@@ -94,6 +94,20 @@ Export implemented domain summaries to JSON:
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark bases /tmp/bases.json
 ```
 
+Use `--redact` when command output or export files need to be safe for logs,
+issue comments, or aggregate reporting:
+
+```sh
+./bin/arksave --redact players /path/to/76561198000000000.arkprofile
+./bin/arksave --redact export-json /path/to/Valguero_WP.ark /tmp/save_info.redacted.json
+./bin/arksave --redact export-domain-json /path/to/Valguero_WP.ark dinos /tmp/dinos.redacted.json
+./bin/arksave --redact export-cluster-json /path/to/EOS_abc123 /tmp/cluster.redacted.json
+```
+
+Redacted summaries keep counts and versions but hide local paths, profile/tribe
+names, IDs, archive class lists, cluster upload details, and object/domain item
+details.
+
 CLI summaries and JSON exports are save-derived operational data. They can
 include local paths, class names, object IDs, player or tribe identifiers,
 locations, crafter names, and cluster upload identifiers depending on the

@@ -46,6 +46,17 @@ func TestRunRejectsNetworkCommands(t *testing.T) {
 	}
 }
 
+func TestRunRejectsUnknownOption(t *testing.T) {
+	var out bytes.Buffer
+	err := run([]string{"--verbose", "inspect", "save.ark"}, &out)
+	if err == nil {
+		t.Fatalf("run(unknown option) error = nil, want unknown option")
+	}
+	if !strings.Contains(err.Error(), "unknown option") {
+		t.Fatalf("run(unknown option) error = %v, want unknown option message", err)
+	}
+}
+
 func TestPlayersCommandPrintsLocalProfileSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
 	createSyntheticArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
@@ -92,6 +103,34 @@ func TestPlayersCommandPrintsParsedLocalProfileSummary(t *testing.T) {
 	}
 }
 
+func TestPlayersCommandRedactsLocalProfileDetails(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	testfixtures.WritePlayerArchive(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"players", "--redact", path}, &out)
+	if err != nil {
+		t.Fatalf("run(players --redact) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Player profile: [redacted]",
+		"Character name: [redacted]",
+		"Player name: [redacted]",
+		"Player data ID: [redacted]",
+		"Tribe ID: [redacted]",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("redacted players output %q does not contain %q", got, want)
+		}
+	}
+	for _, leaked := range []string{path, "Survivor", "PlatformName", "/Game/"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted players output %q contains private detail %q", got, leaked)
+		}
+	}
+}
+
 func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
 	testfixtures.WriteTribeArchive(t, path)
@@ -112,6 +151,33 @@ func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("tribes output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTribesCommandRedactsLocalTribeDetails(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	testfixtures.WriteTribeArchive(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "tribes", path}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact tribes) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe save: [redacted]",
+		"Tribe name: [redacted]",
+		"Tribe ID: [redacted]",
+		"Owner ID: [redacted]",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("redacted tribes output %q does not contain %q", got, want)
+		}
+	}
+	for _, leaked := range []string{path, "Porters", "/Script/ShooterGame.PrimalTribeData"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted tribes output %q contains private detail %q", got, leaked)
 		}
 	}
 }
@@ -164,6 +230,34 @@ func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
 	}
 }
 
+func TestClusterCommandRedactsPathAndUploadDetails(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "cluster", path}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact cluster) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster file: [redacted]",
+		"Archive version: 7",
+		"Objects: 1",
+		"Items: 0",
+		"Dinos: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("redacted cluster output %q does not contain %q", got, want)
+		}
+	}
+	for _, leaked := range []string{path, "EOS_abc123", "blueprint="} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted cluster output %q contains private detail %q", got, leaked)
+		}
+	}
+}
+
 func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")
@@ -196,6 +290,37 @@ func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportJSONRedactsObjectDetailsWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "save_info.json")
+	createSyntheticSave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "export-json", savePath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact export-json) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-json output %q mentions output path %q", out.String(), outPath)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted json) error = %v", err)
+	}
+	var decoded arkapi.SaveInfo
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, data)
+	}
+	if decoded.ObjectCount != 1 || len(decoded.Objects) != 0 {
+		t.Fatalf("redacted SaveInfo = %#v, want object count without object details", decoded)
+	}
+	if strings.Contains(string(data), "00010203") || strings.Contains(string(data), "Blueprint'/Game/Test.Test_C'") {
+		t.Fatalf("redacted save info contains object detail: %s", data)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
@@ -220,6 +345,37 @@ func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
 	}
 	if decoded.ID != "EOS_abc123" || decoded.ArchiveVersion != 7 || decoded.ObjectCount != 1 {
 		t.Fatalf("decoded ClusterDataInfo = %#v", decoded)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportClusterJSONRedactsIdentifiersWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	clusterPath := filepath.Join(dir, "EOS_abc123")
+	outPath := filepath.Join(dir, "cluster.json")
+	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"export-cluster-json", "--redact", clusterPath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-cluster-json --redact) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-cluster-json output %q mentions output path %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted cluster json) error = %v", err)
+	}
+	var decoded arkapi.ClusterDataInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.ID != "[redacted]" || decoded.Path != "[redacted]" || decoded.ObjectCount != 1 || len(decoded.Items) != 0 || len(decoded.Dinos) != 0 {
+		t.Fatalf("redacted ClusterDataInfo = %#v", decoded)
+	}
+	if strings.Contains(string(raw), clusterPath) || strings.Contains(string(raw), "EOS_abc123") {
+		t.Fatalf("redacted cluster json contains private detail: %s", raw)
 	}
 	assertPrivateFileMode(t, outPath)
 }
@@ -252,6 +408,34 @@ func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportDomainJSONRedactsItemsWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "stackables.json")
+	createSyntheticEmptySave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "export-domain-json", savePath, "stackables", outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact export-domain-json) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-domain-json output %q mentions output path %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted domain json) error = %v", err)
+	}
+	var decoded arkapi.DomainExport
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.Domain != "stackables" || decoded.Count != 0 || decoded.Items != nil {
+		t.Fatalf("redacted DomainExport = %#v", decoded)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")
@@ -268,6 +452,32 @@ func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
 	}
 	if _, err := os.Stat(outPath); err != nil {
 		t.Fatalf("stat mutated copy: %v", err)
+	}
+}
+
+func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	copyPath := filepath.Join(dir, "copy.ark")
+	removedPath := filepath.Join(dir, "removed.ark")
+	createSyntheticSave(t, savePath)
+	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+
+	var copyOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "copy", savePath, copyPath}, &copyOut); err != nil {
+		t.Fatalf("run(--redact mutate copy) error = %v", err)
+	}
+	if strings.Contains(copyOut.String(), copyPath) || !strings.Contains(copyOut.String(), "[redacted]") {
+		t.Fatalf("redacted mutate copy output = %q", copyOut.String())
+	}
+
+	var removeOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "remove-object", savePath, removedPath, objectID}, &removeOut); err != nil {
+		t.Fatalf("run(--redact mutate remove-object) error = %v", err)
+	}
+	got := removeOut.String()
+	if strings.Contains(got, removedPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate remove-object output = %q", got)
 	}
 }
 

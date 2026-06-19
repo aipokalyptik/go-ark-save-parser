@@ -83,6 +83,12 @@ crafter names, and cluster upload identifiers. Export files are created with
 `.oracle/output` or another ignored private directory unless they have been
 explicitly sanitized.
 
+Use the CLI `--redact` option for aggregate-only output intended for logs,
+issues, or committed notes. Redacted mode hides stdout paths and identifiers,
+omits archive class details in profile/tribe summaries, omits cluster upload
+details, and writes aggregate JSON exports without object, domain item, or
+cluster item/dino detail records.
+
 ## Adding Fixtures
 
 Prefer synthetic fixtures in tests. If a real save is required:
