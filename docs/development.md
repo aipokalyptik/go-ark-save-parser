@@ -48,6 +48,13 @@ Run the committed Go oracle gate against a selected private map save:
 ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-test
 ```
 
+Add `ARK_ORACLE_TRIBUTE` to the same command when checking a private local
+tribute index fixture:
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark ARK_ORACLE_TRIBUTE=/absolute/path/to/private/file.arktributetribe make oracle-test
+```
+
 Run the implemented example comparison harness against the Python oracle:
 
 ```sh

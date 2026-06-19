@@ -156,6 +156,7 @@ Run the private oracle integration test:
 
 ```sh
 ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-test
+ARK_ORACLE_SAVE=/absolute/path/to/save.ark ARK_ORACLE_TRIBUTE=/absolute/path/to/file.arktributetribe make oracle-test
 ```
 
 Run standalone Go examples:

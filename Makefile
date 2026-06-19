@@ -6,6 +6,7 @@ test:
 oracle-test:
 	test -n "$$ARK_ORACLE_SAVE"
 	go test ./arksave -run TestOracleSaveEnumeratesObjects -count=1
+	if [ -n "$$ARK_ORACLE_TRIBUTE" ]; then go test ./arktribute -run TestOracleTributeParsesLocalIndex -count=1; else echo "ARK_ORACLE_TRIBUTE not set; skipping tribute oracle"; fi
 
 oracle-compare:
 	test -n "$$ARK_ORACLE_SAVE"
