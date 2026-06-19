@@ -165,6 +165,7 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 go run ./examples/object_classes /path/to/Valguero_WP.ark
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
+go run ./examples/local_tribute /path/to/tribute-directory-or-file
 go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
 ```
 

@@ -1,6 +1,8 @@
 package examples_test
 
 import (
+	"bytes"
+	"encoding/binary"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +18,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
+	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
@@ -28,11 +31,13 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	writeTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
 	runExample(t, "local_profiles", "clusters=1", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
+	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
 	runExample(t, "mutation_copy", "wrote copy:", savePath, copyPath)
 	if _, err := os.Stat(copyPath); err != nil {
 		t.Fatalf("mutation_copy output missing: %v", err)
@@ -49,5 +54,27 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	}
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("go run ./%s output %q does not contain %q", name, out, want)
+	}
+}
+
+func writeTributeFile(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
+	t.Helper()
+	var buf bytes.Buffer
+	writeTributeIDs(t, &buf, playerIDs)
+	writeTributeIDs(t, &buf, tribeIDs)
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write tribute fixture: %v", err)
+	}
+}
+
+func writeTributeIDs(t *testing.T, buf *bytes.Buffer, ids []uint64) {
+	t.Helper()
+	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
+		t.Fatalf("write tribute count: %v", err)
+	}
+	for _, id := range ids {
+		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
+			t.Fatalf("write tribute id: %v", err)
+		}
 	}
 }
