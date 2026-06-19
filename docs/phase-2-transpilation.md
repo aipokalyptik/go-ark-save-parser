@@ -40,8 +40,8 @@ enough that oracle-derived tests can run against translated packages.
 
 ### Property Parser
 
-- [ ] Add tests for property terminator handling.
-- [ ] Add tests for primitive property types.
+- [x] Add tests for property terminator handling.
+- [x] Add tests for primitive property types.
 - [ ] Add tests for struct, array, map, set, object-reference, and unknown struct
       fallback behavior.
 - [ ] Port property parsing and declared-size realignment.
