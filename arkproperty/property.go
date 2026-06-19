@@ -10,8 +10,11 @@ type Type string
 
 const (
 	TypeBool   Type = "Boolean"
+	TypeDouble Type = "Double"
+	TypeFloat  Type = "Float"
 	TypeInt    Type = "Int"
 	TypeString Type = "String"
+	TypeUInt32 Type = "UInt32"
 )
 
 type Property struct {
@@ -98,6 +101,38 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 			return nil, err
 		}
 		prop.Value = value
+	case "DoubleProperty":
+		prop.Type = TypeDouble
+		unknown, err := r.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		prop.UnknownByte = unknown
+		prop.ValueOffset = r.Position()
+		value, err := r.ReadFloat64()
+		if err != nil {
+			return nil, err
+		}
+		prop.Value = value
+	case "FloatProperty":
+		prop.Type = TypeFloat
+		isPositioned, err := r.ReadBool()
+		if err != nil {
+			return nil, err
+		}
+		if isPositioned {
+			position, err := r.ReadInt32()
+			if err != nil {
+				return nil, err
+			}
+			prop.Position = position
+		}
+		prop.ValueOffset = r.Position()
+		value, err := r.ReadFloat32()
+		if err != nil {
+			return nil, err
+		}
+		prop.Value = value
 	case "StrProperty":
 		prop.Type = TypeString
 		isPositioned, err := r.ReadBool()
@@ -121,6 +156,19 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		} else {
 			prop.Value = ""
 		}
+	case "UInt32Property":
+		prop.Type = TypeUInt32
+		unknown, err := r.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		prop.UnknownByte = unknown
+		prop.ValueOffset = r.Position()
+		value, err := r.ReadUInt32()
+		if err != nil {
+			return nil, err
+		}
+		prop.Value = value
 	default:
 		return nil, fmt.Errorf("unsupported property type %q for %q", typeName, key)
 	}

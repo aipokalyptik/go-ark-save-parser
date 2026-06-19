@@ -11,13 +11,19 @@ import (
 func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
-		1: "Health",
-		2: "IntProperty",
-		3: "Label",
-		4: "StrProperty",
-		5: "IsActive",
-		6: "BoolProperty",
-		7: "None",
+		1:  "Health",
+		2:  "IntProperty",
+		3:  "Label",
+		4:  "StrProperty",
+		5:  "IsActive",
+		6:  "BoolProperty",
+		7:  "None",
+		8:  "Weight",
+		9:  "FloatProperty",
+		10: "Precise",
+		11: "DoubleProperty",
+		12: "Count",
+		13: "UInt32Property",
 	})
 	stream := bytes.NewBuffer(nil)
 	writeName(stream, 1)
@@ -40,6 +46,27 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	writeInt32(stream, 0)
 	stream.WriteByte(1)
 
+	writeName(stream, 8)
+	writeName(stream, 9)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, float32(3.5))
+
+	writeName(stream, 10)
+	writeName(stream, 11)
+	writeInt32(stream, 8)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, float64(8.25))
+
+	writeName(stream, 12)
+	writeName(stream, 13)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, uint32(99))
+
 	writeName(stream, 7)
 	writeInt32(stream, 0)
 
@@ -47,8 +74,8 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseAll() error = %v", err)
 	}
-	if len(props) != 3 {
-		t.Fatalf("ParseAll() length = %d, want 3", len(props))
+	if len(props) != 6 {
+		t.Fatalf("ParseAll() length = %d, want 6", len(props))
 	}
 	if props[0].Name != "Health" || props[0].Type != TypeInt || props[0].Value != int32(250) {
 		t.Fatalf("first property = %#v, want Health Int 250", props[0])
@@ -58,6 +85,15 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	}
 	if props[2].Name != "IsActive" || props[2].Type != TypeBool || props[2].Value != true {
 		t.Fatalf("third property = %#v, want IsActive Bool true", props[2])
+	}
+	if props[3].Name != "Weight" || props[3].Type != TypeFloat || props[3].Value != float32(3.5) {
+		t.Fatalf("fourth property = %#v, want Weight Float 3.5", props[3])
+	}
+	if props[4].Name != "Precise" || props[4].Type != TypeDouble || props[4].Value != float64(8.25) {
+		t.Fatalf("fifth property = %#v, want Precise Double 8.25", props[4])
+	}
+	if props[5].Name != "Count" || props[5].Type != TypeUInt32 || props[5].Value != uint32(99) {
+		t.Fatalf("sixth property = %#v, want Count UInt32 99", props[5])
 	}
 }
 
