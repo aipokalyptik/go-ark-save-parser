@@ -17,18 +17,18 @@ Implemented:
 - Local SQLite-backed `.ark` opening through pure-Go SQLite.
 - Save header parsing, name table loading, custom value reads, object ID
   enumeration, raw object reads, class-name lookup, and generic object parsing.
-- Primitive property parsing for `BoolProperty`, `IntProperty`, `StrProperty`,
-  and `None` termination.
-- Read-only General API wrapper.
-- Initial `arksave inspect` / `arksave parse` CLI summary command.
+- Property parsing for primitives, object references, byte/enum values, generic
+  structs, struct arrays, simple arrays, simple maps, and simple sets.
+- Read-only General, Structure, Stackable, and save-info JSON API wrappers.
+- `arksave inspect`, `parse`, `players`, `tribes`, and `export-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
 Still in progress:
 
-- Full dynamic property parity for structs, arrays, maps, sets, object
-  references, and legacy embedded data.
-- Domain models and APIs for dinos, structures, equipment, stackables, players,
-  tribes, local cluster files, bases, and JSON export.
+- Full dynamic property parity for dedicated struct readers and legacy embedded
+  data.
+- Full domain models and APIs for dinos, equipment, players, tribes, local
+  cluster files, bases, and model-specific JSON export.
 - Mutation APIs. These will remain experimental and live-server-unverified.
 
 ## Scope
@@ -59,6 +59,19 @@ Inspect a local save:
 
 ```sh
 ./bin/arksave inspect /path/to/Valguero_WP.ark
+```
+
+Export save metadata and object classes to JSON:
+
+```sh
+./bin/arksave export-json /path/to/Valguero_WP.ark /tmp/save_info.json
+```
+
+Inspect local profile and tribe archive metadata:
+
+```sh
+./bin/arksave players /path/to/76561198000000000.arkprofile
+./bin/arksave tribes /path/to/123456789.arktribe
 ```
 
 Run tests:

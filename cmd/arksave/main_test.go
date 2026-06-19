@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/binary"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -86,6 +87,37 @@ func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Fatalf("tribes output %q does not contain %q", got, want)
 		}
+	}
+}
+
+func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "save_info.json")
+	createSyntheticSave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"export-json", savePath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-json) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-json output %q does not mention %q", out.String(), outPath)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(exported json) error = %v", err)
+	}
+	var decoded struct {
+		MapName     string `json:"map_name"`
+		SaveVersion int16  `json:"save_version"`
+		ObjectCount int    `json:"object_count"`
+	}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, data)
+	}
+	if decoded.MapName != "Valguero_WP" || decoded.SaveVersion != 12 || decoded.ObjectCount != 1 {
+		t.Fatalf("exported json = %#v", decoded)
 	}
 }
 

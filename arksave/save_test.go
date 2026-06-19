@@ -126,6 +126,14 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if len(classes) != 2 || classes[0] != "Blueprint'/Game/Other.Other_C'" || classes[1] != "Blueprint'/Game/Test.Test_C'" {
 		t.Fatalf("Classes() = %#v, want two sorted classes", classes)
 	}
+
+	infos, err := save.ObjectClassInfos()
+	if err != nil {
+		t.Fatalf("ObjectClassInfos() error = %v", err)
+	}
+	if len(infos) != 2 || infos[0].UUID != objectID || infos[0].ClassName != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("ObjectClassInfos() = %#v", infos)
+	}
 }
 
 func syntheticActorTransforms(id uuid.UUID) []byte {

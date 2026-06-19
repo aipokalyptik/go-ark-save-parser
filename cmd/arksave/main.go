@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
@@ -38,7 +39,12 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("tribes requires a local .arktribe path")
 		}
 		return tribes(args[1], out)
-	case "export-json", "mutate":
+	case "export-json":
+		if len(args) != 3 {
+			return fmt.Errorf("export-json requires a local .ark path and explicit output path")
+		}
+		return exportJSON(args[1], args[2], out)
+	case "mutate":
 		return fmt.Errorf("%s is planned but not implemented yet in this offline port", args[0])
 	case "ftp", "rcon":
 		return fmt.Errorf("%s is unsupported: this is an offline-only parser", args[0])
@@ -53,6 +59,7 @@ func usage(out io.Writer) error {
   arksave parse <save.ark>
   arksave players <player.arkprofile>
   arksave tribes <tribe.arktribe>
+  arksave export-json <save.ark> <out.json>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.`)
 	return err
@@ -97,6 +104,24 @@ func tribes(path string, out io.Writer) error {
 		return err
 	}
 	return printArchiveSummary(out, "Tribe save", tribe.Path, tribe.Archive.Version, tribe.Archive.Objects)
+}
+
+func exportJSON(path string, outputPath string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	data, err := arkapi.NewJSON(save).ExportSaveInfoJSON()
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o644); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote JSON export: %s\n", outputPath)
+	return err
 }
 
 func printArchiveSummary(out io.Writer, label string, path string, version int32, objects []arkarchive.Object) error {

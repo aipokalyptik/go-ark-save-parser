@@ -74,7 +74,8 @@ enough that oracle-derived tests can run against translated packages.
 - [ ] Port full Player and Tribe APIs for local files and save-contained data.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
-- [ ] Port Dino, full Structure, Equipment, full Stackable, Base, and JSON APIs.
+- [x] Add read-only save-info JSON export API and CLI command.
+- [ ] Port Dino, full Structure, Equipment, full Stackable, Base, and full model-specific JSON APIs.
 - [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation

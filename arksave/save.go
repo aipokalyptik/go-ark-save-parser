@@ -22,6 +22,11 @@ type Save struct {
 	names   *arkbinary.Context
 }
 
+type ObjectClassInfo struct {
+	UUID      uuid.UUID
+	ClassName string
+}
+
 func Open(path string) (*Save, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
@@ -143,6 +148,40 @@ func (s *Save) Classes() ([]string, error) {
 	}
 	sort.Strings(classes)
 	return classes, nil
+}
+
+func (s *Save) ObjectClassInfos() ([]ObjectClassInfo, error) {
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var infos []ObjectClassInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, err
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, ObjectClassInfo{UUID: id, ClassName: className})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	sort.Slice(infos, func(i int, j int) bool {
+		return infos[i].UUID.String() < infos[j].UUID.String()
+	})
+	return infos, nil
 }
 
 func (s *Save) ObjectIDsByClassContains(substr string) ([]uuid.UUID, error) {
