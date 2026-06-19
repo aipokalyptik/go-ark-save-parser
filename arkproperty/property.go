@@ -651,6 +651,7 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 	if _, err := r.ReadUInt32(); err != nil {
 		return Set{}, err
 	}
+	bodyStart = r.Position()
 	count, err := r.ReadInt32()
 	if err != nil {
 		return Set{}, err
@@ -720,10 +721,8 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	props, err := ParseAllPartial(r, bodyEnd)
 	if err != nil {
 		if len(props) > 0 {
-			if r.Position() < bodyEnd {
-				if err := r.SetPosition(bodyEnd); err != nil {
-					return nil, "", 0, err
-				}
+			if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+				return nil, "", 0, err
 			}
 			return Container{Properties: props}, structType, dataSize, err
 		}
@@ -736,10 +735,8 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 		}
 		return UnknownStruct{TypeName: structType, Raw: raw}, structType, dataSize, nil
 	}
-	if r.Position() < bodyEnd {
-		if err := r.SetPosition(bodyEnd); err != nil {
-			return nil, "", 0, err
-		}
+	if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+		return nil, "", 0, err
 	}
 	return Container{Properties: props}, structType, dataSize, nil
 }
@@ -784,10 +781,14 @@ func readInlineStructHeader(r *arkbinary.Reader, nrNames uint32) (uint32, error)
 
 func alignDeclaredBody(r *arkbinary.Reader, bodyStart int, dataSize uint32) error {
 	bodyEnd := bodyStart + int(dataSize)
-	if r.Position() < bodyEnd {
+	switch current := r.Position(); {
+	case current < bodyEnd:
 		return r.SetPosition(bodyEnd)
+	case current > bodyEnd:
+		return fmt.Errorf("read %d bytes past declared compound payload size %d", current-bodyEnd, dataSize)
+	default:
+		return nil
 	}
-	return nil
 }
 
 func readObjectReference(r *arkbinary.Reader, dataSize int32) (ObjectReference, error) {
@@ -926,7 +927,8 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 		}
 		return Array{ElementType: TypeStruct, StructType: structType, Values: values}, nil
 	}
-	if _, err := r.ReadUInt32(); err != nil {
+	dataSize, err := r.ReadUInt32()
+	if err != nil {
 		return Array{}, err
 	}
 	if _, err := r.ReadByte(); err != nil {
@@ -936,6 +938,7 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 	if err != nil {
 		return Array{}, err
 	}
+	bodyStart := r.Position()
 	elementType, err := typeFromPropertyName(arrayTypeName)
 	if err != nil {
 		return Array{}, err
@@ -948,7 +951,17 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 		}
 		values = append(values, value)
 	}
+	if err := alignArrayBody(r, bodyStart, dataSize); err != nil {
+		return Array{}, err
+	}
 	return Array{ElementType: elementType, Values: values}, nil
+}
+
+func alignArrayBody(r *arkbinary.Reader, elementBodyStart int, dataSize uint32) error {
+	if dataSize >= 4 && r.Position() == elementBodyStart-4+int(dataSize) {
+		return nil
+	}
+	return alignDeclaredBody(r, elementBodyStart, dataSize)
 }
 
 func typeFromPropertyName(name string) (Type, error) {

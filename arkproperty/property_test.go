@@ -600,6 +600,49 @@ func TestParseArrayPropertyReadsUInt64Values(t *testing.T) {
 	}
 }
 
+func TestParseArrayPropertyRealignsToDeclaredElementDataSize(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Levels",
+		2: "ArrayProperty",
+		3: "IntProperty",
+		4: "Label",
+		5: "StrProperty",
+		6: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 1)
+	writeUInt32(stream, 3)
+	writeInt32(stream, 0)
+	writeInt32(stream, 0)
+	writeInt32(stream, 6)
+	stream.WriteByte(0)
+	writeUInt32(stream, 1)
+	writeInt32(stream, 5)
+	stream.Write([]byte{0xaa, 0xbb})
+
+	writeName(stream, 4)
+	writeName(stream, 5)
+	writeInt32(stream, 7)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeArkString(stream, "ok")
+	writeName(stream, 6)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() length = %d, want 2", len(props))
+	}
+	if props[0].Name != "Levels" || props[1].Name != "Label" || props[1].Value != "ok" {
+		t.Fatalf("ParseAll() = %#v, want array followed by Label ok", props)
+	}
+}
+
 func TestParseArrayPropertyReadsGenericStructValues(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -724,6 +767,44 @@ func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	tribeID, ok := container.Value("TribeID")
 	if !ok || tribeID != int32(12345) {
 		t.Fatalf("TribeID = %#v, %v; want 12345, true", tribeID, ok)
+	}
+}
+
+func TestParseStructPropertyRejectsDeclaredSizeOverread(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "TribeData",
+		2: "StructProperty",
+		3: "TribeDataStruct",
+		4: "Count",
+		5: "IntProperty",
+		6: "None",
+	})
+
+	var body bytes.Buffer
+	writeName(&body, 4)
+	writeName(&body, 5)
+	writeInt32(&body, 4)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	writeInt32(&body, 42)
+	writeName(&body, 6)
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(body.Len()-1))
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+
+	_, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err == nil {
+		t.Fatalf("ParseAll() error = nil, want declared size overread error")
 	}
 }
 

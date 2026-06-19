@@ -55,8 +55,10 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and parsing for simple value maps and sets.
 - [x] Add raw fallback preservation for packed unknown structs.
 - [x] Add declared-size realignment for parsed primitive property payloads.
-- [ ] Port remaining property parsing edge cases and realignment for any compound
-      payloads not already covered by their internal readers.
+- [x] Add declared-size realignment and overread detection for compound array,
+      map, set, and struct payloads covered by generic readers.
+- [ ] Port remaining property parsing edge cases for compound payload encodings
+      not already covered by generic readers.
 - [x] Isolate legacy archive behavior behind explicit format paths and a typed
       unsupported-legacy error.
 - [ ] Port legacy property/object parsing where a runnable offline oracle path exists.
