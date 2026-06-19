@@ -92,6 +92,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first local-file Player/Tribe API surface for profile and tribe discovery/loading.
 - [x] Add read-only local profile parsing into normalized player summaries.
 - [x] Add read-only local tribe summary parsing through Player API and CLI output.
+- [x] Add typed local player/tribe lookup helpers for player data IDs, tribe IDs,
+      and parsed tribe detail objects.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless
       cluster files.
 - [x] Add read-only local cluster item/dino payload extraction, including

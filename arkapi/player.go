@@ -96,6 +96,33 @@ func (p *PlayerAPI) Players() ([]arkobject.Player, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) PlayerByDataID(id uint64) (arkobject.Player, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, false, err
+	}
+	for _, player := range players {
+		if player.PlayerDataID == id {
+			return player, true, nil
+		}
+	}
+	return arkobject.Player{}, false, nil
+}
+
+func (p *PlayerAPI) PlayersByTribeID(tribeID int32) ([]arkobject.Player, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Player, 0)
+	for _, player := range players {
+		if player.TribeID == tribeID {
+			out = append(out, player)
+		}
+	}
+	return out, nil
+}
+
 func (p *PlayerAPI) Clusters() ([]*arkcluster.Data, error) {
 	out := make([]*arkcluster.Data, 0, len(p.clusterPaths))
 	for _, path := range p.clusterPaths {
@@ -134,4 +161,33 @@ func (p *PlayerAPI) TribeSummaries() ([]arkprofile.TribeSummary, error) {
 		out = append(out, summary)
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) TribeDetails() ([]arkobject.Tribe, error) {
+	tribes, err := p.Tribes()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Tribe, 0, len(tribes))
+	for _, tribe := range tribes {
+		detail, err := tribe.Tribe()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, detail)
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TribeByID(id int32) (arkobject.Tribe, bool, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return arkobject.Tribe{}, false, err
+	}
+	for _, tribe := range tribes {
+		if tribe.TribeID == id {
+			return tribe, true, nil
+		}
+	}
+	return arkobject.Tribe{}, false, nil
 }

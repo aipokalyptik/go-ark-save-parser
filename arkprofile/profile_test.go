@@ -119,6 +119,23 @@ func TestOpenTribeSaveSummaryUsesParsedArchiveProperties(t *testing.T) {
 	}
 }
 
+func TestOpenTribeSaveTribeUsesParsedArchiveProperties(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	testfixtures.WriteTribeArchive(t, path)
+
+	save, err := OpenTribeSave(path)
+	if err != nil {
+		t.Fatalf("OpenTribeSave() error = %v", err)
+	}
+	tribe, err := save.Tribe()
+	if err != nil {
+		t.Fatalf("Tribe() error = %v", err)
+	}
+	if tribe.Name != "Porters" || tribe.TribeID != 12345 || tribe.OwnerID != 42 || tribe.NumDinos != 7 {
+		t.Fatalf("Tribe() = %#v, want parsed tribe details", tribe)
+	}
+}
+
 func writeSparseFile(t *testing.T, path string, size int64) {
 	t.Helper()
 	file, err := os.Create(path)

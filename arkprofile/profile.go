@@ -109,6 +109,10 @@ func (t *TribeSave) Summary() (TribeSummary, error) {
 	return summary, nil
 }
 
+func (t *TribeSave) Tribe() (arkobject.Tribe, error) {
+	return arkobject.TribeFromContainer(t.Properties)
+}
+
 func stringArrayValues(value any) []string {
 	switch values := value.(type) {
 	case []any:

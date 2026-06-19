@@ -21,9 +21,11 @@ Go packages without losing oracle parity.
       object references, unknown struct fallback, and legacy parser isolation.
 - [ ] Split domain models under `arkobject` or subpackages for dino, structure,
       equipment, stackable, player, tribe, inventory, and local cluster data.
-- [ ] Add typed API layers for player/tribe, dino, full structure, equipment,
-      full stackable, base, additional model-specific JSON export, and local
-      cluster domain modeling.
+- [x] Add first typed local player/tribe lookup layer for player data IDs, tribe
+      IDs, parsed player summaries, and parsed tribe detail objects.
+- [ ] Add typed API layers for full dino, full structure, equipment, full
+      stackable, base, additional model-specific JSON export, local cluster
+      domain modeling, and remaining player/tribe upstream parity.
 - [ ] Replace duplicated synthetic fixture builders in tests with internal test
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive

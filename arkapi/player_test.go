@@ -90,6 +90,33 @@ func TestPlayerAPIPlayersParsesLocalProfiles(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	player, ok, err := api.PlayerByDataID(42)
+	if err != nil {
+		t.Fatalf("PlayerByDataID() error = %v", err)
+	}
+	if !ok || player.CharacterName != "Survivor" {
+		t.Fatalf("PlayerByDataID() = %#v, %v; want Survivor, true", player, ok)
+	}
+	if _, ok, err := api.PlayerByDataID(999); err != nil || ok {
+		t.Fatalf("PlayerByDataID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+	players, err := api.PlayersByTribeID(777)
+	if err != nil {
+		t.Fatalf("PlayersByTribeID() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("PlayersByTribeID() = %#v, want player 42", players)
+	}
+}
+
 func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
@@ -107,6 +134,33 @@ func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
 	}
 	if tribes[0].Name != "Porters" || tribes[0].TribeID != 12345 {
 		t.Fatalf("TribeSummaries()[0] = %#v", tribes[0])
+	}
+}
+
+func TestPlayerAPITribeDetailsParsesAndFindsLocalTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	tribes, err := api.TribeDetails()
+	if err != nil {
+		t.Fatalf("TribeDetails() error = %v", err)
+	}
+	if len(tribes) != 1 || tribes[0].Name != "Porters" || tribes[0].OwnerID != 42 || tribes[0].NumDinos != 7 {
+		t.Fatalf("TribeDetails() = %#v, want parsed Porters tribe", tribes)
+	}
+	tribe, ok, err := api.TribeByID(12345)
+	if err != nil {
+		t.Fatalf("TribeByID() error = %v", err)
+	}
+	if !ok || tribe.Name != "Porters" {
+		t.Fatalf("TribeByID() = %#v, %v; want Porters, true", tribe, ok)
+	}
+	if _, ok, err := api.TribeByID(999); err != nil || ok {
+		t.Fatalf("TribeByID(missing) = ok %v err %v, want false nil", ok, err)
 	}
 }
 
