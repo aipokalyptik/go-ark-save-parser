@@ -57,6 +57,27 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIByCrafterFiltersLocalSaveItems(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	items, err := api.ByCrafter(arkobject.ObjectCrafter{CharacterName: "Survivor", TribeName: "Porters"})
+	if err != nil {
+		t.Fatalf("ByCrafter() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ByCrafter() length = %d, want 1", len(items))
+	}
+	items, err = api.ByCrafter(arkobject.ObjectCrafter{CharacterName: "Other", TribeName: "Porters"})
+	if err != nil {
+		t.Fatalf("ByCrafter(other) error = %v", err)
+	}
+	if len(items) != 0 {
+		t.Fatalf("ByCrafter(other) length = %d, want 0", len(items))
+	}
+}
+
 func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -96,10 +117,23 @@ func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 	writeFloatProperty(&buf, 0x10000010, 7.5)
 	writeIntProperty(&buf, 0x10000011, 3)
 	writeFloatProperty(&buf, 0x10000012, 0.75)
+	writeStringProperty(&buf, 0x1000001b, "Survivor")
+	writeStringProperty(&buf, 0x1000001c, "Porters")
 	if isEngram {
 		writeBoolProperty(&buf, 0x10000013, true)
 	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
+}
+
+func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001a))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+5))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	writeArkString(buf, value)
 }

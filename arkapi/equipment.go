@@ -91,3 +91,20 @@ func (e *EquipmentAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Equ
 	}
 	return out, nil
 }
+
+func (e *EquipmentAPI) ByCrafter(crafter arkobject.ObjectCrafter) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	all, err := e.All()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range all {
+		if item.Crafter == nil {
+			continue
+		}
+		if *item.Crafter == crafter {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
