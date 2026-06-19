@@ -61,6 +61,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-first object owner wrapper for parsed ownership fields.
 - [x] Port actor transforms and map coordinate helpers.
 - [x] Add read-first structure wrapper for parsed object fields.
+- [x] Add read-first equipment wrapper for parsed inventory item fields.
 - [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
       player, tribe, and local cluster data models as read-first wrappers.
 - [ ] Preserve raw binary/property positions needed by mutation structural tests.
@@ -75,7 +76,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
 - [x] Add read-only save-info JSON export API and CLI command.
-- [ ] Port Dino, full Structure, Equipment, full Stackable, Base, and full model-specific JSON APIs.
+- [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
+- [ ] Port Dino, full Structure, full Equipment, full Stackable, Base, and full model-specific JSON APIs.
 - [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation
