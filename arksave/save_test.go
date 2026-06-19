@@ -134,7 +134,7 @@ func syntheticHeader() []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, float64(1234.5))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(77))
-	writeArkString(&buf, "")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
 	for buf.Len() < 30 {
 		buf.WriteByte(0)
 	}

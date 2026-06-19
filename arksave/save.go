@@ -24,7 +24,7 @@ func Open(path string) (*Save, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", abs))
+	db, err := sql.Open("sqlite", abs)
 	if err != nil {
 		return nil, err
 	}
@@ -183,17 +183,32 @@ func (s *Save) readHeader() error {
 }
 
 func readLocations(r *arkbinary.Reader) ([]HeaderLocation, error) {
-	var out []HeaderLocation
-	for {
+	count, err := r.ReadUInt32()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]HeaderLocation, 0, count)
+	for i := uint32(0); i < count; i++ {
 		part, err := r.ReadString()
 		if err != nil {
 			return nil, err
 		}
-		if part == nil || *part == "" {
-			return out, nil
+		if part != nil && *part != "" && !isWorldPartitionName(*part) {
+			out = append(out, HeaderLocation{Raw: *part})
 		}
-		out = append(out, HeaderLocation{Raw: *part})
+		sentinel, err := r.ReadUInt32()
+		if err != nil {
+			return nil, err
+		}
+		if sentinel != 0xffffffff {
+			return nil, fmt.Errorf("invalid header location sentinel %#x", sentinel)
+		}
 	}
+	return out, nil
+}
+
+func isWorldPartitionName(part string) bool {
+	return len(part) >= 3 && part[len(part)-3:] == "_WP"
 }
 
 func readNameTable(r *arkbinary.Reader) (map[uint32]string, error) {
