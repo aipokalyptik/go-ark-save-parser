@@ -51,7 +51,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
 - [x] Add raw fallback preservation for packed unknown structs.
-- [ ] Port remaining property parsing and declared-size realignment.
+- [x] Add declared-size realignment for parsed primitive property payloads.
+- [ ] Port remaining property parsing edge cases and realignment for any compound
+      payloads not already covered by their internal readers.
 - [ ] Isolate legacy parser behavior behind explicit version/format paths.
 
 ### Object Model

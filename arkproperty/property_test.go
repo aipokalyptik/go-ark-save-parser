@@ -146,6 +146,47 @@ func TestParseObjectPropertyReadsUUIDReference(t *testing.T) {
 	}
 }
 
+func TestParsePrimitivePropertyRealignsToDeclaredDataSize(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Count",
+		2: "IntProperty",
+		3: "Label",
+		4: "StrProperty",
+		5: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 6)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 99)
+	stream.Write([]byte{0xaa, 0xbb})
+
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 7)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeArkString(stream, "ok")
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() length = %d, want 2", len(props))
+	}
+	if props[0].Name != "Count" || props[0].Value != int32(99) {
+		t.Fatalf("first property = %#v, want Count 99", props[0])
+	}
+	if props[1].Name != "Label" || props[1].Value != "ok" {
+		t.Fatalf("second property = %#v, want Label ok", props[1])
+	}
+}
+
 func TestParseBytePropertyReadsRawByteValue(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -339,7 +380,7 @@ func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	var body bytes.Buffer
 	writeName(&body, 4)
 	writeName(&body, 5)
-	writeInt32(&body, 11)
+	writeInt32(&body, 12)
 	writeInt32(&body, 0)
 	body.WriteByte(0)
 	writeArkString(&body, "Porters")

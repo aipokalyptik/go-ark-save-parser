@@ -313,7 +313,30 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		return nil, fmt.Errorf("unsupported property type %q for %q", typeName, key)
 	}
 
+	if err := realignPrimitiveProperty(r, prop); err != nil {
+		return nil, err
+	}
 	return prop, nil
+}
+
+func realignPrimitiveProperty(r *arkbinary.Reader, prop *Property) error {
+	if prop.DataSize <= 0 || prop.ValueOffset == 0 {
+		return nil
+	}
+	switch prop.Type {
+	case TypeBool, TypeDouble, TypeFloat, TypeInt, TypeObject, TypeString, TypeUInt32:
+	default:
+		return nil
+	}
+	target := prop.ValueOffset + int(prop.DataSize)
+	switch current := r.Position(); {
+	case current == target:
+		return nil
+	case current < target:
+		return r.Skip(target - current)
+	default:
+		return fmt.Errorf("property %q read %d bytes past declared payload size %d", prop.Name, current-target, prop.DataSize)
+	}
 }
 
 func readByteProperty(r *arkbinary.Reader, dataSize int32, position int32) (any, Type, int, int32, byte, error) {
