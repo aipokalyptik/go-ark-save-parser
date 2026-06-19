@@ -42,9 +42,10 @@ enough that oracle-derived tests can run against translated packages.
 
 - [x] Add tests for property terminator handling.
 - [x] Add tests for primitive property types.
-- [ ] Add tests for struct, map, set, and unknown struct
+- [ ] Add tests for map, set, and unknown struct
       fallback behavior.
 - [x] Add tests and parsing for object-reference properties and simple value arrays.
+- [x] Add tests and generic property-list parsing for struct properties.
 - [ ] Port remaining property parsing and declared-size realignment.
 - [ ] Isolate legacy parser behavior behind explicit version/format paths.
 
@@ -60,6 +61,7 @@ enough that oracle-derived tests can run against translated packages.
 
 - [x] Port General API object queries.
 - [x] Add archive metadata parser and local `.arkprofile` / `.arktribe` file-open wrappers.
+- [x] Add first normalized tribe summary extraction surface.
 - [ ] Port full Player and Tribe APIs for local files and save-contained data.
 - [ ] Port Dino, Structure, Equipment, Stackable, Base, and JSON APIs.
 - [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.

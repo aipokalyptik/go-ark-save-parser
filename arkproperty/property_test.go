@@ -194,6 +194,71 @@ func TestParseArrayPropertyReadsIntValues(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "TribeData",
+		2: "StructProperty",
+		3: "TribeDataStruct",
+		4: "TribeName",
+		5: "StrProperty",
+		6: "TribeID",
+		7: "IntProperty",
+		8: "None",
+	})
+
+	var body bytes.Buffer
+	writeName(&body, 4)
+	writeName(&body, 5)
+	writeInt32(&body, 11)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	writeArkString(&body, "Porters")
+	writeName(&body, 6)
+	writeName(&body, 7)
+	writeInt32(&body, 4)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	writeInt32(&body, 12345)
+	writeName(&body, 8)
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(body.Len()))
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+	writeName(stream, 8)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeStruct {
+		t.Fatalf("property type = %s, want Struct", props[0].Type)
+	}
+	container, ok := props[0].Value.(Container)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Container", props[0].Value)
+	}
+	name, ok := container.Value("TribeName")
+	if !ok || name != "Porters" {
+		t.Fatalf("TribeName = %#v, %v; want Porters, true", name, ok)
+	}
+	tribeID, ok := container.Value("TribeID")
+	if !ok || tribeID != int32(12345) {
+		t.Fatalf("TribeID = %#v, %v; want 12345, true", tribeID, ok)
+	}
+}
+
 func writeName(buf *bytes.Buffer, id uint32) {
 	_ = binary.Write(buf, binary.LittleEndian, id)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
