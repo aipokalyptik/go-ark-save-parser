@@ -56,6 +56,7 @@ enough that oracle-derived tests can run against translated packages.
 ### Object Model
 
 - [x] Port generic game object headers and property containers.
+- [x] Add read-first inventory and inventory item wrappers for parsed objects.
 - [ ] Port actor transforms and map coordinate helpers.
 - [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
       player, tribe, and local cluster data models as read-first wrappers.

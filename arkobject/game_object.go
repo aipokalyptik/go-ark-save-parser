@@ -17,6 +17,15 @@ type GameObject struct {
 	Properties []arkproperty.Property
 }
 
+func (g *GameObject) Value(name string) (any, bool) {
+	for _, prop := range g.Properties {
+		if prop.Name == name {
+			return prop.Value, true
+		}
+	}
+	return nil, false
+}
+
 func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string) (*GameObject, error) {
 	r := arkbinary.NewReader(data, ctx)
 	blueprint, err := r.ReadName("")
