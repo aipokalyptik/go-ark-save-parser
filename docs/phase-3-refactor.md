@@ -32,4 +32,4 @@ Go packages without losing oracle parity.
       profile/tribe metadata and save-info JSON export.
 - [x] Keep mutation helpers in an explicit experimental surface that requires an
       output path.
-- [ ] Re-run oracle integration after each major parser expansion.
+- [x] Re-run oracle integration after major parser/API expansion.
