@@ -54,6 +54,48 @@ func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {
 	}
 }
 
+func TestDinoAPIFiltersBySexDeathAndBabyState(t *testing.T) {
+	save := openSyntheticDinoFilterSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	females, err := api.Females()
+	if err != nil {
+		t.Fatalf("Females() error = %v", err)
+	}
+	if len(females) != 1 {
+		t.Fatalf("Females() length = %d, want 1", len(females))
+	}
+	males, err := api.Males()
+	if err != nil {
+		t.Fatalf("Males() error = %v", err)
+	}
+	if len(males) != 1 {
+		t.Fatalf("Males() length = %d, want 1", len(males))
+	}
+	dead, err := api.Dead()
+	if err != nil {
+		t.Fatalf("Dead() error = %v", err)
+	}
+	if len(dead) != 1 {
+		t.Fatalf("Dead() length = %d, want 1", len(dead))
+	}
+	alive, err := api.Alive()
+	if err != nil {
+		t.Fatalf("Alive() error = %v", err)
+	}
+	if len(alive) != 1 {
+		t.Fatalf("Alive() length = %d, want 1", len(alive))
+	}
+	babies, err := api.Babies()
+	if err != nil {
+		t.Fatalf("Babies() error = %v", err)
+	}
+	if len(babies) != 1 {
+		t.Fatalf("Babies() length = %d, want 1", len(babies))
+	}
+}
+
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -82,7 +124,38 @@ func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticDinoFilterSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	femaleAliveID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	maleDeadID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, femaleAliveID[:], syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, maleDeadID[:], syntheticDinoObjectBytesWithFlags(3003, 4004, false, true, true, false))
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticDinoObjectBytes() []byte {
+	return syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true)
+}
+
+func syntheticDinoObjectBytesWithFlags(id1 int32, id2 int32, isFemale bool, isDead bool, isBaby bool, isTamed bool) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -90,10 +163,14 @@ func syntheticDinoObjectBytes() []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x10000015, 1001)
-	writeIntProperty(&buf, 0x10000016, 2002)
-	writeBoolProperty(&buf, 0x10000017, true)
-	writeDoubleProperty(&buf, 0x10000018, 42)
+	writeIntProperty(&buf, 0x10000015, id1)
+	writeIntProperty(&buf, 0x10000016, id2)
+	writeBoolProperty(&buf, 0x10000017, isFemale)
+	writeBoolProperty(&buf, 0x10000020, isDead)
+	writeBoolProperty(&buf, 0x10000021, isBaby)
+	if isTamed {
+		writeDoubleProperty(&buf, 0x10000018, 42)
+	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()

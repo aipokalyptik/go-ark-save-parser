@@ -140,7 +140,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(32))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(34))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -205,6 +205,10 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "ArrayProperty")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001f))
 	writeArkString(&buf, "ObjectProperty")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000020))
+	writeArkString(&buf, "bIsDead")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000021))
+	writeArkString(&buf, "bIsBaby")
 	return buf.Bytes()
 }
 

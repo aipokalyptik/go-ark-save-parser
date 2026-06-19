@@ -103,3 +103,41 @@ func (d *DinoAPI) Babies() (map[uuid.UUID]arkobject.Dino, error) {
 	}
 	return out, nil
 }
+
+func (d *DinoAPI) Females() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return dino.IsFemale
+	})
+}
+
+func (d *DinoAPI) Males() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return !dino.IsFemale
+	})
+}
+
+func (d *DinoAPI) Dead() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return dino.IsDead
+	})
+}
+
+func (d *DinoAPI) Alive() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return !dino.IsDead
+	})
+}
+
+func (d *DinoAPI) filter(match func(arkobject.Dino) bool) (map[uuid.UUID]arkobject.Dino, error) {
+	all, err := d.All()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range all {
+		if match(dino) {
+			out[id] = dino
+		}
+	}
+	return out, nil
+}

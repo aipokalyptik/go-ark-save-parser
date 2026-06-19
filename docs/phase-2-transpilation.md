@@ -111,7 +111,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
-- [x] Add first read-only Dino API surface for local class/tamed/wild/baby queries.
+- [x] Add first read-only Dino API surface for local class, tamed/wild,
+      baby/adult, sex, and alive/dead queries.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
       richer local cluster item/dino domain models, and complete model-specific
