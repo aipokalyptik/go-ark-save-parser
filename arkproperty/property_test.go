@@ -259,6 +259,101 @@ func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	}
 }
 
+func TestParseMapPropertyReadsSimpleKeyValueEntries(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "LabelsByLevel",
+		2: "MapProperty",
+		3: "IntProperty",
+		4: "StrProperty",
+		5: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 2)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeName(stream, 4)
+	writeInt32(stream, 0)
+	writeUInt32(stream, 32)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, 2)
+	writeInt32(stream, 1)
+	writeArkString(stream, "one")
+	writeInt32(stream, 2)
+	writeArkString(stream, "two")
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeMap {
+		t.Fatalf("ParseAll() = %#v, want one map property", props)
+	}
+	got, ok := props[0].Value.(Map)
+	if !ok {
+		t.Fatalf("MapProperty value type = %T, want Map", props[0].Value)
+	}
+	if got.KeyType != TypeInt || got.ValueType != TypeString || len(got.Entries) != 2 {
+		t.Fatalf("Map = %#v, want Int->String length 2", got)
+	}
+	if got.Entries[0].Key != int32(1) || got.Entries[0].Value != "one" {
+		t.Fatalf("first map entry = %#v", got.Entries[0])
+	}
+	if got.Entries[1].Key != int32(2) || got.Entries[1].Value != "two" {
+		t.Fatalf("second map entry = %#v", got.Entries[1])
+	}
+}
+
+func TestParseSetPropertyReadsSimpleValues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Unlocked",
+		2: "SetProperty",
+		3: "IntProperty",
+		4: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 3)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 16)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 3)
+	writeInt32(stream, 10)
+	writeInt32(stream, 20)
+	writeInt32(stream, 30)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeSet {
+		t.Fatalf("ParseAll() = %#v, want one set property", props)
+	}
+	got, ok := props[0].Value.(Set)
+	if !ok {
+		t.Fatalf("SetProperty value type = %T, want Set", props[0].Value)
+	}
+	if got.ElementType != TypeInt || len(got.Values) != 3 {
+		t.Fatalf("Set = %#v, want Int set length 3", got)
+	}
+	for i, want := range []any{int32(10), int32(20), int32(30)} {
+		if got.Values[i] != want {
+			t.Fatalf("set value %d = %#v, want %#v", i, got.Values[i], want)
+		}
+	}
+}
+
 func writeName(buf *bytes.Buffer, id uint32) {
 	_ = binary.Write(buf, binary.LittleEndian, id)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))

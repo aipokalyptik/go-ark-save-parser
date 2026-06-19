@@ -42,10 +42,11 @@ enough that oracle-derived tests can run against translated packages.
 
 - [x] Add tests for property terminator handling.
 - [x] Add tests for primitive property types.
-- [ ] Add tests for map, set, and unknown struct
+- [ ] Add tests for unknown struct
       fallback behavior.
 - [x] Add tests and parsing for object-reference properties and simple value arrays.
 - [x] Add tests and generic property-list parsing for struct properties.
+- [x] Add tests and parsing for simple value maps and sets.
 - [ ] Port remaining property parsing and declared-size realignment.
 - [ ] Isolate legacy parser behavior behind explicit version/format paths.
 

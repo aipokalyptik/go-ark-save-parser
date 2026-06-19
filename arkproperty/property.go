@@ -14,7 +14,9 @@ const (
 	TypeDouble Type = "Double"
 	TypeFloat  Type = "Float"
 	TypeInt    Type = "Int"
+	TypeMap    Type = "Map"
 	TypeObject Type = "Object"
+	TypeSet    Type = "Set"
 	TypeString Type = "String"
 	TypeStruct Type = "Struct"
 	TypeUInt32 Type = "UInt32"
@@ -35,6 +37,22 @@ type ObjectReference struct {
 }
 
 type Array struct {
+	ElementType Type
+	Values      []any
+}
+
+type MapEntry struct {
+	Key   any
+	Value any
+}
+
+type Map struct {
+	KeyType   Type
+	ValueType Type
+	Entries   []MapEntry
+}
+
+type Set struct {
 	ElementType Type
 	Values      []any
 }
@@ -221,6 +239,28 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		}
 		prop.ValueOffset = r.Position()
 		prop.Value = array
+	case "MapProperty":
+		prop.Type = TypeMap
+		if err := r.SetPosition(r.Position() - 4); err != nil {
+			return nil, err
+		}
+		value, err := readMap(r)
+		if err != nil {
+			return nil, err
+		}
+		prop.ValueOffset = r.Position()
+		prop.Value = value
+	case "SetProperty":
+		prop.Type = TypeSet
+		if err := r.SetPosition(r.Position() - 4); err != nil {
+			return nil, err
+		}
+		value, err := readSet(r)
+		if err != nil {
+			return nil, err
+		}
+		prop.ValueOffset = r.Position()
+		prop.Value = value
 	case "StructProperty":
 		prop.Type = TypeStruct
 		if err := r.SetPosition(r.Position() - 8); err != nil {
@@ -252,6 +292,117 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	}
 
 	return prop, nil
+}
+
+func readMap(r *arkbinary.Reader) (Map, error) {
+	keyTypeName, err := r.ReadName("")
+	if err != nil {
+		return Map{}, err
+	}
+	keyType, err := typeFromPropertyName(keyTypeName)
+	if err != nil {
+		return Map{}, err
+	}
+	if _, err := r.ReadUInt32(); err != nil {
+		return Map{}, err
+	}
+	valueTypeName, err := r.ReadName("")
+	if err != nil {
+		return Map{}, err
+	}
+	valueType, err := typeFromPropertyName(valueTypeName)
+	if err != nil {
+		return Map{}, err
+	}
+	structNames, err := r.ReadInt32()
+	if err != nil {
+		return Map{}, err
+	}
+	if structNames > 0 {
+		if _, err := r.ReadName(""); err != nil {
+			return Map{}, err
+		}
+	}
+	dataSize, err := readInlineStructHeader(r, uint32(structNames))
+	if err != nil {
+		return Map{}, err
+	}
+	bodyStart := r.Position()
+	if _, err := r.ReadUInt32(); err != nil {
+		return Map{}, err
+	}
+	count, err := r.ReadUInt32()
+	if err != nil {
+		return Map{}, err
+	}
+	entries := make([]MapEntry, 0, count)
+	for i := uint32(0); i < count; i++ {
+		key, err := readValue(keyType, r)
+		if err != nil {
+			return Map{}, err
+		}
+		value, err := readValue(valueType, r)
+		if err != nil {
+			return Map{}, err
+		}
+		entries = append(entries, MapEntry{Key: key, Value: value})
+	}
+	if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+		return Map{}, err
+	}
+	return Map{KeyType: keyType, ValueType: valueType, Entries: entries}, nil
+}
+
+func readSet(r *arkbinary.Reader) (Set, error) {
+	valueTypeName, err := r.ReadName("")
+	if err != nil {
+		return Set{}, err
+	}
+	elementType, err := typeFromPropertyName(valueTypeName)
+	if err != nil {
+		return Set{}, err
+	}
+	zero, err := r.ReadUInt32()
+	if err != nil {
+		return Set{}, err
+	}
+	if zero != 0 {
+		return Set{}, fmt.Errorf("invalid set header zero %#x", zero)
+	}
+	dataSize, err := r.ReadInt32()
+	if err != nil {
+		return Set{}, err
+	}
+	endByte, err := r.ReadByte()
+	if err != nil {
+		return Set{}, err
+	}
+	if endByte != 0 {
+		return Set{}, fmt.Errorf("invalid set end byte %#x", endByte)
+	}
+	bodyStart := r.Position()
+	if _, err := r.ReadUInt32(); err != nil {
+		return Set{}, err
+	}
+	count, err := r.ReadInt32()
+	if err != nil {
+		return Set{}, err
+	}
+	if count < 0 {
+		return Set{}, fmt.Errorf("negative set count %d", count)
+	}
+	values := make([]any, 0, count)
+	for i := int32(0); i < count; i++ {
+		value, err := readValue(elementType, r)
+		if err != nil {
+			return Set{}, err
+		}
+		values = append(values, value)
+	}
+	if err := alignDeclaredBody(r, bodyStart, uint32(dataSize)); err != nil {
+		return Set{}, err
+	}
+	return Set{ElementType: elementType, Values: values}, nil
 }
 
 func readStruct(r *arkbinary.Reader) (Container, string, uint32, error) {
@@ -309,6 +460,52 @@ func readStruct(r *arkbinary.Reader) (Container, string, uint32, error) {
 		}
 	}
 	return Container{Properties: props}, structType, dataSize, nil
+}
+
+func readInlineStructHeader(r *arkbinary.Reader, nrNames uint32) (uint32, error) {
+	if nrNames != 0 {
+		marker, err := r.ReadUInt32()
+		if err != nil {
+			return 0, err
+		}
+		if marker != 1 {
+			return 0, fmt.Errorf("invalid inline struct header marker %#x", marker)
+		}
+	}
+	for i := uint32(0); i < nrNames; i++ {
+		if _, err := r.ReadName(""); err != nil {
+			return 0, err
+		}
+		zero, err := r.ReadUInt32()
+		if err != nil {
+			return 0, err
+		}
+		if zero != 0 {
+			return 0, fmt.Errorf("invalid inline struct name terminator %#x", zero)
+		}
+	}
+	dataSize, err := r.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	sizeByte, err := r.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+	if sizeByte != 0 && sizeByte != 8 {
+		if _, err := r.ReadUInt32(); err != nil {
+			return 0, err
+		}
+	}
+	return dataSize, nil
+}
+
+func alignDeclaredBody(r *arkbinary.Reader, bodyStart int, dataSize uint32) error {
+	bodyEnd := bodyStart + int(dataSize)
+	if r.Position() < bodyEnd {
+		return r.SetPosition(bodyEnd)
+	}
+	return nil
 }
 
 func readObjectReference(r *arkbinary.Reader) (ObjectReference, error) {
