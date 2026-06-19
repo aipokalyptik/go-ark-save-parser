@@ -8,7 +8,7 @@ import (
 
 type Player struct {
 	PlayerDataVersion int32
-	PlayerDataID      int32
+	PlayerDataID      uint64
 	CharacterName     string
 	PlayerName        string
 	UniqueID          string
@@ -33,7 +33,7 @@ func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 		return Player{}, fmt.Errorf("MyData has type %T, want arkproperty.Container", raw)
 	}
 
-	player.PlayerDataID = int32Value(myData, "PlayerDataID")
+	player.PlayerDataID = uint64Value(myData, "PlayerDataID")
 	player.CharacterName = stringValue(myData, "PlayerCharacterName")
 	player.PlayerName = stringValue(myData, "PlayerName")
 	player.IPAddress = stringValue(myData, "SavedNetworkAddress")
@@ -44,6 +44,31 @@ func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	player.LoginTime = float64Value(myData, "LoginTime")
 	player.UniqueID = uniqueIDValue(myData)
 	return player, nil
+}
+
+func uint64Value(properties arkproperty.Container, name string) uint64 {
+	value, ok := properties.Value(name)
+	if !ok {
+		return 0
+	}
+	switch v := value.(type) {
+	case uint64:
+		return v
+	case uint32:
+		return uint64(v)
+	case int32:
+		if v < 0 {
+			return 0
+		}
+		return uint64(v)
+	case int:
+		if v < 0 {
+			return 0
+		}
+		return uint64(v)
+	default:
+		return 0
+	}
 }
 
 type Tribe struct {

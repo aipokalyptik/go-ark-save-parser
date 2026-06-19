@@ -22,6 +22,7 @@ const (
 	TypeString Type = "String"
 	TypeStruct Type = "Struct"
 	TypeUInt32 Type = "UInt32"
+	TypeUInt64 Type = "UInt64"
 )
 
 type ObjectReferenceType int
@@ -107,6 +108,9 @@ func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error
 	for r.HasMore() && (end < 0 || r.Position() < end) {
 		prop, err := ParseOne(r, end)
 		if err != nil {
+			if keepPartial && prop != nil {
+				props = append(props, *prop)
+			}
 			if keepPartial {
 				return props, err
 			}
@@ -300,13 +304,13 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 			return nil, err
 		}
 		value, structType, declaredSize, err := readStruct(r)
-		if err != nil {
-			return nil, err
-		}
 		prop.ValueOffset = r.Position()
 		prop.DataSize = int32(declaredSize)
 		prop.Value = value
 		_ = structType
+		if err != nil {
+			return prop, err
+		}
 	case "UInt32Property":
 		prop.Type = TypeUInt32
 		unknown, err := r.ReadByte()
@@ -316,6 +320,19 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.UnknownByte = unknown
 		prop.ValueOffset = r.Position()
 		value, err := r.ReadUInt32()
+		if err != nil {
+			return nil, err
+		}
+		prop.Value = value
+	case "UInt64Property":
+		prop.Type = TypeUInt64
+		unknown, err := r.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		prop.UnknownByte = unknown
+		prop.ValueOffset = r.Position()
+		value, err := r.ReadUInt64()
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +352,7 @@ func realignPrimitiveProperty(r *arkbinary.Reader, prop *Property) error {
 		return nil
 	}
 	switch prop.Type {
-	case TypeBool, TypeDouble, TypeFloat, TypeInt, TypeObject, TypeString, TypeUInt32:
+	case TypeBool, TypeDouble, TypeFloat, TypeInt, TypeObject, TypeString, TypeUInt32, TypeUInt64:
 	default:
 		return nil
 	}
@@ -567,8 +584,16 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	}
 	bodyStart := r.Position()
 	bodyEnd := bodyStart + int(dataSize)
-	props, err := ParseAll(r, bodyEnd)
+	props, err := ParseAllPartial(r, bodyEnd)
 	if err != nil {
+		if len(props) > 0 {
+			if r.Position() < bodyEnd {
+				if err := r.SetPosition(bodyEnd); err != nil {
+					return nil, "", 0, err
+				}
+			}
+			return Container{Properties: props}, structType, dataSize, err
+		}
 		if err := r.SetPosition(bodyStart); err != nil {
 			return nil, "", 0, err
 		}

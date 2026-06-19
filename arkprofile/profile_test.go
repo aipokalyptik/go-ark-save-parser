@@ -27,6 +27,23 @@ func TestOpenPlayerProfileLoadsLocalArchiveFile(t *testing.T) {
 	}
 }
 
+func TestOpenPlayerProfilePlayerUsesParsedArchiveProperties(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	writePlayerArchiveFile(t, path)
+
+	profile, err := OpenPlayerProfile(path)
+	if err != nil {
+		t.Fatalf("OpenPlayerProfile() error = %v", err)
+	}
+	player, err := profile.Player()
+	if err != nil {
+		t.Fatalf("Player() error = %v", err)
+	}
+	if player.PlayerDataID != 42 || player.CharacterName != "Survivor" || player.TribeID != 777 {
+		t.Fatalf("Player() = %#v", player)
+	}
+}
+
 func TestOpenTribeSaveLoadsLocalArchiveFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
 	writeArchiveFile(t, path, "/Script/ShooterGame.PrimalTribeData")
@@ -133,6 +150,41 @@ func writeTribeArchiveFile(t *testing.T, path string) {
 	writeArkString(&buf, "None")
 	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
 		t.Fatalf("write archive fixture: %v", err)
+	}
+}
+
+func writePlayerArchiveFile(t *testing.T, path string) {
+	t.Helper()
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var myData bytes.Buffer
+	writeNameIntProperty(&myData, "PlayerDataID", 42)
+	writeNameStringProperty(&myData, "PlayerCharacterName", "Survivor")
+	writeNameStringProperty(&myData, "PlayerName", "PlatformName")
+	writeNameIntProperty(&myData, "TribeID", 777)
+	writeArkString(&myData, "None")
+
+	var buf bytes.Buffer
+	writeInt32(&buf, 7)
+	writeInt32(&buf, 0)
+	writeInt32(&buf, 0)
+	writeInt32(&buf, 1)
+	buf.Write(id[:])
+	writeArkString(&buf, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	writeUInt32(&buf, 0)
+	writeStringArray(&buf, []string{"PlayerData_0"})
+	writeUInt32(&buf, 0)
+	writeInt32(&buf, -1)
+	writeUInt32(&buf, 0)
+	offsetPos := buf.Len()
+	writeInt32(&buf, 0)
+	writeUInt32(&buf, 0)
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	writeNameIntProperty(&buf, "SavedPlayerDataVersion", 17)
+	writeNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
+	writeArkString(&buf, "None")
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write player archive fixture: %v", err)
 	}
 }
 

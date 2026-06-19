@@ -24,6 +24,8 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 		11: "DoubleProperty",
 		12: "Count",
 		13: "UInt32Property",
+		14: "LargeID",
+		15: "UInt64Property",
 	})
 	stream := bytes.NewBuffer(nil)
 	writeName(stream, 1)
@@ -67,6 +69,13 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	stream.WriteByte(0)
 	_ = binary.Write(stream, binary.LittleEndian, uint32(99))
 
+	writeName(stream, 14)
+	writeName(stream, 15)
+	writeInt32(stream, 8)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, uint64(9876543210))
+
 	writeName(stream, 7)
 	writeInt32(stream, 0)
 
@@ -74,8 +83,8 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseAll() error = %v", err)
 	}
-	if len(props) != 6 {
-		t.Fatalf("ParseAll() length = %d, want 6", len(props))
+	if len(props) != 7 {
+		t.Fatalf("ParseAll() length = %d, want 7", len(props))
 	}
 	if props[0].Name != "Health" || props[0].Type != TypeInt || props[0].Value != int32(250) {
 		t.Fatalf("first property = %#v, want Health Int 250", props[0])
@@ -94,6 +103,9 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	}
 	if props[5].Name != "Count" || props[5].Type != TypeUInt32 || props[5].Value != uint32(99) {
 		t.Fatalf("sixth property = %#v, want Count UInt32 99", props[5])
+	}
+	if props[6].Name != "LargeID" || props[6].Type != TypeUInt64 || props[6].Value != uint64(9876543210) {
+		t.Fatalf("seventh property = %#v, want LargeID UInt64 9876543210", props[6])
 	}
 }
 
@@ -426,6 +438,61 @@ func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	tribeID, ok := container.Value("TribeID")
 	if !ok || tribeID != int32(12345) {
 		t.Fatalf("TribeID = %#v, %v; want 12345, true", tribeID, ok)
+	}
+}
+
+func TestParseStructPropertyKeepsPartialContainerBeforeNestedError(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "MyData",
+		2: "StructProperty",
+		3: "PlayerDataStruct",
+		4: "PlayerDataID",
+		5: "IntProperty",
+		6: "Owner",
+		7: "ObjectProperty",
+		8: "None",
+	})
+
+	var body bytes.Buffer
+	writeName(&body, 4)
+	writeName(&body, 5)
+	writeInt32(&body, 4)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	writeInt32(&body, 42)
+	writeName(&body, 6)
+	writeName(&body, 7)
+	writeInt32(&body, 2)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	_ = binary.Write(&body, binary.LittleEndian, int16(5))
+	writeName(&body, 8)
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(body.Len()))
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+	writeName(stream, 8)
+
+	props, err := ParseAllPartial(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err == nil {
+		t.Fatalf("ParseAllPartial() error = nil, want nested parse error")
+	}
+	container, ok := props[0].Value.(Container)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Container", props[0].Value)
+	}
+	value, ok := container.Value("PlayerDataID")
+	if !ok || value != int32(42) {
+		t.Fatalf("PlayerDataID = %#v, %v; want 42, true", value, ok)
 	}
 }
 

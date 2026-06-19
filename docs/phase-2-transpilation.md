@@ -84,6 +84,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first normalized tribe summary extraction surface.
 - [x] Add offline CLI metadata summaries for local `.arkprofile` and `.arktribe` files.
 - [x] Add first local-file Player/Tribe API surface for profile and tribe discovery/loading.
+- [x] Add read-only local profile parsing into normalized player summaries.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless
       cluster files.
 - [ ] Port full Player and Tribe APIs for parsed local files and save-contained data.

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 )
 
@@ -75,6 +76,22 @@ func (p *PlayerAPI) Profiles() ([]*arkprofile.PlayerProfile, error) {
 			return nil, err
 		}
 		out = append(out, profile)
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) Players() ([]arkobject.Player, error) {
+	profiles, err := p.Profiles()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Player, 0, len(profiles))
+	for _, profile := range profiles {
+		player, err := profile.Player()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, player)
 	}
 	return out, nil
 }

@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
 type PlayerProfile struct {
-	Path    string
-	Archive *arkarchive.Archive
+	Path       string
+	Archive    *arkarchive.Archive
+	Properties arkproperty.Container
 }
 
 type TribeSave struct {
@@ -32,7 +34,15 @@ func OpenPlayerProfile(path string) (*PlayerProfile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &PlayerProfile{Path: path, Archive: archive}, nil
+	profile := &PlayerProfile{Path: path, Archive: archive}
+	if len(archive.Objects) > 0 {
+		profile.Properties = arkproperty.Container{Properties: archive.Objects[0].Properties}
+	}
+	return profile, nil
+}
+
+func (p *PlayerProfile) Player() (arkobject.Player, error) {
+	return arkobject.PlayerFromContainer(p.Properties)
 }
 
 func OpenTribeSave(path string) (*TribeSave, error) {
