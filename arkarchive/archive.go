@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
 )
 
@@ -20,10 +21,11 @@ const (
 var ErrLegacyArchiveUnsupported = errors.New("legacy archive object parsing is not implemented")
 
 type Options struct {
-	HeaderOnly  bool
-	FromStore   bool
-	ClusterDino bool
-	Format      Format
+	HeaderOnly       bool
+	FromStore        bool
+	ClusterDino      bool
+	Format           Format
+	StrictProperties bool
 }
 
 type Archive struct {
@@ -40,6 +42,8 @@ type Object struct {
 	FromDataFile     uint32
 	DataFileIndex    int32
 	PropertiesOffset int32
+	Properties       []arkproperty.Property
+	PropertyError    error
 }
 
 func Parse(data []byte, opts Options) (*Archive, error) {
@@ -88,7 +92,43 @@ func Parse(data []byte, opts Options) (*Archive, error) {
 		}
 		archive.Objects = append(archive.Objects, obj)
 	}
+	if err := readObjectProperties(r, archive, format, opts.StrictProperties); err != nil {
+		return nil, err
+	}
 	return archive, nil
+}
+
+func readObjectProperties(r *arkbinary.Reader, archive *Archive, format Format, strict bool) error {
+	if format == FormatClusterDino {
+		return nil
+	}
+	for i := range archive.Objects {
+		start := int(archive.Objects[i].PropertiesOffset) + 1
+		if start < 0 || start >= r.Size() {
+			continue
+		}
+		end := r.Size()
+		if i+1 < len(archive.Objects) {
+			next := int(archive.Objects[i+1].PropertiesOffset) + 1
+			if next > start && next <= r.Size() {
+				end = next
+			}
+		}
+		if err := r.SetPosition(start); err != nil {
+			return err
+		}
+		props, err := arkproperty.ParseAllPartial(r, end)
+		archive.Objects[i].Properties = props
+		if err != nil {
+			err = fmt.Errorf("parse archive object %s properties at %d: %w", archive.Objects[i].UUID, start, err)
+			archive.Objects[i].PropertyError = err
+			if strict {
+				return err
+			}
+			continue
+		}
+	}
+	return nil
 }
 
 func readObject(r *arkbinary.Reader, clusterDino bool) (Object, error) {

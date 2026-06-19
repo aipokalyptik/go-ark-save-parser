@@ -95,10 +95,21 @@ type Property struct {
 }
 
 func ParseAll(r *arkbinary.Reader, end int) ([]Property, error) {
+	return parseAll(r, end, false)
+}
+
+func ParseAllPartial(r *arkbinary.Reader, end int) ([]Property, error) {
+	return parseAll(r, end, true)
+}
+
+func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error) {
 	var props []Property
 	for r.HasMore() && (end < 0 || r.Position() < end) {
 		prop, err := ParseOne(r, end)
 		if err != nil {
+			if keepPartial {
+				return props, err
+			}
 			return nil, err
 		}
 		if prop == nil {

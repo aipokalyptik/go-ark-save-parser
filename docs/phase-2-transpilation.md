@@ -79,6 +79,8 @@ enough that oracle-derived tests can run against translated packages.
 
 - [x] Port General API object queries.
 - [x] Add archive metadata parser and local `.arkprofile` / `.arktribe` file-open wrappers.
+- [x] Parse modern local archive object properties on a best-effort basis with a
+      strict mode for debugging unsupported property encodings.
 - [x] Add first normalized tribe summary extraction surface.
 - [x] Add offline CLI metadata summaries for local `.arkprofile` and `.arktribe` files.
 - [x] Add first local-file Player/Tribe API surface for profile and tribe discovery/loading.

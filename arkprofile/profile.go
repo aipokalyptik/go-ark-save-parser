@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
 type PlayerProfile struct {
@@ -15,7 +16,7 @@ type PlayerProfile struct {
 type TribeSave struct {
 	Path       string
 	Archive    *arkarchive.Archive
-	Properties map[string]any
+	Properties arkproperty.Container
 }
 
 type TribeSummary struct {
@@ -39,39 +40,72 @@ func OpenTribeSave(path string) (*TribeSave, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &TribeSave{Path: path, Archive: archive}, nil
+	tribe := &TribeSave{Path: path, Archive: archive}
+	if len(archive.Objects) > 0 {
+		tribe.Properties = arkproperty.Container{Properties: archive.Objects[0].Properties}
+	}
+	return tribe, nil
 }
 
 func (t *TribeSave) Summary() (TribeSummary, error) {
-	raw, ok := t.Properties["TribeData"]
+	raw, ok := t.Properties.Value("TribeData")
 	if !ok {
 		return TribeSummary{}, fmt.Errorf("missing TribeData")
 	}
-	data, ok := raw.(map[string]any)
+	data, ok := raw.(arkproperty.Container)
 	if !ok {
-		return TribeSummary{}, fmt.Errorf("TribeData has type %T, want map[string]any", raw)
+		return TribeSummary{}, fmt.Errorf("TribeData has type %T, want arkproperty.Container", raw)
 	}
 	var summary TribeSummary
-	if value, ok := data["TribeName"].(string); ok {
+	if raw, ok := data.Value("TribeName"); ok {
+		value, _ := raw.(string)
 		summary.Name = value
 	}
-	if value, ok := data["OwnerPlayerDataId"].(uint32); ok {
-		summary.OwnerID = value
+	if raw, ok := data.Value("OwnerPlayerDataId"); ok {
+		switch value := raw.(type) {
+		case uint32:
+			summary.OwnerID = value
+		case int32:
+			summary.OwnerID = uint32(value)
+		}
 	}
-	if value, ok := data["TribeID"].(int32); ok {
+	if raw, ok := data.Value("TribeID"); ok {
+		value, _ := raw.(int32)
 		summary.TribeID = value
 	}
-	if value, ok := data["NumTribeDinos"].(int32); ok {
+	if raw, ok := data.Value("NumTribeDinos"); ok {
+		value, _ := raw.(int32)
 		summary.NumDinos = value
 	}
-	if values, ok := data["MembersPlayerName"].([]any); ok {
-		for _, item := range values {
-			if name, ok := item.(string); ok {
-				summary.Members = append(summary.Members, name)
-			}
+	if raw, ok := data.Value("MembersPlayerName"); ok {
+		for _, item := range stringArrayValues(raw) {
+			summary.Members = append(summary.Members, item)
 		}
 	}
 	return summary, nil
+}
+
+func stringArrayValues(value any) []string {
+	switch values := value.(type) {
+	case []any:
+		out := make([]string, 0, len(values))
+		for _, item := range values {
+			if name, ok := item.(string); ok {
+				out = append(out, name)
+			}
+		}
+		return out
+	case arkproperty.Array:
+		out := make([]string, 0, len(values.Values))
+		for _, item := range values.Values {
+			if name, ok := item.(string); ok {
+				out = append(out, name)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func openArchive(path string) (*arkarchive.Archive, error) {
