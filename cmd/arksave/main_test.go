@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -69,9 +68,33 @@ func TestPlayersCommandPrintsLocalProfileSummary(t *testing.T) {
 	}
 }
 
+func TestPlayersCommandPrintsParsedLocalProfileSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	testfixtures.WritePlayerArchive(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"players", path}, &out)
+	if err != nil {
+		t.Fatalf("run(players) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Player profile:",
+		"Character name: Survivor",
+		"Player name: PlatformName",
+		"Player data ID: 42",
+		"Tribe ID: 777",
+		"Deaths: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("players output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
-	createSyntheticTribeArchive(t, path)
+	testfixtures.WriteTribeArchive(t, path)
 
 	var out bytes.Buffer
 	err := run([]string{"tribes", path}, &out)
@@ -170,6 +193,7 @@ func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	if decoded.MapName != "Valguero_WP" || decoded.SaveVersion != 12 || decoded.ObjectCount != 1 {
 		t.Fatalf("exported json = %#v", decoded)
 	}
+	assertPrivateFileMode(t, outPath)
 }
 
 func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
@@ -197,6 +221,7 @@ func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
 	if decoded.ID != "EOS_abc123" || decoded.ArchiveVersion != 7 || decoded.ObjectCount != 1 {
 		t.Fatalf("decoded ClusterDataInfo = %#v", decoded)
 	}
+	assertPrivateFileMode(t, outPath)
 }
 
 func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
@@ -224,6 +249,7 @@ func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
 	if decoded.Domain != "stackables" {
 		t.Fatalf("decoded DomainExport = %#v", decoded)
 	}
+	assertPrivateFileMode(t, outPath)
 }
 
 func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
@@ -301,78 +327,13 @@ func createSyntheticArchive(t *testing.T, path string, className string) {
 	testfixtures.WriteArchive(t, path, className)
 }
 
-func createSyntheticTribeArchive(t *testing.T, path string) {
+func assertPrivateFileMode(t *testing.T, path string) {
 	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var tribeData bytes.Buffer
-	writeNameStringProperty(&tribeData, "TribeName", "Porters")
-	writeNameIntProperty(&tribeData, "TribeID", 12345)
-	writeArkString(&tribeData, "None")
-
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	writeStringArray(&buf, []string{"TribeData_0"})
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	offsetPos := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
-	writeArkString(&buf, "None")
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write tribe archive fixture: %v", err)
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat exported file: %v", err)
 	}
-}
-
-func writeArkString(buf *bytes.Buffer, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
-	buf.WriteString(value)
-	buf.WriteByte(0)
-}
-
-func writeStringArray(buf *bytes.Buffer, values []string) {
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	for _, value := range values {
-		writeArkString(buf, value)
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Fatalf("exported file mode = %o, want 600", got)
 	}
-}
-
-func writeNameIntProperty(buf *bytes.Buffer, name string, value int32) {
-	writeArkString(buf, name)
-	writeArkString(buf, "IntProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeNameStringProperty(buf *bytes.Buffer, name string, value string) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StrProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+5))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	writeArkString(buf, value)
-}
-
-func writeNameStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StructProperty")
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
-	buf.WriteByte(0)
-	buf.Write(body)
 }

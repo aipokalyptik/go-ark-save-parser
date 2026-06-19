@@ -66,6 +66,13 @@ Never commit:
 Committed oracle documentation must stay aggregate or sanitized. The safe
 inventory summary is `docs/oracle-summary.md`.
 
+CLI and JSON output is also sensitive at runtime. Commands can print or export
+local paths, object IDs, class names, player/tribe identifiers, locations,
+crafter names, and cluster upload identifiers. Export files are created with
+`0600` permissions, but generated outputs from private saves still belong under
+`.oracle/output` or another ignored private directory unless they have been
+explicitly sanitized.
+
 ## Adding Fixtures
 
 Prefer synthetic fixtures in tests. If a real save is required:
@@ -82,6 +89,7 @@ Mutation helpers live in `arkmutation` and must:
 
 - require an explicit output path
 - never modify the input save in place
+- write copied outputs with private file permissions
 - structurally verify copied outputs by reopening and reparsing them
 - remain documented as live-server-unverified
 

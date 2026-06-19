@@ -14,6 +14,8 @@ offline parser without Python or private chat context.
 - [x] Document mutation APIs as experimental and live-server-unverified.
 - [x] Document oracle regeneration using `~/Downloads/SavedArks.tar.bz2`.
 - [x] Document privacy rules and ignored paths.
+- [x] Document runtime output sensitivity and write JSON/mutation outputs with
+      private file permissions.
 - [x] Document how to add new oracle fixtures safely.
 - [x] Add standalone Go examples for implemented offline workflows.
 
@@ -37,3 +39,7 @@ offline parser without Python or private chat context.
 - Legacy `.arktributetribe` local tribute archives remain unsupported.
 - Mutation helpers are structurally tested only and require live-server manual
   validation before being treated as production-safe for real servers.
+- Latest read-only review found remaining production blockers in oracle parity
+  evidence, runtime redaction modes, large-file hardening, and full domain/API
+  parity. Those are not release-blocking for continued port work, but they keep
+  final production readiness open.

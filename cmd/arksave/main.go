@@ -118,7 +118,23 @@ func players(path string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return printArchiveSummary(out, "Player profile", profile.Path, profile.Archive.Version, profile.Archive.Objects)
+	if err := printArchiveSummary(out, "Player profile", profile.Path, profile.Archive.Version, profile.Archive.Objects); err != nil {
+		return err
+	}
+	player, err := profile.Player()
+	if err != nil {
+		return nil
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Character name: %s\nPlayer name: %s\nPlayer data ID: %d\nTribe ID: %d\nDeaths: %d\n",
+		player.CharacterName,
+		player.PlayerName,
+		player.PlayerDataID,
+		player.TribeID,
+		player.NumDeaths,
+	)
+	return err
 }
 
 func tribes(path string, out io.Writer) error {
@@ -157,7 +173,7 @@ func mutate(args []string, out io.Writer) error {
 		if err := arkmutation.CopySave(args[1], args[2]); err != nil {
 			return err
 		}
-		_, err := fmt.Fprintf(out, "Wrote mutation copy: %s\n", args[2])
+		_, err := fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy: %s\n", args[2])
 		return err
 	case "remove-object":
 		if len(args) != 4 {
@@ -170,7 +186,7 @@ func mutate(args []string, out io.Writer) error {
 		if err := arkmutation.RemoveObject(args[1], args[2], id); err != nil {
 			return err
 		}
-		_, err = fmt.Fprintf(out, "Wrote mutation copy without object %s: %s\n", id, args[2])
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy without object %s: %s\n", id, args[2])
 		return err
 	default:
 		return fmt.Errorf("unknown mutate subcommand %q", args[0])
@@ -221,7 +237,7 @@ func exportJSON(path string, outputPath string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(outputPath, append(data, '\n'), 0o644); err != nil {
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o600); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote JSON export: %s\n", outputPath)
@@ -239,7 +255,7 @@ func exportDomainJSON(path string, domain string, outputPath string, out io.Writ
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(outputPath, append(data, '\n'), 0o644); err != nil {
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o600); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote %s JSON export: %s\n", domain, outputPath)
@@ -255,7 +271,7 @@ func exportClusterJSON(path string, outputPath string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o644); err != nil {
+	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o600); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote cluster JSON export: %s\n", outputPath)

@@ -1,19 +1,16 @@
 package arkprofile
 
 import (
-	"bytes"
-	"encoding/binary"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
-	"github.com/google/uuid"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestOpenPlayerProfileLoadsLocalArchiveFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
-	writeArchiveFile(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	testfixtures.WriteArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
 
 	profile, err := OpenPlayerProfile(path)
 	if err != nil {
@@ -29,7 +26,7 @@ func TestOpenPlayerProfileLoadsLocalArchiveFile(t *testing.T) {
 
 func TestOpenPlayerProfilePlayerUsesParsedArchiveProperties(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
-	writePlayerArchiveFile(t, path)
+	testfixtures.WritePlayerArchive(t, path)
 
 	profile, err := OpenPlayerProfile(path)
 	if err != nil {
@@ -46,7 +43,7 @@ func TestOpenPlayerProfilePlayerUsesParsedArchiveProperties(t *testing.T) {
 
 func TestOpenTribeSaveLoadsLocalArchiveFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
-	writeArchiveFile(t, path, "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
 
 	tribe, err := OpenTribeSave(path)
 	if err != nil {
@@ -84,7 +81,7 @@ func TestTribeSummaryReadsStructContainerFields(t *testing.T) {
 
 func TestOpenTribeSaveSummaryUsesParsedArchiveProperties(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
-	writeTribeArchiveFile(t, path)
+	testfixtures.WriteTribeArchive(t, path)
 
 	tribe, err := OpenTribeSave(path)
 	if err != nil {
@@ -97,145 +94,4 @@ func TestOpenTribeSaveSummaryUsesParsedArchiveProperties(t *testing.T) {
 	if summary.Name != "Porters" || summary.TribeID != 12345 {
 		t.Fatalf("Summary() = %#v, want Porters/12345", summary)
 	}
-}
-
-func writeArchiveFile(t *testing.T, path string, className string) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, className)
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"Object_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, 128)
-	writeUInt32(&buf, 0)
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write archive fixture: %v", err)
-	}
-}
-
-func writeTribeArchiveFile(t *testing.T, path string) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var body bytes.Buffer
-	writeNameStringProperty(&body, "TribeName", "Porters")
-	writeNameIntProperty(&body, "TribeID", 12345)
-	writeArkString(&body, "None")
-
-	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"TribeData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeNameStructProperty(&buf, "TribeData", "TribeDataStruct", body.Bytes())
-	writeArkString(&buf, "None")
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write archive fixture: %v", err)
-	}
-}
-
-func writePlayerArchiveFile(t *testing.T, path string) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var myData bytes.Buffer
-	writeNameIntProperty(&myData, "PlayerDataID", 42)
-	writeNameStringProperty(&myData, "PlayerCharacterName", "Survivor")
-	writeNameStringProperty(&myData, "PlayerName", "PlatformName")
-	writeNameIntProperty(&myData, "TribeID", 777)
-	writeArkString(&myData, "None")
-
-	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"PlayerData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeNameIntProperty(&buf, "SavedPlayerDataVersion", 17)
-	writeNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
-	writeArkString(&buf, "None")
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write player archive fixture: %v", err)
-	}
-}
-
-func writeInt32(buf *bytes.Buffer, value int32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeUInt32(buf *bytes.Buffer, value uint32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeArkString(buf *bytes.Buffer, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
-	buf.WriteString(value)
-	buf.WriteByte(0)
-}
-
-func writeStringArray(buf *bytes.Buffer, values []string) {
-	writeUInt32(buf, uint32(len(values)))
-	for _, value := range values {
-		writeArkString(buf, value)
-	}
-}
-
-func writeNameIntProperty(buf *bytes.Buffer, name string, value int32) {
-	writeArkString(buf, name)
-	writeArkString(buf, "IntProperty")
-	writeInt32(buf, 4)
-	writeInt32(buf, 0)
-	buf.WriteByte(0)
-	writeInt32(buf, value)
-}
-
-func writeNameStringProperty(buf *bytes.Buffer, name string, value string) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StrProperty")
-	writeInt32(buf, int32(len(value)+5))
-	writeInt32(buf, 0)
-	buf.WriteByte(0)
-	writeArkString(buf, value)
-}
-
-func writeNameStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StructProperty")
-	writeUInt32(buf, 1)
-	writeArkString(buf, structType)
-	writeUInt32(buf, 1)
-	writeArkString(buf, structType)
-	writeUInt32(buf, 0)
-	writeUInt32(buf, uint32(len(body)))
-	buf.WriteByte(0)
-	buf.Write(body)
 }

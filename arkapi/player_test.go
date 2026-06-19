@@ -1,13 +1,11 @@
 package arkapi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
@@ -18,9 +16,9 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 	ignoredPath := filepath.Join(dir, "ignore.txt")
 	unrelatedExtensionlessPath := filepath.Join(dir, "README")
 	nestedDir := filepath.Join(dir, "nested")
-	createSyntheticArchive(t, profilePath, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
-	createSyntheticArchive(t, tribePath, "/Script/ShooterGame.PrimalTribeData")
-	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, profilePath, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	testfixtures.WriteArchive(t, tribePath, "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 	if err := os.WriteFile(ignoredPath, []byte("ignore"), 0o600); err != nil {
 		t.Fatalf("write ignored file: %v", err)
 	}
@@ -30,7 +28,7 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 	if err := os.Mkdir(nestedDir, 0o700); err != nil {
 		t.Fatalf("create nested dir: %v", err)
 	}
-	createSyntheticArchive(t, filepath.Join(nestedDir, "EOS_nested"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(nestedDir, "EOS_nested"), "/Script/ShooterGame.ArkCloudInventoryData")
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -49,8 +47,8 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 
 func TestPlayerAPILoadsLocalProfileAndTribeArchives(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticArchive(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
-	createSyntheticArchive(t, filepath.Join(dir, "456.arktribe"), "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "456.arktribe"), "/Script/ShooterGame.PrimalTribeData")
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -74,7 +72,7 @@ func TestPlayerAPILoadsLocalProfileAndTribeArchives(t *testing.T) {
 
 func TestPlayerAPIPlayersParsesLocalProfiles(t *testing.T) {
 	dir := t.TempDir()
-	writePlayerArchiveFile(t, filepath.Join(dir, "123.arkprofile"))
+	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -94,7 +92,7 @@ func TestPlayerAPIPlayersParsesLocalProfiles(t *testing.T) {
 
 func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
 	dir := t.TempDir()
-	writeTribeArchiveFile(t, filepath.Join(dir, "456.arktribe"))
+	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -115,7 +113,7 @@ func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
-	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -128,110 +126,4 @@ func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	if len(clusters) != 1 || clusters[0].ID != "EOS_abc123" || len(clusters[0].Archive.Objects) != 1 {
 		t.Fatalf("Clusters() = %#v", clusters)
 	}
-}
-
-func writeTribeArchiveFile(t *testing.T, path string) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var tribeData bytes.Buffer
-	writeNameStringProperty(&tribeData, "TribeName", "Porters")
-	writeNameIntProperty(&tribeData, "TribeID", 12345)
-	writeArkString(&tribeData, "None")
-
-	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"TribeData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
-	writeArkString(&buf, "None")
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write tribe archive fixture: %v", err)
-	}
-}
-
-func writePlayerArchiveFile(t *testing.T, path string) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var myData bytes.Buffer
-	writeNameIntProperty(&myData, "PlayerDataID", 42)
-	writeNameStringProperty(&myData, "PlayerCharacterName", "Survivor")
-	writeNameStringProperty(&myData, "PlayerName", "PlatformName")
-	writeNameIntProperty(&myData, "TribeID", 777)
-	writeArkString(&myData, "None")
-
-	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"PlayerData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeNameIntProperty(&buf, "SavedPlayerDataVersion", 17)
-	writeNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
-	writeArkString(&buf, "None")
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write player archive fixture: %v", err)
-	}
-}
-
-func writeNameIntProperty(buf *bytes.Buffer, name string, value int32) {
-	writeArkString(buf, name)
-	writeArkString(buf, "IntProperty")
-	writeInt32(buf, 4)
-	writeInt32(buf, 0)
-	buf.WriteByte(0)
-	writeInt32(buf, value)
-}
-
-func writeNameStringProperty(buf *bytes.Buffer, name string, value string) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StrProperty")
-	writeInt32(buf, int32(len(value)+5))
-	writeInt32(buf, 0)
-	buf.WriteByte(0)
-	writeArkString(buf, value)
-}
-
-func writeNameStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StructProperty")
-	writeUInt32(buf, 1)
-	writeArkString(buf, structType)
-	writeUInt32(buf, 1)
-	writeArkString(buf, structType)
-	writeUInt32(buf, 0)
-	writeUInt32(buf, uint32(len(body)))
-	buf.WriteByte(0)
-	buf.Write(body)
-}
-
-func writeInt32(buf *bytes.Buffer, value int32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeUInt32(buf *bytes.Buffer, value uint32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
 }

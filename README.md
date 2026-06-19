@@ -93,6 +93,13 @@ Export implemented domain summaries to JSON:
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark stackables /tmp/stackables.json
 ```
 
+CLI summaries and JSON exports are save-derived operational data. They can
+include local paths, class names, object IDs, player or tribe identifiers,
+locations, crafter names, and cluster upload identifiers depending on the
+command. JSON export files are written with `0600` permissions by default, but
+you should still treat them as private and avoid committing or sharing them
+unless they have been reviewed and sanitized.
+
 Inspect local profile and tribe archive metadata:
 
 ```sh
@@ -138,8 +145,10 @@ go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
 ## Mutation Safety
 
 Mutation helpers never modify the input file in place and always require a new
-output path. They are structurally tested by reopening and reparsing the copied
-SQLite save, but live Ark server behavior is unverified.
+output path. Generated mutation copies are written with `0600` permissions.
+They are structurally tested by reopening and reparsing the copied SQLite save,
+but live Ark server behavior is unverified; command output labels these files as
+experimental and live-server-unverified.
 
 ## Library Sketch
 
