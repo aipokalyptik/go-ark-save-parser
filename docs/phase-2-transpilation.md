@@ -100,13 +100,16 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
 - [x] Add read-only save-info JSON export API and CLI command.
+- [x] Add read-only domain JSON export API and CLI command for implemented
+      dino, structure, equipment, and stackable summaries.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
 - [x] Add first read-only Dino API surface for local class/tamed/wild/baby queries.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
-      richer local cluster item/dino domain models, and full model-specific JSON APIs.
+      richer local cluster item/dino domain models, and complete model-specific
+      JSON APIs.
 - [ ] Port legacy `.arktributetribe` local tribute archive parsing.
 - [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 

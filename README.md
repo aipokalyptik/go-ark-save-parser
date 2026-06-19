@@ -21,11 +21,11 @@ Implemented:
   byte/enum values, generic structs, struct arrays, simple arrays, simple maps,
   and simple sets.
 - Read-only General, Player/Tribe local-file, Dino, Structure, Base, Stackable,
-  Equipment, and save-info JSON API wrappers.
+  Equipment, save-info JSON, and domain JSON API wrappers.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `export-json`,
-  and `export-cluster-json` commands.
+  `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
 Still in progress:
@@ -82,6 +82,15 @@ Export local cluster upload summaries to JSON:
 
 ```sh
 ./bin/arksave export-cluster-json /path/to/EOS_abc123 /tmp/cluster.json
+```
+
+Export implemented domain summaries to JSON:
+
+```sh
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark dinos /tmp/dinos.json
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark structures /tmp/structures.json
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark equipment /tmp/equipment.json
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark stackables /tmp/stackables.json
 ```
 
 Inspect local profile and tribe archive metadata:

@@ -24,6 +24,8 @@ offline parser without Python or private chat context.
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
+- [x] Synthetic domain JSON export tests for dinos, structures, equipment, and
+      stackables.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [ ] Final review for parser parity, API coverage, privacy, docs, and release
       readiness.

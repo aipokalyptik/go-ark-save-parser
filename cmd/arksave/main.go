@@ -52,6 +52,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("export-json requires a local .ark path and explicit output path")
 		}
 		return exportJSON(args[1], args[2], out)
+	case "export-domain-json":
+		if len(args) != 4 {
+			return fmt.Errorf("export-domain-json requires a local .ark path, domain, and explicit output path")
+		}
+		return exportDomainJSON(args[1], args[2], args[3], out)
 	case "export-cluster-json":
 		if len(args) != 3 {
 			return fmt.Errorf("export-cluster-json requires a local cluster file path and explicit output path")
@@ -74,6 +79,7 @@ func usage(out io.Writer) error {
   arksave tribes <tribe.arktribe>
   arksave cluster <cluster-file-or-directory>
   arksave export-json <save.ark> <out.json>
+  arksave export-domain-json <save.ark> <dinos|structures|equipment|stackables> <out.json>
   arksave export-cluster-json <cluster-file> <out.json>
   arksave mutate copy <save.ark> <out.ark>
   arksave mutate remove-object <save.ark> <out.ark> <uuid>
@@ -219,6 +225,24 @@ func exportJSON(path string, outputPath string, out io.Writer) error {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote JSON export: %s\n", outputPath)
+	return err
+}
+
+func exportDomainJSON(path string, domain string, outputPath string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	data, err := arkapi.NewJSON(save).ExportDomainJSON(domain)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o644); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote %s JSON export: %s\n", domain, outputPath)
 	return err
 }
 

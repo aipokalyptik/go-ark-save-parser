@@ -200,6 +200,33 @@ func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
 	}
 }
 
+func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "stackables.json")
+	createSyntheticEmptySave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"export-domain-json", savePath, "stackables", outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-domain-json) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-domain-json output %q does not mention %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(domain json) error = %v", err)
+	}
+	var decoded arkapi.DomainExport
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.Domain != "stackables" {
+		t.Fatalf("decoded DomainExport = %#v", decoded)
+	}
+}
+
 func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")
@@ -259,6 +286,18 @@ func createSyntheticSave(t *testing.T, path string) {
 	mustExec(t, db, `create table game (key blob primary key, value blob)`)
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
 	mustExec(t, db, `insert into game (key, value) values (?, ?)`, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, []byte{1, 0, 0, 0, 0, 0, 0, 0})
+}
+
+func createSyntheticEmptySave(t *testing.T, path string) {
+	t.Helper()
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	defer db.Close()
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
 }
 
 func createSyntheticArchive(t *testing.T, path string, className string) {
