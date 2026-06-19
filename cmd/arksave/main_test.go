@@ -70,6 +70,30 @@ func TestPlayersCommandPrintsLocalProfileSummary(t *testing.T) {
 
 func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
+	createSyntheticTribeArchive(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"tribes", path}, &out)
+	if err != nil {
+		t.Fatalf("run(tribes) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe save:",
+		"Archive version: 7",
+		"Objects: 1",
+		"/Script/ShooterGame.PrimalTribeData",
+		"Tribe name: Porters",
+		"Tribe ID: 12345",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribes output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTribesCommandKeepsMetadataWhenSummaryMissing(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
 	createSyntheticArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
 
 	var out bytes.Buffer
@@ -87,6 +111,9 @@ func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Fatalf("tribes output %q does not contain %q", got, want)
 		}
+	}
+	if strings.Contains(got, "Tribe name:") {
+		t.Fatalf("tribes output %q includes summary despite missing TribeData", got)
 	}
 }
 
@@ -156,6 +183,38 @@ func createSyntheticArchive(t *testing.T, path string, className string) {
 	}
 }
 
+func createSyntheticTribeArchive(t *testing.T, path string) {
+	t.Helper()
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var tribeData bytes.Buffer
+	writeNameStringProperty(&tribeData, "TribeName", "Porters")
+	writeNameIntProperty(&tribeData, "TribeID", 12345)
+	writeArkString(&tribeData, "None")
+
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
+	buf.Write(id[:])
+	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	writeStringArray(&buf, []string{"TribeData_0"})
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	offsetPos := buf.Len()
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	writeNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
+	writeArkString(&buf, "None")
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write tribe archive fixture: %v", err)
+	}
+}
+
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
 	t.Helper()
 	if _, err := db.Exec(query, args...); err != nil {
@@ -194,4 +253,35 @@ func writeStringArray(buf *bytes.Buffer, values []string) {
 	for _, value := range values {
 		writeArkString(buf, value)
 	}
+}
+
+func writeNameIntProperty(buf *bytes.Buffer, name string, value int32) {
+	writeArkString(buf, name)
+	writeArkString(buf, "IntProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeNameStringProperty(buf *bytes.Buffer, name string, value string) {
+	writeArkString(buf, name)
+	writeArkString(buf, "StrProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+5))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	writeArkString(buf, value)
+}
+
+func writeNameStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
+	writeArkString(buf, name)
+	writeArkString(buf, "StructProperty")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	writeArkString(buf, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	writeArkString(buf, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
+	buf.WriteByte(0)
+	buf.Write(body)
 }

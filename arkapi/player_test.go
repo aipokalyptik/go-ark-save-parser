@@ -92,6 +92,26 @@ func TestPlayerAPIPlayersParsesLocalProfiles(t *testing.T) {
 	}
 }
 
+func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
+	dir := t.TempDir()
+	writeTribeArchiveFile(t, filepath.Join(dir, "456.arktribe"))
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	tribes, err := api.TribeSummaries()
+	if err != nil {
+		t.Fatalf("TribeSummaries() error = %v", err)
+	}
+	if len(tribes) != 1 {
+		t.Fatalf("TribeSummaries() length = %d, want 1", len(tribes))
+	}
+	if tribes[0].Name != "Porters" || tribes[0].TribeID != 12345 {
+		t.Fatalf("TribeSummaries()[0] = %#v", tribes[0])
+	}
+}
+
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
@@ -107,6 +127,38 @@ func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	}
 	if len(clusters) != 1 || clusters[0].ID != "EOS_abc123" || len(clusters[0].Archive.Objects) != 1 {
 		t.Fatalf("Clusters() = %#v", clusters)
+	}
+}
+
+func writeTribeArchiveFile(t *testing.T, path string) {
+	t.Helper()
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var tribeData bytes.Buffer
+	writeNameStringProperty(&tribeData, "TribeName", "Porters")
+	writeNameIntProperty(&tribeData, "TribeID", 12345)
+	writeArkString(&tribeData, "None")
+
+	var buf bytes.Buffer
+	writeInt32(&buf, 7)
+	writeInt32(&buf, 0)
+	writeInt32(&buf, 0)
+	writeInt32(&buf, 1)
+	buf.Write(id[:])
+	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
+	writeUInt32(&buf, 0)
+	writeStringArray(&buf, []string{"TribeData_0"})
+	writeUInt32(&buf, 0)
+	writeInt32(&buf, -1)
+	writeUInt32(&buf, 0)
+	offsetPos := buf.Len()
+	writeInt32(&buf, 0)
+	writeUInt32(&buf, 0)
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	writeNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
+	writeArkString(&buf, "None")
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write tribe archive fixture: %v", err)
 	}
 }
 

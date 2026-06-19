@@ -119,3 +119,19 @@ func (p *PlayerAPI) Tribes() ([]*arkprofile.TribeSave, error) {
 	}
 	return out, nil
 }
+
+func (p *PlayerAPI) TribeSummaries() ([]arkprofile.TribeSummary, error) {
+	tribes, err := p.Tribes()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkprofile.TribeSummary, 0, len(tribes))
+	for _, tribe := range tribes {
+		summary, err := tribe.Summary()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, summary)
+	}
+	return out, nil
+}

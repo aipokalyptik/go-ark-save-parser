@@ -103,7 +103,23 @@ func tribes(path string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return printArchiveSummary(out, "Tribe save", tribe.Path, tribe.Archive.Version, tribe.Archive.Objects)
+	if err := printArchiveSummary(out, "Tribe save", tribe.Path, tribe.Archive.Version, tribe.Archive.Objects); err != nil {
+		return err
+	}
+	summary, err := tribe.Summary()
+	if err != nil {
+		return nil
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Tribe name: %s\nTribe ID: %d\nOwner ID: %d\nMembers: %d\nDinos: %d\n",
+		summary.Name,
+		summary.TribeID,
+		summary.OwnerID,
+		len(summary.Members),
+		summary.NumDinos,
+	)
+	return err
 }
 
 func exportJSON(path string, outputPath string, out io.Writer) error {
