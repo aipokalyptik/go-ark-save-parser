@@ -117,6 +117,29 @@ func TestTribesCommandKeepsMetadataWhenSummaryMissing(t *testing.T) {
 	}
 }
 
+func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"cluster", path}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster file:",
+		"Archive version: 7",
+		"Objects: 1",
+		"Items: 0",
+		"Dinos: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

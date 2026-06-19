@@ -158,6 +158,138 @@ func TestParseObjectPropertyReadsUUIDReference(t *testing.T) {
 	}
 }
 
+func TestParseObjectPropertyReadsLocalArchivePathReference(t *testing.T) {
+	stream := bytes.NewBuffer(nil)
+	writeArkString(stream, "ItemArchetype")
+	writeArkString(stream, "ObjectProperty")
+	var body bytes.Buffer
+	writeInt32(&body, 1)
+	writeArkString(&body, "BlueprintGeneratedClass /Game/Test/Item.Item_C")
+	writeInt32(stream, int32(body.Len()))
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+	writeArkString(stream, "None")
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), nil), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	got, ok := props[0].Value.(ObjectReference)
+	if !ok {
+		t.Fatalf("ObjectProperty value type = %T, want ObjectReference", props[0].Value)
+	}
+	if got.Type != ObjectReferencePath || got.Value != "BlueprintGeneratedClass /Game/Test/Item.Item_C" {
+		t.Fatalf("ObjectReference = %#v, want local path reference", got)
+	}
+}
+
+func TestParseObjectPropertyReadsLocalArchiveNonePathReference(t *testing.T) {
+	stream := bytes.NewBuffer(nil)
+	writeArkString(stream, "ItemArchetype")
+	writeArkString(stream, "ObjectProperty")
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 1)
+	writeArkString(stream, "None")
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), nil), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	got, ok := props[0].Value.(ObjectReference)
+	if !ok {
+		t.Fatalf("ObjectProperty value type = %T, want ObjectReference", props[0].Value)
+	}
+	if got.Type != ObjectReferencePath || got.Value != "NONE" {
+		t.Fatalf("ObjectReference = %#v, want NONE path reference", got)
+	}
+}
+
+func TestParseSoftObjectPropertyReadsTerminatedNameList(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "CustomCosmeticBuffToGiveWhenEquipped",
+		2: "SoftObjectProperty",
+		3: "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Skin/CustomCosmeticBuff",
+		4: "CustomCosmeticBuff_C",
+		5: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 20)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeUInt32(stream, 0)
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeSoftObject {
+		t.Fatalf("property type = %s, want SoftObject", props[0].Type)
+	}
+	got, ok := props[0].Value.([]string)
+	if !ok {
+		t.Fatalf("SoftObjectProperty value type = %T, want []string", props[0].Value)
+	}
+	want := []string{
+		"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Skin/CustomCosmeticBuff",
+		"CustomCosmeticBuff_C",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("SoftObjectProperty length = %d, want %d: %#v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("SoftObjectProperty[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestParseNamePropertyReadsNameValue(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "CostumeOverrideRiderSocketName",
+		2: "NameProperty",
+		3: "RiderSocket",
+		4: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 8)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeName(stream, 3)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeName || props[0].Value != "RiderSocket" {
+		t.Fatalf("NameProperty = %#v, want RiderSocket", props[0])
+	}
+}
+
 func TestParsePrimitivePropertyRealignsToDeclaredDataSize(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -196,6 +328,87 @@ func TestParsePrimitivePropertyRealignsToDeclaredDataSize(t *testing.T) {
 	}
 	if props[1].Name != "Label" || props[1].Value != "ok" {
 		t.Fatalf("second property = %#v, want Label ok", props[1])
+	}
+}
+
+func TestParseInt64PropertyReadsSignedValue(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "CustomCosmeticModSkinReplacementID",
+		2: "Int64Property",
+		3: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 8)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, int64(-42))
+	writeName(stream, 3)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeInt64 || props[0].Value != int64(-42) {
+		t.Fatalf("Int64Property = %#v, want -42", props[0])
+	}
+}
+
+func TestParseSmallIntegerProperties(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Int8Value",
+		2: "Int8Property",
+		3: "Int16Value",
+		4: "Int16Property",
+		5: "UInt16Value",
+		6: "UInt16Property",
+		7: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 1)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	stream.WriteByte(0xf9)
+
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 2)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, int16(-32000))
+
+	writeName(stream, 5)
+	writeName(stream, 6)
+	writeInt32(stream, 2)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, uint16(65000))
+
+	writeName(stream, 7)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 3 {
+		t.Fatalf("ParseAll() length = %d, want 3", len(props))
+	}
+	if props[0].Type != TypeInt8 || props[0].Value != int8(-7) {
+		t.Fatalf("Int8Property = %#v", props[0])
+	}
+	if props[1].Type != TypeInt16 || props[1].Value != int16(-32000) {
+		t.Fatalf("Int16Property = %#v", props[1])
+	}
+	if props[2].Type != TypeUInt16 || props[2].Value != uint16(65000) {
+		t.Fatalf("UInt16Property = %#v", props[2])
 	}
 }
 
@@ -311,6 +524,44 @@ func TestParseArrayPropertyReadsIntValues(t *testing.T) {
 		if got.Values[i] != want[i] {
 			t.Fatalf("Array value %d = %#v, want %#v", i, got.Values[i], want[i])
 		}
+	}
+}
+
+func TestParseArrayPropertyReadsUInt64Values(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "ItemIDs",
+		2: "ArrayProperty",
+		3: "UInt64Property",
+		4: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 2)
+	writeUInt32(stream, 3)
+	writeInt32(stream, 0)
+	writeInt32(stream, 0)
+	writeInt32(stream, 20)
+	stream.WriteByte(0)
+	writeUInt32(stream, 2)
+	_ = binary.Write(stream, binary.LittleEndian, uint64(1001))
+	_ = binary.Write(stream, binary.LittleEndian, uint64(1002))
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeArray {
+		t.Fatalf("ParseAll() = %#v, want one array property", props)
+	}
+	got, ok := props[0].Value.(Array)
+	if !ok {
+		t.Fatalf("ArrayProperty value type = %T, want Array", props[0].Value)
+	}
+	if got.ElementType != TypeUInt64 || len(got.Values) != 2 || got.Values[0] != uint64(1001) || got.Values[1] != uint64(1002) {
+		t.Fatalf("Array = %#v, want UInt64 values 1001 and 1002", got)
 	}
 }
 

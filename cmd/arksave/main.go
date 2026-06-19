@@ -8,6 +8,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
@@ -39,6 +40,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("tribes requires a local .arktribe path")
 		}
 		return tribes(args[1], out)
+	case "cluster":
+		if len(args) != 2 {
+			return fmt.Errorf("cluster requires a local cluster file or directory path")
+		}
+		return cluster(args[1], out)
 	case "export-json":
 		if len(args) != 3 {
 			return fmt.Errorf("export-json requires a local .ark path and explicit output path")
@@ -59,6 +65,7 @@ func usage(out io.Writer) error {
   arksave parse <save.ark>
   arksave players <player.arkprofile>
   arksave tribes <tribe.arktribe>
+  arksave cluster <cluster-file-or-directory>
   arksave export-json <save.ark> <out.json>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.`)
@@ -122,6 +129,39 @@ func tribes(path string, out io.Writer) error {
 	return err
 }
 
+func cluster(path string, out io.Writer) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		entries, err := arkcluster.OpenDirectory(path)
+		if err != nil {
+			return err
+		}
+		if len(entries) == 0 {
+			_, err = fmt.Fprintf(out, "Cluster directory: %s\nFiles: 0\n", path)
+			return err
+		}
+		for i, entry := range entries {
+			if i > 0 {
+				if _, err := fmt.Fprintln(out); err != nil {
+					return err
+				}
+			}
+			if err := printClusterSummary(out, entry); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	data, err := arkcluster.Open(path)
+	if err != nil {
+		return err
+	}
+	return printClusterSummary(out, data)
+}
+
 func exportJSON(path string, outputPath string, out io.Writer) error {
 	save, err := arksave.Open(path)
 	if err != nil {
@@ -138,6 +178,27 @@ func exportJSON(path string, outputPath string, out io.Writer) error {
 	}
 	_, err = fmt.Fprintf(out, "Wrote JSON export: %s\n", outputPath)
 	return err
+}
+
+func printClusterSummary(out io.Writer, data *arkcluster.Data) error {
+	if _, err := fmt.Fprintf(out, "Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\n", data.Path, data.Archive.Version, len(data.Archive.Objects), len(data.Items), len(data.Dinos)); err != nil {
+		return err
+	}
+	for _, item := range data.Items {
+		if _, err := fmt.Fprintf(out, "  item[%d] blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
+			return err
+		}
+	}
+	for _, dino := range data.Dinos {
+		objectCount := 0
+		if dino.Archive != nil {
+			objectCount = len(dino.Archive.Objects)
+		}
+		if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func printArchiveSummary(out io.Writer, label string, path string, version int32, objects []arkarchive.Object) error {

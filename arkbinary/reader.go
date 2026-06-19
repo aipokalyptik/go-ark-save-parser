@@ -35,6 +35,10 @@ func (r *Reader) HasMore() bool {
 	return r.pos < len(r.data)
 }
 
+func (r *Reader) HasNameTable() bool {
+	return r.ctx.HasNameTable()
+}
+
 func (r *Reader) SetPosition(pos int) error {
 	if pos < 0 || pos > len(r.data) {
 		return fmt.Errorf("position %d outside buffer size %d", pos, len(r.data))

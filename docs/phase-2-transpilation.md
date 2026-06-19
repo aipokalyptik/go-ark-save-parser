@@ -47,6 +47,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests for unknown struct
       fallback behavior.
 - [x] Add tests and parsing for object-reference properties and simple value arrays.
+- [x] Add tests and parsing for ASA local-cluster primitive edge types:
+      `SoftObjectProperty`, `NameProperty`, `Int8Property`, `Int16Property`,
+      `Int64Property`, `UInt16Property`, and inline `UInt64Property` values.
 - [x] Add tests and generic parsing for struct arrays.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
@@ -88,6 +91,10 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only local tribe summary parsing through Player API and CLI output.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless
       cluster files.
+- [x] Add read-only local cluster item/dino payload extraction, including
+      `ArkItems`, `ArkTamedDinosData`, upload metadata, item blueprint summaries,
+      and best-effort cluster dino archive parsing.
+- [x] Add offline CLI summary for local cluster files and directories.
 - [ ] Port full Player and Tribe APIs for parsed local files and save-contained data.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
@@ -97,7 +104,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first read-only Dino API surface for local class/tamed/wild/baby queries.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
-      local cluster item/dino payload parsing, and full model-specific JSON APIs.
+      richer local cluster item/dino domain models, and full model-specific JSON APIs.
 - [ ] Port legacy `.arktributetribe` local tribute archive parsing.
 - [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 

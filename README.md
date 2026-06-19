@@ -17,13 +17,15 @@ Implemented:
 - Local SQLite-backed `.ark` opening through pure-Go SQLite.
 - Save header parsing, name table loading, custom value reads, object ID
   enumeration, raw object reads, class-name lookup, and generic object parsing.
-- Property parsing for primitives, object references, byte/enum values, generic
-  structs, struct arrays, simple arrays, simple maps, and simple sets.
+- Property parsing for primitives, object references, soft object/name values,
+  byte/enum values, generic structs, struct arrays, simple arrays, simple maps,
+  and simple sets.
 - Read-only General, Player/Tribe local-file, Dino, Structure, Base, Stackable,
   Equipment, and save-info JSON API wrappers.
-- Local cluster archive discovery and metadata loading for extensionless local
-  cluster files.
-- `arksave inspect`, `parse`, `players`, `tribes`, and `export-json` commands.
+- Local cluster archive discovery plus read-only item/dino upload payload
+  summaries for extensionless local cluster files.
+- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, and `export-json`
+  commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
 Still in progress:
@@ -31,8 +33,8 @@ Still in progress:
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
 - Full domain models and APIs for dino stats/cryopods/pedigrees, full equipment
-  stats, parsed player/tribe properties, local cluster item/dino payloads, full
-  bases, and model-specific JSON export.
+  stats, parsed player/tribe properties, richer local cluster item/dino domain
+  models, full bases, and model-specific JSON export.
 - Mutation APIs. These will remain experimental and live-server-unverified.
 
 ## Scope
@@ -80,6 +82,12 @@ Inspect local profile and tribe archive metadata:
 ```sh
 ./bin/arksave players /path/to/76561198000000000.arkprofile
 ./bin/arksave tribes /path/to/123456789.arktribe
+```
+
+Inspect local cluster uploads:
+
+```sh
+./bin/arksave cluster /path/to/cluster-directory-or-file
 ```
 
 Run tests:
