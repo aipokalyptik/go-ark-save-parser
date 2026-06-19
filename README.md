@@ -35,7 +35,8 @@ Still in progress:
 - Full domain models and APIs for dino stats/cryopods/pedigrees, full equipment
   stats, parsed player/tribe properties, richer local cluster item/dino domain
   models, full bases, and model-specific JSON export.
-- Mutation APIs. These will remain experimental and live-server-unverified.
+- Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
+  helpers remain experimental and live-server-unverified.
 
 ## Scope
 
@@ -90,6 +91,13 @@ Inspect local cluster uploads:
 ./bin/arksave cluster /path/to/cluster-directory-or-file
 ```
 
+Create an experimental mutation copy or remove an object from a copied save:
+
+```sh
+./bin/arksave mutate copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
+./bin/arksave mutate remove-object /path/to/Valguero_WP.ark /tmp/Valguero_removed.ark 00112233-4455-6677-8899-aabbccddeeff
+```
+
 Run tests:
 
 ```sh
@@ -101,6 +109,12 @@ Run the private oracle integration test:
 ```sh
 ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-test
 ```
+
+## Mutation Safety
+
+Mutation helpers never modify the input file in place and always require a new
+output path. They are structurally tested by reopening and reparsing the copied
+SQLite save, but live Ark server behavior is unverified.
 
 ## Library Sketch
 

@@ -111,11 +111,12 @@ enough that oracle-derived tests can run against translated packages.
 
 ### Experimental Mutation
 
-- [ ] Port copy-based modification helpers where upstream behavior can be
-      translated safely.
-- [ ] Require explicit output paths.
-- [ ] Add structural write/reopen/reparse tests only.
-- [ ] Document live-server validation as out of scope.
+- [x] Port first copy-based modification helpers where upstream behavior can be
+      translated safely: copy save, remove object row, upsert object bytes, and
+      upsert custom values on copied SQLite saves.
+- [x] Require explicit output paths.
+- [x] Add structural write/reopen/reparse tests only.
+- [x] Document live-server validation as out of scope.
 
 ### Examples And Review
 

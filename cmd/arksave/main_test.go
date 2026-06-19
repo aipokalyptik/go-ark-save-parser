@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -168,6 +169,54 @@ func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	}
 	if decoded.MapName != "Valguero_WP" || decoded.SaveVersion != 12 || decoded.ObjectCount != 1 {
 		t.Fatalf("exported json = %#v", decoded)
+	}
+}
+
+func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "copy.ark")
+	createSyntheticSave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "copy", savePath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate copy) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("mutate copy output %q does not mention %q", out.String(), outPath)
+	}
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("stat mutated copy: %v", err)
+	}
+}
+
+func TestMutateRemoveObjectCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "removed.ark")
+	createSyntheticSave(t, savePath)
+	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "remove-object", savePath, outPath, objectID}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate remove-object) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), objectID) {
+		t.Fatalf("mutate remove-object output %q missing path or uuid", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	ids, err := save.ObjectIDs()
+	if err != nil {
+		t.Fatalf("ObjectIDs(mutated output) error = %v", err)
+	}
+	_ = save.Close()
+	if len(ids) != 0 {
+		t.Fatalf("mutated output ObjectIDs length = %d, want 0", len(ids))
 	}
 }
 

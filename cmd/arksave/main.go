@@ -9,8 +9,10 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -51,7 +53,7 @@ func run(args []string, out io.Writer) error {
 		}
 		return exportJSON(args[1], args[2], out)
 	case "mutate":
-		return fmt.Errorf("%s is planned but not implemented yet in this offline port", args[0])
+		return mutate(args[1:], out)
 	case "ftp", "rcon":
 		return fmt.Errorf("%s is unsupported: this is an offline-only parser", args[0])
 	default:
@@ -67,6 +69,8 @@ func usage(out io.Writer) error {
   arksave tribes <tribe.arktribe>
   arksave cluster <cluster-file-or-directory>
   arksave export-json <save.ark> <out.json>
+  arksave mutate copy <save.ark> <out.ark>
+  arksave mutate remove-object <save.ark> <out.ark> <uuid>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.`)
 	return err
@@ -127,6 +131,38 @@ func tribes(path string, out io.Writer) error {
 		summary.NumDinos,
 	)
 	return err
+}
+
+func mutate(args []string, out io.Writer) error {
+	if len(args) == 0 {
+		return fmt.Errorf("mutate requires a subcommand")
+	}
+	switch args[0] {
+	case "copy":
+		if len(args) != 3 {
+			return fmt.Errorf("mutate copy requires a local .ark path and explicit output path")
+		}
+		if err := arkmutation.CopySave(args[1], args[2]); err != nil {
+			return err
+		}
+		_, err := fmt.Fprintf(out, "Wrote mutation copy: %s\n", args[2])
+		return err
+	case "remove-object":
+		if len(args) != 4 {
+			return fmt.Errorf("mutate remove-object requires a local .ark path, explicit output path, and object UUID")
+		}
+		id, err := uuid.Parse(args[3])
+		if err != nil {
+			return err
+		}
+		if err := arkmutation.RemoveObject(args[1], args[2], id); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote mutation copy without object %s: %s\n", id, args[2])
+		return err
+	default:
+		return fmt.Errorf("unknown mutate subcommand %q", args[0])
+	}
 }
 
 func cluster(path string, out io.Writer) error {
