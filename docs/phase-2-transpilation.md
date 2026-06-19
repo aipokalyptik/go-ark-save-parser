@@ -32,8 +32,8 @@ enough that oracle-derived tests can run against translated packages.
 
 ### Save Access
 
-- [ ] Add synthetic SQLite `.ark` fixture tests with `custom` and `game` tables.
-- [ ] Port save context, header parsing, name table parsing, custom table reads,
+- [x] Add synthetic SQLite `.ark` fixture tests with `custom` and `game` tables.
+- [x] Port save context, header parsing, name table parsing, custom table reads,
       and object binary access.
 - [ ] Add private-oracle integration tests gated behind an environment variable.
 - [ ] Validate object count and zero faulty-object core parse against oracle data.
