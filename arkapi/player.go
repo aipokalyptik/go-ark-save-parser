@@ -9,12 +9,14 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
+	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
 )
 
 type PlayerAPI struct {
 	profilePaths []string
 	tribePaths   []string
 	clusterPaths []string
+	tributePaths []string
 }
 
 func NewPlayerFromDirectory(dir string) (*PlayerAPI, error) {
@@ -44,9 +46,17 @@ func NewPlayerFromDirectory(dir string) (*PlayerAPI, error) {
 	for _, file := range clusterFiles {
 		api.clusterPaths = append(api.clusterPaths, file.Path)
 	}
+	tributeFiles, err := arktribute.Discover(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range tributeFiles {
+		api.tributePaths = append(api.tributePaths, file.Path)
+	}
 	sort.Strings(api.profilePaths)
 	sort.Strings(api.tribePaths)
 	sort.Strings(api.clusterPaths)
+	sort.Strings(api.tributePaths)
 	return api, nil
 }
 
@@ -65,6 +75,12 @@ func (p *PlayerAPI) TribePaths() []string {
 func (p *PlayerAPI) ClusterPaths() []string {
 	out := make([]string, len(p.clusterPaths))
 	copy(out, p.clusterPaths)
+	return out
+}
+
+func (p *PlayerAPI) TributePaths() []string {
+	out := make([]string, len(p.tributePaths))
+	copy(out, p.tributePaths)
 	return out
 }
 
@@ -131,6 +147,18 @@ func (p *PlayerAPI) Clusters() ([]*arkcluster.Data, error) {
 			return nil, err
 		}
 		out = append(out, cluster)
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) Tributes() ([]*arktribute.Data, error) {
+	out := make([]*arktribute.Data, 0, len(p.tributePaths))
+	for _, path := range p.tributePaths {
+		tribute, err := arktribute.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, tribute)
 	}
 	return out, nil
 }

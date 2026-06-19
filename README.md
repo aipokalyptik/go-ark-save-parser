@@ -21,8 +21,8 @@ Implemented:
 - Property parsing for primitives, object references, soft object/name values,
   byte/enum values, generic structs, struct arrays, simple arrays, simple maps,
   and simple sets.
-- Read-only General, Player/Tribe local-file, Dino, Structure, Base, Stackable,
-  Equipment, save-info JSON, and domain JSON API wrappers.
+- Read-only General, Player/Tribe local-file, local tribute, Dino, Structure,
+  Base, Stackable, Equipment, save-info JSON, and domain JSON API wrappers.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing.

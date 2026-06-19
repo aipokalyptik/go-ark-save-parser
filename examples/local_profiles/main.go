@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("profiles=%d tribes=%d clusters=%d\n", len(api.ProfilePaths()), len(api.TribePaths()), len(api.ClusterPaths()))
+	fmt.Printf("profiles=%d tribes=%d clusters=%d tributes=%d\n", len(api.ProfilePaths()), len(api.TribePaths()), len(api.ClusterPaths()), len(api.TributePaths()))
 
 	players, err := api.Players()
 	if err != nil {
