@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
 	"encoding/json"
 	"os"
@@ -12,8 +11,8 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestInspectCommandPrintsOfflineSaveSummary(t *testing.T) {
@@ -277,49 +276,29 @@ func TestMutateRemoveObjectCommandWritesReopenableCopy(t *testing.T) {
 
 func createSyntheticSave(t *testing.T, path string) {
 	t.Helper()
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	defer db.Close()
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, []byte{1, 0, 0, 0, 0, 0, 0, 0})
+	objectID := uuid.MustParse("00010203-0405-0607-0809-0a0b0c0d0e0f")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			1: "Blueprint'/Game/Test.Test_C'",
+			2: "None",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			objectID: testfixtures.GenericObjectBytes(1, 2),
+		},
+	})
 }
 
 func createSyntheticEmptySave(t *testing.T, path string) {
 	t.Helper()
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	defer db.Close()
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header:      testfixtures.Header("Valguero_WP", map[uint32]string{1: "Blueprint'/Game/Test.Test_C'"}),
+		EmptyTables: true,
+	})
 }
 
 func createSyntheticArchive(t *testing.T, path string, className string) {
 	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	buf.Write(id[:])
-	writeArkString(&buf, className)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	writeStringArray(&buf, []string{"Object_0"})
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(128))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write archive fixture: %v", err)
-	}
+	testfixtures.WriteArchive(t, path, className)
 }
 
 func createSyntheticTribeArchive(t *testing.T, path string) {
@@ -352,33 +331,6 @@ func createSyntheticTribeArchive(t *testing.T, path string) {
 	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
 		t.Fatalf("write tribe archive fixture: %v", err)
 	}
-}
-
-func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
-	t.Helper()
-	if _, err := db.Exec(query, args...); err != nil {
-		t.Fatalf("exec %q: %v", query, err)
-	}
-}
-
-func syntheticHeader() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int16(12))
-	nameOffsetPosition := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, float64(1234.5))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(77))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	for buf.Len() < 30 {
-		buf.WriteByte(0)
-	}
-	writeArkString(&buf, "Valguero_WP")
-	nameOffset := int32(buf.Len())
-	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(1))
-	writeArkString(&buf, "Blueprint'/Game/Test.Test_C'")
-	return buf.Bytes()
 }
 
 func writeArkString(buf *bytes.Buffer, value string) {

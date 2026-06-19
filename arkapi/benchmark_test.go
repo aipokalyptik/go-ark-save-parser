@@ -2,14 +2,13 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func BenchmarkOpenSave(b *testing.B) {
@@ -104,13 +103,6 @@ func openBenchmarkSave(b *testing.B) *arksave.Save {
 func createBenchmarkSave(b *testing.B) string {
 	b.Helper()
 	path := filepath.Join(b.TempDir(), "benchmark.ark")
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		b.Fatalf("open sqlite fixture: %v", err)
-	}
-	benchExec(b, db, `create table custom (key text primary key, value blob)`)
-	benchExec(b, db, `create table game (key blob primary key, value blob)`)
-	benchExec(b, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
 
 	genericID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	structureID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
@@ -118,15 +110,19 @@ func createBenchmarkSave(b *testing.B) string {
 	equipmentID := uuid.MustParse("33332233-4455-6677-8899-aabbccddeeff")
 	dinoID := uuid.MustParse("44442233-4455-6677-8899-aabbccddeeff")
 
-	benchExec(b, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", benchmarkActorTransforms(structureID, dinoID))
-	benchExec(b, db, `insert into game (key, value) values (?, ?)`, genericID[:], syntheticObjectBytes(0x10000001))
-	benchExec(b, db, `insert into game (key, value) values (?, ?)`, structureID[:], syntheticStructureObjectBytes())
-	benchExec(b, db, `insert into game (key, value) values (?, ?)`, stackableID[:], syntheticStackableObjectBytes(false))
-	benchExec(b, db, `insert into game (key, value) values (?, ?)`, equipmentID[:], syntheticEquipmentObjectBytes(false))
-	benchExec(b, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoObjectBytes())
-	if err := db.Close(); err != nil {
-		b.Fatalf("close fixture db: %v", err)
-	}
+	testfixtures.WriteSave(b, path, testfixtures.SaveOptions{
+		Header: syntheticHeader(),
+		Custom: map[string][]byte{
+			"ActorTransforms": benchmarkActorTransforms(structureID, dinoID),
+		},
+		Objects: map[uuid.UUID][]byte{
+			genericID:   syntheticObjectBytes(0x10000001),
+			structureID: syntheticStructureObjectBytes(),
+			stackableID: syntheticStackableObjectBytes(false),
+			equipmentID: syntheticEquipmentObjectBytes(false),
+			dinoID:      syntheticDinoObjectBytes(),
+		},
+	})
 	return path
 }
 
@@ -140,11 +136,4 @@ func benchmarkActorTransforms(ids ...uuid.UUID) []byte {
 	}
 	buf.Write(uuid.Nil[:])
 	return buf.Bytes()
-}
-
-func benchExec(b *testing.B, db *sql.DB, query string, args ...any) {
-	b.Helper()
-	if _, err := db.Exec(query, args...); err != nil {
-		b.Fatalf("exec %q: %v", query, err)
-	}
 }

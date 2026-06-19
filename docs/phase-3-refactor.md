@@ -25,7 +25,10 @@ Go packages without losing oracle parity.
       full stackable, base, additional model-specific JSON export, and local
       cluster domain modeling.
 - [ ] Replace duplicated synthetic fixture builders in tests with internal test
-      helpers.
+      helpers. `internal/testfixtures` now centralizes public synthetic SQLite
+      saves, generic object payloads, archive payloads, and shared header/string
+      encoding for examples, CLI tests, and benchmarks; domain-specific parser
+      fixtures still need incremental migration.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
 - [x] Expand `cmd/arksave` commands beyond `inspect`/`parse` with local
