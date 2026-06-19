@@ -79,7 +79,7 @@ func usage(out io.Writer) error {
   arksave tribes <tribe.arktribe>
   arksave cluster <cluster-file-or-directory>
   arksave export-json <save.ark> <out.json>
-  arksave export-domain-json <save.ark> <dinos|structures|equipment|stackables> <out.json>
+  arksave export-domain-json <save.ark> <dinos|structures|equipment|stackables|bases> <out.json>
   arksave export-cluster-json <cluster-file> <out.json>
   arksave mutate copy <save.ark> <out.ark>
   arksave mutate remove-object <save.ark> <out.ark> <uuid>

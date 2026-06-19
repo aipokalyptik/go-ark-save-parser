@@ -69,6 +69,25 @@ func TestJSONAPIExportStackablesSummarizesStackableAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportBasesSummarizesBaseAPI(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportBases()
+	if err != nil {
+		t.Fatalf("ExportBases() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ExportBases() length = %d, want 1", len(items))
+	}
+	if items[0].StructureCount != 2 || items[0].Owner.TribeID != 555 || items[0].AverageLocation == nil {
+		t.Fatalf("BaseInfo = %#v", items[0])
+	}
+	if len(items[0].StructureUUIDs) != 2 || items[0].StructureUUIDs[0] != "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff" {
+		t.Fatalf("StructureUUIDs = %#v", items[0].StructureUUIDs)
+	}
+}
+
 func TestJSONAPIExportDomainJSONIsDeterministic(t *testing.T) {
 	save := openSyntheticStackableSave(t)
 	defer save.Close()
@@ -84,7 +103,7 @@ func TestJSONAPIExportDomainJSONIsDeterministic(t *testing.T) {
 	if decoded.Domain != "stackables" || decoded.Count != 1 {
 		t.Fatalf("DomainExport = %#v", decoded)
 	}
-	if _, err := NewJSON(save).ExportDomainJSON("bases"); err == nil {
-		t.Fatalf("ExportDomainJSON(bases) error = nil, want unsupported domain")
+	if _, err := NewJSON(save).ExportDomainJSON("unknown"); err == nil {
+		t.Fatalf("ExportDomainJSON(unknown) error = nil, want unsupported domain")
 	}
 }

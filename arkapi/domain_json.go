@@ -58,6 +58,16 @@ type StackableInfo struct {
 	Quantity  int32  `json:"quantity"`
 }
 
+type BaseInfo struct {
+	KeystoneUUID    string        `json:"keystone_uuid"`
+	StructureUUIDs  []string      `json:"structure_uuids"`
+	StructureCount  int           `json:"structure_count"`
+	Owner           OwnerInfo     `json:"owner"`
+	Location        *LocationInfo `json:"location,omitempty"`
+	AverageLocation *LocationInfo `json:"average_location,omitempty"`
+	TurretCount     float64       `json:"turret_count"`
+}
+
 type LocationInfo struct {
 	X          float64 `json:"x"`
 	Y          float64 `json:"y"`
@@ -94,6 +104,9 @@ func (j *JSONAPI) ExportDomain(domain string) (DomainExport, error) {
 		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
 	case "stackables":
 		items, err := j.ExportStackables()
+		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+	case "bases":
+		items, err := j.ExportBases()
 		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
 	default:
 		return DomainExport{}, fmt.Errorf("unsupported export domain %q", domain)
@@ -195,6 +208,26 @@ func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {
 	return out, nil
 }
 
+func (j *JSONAPI) ExportBases() ([]BaseInfo, error) {
+	bases, err := NewBase(j.save, "").All()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BaseInfo, 0, len(bases))
+	for _, base := range bases {
+		out = append(out, BaseInfo{
+			KeystoneUUID:    base.KeystoneUUID.String(),
+			StructureUUIDs:  sortedBaseStructureUUIDs(base),
+			StructureCount:  base.StructureCount,
+			Owner:           ownerInfo(base.Owner),
+			Location:        locationInfo(base.Location),
+			AverageLocation: locationInfo(base.AverageLocation),
+			TurretCount:     base.TurretCount,
+		})
+	}
+	return out, nil
+}
+
 func sortedUUIDKeys[T any](values map[uuid.UUID]T) []uuid.UUID {
 	keys := make([]uuid.UUID, 0, len(values))
 	for id := range values {
@@ -204,6 +237,15 @@ func sortedUUIDKeys[T any](values map[uuid.UUID]T) []uuid.UUID {
 		return keys[i].String() < keys[j].String()
 	})
 	return keys
+}
+
+func sortedBaseStructureUUIDs(base arkobject.Base) []string {
+	ids := sortedUUIDKeys(base.Structures)
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, id.String())
+	}
+	return out
 }
 
 func locationInfo(value *arkobject.ActorTransform) *LocationInfo {

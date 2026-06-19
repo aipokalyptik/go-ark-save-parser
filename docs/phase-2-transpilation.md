@@ -101,7 +101,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
-      dino, structure, equipment, and stackable summaries.
+      dino, structure, equipment, stackable, and base summaries.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.

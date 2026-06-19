@@ -47,6 +47,30 @@ func TestBaseAPIAtReturnsNilWhenNoStructuresMatch(t *testing.T) {
 	}
 }
 
+func TestBaseAPIAllGroupsLinkedStructures(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewBase(save, "Valguero")
+	bases, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(bases) != 1 {
+		t.Fatalf("All() length = %d, want 1: %#v", len(bases), bases)
+	}
+	base := bases[0]
+	if base.StructureCount != 2 || base.Owner.TribeID != 555 || base.AverageLocation == nil {
+		t.Fatalf("Base = %#v", base)
+	}
+	if base.KeystoneUUID != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") {
+		t.Fatalf("KeystoneUUID = %s", base.KeystoneUUID)
+	}
+	if base.AverageLocation.X != 500 || base.AverageLocation.Y != 500 {
+		t.Fatalf("AverageLocation = %#v", base.AverageLocation)
+	}
+}
+
 func openSyntheticBaseSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -63,8 +87,8 @@ func openSyntheticBaseSave(t *testing.T) *arksave.Save {
 	mustExec(t, db, `create table game (key blob primary key, value blob)`)
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticBaseActorTransforms(firstID, secondID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, firstID[:], syntheticBaseStructureObjectBytes(101))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, secondID[:], syntheticBaseStructureObjectBytes(102))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, firstID[:], syntheticBaseStructureObjectBytes(101, secondID))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, secondID[:], syntheticBaseStructureObjectBytes(102, firstID))
 	mustExec(t, db, `insert into game (key, value) values (?, ?)`, otherID[:], syntheticObjectBytes(0x10000001))
 	if err := db.Close(); err != nil {
 		t.Fatalf("close fixture db: %v", err)
@@ -77,7 +101,7 @@ func openSyntheticBaseSave(t *testing.T) *arksave.Save {
 	return save
 }
 
-func syntheticBaseStructureObjectBytes(structureID int32) []byte {
+func syntheticBaseStructureObjectBytes(structureID int32, linked ...uuid.UUID) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -89,6 +113,9 @@ func syntheticBaseStructureObjectBytes(structureID int32) []byte {
 	writeFloatProperty(&buf, 0x10000007, 10000)
 	writeFloatProperty(&buf, 0x10000008, 9000)
 	writeIntProperty(&buf, 0x10000009, 555)
+	if len(linked) > 0 {
+		writeObjectReferenceArrayProperty(&buf, 0x1000001d, linked)
+	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
@@ -106,4 +133,23 @@ func syntheticBaseActorTransforms(first uuid.UUID, second uuid.UUID) []byte {
 	}
 	buf.Write(uuid.Nil[:])
 	return buf.Bytes()
+}
+
+func writeObjectReferenceArrayProperty(buf *bytes.Buffer, name uint32, values []uuid.UUID) {
+	dataSize := int32(len(values) * 18)
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(values)))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001f))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(dataSize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, id := range values {
+		_ = binary.Write(buf, binary.LittleEndian, int16(0))
+		buf.Write(id[:])
+	}
 }
