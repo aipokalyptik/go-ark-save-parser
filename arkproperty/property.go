@@ -10,8 +10,10 @@ type Type string
 
 const (
 	TypeArray  Type = "Array"
+	TypeByte   Type = "Byte"
 	TypeBool   Type = "Boolean"
 	TypeDouble Type = "Double"
+	TypeEnum   Type = "Enum"
 	TypeFloat  Type = "Float"
 	TypeInt    Type = "Int"
 	TypeMap    Type = "Map"
@@ -64,6 +66,10 @@ type Container struct {
 type UnknownStruct struct {
 	TypeName string
 	Raw      []byte
+}
+
+type EnumValue struct {
+	Name string
 }
 
 func (c Container) Value(name string) (any, bool) {
@@ -138,6 +144,16 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	}
 
 	switch typeName {
+	case "ByteProperty":
+		value, valueType, valueOffset, position, unknown, err := readByteProperty(r, dataSize, position)
+		if err != nil {
+			return nil, err
+		}
+		prop.Type = valueType
+		prop.Position = position
+		prop.UnknownByte = unknown
+		prop.ValueOffset = valueOffset
+		prop.Value = value
 	case "BoolProperty":
 		prop.Type = TypeBool
 		prop.ValueOffset = r.Position()
@@ -297,6 +313,67 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	}
 
 	return prop, nil
+}
+
+func readByteProperty(r *arkbinary.Reader, dataSize int32, position int32) (any, Type, int, int32, byte, error) {
+	preReadPosition := r.Position()
+	if dataSize == 0 {
+		isPositioned, err := r.ReadBool()
+		if err != nil {
+			return nil, "", 0, 0, 0, err
+		}
+		if isPositioned {
+			updated, err := r.ReadInt32()
+			if err != nil {
+				return nil, "", 0, 0, 0, err
+			}
+			position = updated
+		} else {
+			position = 0
+		}
+		valueOffset := r.Position()
+		value, err := r.ReadByte()
+		if err != nil {
+			return nil, "", 0, 0, 0, err
+		}
+		return value, TypeByte, valueOffset, position, 0, nil
+	}
+
+	if err := r.SetPosition(preReadPosition - 4); err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	if _, err := r.ReadName(""); err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	if _, err := r.ReadInt32(); err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	if _, err := r.ReadName(""); err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	zero, err := r.ReadUInt32()
+	if err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	if zero != 0 {
+		return nil, "", 0, 0, 0, fmt.Errorf("invalid enum zero %#x", zero)
+	}
+	unknown, err := r.ReadByte()
+	if err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	zero, err = r.ReadUInt32()
+	if err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	if zero != 0 {
+		return nil, "", 0, 0, 0, fmt.Errorf("invalid enum terminator %#x", zero)
+	}
+	name, err := r.ReadName("")
+	if err != nil {
+		return nil, "", 0, 0, 0, err
+	}
+	return EnumValue{Name: name}, TypeEnum, r.Position(), position, unknown, nil
 }
 
 func readMap(r *arkbinary.Reader) (Map, error) {
@@ -584,6 +661,8 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 
 func typeFromPropertyName(name string) (Type, error) {
 	switch name {
+	case "ByteProperty":
+		return TypeByte, nil
 	case "BoolProperty":
 		return TypeBool, nil
 	case "DoubleProperty":
@@ -605,6 +684,8 @@ func typeFromPropertyName(name string) (Type, error) {
 
 func readValue(t Type, r *arkbinary.Reader) (any, error) {
 	switch t {
+	case TypeByte:
+		return r.ReadByte()
 	case TypeBool:
 		return r.ReadBool()
 	case TypeDouble:

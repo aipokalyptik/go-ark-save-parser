@@ -42,6 +42,7 @@ enough that oracle-derived tests can run against translated packages.
 
 - [x] Add tests for property terminator handling.
 - [x] Add tests for primitive property types.
+- [x] Add tests and parsing for raw byte and enum `ByteProperty` encodings.
 - [x] Add tests for unknown struct
       fallback behavior.
 - [x] Add tests and parsing for object-reference properties and simple value arrays.

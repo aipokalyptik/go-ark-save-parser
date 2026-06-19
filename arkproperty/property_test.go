@@ -146,6 +146,73 @@ func TestParseObjectPropertyReadsUUIDReference(t *testing.T) {
 	}
 }
 
+func TestParseBytePropertyReadsRawByteValue(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "PaintRegion",
+		2: "ByteProperty",
+		3: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 0)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	stream.WriteByte(7)
+	writeName(stream, 3)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeByte || props[0].Value != byte(7) {
+		t.Fatalf("ByteProperty = %#v, want raw byte 7", props[0])
+	}
+}
+
+func TestParseBytePropertyReadsEnumValue(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "QualityTier",
+		2: "ByteProperty",
+		3: "EPrimalItemQuality",
+		4: "/Script/ShooterGame.EPrimalItemQuality",
+		5: "EPrimalItemQuality::Journeyman",
+		6: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 1)
+	writeName(stream, 3)
+	writeInt32(stream, 1)
+	writeName(stream, 4)
+	writeUInt32(stream, 0)
+	stream.WriteByte(1)
+	writeUInt32(stream, 0)
+	writeName(stream, 5)
+	writeName(stream, 6)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	got, ok := props[0].Value.(EnumValue)
+	if !ok {
+		t.Fatalf("ByteProperty enum value type = %T, want EnumValue", props[0].Value)
+	}
+	if props[0].Type != TypeEnum || got.Name != "EPrimalItemQuality::Journeyman" {
+		t.Fatalf("Enum ByteProperty = %#v, want Journeyman enum", props[0])
+	}
+}
+
 func TestParseArrayPropertyReadsIntValues(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
