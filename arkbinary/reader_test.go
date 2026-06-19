@@ -179,6 +179,24 @@ func TestReaderReadsNamesFromContext(t *testing.T) {
 	}
 }
 
+func TestReaderDoesNotSuffixBlueprintPathsContainingNPCZoneVolume(t *testing.T) {
+	ctx := NewContext()
+	ctx.SetNames(map[uint32]string{
+		7: "Blueprint'/Game/Path/NPCZoneVolume.NPCZoneVolume_C'",
+	})
+	var data bytes.Buffer
+	_ = binary.Write(&data, binary.LittleEndian, uint32(7))
+	_ = binary.Write(&data, binary.LittleEndian, int32(0))
+
+	got, err := NewReader(data.Bytes(), ctx).ReadName("")
+	if err != nil {
+		t.Fatalf("ReadName() error = %v", err)
+	}
+	if got != "Blueprint'/Game/Path/NPCZoneVolume.NPCZoneVolume_C'" {
+		t.Fatalf("ReadName() = %q, want unsuffixed blueprint path", got)
+	}
+}
+
 func TestInflateZlibData(t *testing.T) {
 	got, err := InflateZlib([]byte{0x78, 0x9c, 0xcb, 0x48, 0xcd, 0xc9, 0xc9, 0x07, 0x00, 0x06, 0x2c, 0x02, 0x15})
 	if err != nil {

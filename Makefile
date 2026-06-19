@@ -1,4 +1,4 @@
-.PHONY: test oracle-test bench build
+.PHONY: test oracle-test oracle-compare bench build
 
 test:
 	go test ./...
@@ -6,6 +6,10 @@ test:
 oracle-test:
 	test -n "$$ARK_ORACLE_SAVE"
 	go test ./arksave -run TestOracleSaveEnumeratesObjects -count=1
+
+oracle-compare:
+	test -n "$$ARK_ORACLE_SAVE"
+	.oracle/venv/bin/python scripts/oracle_compare.py
 
 bench:
 	go test ./arkapi -run '^$$' -bench . -benchmem

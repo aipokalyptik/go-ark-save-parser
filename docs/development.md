@@ -48,6 +48,16 @@ Run the committed Go oracle gate against a selected private map save:
 ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-test
 ```
 
+Run the implemented example comparison harness against the Python oracle:
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-compare
+```
+
+`oracle-compare` writes detailed private values and stdout/stderr to
+`.oracle/output/oracle-comparison.json` and updates the commit-safe aggregate
+status in `docs/oracle-comparison-summary.md`.
+
 Upstream fixed tests require non-public `tests/test_data` and are recorded as
 blocked in `docs/upstream-oracle-classification.md`. The upstream `testbench/`
 suite is the useful arbitrary-save oracle path for private `.ark` files.

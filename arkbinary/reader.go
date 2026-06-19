@@ -250,7 +250,7 @@ func (r *Reader) ReadName(defaultValue string) (string, error) {
 		}
 	}
 
-	if strings.Contains(name, "NPCZoneVolume") || strings.Contains(name, "NPCCountVolume") {
+	if isSuffixedVolumeName(name) {
 		suffix, err := r.ReadInt32()
 		if err != nil {
 			return "", err
@@ -262,4 +262,14 @@ func (r *Reader) ReadName(defaultValue string) (string, error) {
 		return "", err
 	}
 	return name, nil
+}
+
+func isSuffixedVolumeName(name string) bool {
+	if strings.Contains(name, "/") || strings.Contains(name, "'") {
+		return false
+	}
+	return name == "NPCZoneVolume" ||
+		strings.Contains(name, "NPCZoneVolume_") ||
+		strings.Contains(name, "_NPCZoneVolume") ||
+		strings.Contains(name, "NPCCountVolume")
 }

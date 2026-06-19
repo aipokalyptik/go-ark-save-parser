@@ -34,6 +34,10 @@ sanitized status.
 - [x] Run upstream `testbench/` for each usable `.ark` save and record sanitized
       status.
 - [x] Classify all offline-compatible examples.
+- [x] Add and run a privacy-safe comparison harness for implemented Go example
+      counterparts; current committed aggregate status is in
+      `docs/oracle-comparison-summary.md`, with detailed values kept under
+      `.oracle/output/oracle-comparison.json`.
 - [ ] Run read-only examples and capture private normalized output under
       `.oracle/`.
 - [ ] Run mutation examples only on copied inputs and record structural status.

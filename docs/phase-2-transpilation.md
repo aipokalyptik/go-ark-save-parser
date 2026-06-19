@@ -127,6 +127,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first Go examples for runnable offline Python example categories:
       map summary, class listing, local profile/tribe discovery, cluster JSON,
       and mutation-copy workflows.
+- [x] Compare normalized Go outputs with the private Python oracle for the
+      implemented direct read-only counterparts: `map_summary` and
+      `object_classes`.
 - [ ] Compare normalized Go outputs with private Python oracle outputs where
-      available.
+      available for the remaining runnable upstream examples.
 - [ ] Run subagent spec and quality reviews on parser parity and API coverage.

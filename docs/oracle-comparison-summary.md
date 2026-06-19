@@ -1,0 +1,14 @@
+# Oracle Comparison Summary
+
+This file is safe to commit. It records only aggregate status for the
+implemented offline Go example comparisons. Detailed oracle values, paths,
+class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
+
+## Case Status
+
+- `map_summary`: `pass` (summary metrics compared)
+- `object_classes`: `pass` (class list compared)
+
+## Counts
+
+- `pass`: 2

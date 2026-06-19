@@ -172,5 +172,6 @@ obj, err := save.Object(ids[0])
 
 Private save data and oracle output live under `.oracle/` and are ignored by git.
 The current oracle was generated from `~/Downloads/SavedArks.tar.bz2`; see
-`docs/development.md`, `docs/phase-1-report.md`, and `docs/oracle-summary.md`
-for regeneration instructions and commit-safe details.
+`docs/development.md`, `docs/phase-1-report.md`, `docs/oracle-summary.md`, and
+`docs/oracle-comparison-summary.md` for regeneration instructions,
+commit-safe details, and implemented-example comparison status.
