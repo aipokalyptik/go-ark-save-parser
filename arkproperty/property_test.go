@@ -112,12 +112,98 @@ func TestParsePropertyReturnsNilForNoneMarkerWithoutTrailingZeros(t *testing.T) 
 	}
 }
 
+func TestParseObjectPropertyReadsUUIDReference(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Target",
+		2: "ObjectProperty",
+		3: "None",
+	})
+	ref := []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 18)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, int16(0))
+	stream.Write(ref)
+	writeName(stream, 3)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	got, ok := props[0].Value.(ObjectReference)
+	if !ok {
+		t.Fatalf("ObjectProperty value type = %T, want ObjectReference", props[0].Value)
+	}
+	if got.Type != ObjectReferenceUUID || got.Value != "00112233-4455-6677-8899-aabbccddeeff" {
+		t.Fatalf("ObjectReference = %#v, want UUID reference", got)
+	}
+}
+
+func TestParseArrayPropertyReadsIntValues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Levels",
+		2: "ArrayProperty",
+		3: "IntProperty",
+		4: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 3)
+	writeUInt32(stream, 3)
+	writeInt32(stream, 0)
+	writeInt32(stream, 0)
+	writeInt32(stream, 12)
+	stream.WriteByte(0)
+	writeUInt32(stream, 3)
+	writeInt32(stream, 5)
+	writeInt32(stream, 8)
+	writeInt32(stream, 13)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if props[0].Type != TypeArray {
+		t.Fatalf("property type = %s, want Array", props[0].Type)
+	}
+	got, ok := props[0].Value.(Array)
+	if !ok {
+		t.Fatalf("ArrayProperty value type = %T, want Array", props[0].Value)
+	}
+	want := []any{int32(5), int32(8), int32(13)}
+	if got.ElementType != TypeInt || len(got.Values) != len(want) {
+		t.Fatalf("Array = %#v, want Int array length %d", got, len(want))
+	}
+	for i := range want {
+		if got.Values[i] != want[i] {
+			t.Fatalf("Array value %d = %#v, want %#v", i, got.Values[i], want[i])
+		}
+	}
+}
+
 func writeName(buf *bytes.Buffer, id uint32) {
 	_ = binary.Write(buf, binary.LittleEndian, id)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 }
 
 func writeInt32(buf *bytes.Buffer, value int32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeUInt32(buf *bytes.Buffer, value uint32) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 

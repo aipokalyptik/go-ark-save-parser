@@ -9,13 +9,34 @@ import (
 type Type string
 
 const (
+	TypeArray  Type = "Array"
 	TypeBool   Type = "Boolean"
 	TypeDouble Type = "Double"
 	TypeFloat  Type = "Float"
 	TypeInt    Type = "Int"
+	TypeObject Type = "Object"
 	TypeString Type = "String"
 	TypeUInt32 Type = "UInt32"
 )
+
+type ObjectReferenceType int
+
+const (
+	ObjectReferenceUUID ObjectReferenceType = iota
+	ObjectReferencePath
+	ObjectReferenceID
+	ObjectReferenceUnknown
+)
+
+type ObjectReference struct {
+	Type  ObjectReferenceType
+	Value any
+}
+
+type Array struct {
+	ElementType Type
+	Values      []any
+}
 
 type Property struct {
 	Name         string
@@ -156,6 +177,36 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		} else {
 			prop.Value = ""
 		}
+	case "ObjectProperty":
+		prop.Type = TypeObject
+		isPositioned, err := r.ReadBool()
+		if err != nil {
+			return nil, err
+		}
+		if isPositioned {
+			position, err := r.ReadInt32()
+			if err != nil {
+				return nil, err
+			}
+			prop.Position = position
+		}
+		prop.ValueOffset = r.Position()
+		ref, err := readObjectReference(r)
+		if err != nil {
+			return nil, err
+		}
+		prop.Value = ref
+	case "ArrayProperty":
+		prop.Type = TypeArray
+		if err := r.SetPosition(r.Position() - 4); err != nil {
+			return nil, err
+		}
+		array, err := readArray(r)
+		if err != nil {
+			return nil, err
+		}
+		prop.ValueOffset = r.Position()
+		prop.Value = array
 	case "UInt32Property":
 		prop.Type = TypeUInt32
 		unknown, err := r.ReadByte()
@@ -174,6 +225,114 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	}
 
 	return prop, nil
+}
+
+func readObjectReference(r *arkbinary.Reader) (ObjectReference, error) {
+	refType, err := r.ReadInt16()
+	if err != nil {
+		return ObjectReference{}, err
+	}
+	switch refType {
+	case 0:
+		id, err := r.ReadUUID()
+		if err != nil {
+			return ObjectReference{}, err
+		}
+		return ObjectReference{Type: ObjectReferenceUUID, Value: id.String()}, nil
+	case 1, 256:
+		name, err := r.ReadName("")
+		if err != nil {
+			return ObjectReference{}, err
+		}
+		return ObjectReference{Type: ObjectReferencePath, Value: name}, nil
+	case 4:
+		id, err := r.ReadInt32()
+		if err != nil {
+			return ObjectReference{}, err
+		}
+		return ObjectReference{Type: ObjectReferenceID, Value: id}, nil
+	default:
+		return ObjectReference{}, fmt.Errorf("unknown object reference type %d", refType)
+	}
+}
+
+func readArray(r *arkbinary.Reader) (Array, error) {
+	arrayTypeName, err := r.ReadName("")
+	if err != nil {
+		return Array{}, err
+	}
+	if _, err := r.ReadInt32(); err != nil {
+		return Array{}, err
+	}
+	if _, err := r.ReadUInt32(); err != nil {
+		return Array{}, err
+	}
+	if _, err := r.ReadByte(); err != nil {
+		return Array{}, err
+	}
+	length, err := r.ReadUInt32()
+	if err != nil {
+		return Array{}, err
+	}
+	elementType, err := typeFromPropertyName(arrayTypeName)
+	if err != nil {
+		return Array{}, err
+	}
+	values := make([]any, 0, length)
+	for i := uint32(0); i < length; i++ {
+		value, err := readValue(elementType, r)
+		if err != nil {
+			return Array{}, err
+		}
+		values = append(values, value)
+	}
+	return Array{ElementType: elementType, Values: values}, nil
+}
+
+func typeFromPropertyName(name string) (Type, error) {
+	switch name {
+	case "BoolProperty":
+		return TypeBool, nil
+	case "DoubleProperty":
+		return TypeDouble, nil
+	case "FloatProperty":
+		return TypeFloat, nil
+	case "IntProperty":
+		return TypeInt, nil
+	case "ObjectProperty":
+		return TypeObject, nil
+	case "StrProperty":
+		return TypeString, nil
+	case "UInt32Property":
+		return TypeUInt32, nil
+	default:
+		return "", fmt.Errorf("unsupported value type %q", name)
+	}
+}
+
+func readValue(t Type, r *arkbinary.Reader) (any, error) {
+	switch t {
+	case TypeBool:
+		return r.ReadBool()
+	case TypeDouble:
+		return r.ReadFloat64()
+	case TypeFloat:
+		return r.ReadFloat32()
+	case TypeInt:
+		return r.ReadInt32()
+	case TypeObject:
+		return readObjectReference(r)
+	case TypeString:
+		value, err := r.ReadString()
+		if err != nil || value == nil {
+			return "", err
+		}
+		return *value, nil
+	case TypeUInt32:
+		return r.ReadUInt32()
+	default:
+		return nil, fmt.Errorf("unsupported value type %q", t)
+	}
 }
 
 func shouldSkipTrailingNoneZeros(r *arkbinary.Reader, structEnd int) bool {
