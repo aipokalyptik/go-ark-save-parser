@@ -24,17 +24,17 @@ sanitized status.
 
 ## Task Ledger
 
-- [ ] Create repository hygiene and public GitHub remote.
-- [ ] Verify and extract `~/Downloads/SavedArks.tar.bz2` into `.oracle/data`.
-- [ ] Clone upstream into `.oracle/upstream` at the pinned commit.
-- [ ] Build `.oracle/venv` with a suitable Python runtime.
-- [ ] Generate `.oracle/manifest.json` with private file details.
-- [ ] Commit a sanitized backup summary with counts by file type only.
-- [ ] Run upstream packaged tests and record sanitized status.
-- [ ] Run upstream `testbench/` for each usable `.ark` save and record sanitized
+- [x] Create repository hygiene and public GitHub remote.
+- [x] Verify and extract `~/Downloads/SavedArks.tar.bz2` into `.oracle/data`.
+- [x] Clone upstream into `.oracle/upstream` at the pinned commit.
+- [x] Build `.oracle/venv` with a suitable Python runtime.
+- [x] Generate `.oracle/manifest.json` with private file details.
+- [x] Commit a sanitized backup summary with counts by file type only.
+- [x] Run upstream packaged tests and record sanitized status.
+- [x] Run upstream `testbench/` for each usable `.ark` save and record sanitized
       status.
-- [ ] Classify all offline-compatible examples.
+- [x] Classify all offline-compatible examples.
 - [ ] Run read-only examples and capture private normalized output under
       `.oracle/`.
 - [ ] Run mutation examples only on copied inputs and record structural status.
-- [ ] Review privacy boundaries and oracle completeness.
+- [x] Review privacy boundaries and oracle completeness.
