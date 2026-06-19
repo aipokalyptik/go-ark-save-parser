@@ -7,10 +7,11 @@ offline parser without Python or private chat context.
 
 - [x] Write README with build, CLI, library, example, scope, and mutation safety
       notes.
-- [x] Document supported file types: `.ark`, `.arkprofile`, `.arktribe`, and
-      extensionless local cluster files.
+- [x] Document supported file types: `.ark`, `.arkprofile`, `.arktribe`,
+      extensionless local cluster files, and local tribute index files.
 - [x] Document unsupported features: FTP, RCON, live server integration, and
-      legacy `.arktributetribe` parsing.
+      legacy archive object parsing outside modern archive/local tribute index
+      formats.
 - [x] Document mutation APIs as experimental and live-server-unverified.
 - [x] Document oracle regeneration using `~/Downloads/SavedArks.tar.bz2`.
 - [x] Document privacy rules and ignored paths.
@@ -42,7 +43,8 @@ offline parser without Python or private chat context.
 
 - Full domain parity for dino stats, cryopods, pedigrees, richer equipment
   stats, player/tribe details, and base import/export remains incomplete.
-- Legacy `.arktributetribe` local tribute archives remain unsupported.
+- Legacy archive object parsing remains unsupported outside modern archive and
+  compact local tribute index formats.
 - Mutation helpers are structurally tested only and require live-server manual
   validation before being treated as production-safe for real servers.
 - Latest read-only review found remaining production blockers in oracle parity

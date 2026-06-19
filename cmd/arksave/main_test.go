@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -254,6 +255,56 @@ func TestClusterCommandRedactsPathAndUploadDetails(t *testing.T) {
 	for _, leaked := range []string{path, "EOS_abc123", "blueprint="} {
 		if strings.Contains(got, leaked) {
 			t.Fatalf("redacted cluster output %q contains private detail %q", got, leaked)
+		}
+	}
+}
+
+func TestTributeCommandPrintsLocalTributeSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
+	createSyntheticTribute(t, path, []uint64{11, 22}, []uint64{33})
+
+	var out bytes.Buffer
+	err := run([]string{"tribute", path}, &out)
+	if err != nil {
+		t.Fatalf("run(tribute) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribute file:",
+		"Player data IDs: 2",
+		"Tribe data IDs: 1",
+		"player_data_id=11",
+		"player_data_id=22",
+		"tribe_data_id=33",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribute output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTributeCommandRedactsLocalTributeDetails(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
+	createSyntheticTribute(t, path, []uint64{11, 22}, []uint64{33})
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "tribute", path}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact tribute) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribute file: [redacted]",
+		"Player data IDs: 2",
+		"Tribe data IDs: 1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("redacted tribute output %q does not contain %q", got, want)
+		}
+	}
+	for _, leaked := range []string{path, "player_data_id=", "tribe_data_id=", "abc.arktributetribe"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted tribute output %q contains private detail %q", got, leaked)
 		}
 	}
 }
@@ -535,6 +586,28 @@ func createSyntheticEmptySave(t *testing.T, path string) {
 func createSyntheticArchive(t *testing.T, path string, className string) {
 	t.Helper()
 	testfixtures.WriteArchive(t, path, className)
+}
+
+func createSyntheticTribute(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
+	t.Helper()
+	var buf bytes.Buffer
+	writeTributeIDs(t, &buf, playerIDs)
+	writeTributeIDs(t, &buf, tribeIDs)
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write tribute fixture: %v", err)
+	}
+}
+
+func writeTributeIDs(t *testing.T, buf *bytes.Buffer, ids []uint64) {
+	t.Helper()
+	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
+		t.Fatalf("write tribute count: %v", err)
+	}
+	for _, id := range ids {
+		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
+			t.Fatalf("write tribute id: %v", err)
+		}
+	}
 }
 
 func assertPrivateFileMode(t *testing.T, path string) {

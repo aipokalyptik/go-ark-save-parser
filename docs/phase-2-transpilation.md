@@ -7,8 +7,8 @@ enough that oracle-derived tests can run against translated packages.
 
 - Preserve upstream behavior first, even when the shape is not idiomatic Go.
 - Keep FTP and RCON out of scope.
-- Support local `.ark`, `.arkprofile`, `.arktribe`, and local cluster files where
-  fixtures exist.
+- Support local `.ark`, `.arkprofile`, `.arktribe`, local cluster files, and
+  local tribute index files where fixtures exist.
 - Treat mutation APIs as experimental and structurally tested only.
 - Add tests before implementation code for each behavior slice.
 - Keep private oracle data under `.oracle/`; committed tests must use synthetic
@@ -110,7 +110,10 @@ enough that oracle-derived tests can run against translated packages.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
       richer local cluster item/dino domain models, and complete model-specific
       JSON APIs.
-- [ ] Port legacy `.arktributetribe` local tribute archive parsing.
+- [x] Port compact `.arktributetribe` / `.arktributetribetribe` local tribute
+      index parsing for player-data and tribe-data ID lists.
+- [ ] Port legacy archive object parsing for any other runnable local oracle path
+      that is not covered by modern archive or compact tribute index formats.
 - [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation

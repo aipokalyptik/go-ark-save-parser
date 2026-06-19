@@ -129,6 +129,7 @@ Supported local inputs:
 - `.arkprofile`
 - `.arktribe`
 - extensionless local cluster files when present
+- `.arktributetribe` and `.arktributetribetribe` local tribute index files
 
 Intentionally unsupported:
 
@@ -136,5 +137,5 @@ Intentionally unsupported:
 - RCON
 - live server control or validation
 
-Legacy `.arktributetribe` parsing remains unsupported until a local-file oracle
-path proves enough format behavior to port safely.
+Legacy archive object parsing remains unsupported where an input is not one of
+the modern local archive formats or the compact local tribute index format.

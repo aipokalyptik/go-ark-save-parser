@@ -5,8 +5,9 @@ Offline Go port of
 reading Ark Survival Ascended save data from local files.
 
 The goal is a portable, statically compiled base for command-line tools and Go
-libraries that inspect `.ark`, `.arkprofile`, `.arktribe`, and local cluster data
-without requiring Python, virtual environments, FTP, RCON, or live server access.
+libraries that inspect `.ark`, `.arkprofile`, `.arktribe`, local cluster data,
+and local tribute index files without requiring Python, virtual environments,
+FTP, RCON, or live server access.
 
 ## Current Status
 
@@ -24,8 +25,9 @@ Implemented:
   Equipment, save-info JSON, and domain JSON API wrappers.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files.
-- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `export-json`,
-  `export-domain-json`, and `export-cluster-json` commands.
+- Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing.
+- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
+  `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
 Still in progress:
@@ -46,10 +48,7 @@ Supported target inputs:
 - Local `.arkprofile` player saves.
 - Local `.arktribe` tribe saves.
 - Extensionless local cluster archive files where present.
-
-Not yet supported:
-
-- Legacy `.arktributetribe` local tribute archive parsing.
+- Local `.arktributetribe` / `.arktributetribetribe` tribute index files.
 
 Out of scope:
 
@@ -132,6 +131,12 @@ Inspect local cluster uploads:
 
 ```sh
 ./bin/arksave cluster /path/to/cluster-directory-or-file
+```
+
+Inspect local tribute indexes:
+
+```sh
+./bin/arksave tribute /path/to/tribute-directory-or-file
 ```
 
 Create an experimental mutation copy or remove an object from a copied save:

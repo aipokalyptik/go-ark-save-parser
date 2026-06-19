@@ -14,6 +14,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
 	"github.com/google/uuid"
 )
 
@@ -59,6 +60,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("cluster requires a local cluster file or directory path")
 		}
 		return cluster(args[1], out, opts)
+	case "tribute":
+		if len(args) != 2 {
+			return fmt.Errorf("tribute requires a local .arktributetribe file or directory path")
+		}
+		return tribute(args[1], out, opts)
 	case "export-json":
 		if len(args) != 3 {
 			return fmt.Errorf("export-json requires a local .ark path and explicit output path")
@@ -107,6 +113,7 @@ func usage(out io.Writer) error {
   arksave [--redact] players <player.arkprofile>
   arksave [--redact] tribes <tribe.arktribe>
   arksave [--redact] cluster <cluster-file-or-directory>
+  arksave [--redact] tribute <tribute-file-or-directory>
   arksave [--redact] export-json <save.ark> <out.json>
   arksave [--redact] export-domain-json <save.ark> <dinos|structures|equipment|stackables|bases> <out.json>
   arksave [--redact] export-cluster-json <cluster-file> <out.json>
@@ -256,6 +263,39 @@ func cluster(path string, out io.Writer, opts runOptions) error {
 	return printClusterSummary(out, data, opts)
 }
 
+func tribute(path string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		entries, err := arktribute.OpenDirectory(path)
+		if err != nil {
+			return err
+		}
+		if len(entries) == 0 {
+			_, err = fmt.Fprintf(out, "Tribute directory: %s\nFiles: 0\n", displayString(path, opts))
+			return err
+		}
+		for i, entry := range entries {
+			if i > 0 {
+				if _, err := fmt.Fprintln(out); err != nil {
+					return err
+				}
+			}
+			if err := printTributeSummary(out, entry, opts); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	data, err := arktribute.Open(path)
+	if err != nil {
+		return err
+	}
+	return printTributeSummary(out, data, opts)
+}
+
 func exportJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
 	save, err := arksave.Open(path)
 	if err != nil {
@@ -385,6 +425,26 @@ func printArchiveSummary(out io.Writer, label string, path string, version int32
 	}
 	for _, object := range objects {
 		if _, err := fmt.Fprintf(out, "  %s\n", object.ClassName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func printTributeSummary(out io.Writer, data *arktribute.Data, opts runOptions) error {
+	if _, err := fmt.Fprintf(out, "Tribute file: %s\nPlayer data IDs: %d\nTribe data IDs: %d\n", displayString(data.Path, opts), len(data.PlayerDataIDs), len(data.TribeDataIDs)); err != nil {
+		return err
+	}
+	if opts.Redact {
+		return nil
+	}
+	for _, id := range data.PlayerDataIDs {
+		if _, err := fmt.Fprintf(out, "  player_data_id=%d\n", id); err != nil {
+			return err
+		}
+	}
+	for _, id := range data.TribeDataIDs {
+		if _, err := fmt.Fprintf(out, "  tribe_data_id=%d\n", id); err != nil {
 			return err
 		}
 	}
