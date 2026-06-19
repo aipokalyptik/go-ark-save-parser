@@ -31,23 +31,18 @@ func (s *StackableAPI) Count(items map[uuid.UUID]arkobject.InventoryItem) int32 
 }
 
 func (s *StackableAPI) All() (map[uuid.UUID]arkobject.InventoryItem, error) {
-	ids, err := s.save.ObjectIDs()
+	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return s.IsApplicableBlueprint(info.ClassName)
+	})
 	if err != nil {
 		return nil, err
 	}
 	out := map[uuid.UUID]arkobject.InventoryItem{}
-	for _, id := range ids {
-		object, err := s.save.Object(id)
-		if err != nil {
-			return nil, err
-		}
-		if !s.IsApplicableBlueprint(object.Blueprint) {
+	for _, info := range objects {
+		if boolProperty(info.Object, "bIsBlueprint") || boolProperty(info.Object, "bIsEngram") {
 			continue
 		}
-		if boolProperty(object, "bIsBlueprint") || boolProperty(object, "bIsEngram") {
-			continue
-		}
-		out[id] = arkobject.InventoryItemFromObject(object)
+		out[info.UUID] = arkobject.InventoryItemFromObject(info.Object)
 	}
 	return out, nil
 }

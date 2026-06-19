@@ -134,6 +134,22 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if len(infos) != 2 || infos[0].UUID != objectID || infos[0].ClassName != "Blueprint'/Game/Test.Test_C'" {
 		t.Fatalf("ObjectClassInfos() = %#v", infos)
 	}
+
+	parsed, err := save.ParsedObjects(nil)
+	if err != nil {
+		t.Fatalf("ParsedObjects(nil) error = %v", err)
+	}
+	if len(parsed) != 2 || parsed[0].UUID != objectID || parsed[0].Object.Blueprint != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("ParsedObjects(nil) = %#v", parsed)
+	}
+
+	filteredParsed, err := save.ParsedObjectsByClassContains("/Game/Test")
+	if err != nil {
+		t.Fatalf("ParsedObjectsByClassContains(/Game/Test) error = %v", err)
+	}
+	if len(filteredParsed) != 1 || filteredParsed[0].UUID != objectID {
+		t.Fatalf("ParsedObjectsByClassContains(/Game/Test) = %#v, want [%s]", filteredParsed, objectID)
+	}
 }
 
 func syntheticActorTransforms(id uuid.UUID) []byte {

@@ -27,24 +27,19 @@ func (d *DinoAPI) IsApplicableBlueprint(blueprint string) bool {
 }
 
 func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
-	ids, err := d.save.ObjectIDs()
+	objects, err := d.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return d.IsApplicableBlueprint(info.ClassName)
+	})
 	if err != nil {
 		return nil, err
 	}
 	out := map[uuid.UUID]arkobject.Dino{}
-	for _, id := range ids {
-		object, err := d.save.Object(id)
-		if err != nil {
-			return nil, err
-		}
-		if !d.IsApplicableBlueprint(object.Blueprint) {
-			continue
-		}
+	for _, info := range objects {
 		var location *arkobject.ActorTransform
-		if transform, ok := d.save.ActorTransform(id); ok {
+		if transform, ok := d.save.ActorTransform(info.UUID); ok {
 			location = &transform
 		}
-		out[id] = arkobject.DinoFromObject(object, location)
+		out[info.UUID] = arkobject.DinoFromObject(info.Object, location)
 	}
 	return out, nil
 }

@@ -17,27 +17,22 @@ func NewStructure(save *arksave.Save) *StructureAPI {
 }
 
 func (s *StructureAPI) All() (map[uuid.UUID]arkobject.Structure, error) {
-	ids, err := s.save.ObjectIDs()
+	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName)
+	})
 	if err != nil {
 		return nil, err
 	}
 	out := map[uuid.UUID]arkobject.Structure{}
-	for _, id := range ids {
-		object, err := s.save.Object(id)
-		if err != nil {
-			return nil, err
-		}
-		if !isStructureBlueprint(object.Blueprint) {
-			continue
-		}
-		if _, ok := object.Value("StructureID"); !ok {
+	for _, info := range objects {
+		if _, ok := info.Object.Value("StructureID"); !ok {
 			continue
 		}
 		var location *arkobject.ActorTransform
-		if transform, ok := s.save.ActorTransform(id); ok {
+		if transform, ok := s.save.ActorTransform(info.UUID); ok {
 			location = &transform
 		}
-		out[id] = arkobject.StructureFromObject(object, location)
+		out[info.UUID] = arkobject.StructureFromObject(info.Object, location)
 	}
 	return out, nil
 }

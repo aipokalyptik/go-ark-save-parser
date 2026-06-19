@@ -38,24 +38,22 @@ func (e *EquipmentAPI) KindForBlueprint(blueprint string) arkobject.EquipmentKin
 }
 
 func (e *EquipmentAPI) All() (map[uuid.UUID]arkobject.EquipmentItem, error) {
-	ids, err := e.save.ObjectIDs()
+	objects, err := e.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return e.IsApplicableBlueprint(info.ClassName)
+	})
 	if err != nil {
 		return nil, err
 	}
 	out := map[uuid.UUID]arkobject.EquipmentItem{}
-	for _, id := range ids {
-		object, err := e.save.Object(id)
-		if err != nil {
-			return nil, err
-		}
-		kind := e.KindForBlueprint(object.Blueprint)
+	for _, info := range objects {
+		kind := e.KindForBlueprint(info.Object.Blueprint)
 		if kind == arkobject.EquipmentUnknown {
 			continue
 		}
-		if boolProperty(object, "bIsEngram") {
+		if boolProperty(info.Object, "bIsEngram") {
 			continue
 		}
-		out[id] = arkobject.EquipmentItemFromObject(object, kind)
+		out[info.UUID] = arkobject.EquipmentItemFromObject(info.Object, kind)
 	}
 	return out, nil
 }
