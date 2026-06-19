@@ -59,7 +59,8 @@ enough that oracle-derived tests can run against translated packages.
 ### Offline APIs
 
 - [x] Port General API object queries.
-- [ ] Port Player and Tribe APIs for local files and save-contained data.
+- [x] Add archive metadata parser and local `.arkprofile` / `.arktribe` file-open wrappers.
+- [ ] Port full Player and Tribe APIs for local files and save-contained data.
 - [ ] Port Dino, Structure, Equipment, Stackable, Base, and JSON APIs.
 - [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
