@@ -46,6 +46,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests for unknown struct
       fallback behavior.
 - [x] Add tests and parsing for object-reference properties and simple value arrays.
+- [x] Add tests and generic parsing for struct arrays.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
 - [x] Add raw fallback preservation for packed unknown structs.

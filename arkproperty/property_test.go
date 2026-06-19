@@ -261,6 +261,68 @@ func TestParseArrayPropertyReadsIntValues(t *testing.T) {
 	}
 }
 
+func TestParseArrayPropertyReadsGenericStructValues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Items",
+		2: "ArrayProperty",
+		3: "StructProperty",
+		4: "ItemStruct",
+		5: "Durability",
+		6: "IntProperty",
+		7: "None",
+	})
+
+	var element bytes.Buffer
+	writeName(&element, 5)
+	writeName(&element, 6)
+	writeInt32(&element, 4)
+	writeInt32(&element, 0)
+	element.WriteByte(0)
+	writeInt32(&element, 88)
+	writeName(&element, 7)
+
+	dataSize := uint32(4 + element.Len())
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, int32(dataSize))
+	writeName(stream, 3)
+	writeInt32(stream, 1)
+	writeName(stream, 4)
+	writeUInt32(stream, 1)
+	writeName(stream, 4)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, dataSize)
+	stream.WriteByte(0)
+	writeUInt32(stream, 1)
+	stream.Write(element.Bytes())
+	writeName(stream, 7)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeArray {
+		t.Fatalf("ParseAll() = %#v, want one array property", props)
+	}
+	got, ok := props[0].Value.(Array)
+	if !ok {
+		t.Fatalf("ArrayProperty value type = %T, want Array", props[0].Value)
+	}
+	if got.ElementType != TypeStruct || got.StructType != "ItemStruct" || len(got.Values) != 1 {
+		t.Fatalf("Array = %#v, want one ItemStruct value", got)
+	}
+	container, ok := got.Values[0].(Container)
+	if !ok {
+		t.Fatalf("struct array element type = %T, want Container", got.Values[0])
+	}
+	value, ok := container.Value("Durability")
+	if !ok || value != int32(88) {
+		t.Fatalf("Durability = %#v, %v; want 88, true", value, ok)
+	}
+}
+
 func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

@@ -40,6 +40,7 @@ type ObjectReference struct {
 
 type Array struct {
 	ElementType Type
+	StructType  string
 	Values      []any
 }
 
@@ -631,8 +632,37 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 	if err != nil {
 		return Array{}, err
 	}
-	if _, err := r.ReadInt32(); err != nil {
+	nrNames, err := r.ReadInt32()
+	if err != nil {
 		return Array{}, err
+	}
+	if arrayTypeName == "StructProperty" {
+		structType, err := r.ReadName("")
+		if err != nil {
+			return Array{}, err
+		}
+		dataSize, err := readInlineStructHeader(r, uint32(nrNames))
+		if err != nil {
+			return Array{}, err
+		}
+		bodyStart := r.Position()
+		count, err := r.ReadUInt32()
+		if err != nil {
+			return Array{}, err
+		}
+		arrayEnd := bodyStart + int(dataSize)
+		values := make([]any, 0, count)
+		for i := uint32(0); i < count; i++ {
+			props, err := ParseAll(r, arrayEnd)
+			if err != nil {
+				return Array{}, err
+			}
+			values = append(values, Container{Properties: props})
+		}
+		if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+			return Array{}, err
+		}
+		return Array{ElementType: TypeStruct, StructType: structType, Values: values}, nil
 	}
 	if _, err := r.ReadUInt32(); err != nil {
 		return Array{}, err
