@@ -124,6 +124,53 @@ func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIFiltersLocalPlayersByNamesAndUniqueID(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+		TribeID:       777,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		UniqueID:      "eos-scout",
+		TribeID:       888,
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	byCharacter, err := api.PlayersByCharacterName("Survivor")
+	if err != nil {
+		t.Fatalf("PlayersByCharacterName() error = %v", err)
+	}
+	if len(byCharacter) != 1 || byCharacter[0].PlayerDataID != 42 {
+		t.Fatalf("PlayersByCharacterName() = %#v, want player 42", byCharacter)
+	}
+	byPlatform, err := api.PlayersByPlayerName("OtherPlatform")
+	if err != nil {
+		t.Fatalf("PlayersByPlayerName() error = %v", err)
+	}
+	if len(byPlatform) != 1 || byPlatform[0].PlayerDataID != 43 {
+		t.Fatalf("PlayersByPlayerName() = %#v, want player 43", byPlatform)
+	}
+	player, ok, err := api.PlayerByUniqueID("eos-survivor")
+	if err != nil {
+		t.Fatalf("PlayerByUniqueID() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 42 {
+		t.Fatalf("PlayerByUniqueID() = %#v, %v; want player 42, true", player, ok)
+	}
+	if _, ok, err := api.PlayerByUniqueID("missing"); err != nil || ok {
+		t.Fatalf("PlayerByUniqueID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+}
+
 func TestPlayerAPITribeSummariesParsesLocalTribes(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
@@ -168,6 +215,59 @@ func TestPlayerAPITribeDetailsParsesAndFindsLocalTribes(t *testing.T) {
 	}
 	if _, ok, err := api.TribeByID(999); err != nil || ok {
 		t.Fatalf("TribeByID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+}
+
+func TestPlayerAPIFiltersLocalTribesByNameOwnerAndMembers(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Ada", "Grace"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Builders",
+		TribeID:   67890,
+		OwnerID:   99,
+		NumDinos:  3,
+		Members:   []string{"Linus"},
+		MemberIDs: []int32{99},
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	byName, err := api.TribesByName("Porters")
+	if err != nil {
+		t.Fatalf("TribesByName() error = %v", err)
+	}
+	if len(byName) != 1 || byName[0].TribeID != 12345 {
+		t.Fatalf("TribesByName() = %#v, want tribe 12345", byName)
+	}
+	byOwner, err := api.TribesByOwnerID(99)
+	if err != nil {
+		t.Fatalf("TribesByOwnerID() error = %v", err)
+	}
+	if len(byOwner) != 1 || byOwner[0].TribeID != 67890 {
+		t.Fatalf("TribesByOwnerID() = %#v, want tribe 67890", byOwner)
+	}
+	byMemberName, err := api.TribesByMemberName("Grace")
+	if err != nil {
+		t.Fatalf("TribesByMemberName() error = %v", err)
+	}
+	if len(byMemberName) != 1 || byMemberName[0].TribeID != 12345 {
+		t.Fatalf("TribesByMemberName() = %#v, want tribe 12345", byMemberName)
+	}
+	byMemberID, err := api.TribesByMemberID(43)
+	if err != nil {
+		t.Fatalf("TribesByMemberID() error = %v", err)
+	}
+	if len(byMemberID) != 1 || byMemberID[0].TribeID != 12345 {
+		t.Fatalf("TribesByMemberID() = %#v, want tribe 12345", byMemberID)
 	}
 }
 

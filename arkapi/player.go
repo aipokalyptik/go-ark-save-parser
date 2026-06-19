@@ -125,14 +125,45 @@ func (p *PlayerAPI) PlayerByDataID(id uint64) (arkobject.Player, bool, error) {
 	return arkobject.Player{}, false, nil
 }
 
+func (p *PlayerAPI) PlayerByUniqueID(id string) (arkobject.Player, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, false, err
+	}
+	for _, player := range players {
+		if player.UniqueID == id {
+			return player, true, nil
+		}
+	}
+	return arkobject.Player{}, false, nil
+}
+
 func (p *PlayerAPI) PlayersByTribeID(tribeID int32) ([]arkobject.Player, error) {
+	return p.filterPlayers(func(player arkobject.Player) bool {
+		return player.TribeID == tribeID
+	})
+}
+
+func (p *PlayerAPI) PlayersByCharacterName(name string) ([]arkobject.Player, error) {
+	return p.filterPlayers(func(player arkobject.Player) bool {
+		return player.CharacterName == name
+	})
+}
+
+func (p *PlayerAPI) PlayersByPlayerName(name string) ([]arkobject.Player, error) {
+	return p.filterPlayers(func(player arkobject.Player) bool {
+		return player.PlayerName == name
+	})
+}
+
+func (p *PlayerAPI) filterPlayers(match func(arkobject.Player) bool) ([]arkobject.Player, error) {
 	players, err := p.Players()
 	if err != nil {
 		return nil, err
 	}
 	out := make([]arkobject.Player, 0)
 	for _, player := range players {
-		if player.TribeID == tribeID {
+		if match(player) {
 			out = append(out, player)
 		}
 	}
@@ -218,4 +249,60 @@ func (p *PlayerAPI) TribeByID(id int32) (arkobject.Tribe, bool, error) {
 		}
 	}
 	return arkobject.Tribe{}, false, nil
+}
+
+func (p *PlayerAPI) TribesByName(name string) ([]arkobject.Tribe, error) {
+	return p.filterTribes(func(tribe arkobject.Tribe) bool {
+		return tribe.Name == name
+	})
+}
+
+func (p *PlayerAPI) TribesByOwnerID(ownerID int32) ([]arkobject.Tribe, error) {
+	return p.filterTribes(func(tribe arkobject.Tribe) bool {
+		return tribe.OwnerID == ownerID
+	})
+}
+
+func (p *PlayerAPI) TribesByMemberName(name string) ([]arkobject.Tribe, error) {
+	return p.filterTribes(func(tribe arkobject.Tribe) bool {
+		return containsString(tribe.Members, name)
+	})
+}
+
+func (p *PlayerAPI) TribesByMemberID(id int32) ([]arkobject.Tribe, error) {
+	return p.filterTribes(func(tribe arkobject.Tribe) bool {
+		return containsInt32(tribe.MemberIDs, id)
+	})
+}
+
+func (p *PlayerAPI) filterTribes(match func(arkobject.Tribe) bool) ([]arkobject.Tribe, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Tribe, 0)
+	for _, tribe := range tribes {
+		if match(tribe) {
+			out = append(out, tribe)
+		}
+	}
+	return out, nil
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func containsInt32(values []int32, want int32) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }

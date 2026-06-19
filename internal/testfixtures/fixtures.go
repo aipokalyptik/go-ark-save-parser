@@ -68,12 +68,33 @@ func WriteArchive(tb testing.TB, path string, className string) {
 
 func WritePlayerArchive(tb testing.TB, path string) {
 	tb.Helper()
+	WritePlayerArchiveWithOptions(tb, path, PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		TribeID:       777,
+	})
+}
+
+type PlayerArchiveOptions struct {
+	PlayerDataID  int32
+	CharacterName string
+	PlayerName    string
+	UniqueID      string
+	TribeID       int32
+}
+
+func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiveOptions) {
+	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var myData bytes.Buffer
-	WriteNameIntProperty(&myData, "PlayerDataID", 42)
-	WriteNameStringProperty(&myData, "PlayerCharacterName", "Survivor")
-	WriteNameStringProperty(&myData, "PlayerName", "PlatformName")
-	WriteNameIntProperty(&myData, "TribeID", 777)
+	WriteNameIntProperty(&myData, "PlayerDataID", opts.PlayerDataID)
+	WriteNameStringProperty(&myData, "PlayerCharacterName", opts.CharacterName)
+	WriteNameStringProperty(&myData, "PlayerName", opts.PlayerName)
+	if opts.UniqueID != "" {
+		WriteNameStringProperty(&myData, "UniqueID", opts.UniqueID)
+	}
+	WriteNameIntProperty(&myData, "TribeID", opts.TribeID)
 	WriteArkString(&myData, "None")
 
 	var buf bytes.Buffer
@@ -91,12 +112,41 @@ func WritePlayerArchive(tb testing.TB, path string) {
 
 func WriteTribeArchive(tb testing.TB, path string) {
 	tb.Helper()
+	WriteTribeArchiveWithOptions(tb, path, TribeArchiveOptions{
+		Name:     "Porters",
+		TribeID:  12345,
+		OwnerID:  42,
+		NumDinos: 7,
+	})
+}
+
+type TribeArchiveOptions struct {
+	Name      string
+	TribeID   int32
+	OwnerID   int32
+	NumDinos  int32
+	Members   []string
+	MemberIDs []int32
+	TribeLog  []string
+}
+
+func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveOptions) {
+	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var tribeData bytes.Buffer
-	WriteNameStringProperty(&tribeData, "TribeName", "Porters")
-	WriteNameIntProperty(&tribeData, "TribeID", 12345)
-	WriteNameIntProperty(&tribeData, "OwnerPlayerDataId", 42)
-	WriteNameIntProperty(&tribeData, "NumTribeDinos", 7)
+	WriteNameStringProperty(&tribeData, "TribeName", opts.Name)
+	WriteNameIntProperty(&tribeData, "TribeID", opts.TribeID)
+	WriteNameIntProperty(&tribeData, "OwnerPlayerDataId", opts.OwnerID)
+	WriteNameIntProperty(&tribeData, "NumTribeDinos", opts.NumDinos)
+	if len(opts.Members) > 0 {
+		WriteNameStringArrayProperty(&tribeData, "MembersPlayerName", opts.Members)
+	}
+	if len(opts.MemberIDs) > 0 {
+		WriteNameIntArrayProperty(&tribeData, "MembersPlayerDataID", opts.MemberIDs)
+	}
+	if len(opts.TribeLog) > 0 {
+		WriteNameStringArrayProperty(&tribeData, "TribeLog", opts.TribeLog)
+	}
 	WriteArkString(&tribeData, "None")
 
 	var buf bytes.Buffer
@@ -180,6 +230,37 @@ func WriteNameStringProperty(buf *bytes.Buffer, name string, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	WriteArkString(buf, value)
+}
+
+func WriteNameStringArrayProperty(buf *bytes.Buffer, name string, values []string) {
+	bodySize := 4
+	for _, value := range values {
+		bodySize += 4 + len(value) + 1
+	}
+	writeNameArrayHeader(buf, name, "StrProperty", bodySize)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, value := range values {
+		WriteArkString(buf, value)
+	}
+}
+
+func WriteNameIntArrayProperty(buf *bytes.Buffer, name string, values []int32) {
+	bodySize := 4 + len(values)*4
+	writeNameArrayHeader(buf, name, "IntProperty", bodySize)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, value := range values {
+		_ = binary.Write(buf, binary.LittleEndian, value)
+	}
+}
+
+func writeNameArrayHeader(buf *bytes.Buffer, name string, elementType string, bodySize int) {
+	WriteArkString(buf, name)
+	WriteArkString(buf, "ArrayProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	WriteArkString(buf, elementType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	buf.WriteByte(0)
 }
 
 func WriteNameStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
