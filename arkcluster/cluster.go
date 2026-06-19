@@ -11,7 +11,14 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
 )
+
+const DefaultMaxArchiveFileSize = 512 << 20
+
+type Options struct {
+	MaxFileSize int64
+}
 
 type File struct {
 	ID   string
@@ -67,7 +74,11 @@ func Discover(dir string) ([]File, error) {
 }
 
 func Open(path string) (*Data, error) {
-	raw, err := os.ReadFile(path)
+	return OpenWithOptions(path, Options{})
+}
+
+func OpenWithOptions(path string, opts Options) (*Data, error) {
+	raw, err := safefile.ReadFile(path, maxFileSize(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -83,19 +94,30 @@ func Open(path string) (*Data, error) {
 }
 
 func OpenDirectory(dir string) ([]*Data, error) {
+	return OpenDirectoryWithOptions(dir, Options{})
+}
+
+func OpenDirectoryWithOptions(dir string, opts Options) ([]*Data, error) {
 	files, err := Discover(dir)
 	if err != nil {
 		return nil, err
 	}
 	out := make([]*Data, 0, len(files))
 	for _, file := range files {
-		data, err := Open(file.Path)
+		data, err := OpenWithOptions(file.Path, opts)
 		if err != nil {
 			return nil, err
 		}
 		out = append(out, data)
 	}
 	return out, nil
+}
+
+func maxFileSize(opts Options) int64 {
+	if opts.MaxFileSize != 0 {
+		return opts.MaxFileSize
+	}
+	return DefaultMaxArchiveFileSize
 }
 
 func (d *Data) parsePayload() error {

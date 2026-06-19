@@ -2,7 +2,9 @@ package arkbinary
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
+	"errors"
 	"math"
 	"testing"
 
@@ -204,6 +206,30 @@ func TestInflateZlibData(t *testing.T) {
 	}
 	if string(got) != "hello" {
 		t.Fatalf("InflateZlib() = %q, want hello", got)
+	}
+}
+
+func TestInflateZlibWithLimitRejectsOversizedOutput(t *testing.T) {
+	var compressed bytes.Buffer
+	writer := zlib.NewWriter(&compressed)
+	if _, err := writer.Write([]byte("hello")); err != nil {
+		t.Fatalf("zlib write: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("zlib close: %v", err)
+	}
+
+	got, err := InflateZlibWithLimit(compressed.Bytes(), 5)
+	if err != nil {
+		t.Fatalf("InflateZlibWithLimit(exact) error = %v", err)
+	}
+	if string(got) != "hello" {
+		t.Fatalf("InflateZlibWithLimit(exact) = %q, want hello", got)
+	}
+
+	_, err = InflateZlibWithLimit(compressed.Bytes(), 4)
+	if !errors.Is(err, ErrInflatedDataTooLarge) {
+		t.Fatalf("InflateZlibWithLimit(small) error = %v, want ErrInflatedDataTooLarge", err)
 	}
 }
 

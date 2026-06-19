@@ -89,6 +89,14 @@ omits archive class details in profile/tribe summaries, omits cluster upload
 details, and writes aggregate JSON exports without object, domain item, or
 cluster item/dino detail records.
 
+Profile, tribe, and local cluster archive reads are guarded by a default 512 MiB
+stat-before-read limit so accidental giant files fail before whole-file memory
+allocation. Use `arkprofile.OpenPlayerProfileWithOptions`,
+`arkprofile.OpenTribeSaveWithOptions`, `arkcluster.OpenWithOptions`, or
+`arkcluster.OpenDirectoryWithOptions` when a tool needs a tighter or looser
+local archive limit. Map `.ark` saves are SQLite-backed and are not read as a
+single byte slice by the public open path.
+
 ## Adding Fixtures
 
 Prefer synthetic fixtures in tests. If a real save is required:

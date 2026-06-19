@@ -18,6 +18,8 @@ offline parser without Python or private chat context.
       private file permissions.
 - [x] Add and document opt-in CLI redaction for aggregate summaries and JSON
       exports.
+- [x] Add basic large-file guards for whole-file profile, tribe, and local
+      cluster archive reads.
 - [x] Document how to add new oracle fixtures safely.
 - [x] Add standalone Go examples for implemented offline workflows.
 
@@ -44,6 +46,7 @@ offline parser without Python or private chat context.
 - Mutation helpers are structurally tested only and require live-server manual
   validation before being treated as production-safe for real servers.
 - Latest read-only review found remaining production blockers in oracle parity
-  evidence, large-file hardening, and full domain/API parity. Runtime redaction
-  now exists for supported CLI summaries and JSON exports, but future commands
-  still need explicit privacy review before committed output is considered safe.
+  evidence and full domain/API parity. Runtime redaction now exists for
+  supported CLI summaries and JSON exports, and whole-file profile/tribe/cluster
+  reads have default size guards. Future commands still need explicit privacy
+  and resource-bound review before committed output is considered safe.

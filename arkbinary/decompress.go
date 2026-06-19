@@ -3,17 +3,35 @@ package arkbinary
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 	"fmt"
 	"io"
 )
 
+var ErrInflatedDataTooLarge = errors.New("inflated data exceeds maximum allowed size")
+
 func InflateZlib(data []byte) ([]byte, error) {
+	return InflateZlibWithLimit(data, 0)
+}
+
+func InflateZlibWithLimit(data []byte, maxBytes int64) ([]byte, error) {
 	reader, err := zlib.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
 	defer reader.Close()
-	return io.ReadAll(reader)
+	if maxBytes <= 0 {
+		return io.ReadAll(reader)
+	}
+	limited := &io.LimitedReader{R: reader, N: maxBytes + 1}
+	out, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(out)) > maxBytes {
+		return nil, fmt.Errorf("%w: limit %d", ErrInflatedDataTooLarge, maxBytes)
+	}
+	return out, nil
 }
 
 func WildcardDecompress(input []byte) ([]byte, error) {

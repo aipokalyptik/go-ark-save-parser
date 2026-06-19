@@ -2,12 +2,18 @@ package arkprofile
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
 )
+
+const DefaultMaxArchiveFileSize = 512 << 20
+
+type Options struct {
+	MaxFileSize int64
+}
 
 type PlayerProfile struct {
 	Path       string
@@ -30,7 +36,11 @@ type TribeSummary struct {
 }
 
 func OpenPlayerProfile(path string) (*PlayerProfile, error) {
-	archive, err := openArchive(path)
+	return OpenPlayerProfileWithOptions(path, Options{})
+}
+
+func OpenPlayerProfileWithOptions(path string, opts Options) (*PlayerProfile, error) {
+	archive, err := openArchive(path, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,11 @@ func (p *PlayerProfile) Player() (arkobject.Player, error) {
 }
 
 func OpenTribeSave(path string) (*TribeSave, error) {
-	archive, err := openArchive(path)
+	return OpenTribeSaveWithOptions(path, Options{})
+}
+
+func OpenTribeSaveWithOptions(path string, opts Options) (*TribeSave, error) {
+	archive, err := openArchive(path, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +132,17 @@ func stringArrayValues(value any) []string {
 	}
 }
 
-func openArchive(path string) (*arkarchive.Archive, error) {
-	data, err := os.ReadFile(path)
+func openArchive(path string, opts Options) (*arkarchive.Archive, error) {
+	data, err := safefile.ReadFile(path, maxFileSize(opts))
 	if err != nil {
 		return nil, err
 	}
 	return arkarchive.Parse(data, arkarchive.Options{FromStore: true, Format: arkarchive.FormatAuto})
+}
+
+func maxFileSize(opts Options) int64 {
+	if opts.MaxFileSize != 0 {
+		return opts.MaxFileSize
+	}
+	return DefaultMaxArchiveFileSize
 }

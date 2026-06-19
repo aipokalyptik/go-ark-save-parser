@@ -1,10 +1,13 @@
 package arkprofile
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
@@ -41,6 +44,16 @@ func TestOpenPlayerProfilePlayerUsesParsedArchiveProperties(t *testing.T) {
 	}
 }
 
+func TestOpenPlayerProfileRejectsArchiveAboveConfiguredLimit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	writeSparseFile(t, path, 1024)
+
+	_, err := OpenPlayerProfileWithOptions(path, Options{MaxFileSize: 16})
+	if !errors.Is(err, safefile.ErrFileTooLarge) {
+		t.Fatalf("OpenPlayerProfileWithOptions() error = %v, want ErrFileTooLarge", err)
+	}
+}
+
 func TestOpenTribeSaveLoadsLocalArchiveFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
 	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
@@ -51,6 +64,16 @@ func TestOpenTribeSaveLoadsLocalArchiveFile(t *testing.T) {
 	}
 	if len(tribe.Archive.Objects) != 1 || tribe.Archive.Objects[0].ClassName != "/Script/ShooterGame.PrimalTribeData" {
 		t.Fatalf("Tribe archive objects = %#v", tribe.Archive.Objects)
+	}
+}
+
+func TestOpenTribeSaveRejectsArchiveAboveConfiguredLimit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	writeSparseFile(t, path, 1024)
+
+	_, err := OpenTribeSaveWithOptions(path, Options{MaxFileSize: 16})
+	if !errors.Is(err, safefile.ErrFileTooLarge) {
+		t.Fatalf("OpenTribeSaveWithOptions() error = %v, want ErrFileTooLarge", err)
 	}
 }
 
@@ -93,5 +116,20 @@ func TestOpenTribeSaveSummaryUsesParsedArchiveProperties(t *testing.T) {
 	}
 	if summary.Name != "Porters" || summary.TribeID != 12345 {
 		t.Fatalf("Summary() = %#v, want Porters/12345", summary)
+	}
+}
+
+func writeSparseFile(t *testing.T, path string, size int64) {
+	t.Helper()
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create sparse file: %v", err)
+	}
+	if err := file.Truncate(size); err != nil {
+		_ = file.Close()
+		t.Fatalf("truncate sparse file: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("close sparse file: %v", err)
 	}
 }

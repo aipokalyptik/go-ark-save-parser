@@ -108,6 +108,12 @@ Redacted summaries keep counts and versions but hide local paths, profile/tribe
 names, IDs, archive class lists, cluster upload details, and object/domain item
 details.
 
+Profile, tribe, and local cluster archive readers apply a default 512 MiB
+stat-before-read limit. Library callers that intentionally handle larger local
+archives can use the `Open...WithOptions` APIs in `arkprofile` and `arkcluster`
+to set a different limit. Zlib inflation also has an explicit bounded helper
+for callers that need to guard compressed payload expansion.
+
 CLI summaries and JSON exports are save-derived operational data. They can
 include local paths, class names, object IDs, player or tribe identifiers,
 locations, crafter names, and cluster upload identifiers depending on the
