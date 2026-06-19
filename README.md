@@ -21,6 +21,8 @@ Implemented:
   structs, struct arrays, simple arrays, simple maps, and simple sets.
 - Read-only General, Player/Tribe local-file, Dino, Structure, Base, Stackable,
   Equipment, and save-info JSON API wrappers.
+- Local cluster archive discovery and metadata loading for extensionless local
+  cluster files.
 - `arksave inspect`, `parse`, `players`, `tribes`, and `export-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
@@ -29,8 +31,8 @@ Still in progress:
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
 - Full domain models and APIs for dino stats/cryopods/pedigrees, full equipment
-  stats, parsed player/tribe properties, local cluster files, full bases, and
-  model-specific JSON export.
+  stats, parsed player/tribe properties, local cluster item/dino payloads, full
+  bases, and model-specific JSON export.
 - Mutation APIs. These will remain experimental and live-server-unverified.
 
 ## Scope
@@ -40,7 +42,11 @@ Supported target inputs:
 - Local `.ark` map saves.
 - Local `.arkprofile` player saves.
 - Local `.arktribe` tribe saves.
-- Local cluster files where present.
+- Extensionless local cluster archive files where present.
+
+Not yet supported:
+
+- Legacy `.arktributetribe` local tribute archive parsing.
 
 Out of scope:
 
