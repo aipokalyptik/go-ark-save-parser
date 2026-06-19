@@ -78,3 +78,14 @@ Committed files include only aggregate counts and classification notes. Private
 paths, hashes, snapshots, raw outputs, debug dumps, object bytes, player names,
 tribe names, and object identifiers remain under `.oracle/` and are ignored by
 git.
+
+## Go Smoke Verification
+
+The Go CLI built with `CGO_ENABLED=0` successfully inspected the private map save
+through `bin/arksave inspect`.
+
+Commit-safe observed values:
+
+- Save version: 14.
+- Object count: 2,164,851.
+- The object count matches the upstream Python testbench core parse result.
