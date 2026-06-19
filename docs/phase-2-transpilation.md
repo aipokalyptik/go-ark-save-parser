@@ -49,7 +49,7 @@ enough that oracle-derived tests can run against translated packages.
 
 ### Object Model
 
-- [ ] Port generic game object headers and property containers.
+- [x] Port generic game object headers and property containers.
 - [ ] Port actor transforms and map coordinate helpers.
 - [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
       player, tribe, and local cluster data models as read-first wrappers.
