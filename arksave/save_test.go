@@ -16,6 +16,8 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	objectBytes := syntheticObjectBytes(0x10000001)
+	secondObjectID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	secondObjectBytes := syntheticObjectBytes(0x10000005)
 	header := syntheticHeader()
 	actorTransforms := append(objectID[:], []byte{1, 2, 3, 4}...)
 
@@ -29,6 +31,7 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", actorTransforms)
 	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], objectBytes)
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, secondObjectID[:], secondObjectBytes)
 	if err := db.Close(); err != nil {
 		t.Fatalf("close fixture db: %v", err)
 	}
@@ -64,8 +67,8 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ObjectIDs() error = %v", err)
 	}
-	if len(ids) != 1 || ids[0] != objectID {
-		t.Fatalf("ObjectIDs() = %v, want [%s]", ids, objectID)
+	if len(ids) != 2 {
+		t.Fatalf("ObjectIDs() length = %d, want 2", len(ids))
 	}
 
 	className, err := save.ClassOf(objectID)
@@ -96,6 +99,22 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	}
 	if len(obj.Properties) != 1 || obj.Properties[0].Name != "Health" || obj.Properties[0].Type != arkproperty.TypeInt {
 		t.Fatalf("Object().Properties = %#v, want Health Int property", obj.Properties)
+	}
+
+	classIDs, err := save.ObjectIDsByClassContains("/Game/Test")
+	if err != nil {
+		t.Fatalf("ObjectIDsByClassContains() error = %v", err)
+	}
+	if len(classIDs) != 1 || classIDs[0] != objectID {
+		t.Fatalf("ObjectIDsByClassContains(/Game/Test) = %v, want [%s]", classIDs, objectID)
+	}
+
+	classes, err := save.Classes()
+	if err != nil {
+		t.Fatalf("Classes() error = %v", err)
+	}
+	if len(classes) != 2 || classes[0] != "Blueprint'/Game/Other.Other_C'" || classes[1] != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("Classes() = %#v, want two sorted classes", classes)
 	}
 }
 
@@ -141,7 +160,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(5))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(6))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -152,6 +171,8 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "IntProperty")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	writeArkString(&buf, "None")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
+	writeArkString(&buf, "Blueprint'/Game/Other.Other_C'")
 	return buf.Bytes()
 }
 

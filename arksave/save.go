@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -101,6 +103,68 @@ func (s *Save) ClassOf(id uuid.UUID) (string, error) {
 	}
 	r := arkbinary.NewReader(raw, s.names)
 	return r.ReadName("")
+}
+
+func (s *Save) Classes() ([]string, error) {
+	rows, err := s.db.Query(`select value from game`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	seen := map[string]struct{}{}
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		seen[className] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	classes := make([]string, 0, len(seen))
+	for className := range seen {
+		classes = append(classes, className)
+	}
+	sort.Strings(classes)
+	return classes, nil
+}
+
+func (s *Save) ObjectIDsByClassContains(substr string) ([]uuid.UUID, error) {
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		if !strings.Contains(className, substr) {
+			continue
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func (s *Save) Object(id uuid.UUID) (*arkobject.GameObject, error) {
