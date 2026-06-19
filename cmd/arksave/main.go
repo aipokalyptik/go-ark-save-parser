@@ -52,6 +52,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("export-json requires a local .ark path and explicit output path")
 		}
 		return exportJSON(args[1], args[2], out)
+	case "export-cluster-json":
+		if len(args) != 3 {
+			return fmt.Errorf("export-cluster-json requires a local cluster file path and explicit output path")
+		}
+		return exportClusterJSON(args[1], args[2], out)
 	case "mutate":
 		return mutate(args[1:], out)
 	case "ftp", "rcon":
@@ -69,6 +74,7 @@ func usage(out io.Writer) error {
   arksave tribes <tribe.arktribe>
   arksave cluster <cluster-file-or-directory>
   arksave export-json <save.ark> <out.json>
+  arksave export-cluster-json <cluster-file> <out.json>
   arksave mutate copy <save.ark> <out.ark>
   arksave mutate remove-object <save.ark> <out.ark> <uuid>
 
@@ -213,6 +219,22 @@ func exportJSON(path string, outputPath string, out io.Writer) error {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote JSON export: %s\n", outputPath)
+	return err
+}
+
+func exportClusterJSON(path string, outputPath string, out io.Writer) error {
+	data, err := arkcluster.Open(path)
+	if err != nil {
+		return err
+	}
+	raw, err := arkapi.ExportClusterDataJSON(data)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o644); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote cluster JSON export: %s\n", outputPath)
 	return err
 }
 

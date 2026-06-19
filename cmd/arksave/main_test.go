@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
@@ -169,6 +170,33 @@ func TestExportJSONWritesSaveInfoToExplicitPath(t *testing.T) {
 	}
 	if decoded.MapName != "Valguero_WP" || decoded.SaveVersion != 12 || decoded.ObjectCount != 1 {
 		t.Fatalf("exported json = %#v", decoded)
+	}
+}
+
+func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
+	dir := t.TempDir()
+	clusterPath := filepath.Join(dir, "EOS_abc123")
+	outPath := filepath.Join(dir, "cluster.json")
+	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"export-cluster-json", clusterPath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-cluster-json) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-cluster-json output %q does not mention %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(cluster json) error = %v", err)
+	}
+	var decoded arkapi.ClusterDataInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.ID != "EOS_abc123" || decoded.ArchiveVersion != 7 || decoded.ObjectCount != 1 {
+		t.Fatalf("decoded ClusterDataInfo = %#v", decoded)
 	}
 }
 

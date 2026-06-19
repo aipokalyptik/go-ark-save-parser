@@ -24,8 +24,8 @@ Implemented:
   Equipment, and save-info JSON API wrappers.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files.
-- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, and `export-json`
-  commands.
+- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `export-json`,
+  and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 
 Still in progress:
@@ -76,6 +76,12 @@ Export save metadata and object classes to JSON:
 
 ```sh
 ./bin/arksave export-json /path/to/Valguero_WP.ark /tmp/save_info.json
+```
+
+Export local cluster upload summaries to JSON:
+
+```sh
+./bin/arksave export-cluster-json /path/to/EOS_abc123 /tmp/cluster.json
 ```
 
 Inspect local profile and tribe archive metadata:
