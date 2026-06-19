@@ -1,0 +1,44 @@
+# Private oracle workspace and extracted live save data.
+.oracle/
+
+# ARK save data and local debug artifacts must never be committed.
+*.ark
+*.arkprofile
+*.arktribe
+*.arktributetribe
+*.arktributetribetribe
+*.arkbackup
+debug_dumps/
+snapshots/
+test_save/
+test_data/
+__saves/
+
+# Generated private outputs.
+oracle-output/
+private-output/
+*.private.json
+*.private.txt
+*.private.log
+
+# Local environments and caches.
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Go build/test artifacts.
+bin/
+dist/
+coverage.out
+*.test
+
+# Editor and OS noise.
+.DS_Store
+*.swp
+*.swo
