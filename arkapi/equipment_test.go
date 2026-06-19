@@ -78,6 +78,48 @@ func TestEquipmentAPIByCrafterFiltersLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
+	save := openSyntheticEquipmentFilterSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	equipped, err := api.Equipped()
+	if err != nil {
+		t.Fatalf("Equipped() error = %v", err)
+	}
+	if len(equipped) != 1 {
+		t.Fatalf("Equipped() length = %d, want 1", len(equipped))
+	}
+	blueprints, err := api.Blueprints()
+	if err != nil {
+		t.Fatalf("Blueprints() error = %v", err)
+	}
+	if len(blueprints) != 1 {
+		t.Fatalf("Blueprints() length = %d, want 1", len(blueprints))
+	}
+	byQuality, err := api.ByQuality(5)
+	if err != nil {
+		t.Fatalf("ByQuality() error = %v", err)
+	}
+	if len(byQuality) != 1 {
+		t.Fatalf("ByQuality() length = %d, want 1", len(byQuality))
+	}
+	rated, err := api.WithMinRating(7)
+	if err != nil {
+		t.Fatalf("WithMinRating() error = %v", err)
+	}
+	if len(rated) != 1 {
+		t.Fatalf("WithMinRating() length = %d, want 1", len(rated))
+	}
+	durable, err := api.WithMinDurability(0.5)
+	if err != nil {
+		t.Fatalf("WithMinDurability() error = %v", err)
+	}
+	if len(durable) != 1 {
+		t.Fatalf("WithMinDurability() length = %d, want 1", len(durable))
+	}
+}
+
 func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -105,7 +147,38 @@ func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticEquipmentFilterSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "equipment.ark")
+	equippedID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	blueprintID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, equippedID[:], syntheticEquipmentObjectBytesWithFlags(false, true, false, 7.5, 5, 0.75))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, blueprintID[:], syntheticEquipmentObjectBytesWithFlags(false, false, true, 2.5, 1, 0.25))
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticEquipmentObjectBytes(isEngram bool) []byte {
+	return syntheticEquipmentObjectBytesWithFlags(isEngram, false, false, 7.5, 3, 0.75)
+}
+
+func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBlueprint bool, rating float32, quality int32, durability float32) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000f))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -114,13 +187,19 @@ func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	writeIntProperty(&buf, 0x1000000c, 1)
-	writeFloatProperty(&buf, 0x10000010, 7.5)
-	writeIntProperty(&buf, 0x10000011, 3)
-	writeFloatProperty(&buf, 0x10000012, 0.75)
+	writeFloatProperty(&buf, 0x10000010, rating)
+	writeIntProperty(&buf, 0x10000011, quality)
+	writeFloatProperty(&buf, 0x10000012, durability)
 	writeStringProperty(&buf, 0x1000001b, "Survivor")
 	writeStringProperty(&buf, 0x1000001c, "Porters")
 	if isEngram {
 		writeBoolProperty(&buf, 0x10000013, true)
+	}
+	if isEquipped {
+		writeBoolProperty(&buf, 0x10000022, true)
+	}
+	if isBlueprint {
+		writeBoolProperty(&buf, 0x1000000d, true)
 	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))

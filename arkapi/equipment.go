@@ -106,3 +106,47 @@ func (e *EquipmentAPI) ByCrafter(crafter arkobject.ObjectCrafter) (map[uuid.UUID
 	}
 	return out, nil
 }
+
+func (e *EquipmentAPI) Equipped() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.IsEquipped
+	})
+}
+
+func (e *EquipmentAPI) Blueprints() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.IsBlueprint
+	})
+}
+
+func (e *EquipmentAPI) ByQuality(quality int32) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Quality == quality
+	})
+}
+
+func (e *EquipmentAPI) WithMinRating(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Rating >= min
+	})
+}
+
+func (e *EquipmentAPI) WithMinDurability(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.CurrentDurability >= min
+	})
+}
+
+func (e *EquipmentAPI) filter(match func(arkobject.EquipmentItem) bool) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	all, err := e.All()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range all {
+		if match(item) {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
