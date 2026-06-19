@@ -73,7 +73,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add offline CLI metadata summaries for local `.arkprofile` and `.arktribe` files.
 - [ ] Port full Player and Tribe APIs for local files and save-contained data.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
-- [ ] Port Dino, full Structure, Equipment, Stackable, Base, and JSON APIs.
+- [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
+- [ ] Port Dino, full Structure, Equipment, full Stackable, Base, and JSON APIs.
 - [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation

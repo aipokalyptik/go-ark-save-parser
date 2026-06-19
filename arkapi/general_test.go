@@ -140,7 +140,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(11))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(15))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -163,6 +163,14 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "TargetingTeam")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000a))
 	writeArkString(&buf, "FloatProperty")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000b))
+	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000c))
+	writeArkString(&buf, "ItemQuantity")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000d))
+	writeArkString(&buf, "bIsBlueprint")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000e))
+	writeArkString(&buf, "BoolProperty")
 	return buf.Bytes()
 }
 
