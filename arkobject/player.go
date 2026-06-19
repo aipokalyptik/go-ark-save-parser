@@ -1,0 +1,136 @@
+package arkobject
+
+import (
+	"fmt"
+
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+)
+
+type Player struct {
+	PlayerDataVersion int32
+	PlayerDataID      int32
+	CharacterName     string
+	PlayerName        string
+	UniqueID          string
+	IPAddress         string
+	FirstSpawned      bool
+	TribeID           int32
+	NumDeaths         int32
+	LastTimeDied      float64
+	LoginTime         float64
+}
+
+func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
+	var player Player
+	player.PlayerDataVersion = int32Value(properties, "SavedPlayerDataVersion")
+
+	raw, ok := properties.Value("MyData")
+	if !ok {
+		return Player{}, fmt.Errorf("missing MyData")
+	}
+	myData, ok := raw.(arkproperty.Container)
+	if !ok {
+		return Player{}, fmt.Errorf("MyData has type %T, want arkproperty.Container", raw)
+	}
+
+	player.PlayerDataID = int32Value(myData, "PlayerDataID")
+	player.CharacterName = stringValue(myData, "PlayerCharacterName")
+	player.PlayerName = stringValue(myData, "PlayerName")
+	player.IPAddress = stringValue(myData, "SavedNetworkAddress")
+	player.FirstSpawned = boolValue(myData, "bFirstSpawned")
+	player.TribeID = int32Value(myData, "TribeID")
+	player.NumDeaths = int32Value(myData, "NumOfDeaths")
+	player.LastTimeDied = float64Value(myData, "LastTimeDiedToEnemyTeam")
+	player.LoginTime = float64Value(myData, "LoginTime")
+	player.UniqueID = uniqueIDValue(myData)
+	return player, nil
+}
+
+type Tribe struct {
+	Name      string
+	OwnerID   int32
+	TribeID   int32
+	Members   []string
+	MemberIDs []int32
+	TribeLog  []string
+	LogIndex  int32
+	NumDinos  int32
+}
+
+func TribeFromContainer(properties arkproperty.Container) (Tribe, error) {
+	raw, ok := properties.Value("TribeData")
+	if !ok {
+		return Tribe{}, fmt.Errorf("missing TribeData")
+	}
+	tribeData, ok := raw.(arkproperty.Container)
+	if !ok {
+		return Tribe{}, fmt.Errorf("TribeData has type %T, want arkproperty.Container", raw)
+	}
+	return Tribe{
+		Name:      stringValue(tribeData, "TribeName"),
+		OwnerID:   int32Value(tribeData, "OwnerPlayerDataId"),
+		TribeID:   int32Value(tribeData, "TribeID"),
+		Members:   stringArrayValue(tribeData, "MembersPlayerName"),
+		MemberIDs: int32ArrayValue(tribeData, "MembersPlayerDataID"),
+		TribeLog:  stringArrayValue(tribeData, "TribeLog"),
+		LogIndex:  int32Value(tribeData, "LogIndex"),
+		NumDinos:  int32Value(tribeData, "NumTribeDinos"),
+	}, nil
+}
+
+func uniqueIDValue(properties arkproperty.Container) string {
+	value, ok := properties.Value("UniqueID")
+	if !ok {
+		return ""
+	}
+	switch v := value.(type) {
+	case arkproperty.ObjectReference:
+		text, _ := v.Value.(string)
+		return text
+	case string:
+		return v
+	default:
+		return ""
+	}
+}
+
+func stringArrayValue(properties arkproperty.Container, name string) []string {
+	raw, ok := properties.Value(name)
+	if !ok {
+		return nil
+	}
+	array, ok := raw.(arkproperty.Array)
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(array.Values))
+	for _, value := range array.Values {
+		if text, ok := value.(string); ok {
+			out = append(out, text)
+		}
+	}
+	return out
+}
+
+func int32ArrayValue(properties arkproperty.Container, name string) []int32 {
+	raw, ok := properties.Value(name)
+	if !ok {
+		return nil
+	}
+	array, ok := raw.(arkproperty.Array)
+	if !ok {
+		return nil
+	}
+	out := make([]int32, 0, len(array.Values))
+	for _, value := range array.Values {
+		switch v := value.(type) {
+		case int32:
+			out = append(out, v)
+		case uint32:
+			out = append(out, int32(v))
+		case int:
+			out = append(out, int32(v))
+		}
+	}
+	return out
+}

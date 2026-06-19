@@ -62,6 +62,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Port actor transforms and map coordinate helpers.
 - [x] Add read-first structure wrapper for parsed object fields.
 - [x] Add read-first equipment wrapper for parsed inventory item fields.
+- [x] Add read-first player and tribe wrappers for parsed profile containers.
 - [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
       player, tribe, and local cluster data models as read-first wrappers.
 - [ ] Preserve raw binary/property positions needed by mutation structural tests.
@@ -72,7 +73,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add archive metadata parser and local `.arkprofile` / `.arktribe` file-open wrappers.
 - [x] Add first normalized tribe summary extraction surface.
 - [x] Add offline CLI metadata summaries for local `.arkprofile` and `.arktribe` files.
-- [ ] Port full Player and Tribe APIs for local files and save-contained data.
+- [x] Add first local-file Player/Tribe API surface for profile and tribe discovery/loading.
+- [ ] Port full Player and Tribe APIs for parsed local files and save-contained data.
 - [x] Add first read-only Structure API surface for class, owner, and location queries.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
 - [x] Add read-only save-info JSON export API and CLI command.
