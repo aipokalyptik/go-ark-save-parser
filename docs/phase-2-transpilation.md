@@ -60,6 +60,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-first inventory and inventory item wrappers for parsed objects.
 - [x] Add read-first object owner wrapper for parsed ownership fields.
 - [x] Port actor transforms and map coordinate helpers.
+- [x] Add read-first structure wrapper for parsed object fields.
 - [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
       player, tribe, and local cluster data models as read-first wrappers.
 - [ ] Preserve raw binary/property positions needed by mutation structural tests.
