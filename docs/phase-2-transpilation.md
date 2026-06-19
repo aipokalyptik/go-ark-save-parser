@@ -76,7 +76,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-first base summary wrapper for grouped structures.
 - [ ] Port remaining inventory, owner, trait, dino, structure, equipment,
       stackable, player, tribe, and local cluster data models as read-first wrappers.
-- [ ] Preserve raw binary/property positions needed by mutation structural tests.
+- [x] Preserve raw binary/property positions and encoded byte spans needed by
+      mutation structural tests.
 
 ### Offline APIs
 

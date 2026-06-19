@@ -331,6 +331,41 @@ func TestParsePrimitivePropertyRealignsToDeclaredDataSize(t *testing.T) {
 	}
 }
 
+func TestParsePropertyPreservesEncodedBytes(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Count",
+		2: "IntProperty",
+		3: "None",
+	})
+	propertyBytes := bytes.NewBuffer(nil)
+	writeName(propertyBytes, 1)
+	writeName(propertyBytes, 2)
+	writeInt32(propertyBytes, 4)
+	writeInt32(propertyBytes, 0)
+	propertyBytes.WriteByte(0)
+	writeInt32(propertyBytes, 99)
+
+	stream := bytes.NewBuffer(nil)
+	stream.Write(propertyBytes.Bytes())
+	writeName(stream, 3)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() length = %d, want 1", len(props))
+	}
+	if !bytes.Equal(props[0].EncodedBytes, propertyBytes.Bytes()) {
+		t.Fatalf("EncodedBytes = % x, want % x", props[0].EncodedBytes, propertyBytes.Bytes())
+	}
+	props[0].EncodedBytes[0] = 0xff
+	if propertyBytes.Bytes()[0] == 0xff {
+		t.Fatalf("EncodedBytes shares backing storage with source bytes")
+	}
+}
+
 func TestParseInt64PropertyReadsSignedValue(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

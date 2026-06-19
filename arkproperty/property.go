@@ -364,6 +364,9 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = array
 		if err != nil {
 			if len(array.Values) > 0 {
+				if captureErr := captureEncodedBytes(r, prop); captureErr != nil {
+					return prop, captureErr
+				}
 				return prop, err
 			}
 			return nil, err
@@ -402,6 +405,9 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 		_ = structType
 		if err != nil {
+			if captureErr := captureEncodedBytes(r, prop); captureErr != nil {
+				return prop, captureErr
+			}
 			return prop, err
 		}
 	case "UInt32Property":
@@ -456,7 +462,22 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	if err := realignPrimitiveProperty(r, prop); err != nil {
 		return nil, err
 	}
+	if err := captureEncodedBytes(r, prop); err != nil {
+		return nil, err
+	}
 	return prop, nil
+}
+
+func captureEncodedBytes(r *arkbinary.Reader, prop *Property) error {
+	if prop == nil {
+		return nil
+	}
+	encoded, err := r.Slice(prop.NameOffset, r.Position())
+	if err != nil {
+		return err
+	}
+	prop.EncodedBytes = encoded
+	return nil
 }
 
 func realignPrimitiveProperty(r *arkbinary.Reader, prop *Property) error {

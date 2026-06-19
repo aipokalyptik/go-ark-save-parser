@@ -76,6 +76,29 @@ func TestReaderRejectsOutOfBoundsReads(t *testing.T) {
 	}
 }
 
+func TestReaderSliceReturnsCopiedBoundsCheckedBytes(t *testing.T) {
+	raw := []byte{0, 1, 2, 3, 4}
+	r := NewReader(raw, nil)
+	got, err := r.Slice(1, 4)
+	if err != nil {
+		t.Fatalf("Slice() error = %v", err)
+	}
+	want := []byte{1, 2, 3}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("Slice() = %v, want %v", got, want)
+	}
+	got[0] = 99
+	if raw[1] != 1 {
+		t.Fatalf("Slice() returned backing storage; raw[1] = %d, want 1", raw[1])
+	}
+	if r.Position() != 0 {
+		t.Fatalf("Slice() moved position to %d, want 0", r.Position())
+	}
+	if _, err := r.Slice(3, 6); err == nil {
+		t.Fatalf("Slice() out of bounds error = nil, want error")
+	}
+}
+
 func TestReaderReadsArkStrings(t *testing.T) {
 	t.Run("ascii null terminated", func(t *testing.T) {
 		var data bytes.Buffer

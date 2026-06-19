@@ -73,6 +73,15 @@ func (r *Reader) ReadBytes(n int) ([]byte, error) {
 	return out, nil
 }
 
+func (r *Reader) Slice(start int, end int) ([]byte, error) {
+	if start < 0 || end < start || end > len(r.data) {
+		return nil, fmt.Errorf("slice [%d:%d] outside buffer size %d", start, end, len(r.data))
+	}
+	out := make([]byte, end-start)
+	copy(out, r.data[start:end])
+	return out, nil
+}
+
 func (r *Reader) ReadByte() (byte, error) {
 	b, err := r.read(1)
 	if err != nil {
