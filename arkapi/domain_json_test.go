@@ -37,6 +37,26 @@ func TestJSONAPIExportStructuresSummarizesStructureAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportStructuresIncludesLinkedStructureMetadata(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportStructures()
+	if err != nil {
+		t.Fatalf("ExportStructures() error = %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("ExportStructures() length = %d, want 2", len(items))
+	}
+	first := items[0]
+	if first.UUID != "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff" || len(first.LinkedStructureUUIDs) != 1 {
+		t.Fatalf("StructureInfo = %#v", first)
+	}
+	if first.LinkedStructureUUIDs[0] != "bbbbbbbb-cccc-dddd-eeee-ffffffffffff" {
+		t.Fatalf("LinkedStructureUUIDs = %#v", first.LinkedStructureUUIDs)
+	}
+}
+
 func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()

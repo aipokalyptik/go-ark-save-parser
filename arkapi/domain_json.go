@@ -30,13 +30,20 @@ type DinoInfo struct {
 }
 
 type StructureInfo struct {
-	UUID          string        `json:"uuid"`
-	Blueprint     string        `json:"blueprint"`
-	ID            int32         `json:"id"`
-	Owner         OwnerInfo     `json:"owner"`
-	MaxHealth     float64       `json:"max_health"`
-	CurrentHealth float64       `json:"current_health"`
-	Location      *LocationInfo `json:"location,omitempty"`
+	UUID                          string        `json:"uuid"`
+	Blueprint                     string        `json:"blueprint"`
+	ID                            int32         `json:"id"`
+	Owner                         OwnerInfo     `json:"owner"`
+	MaxHealth                     float64       `json:"max_health"`
+	CurrentHealth                 float64       `json:"current_health"`
+	Location                      *LocationInfo `json:"location,omitempty"`
+	LinkedStructureUUIDs          []string      `json:"linked_structure_uuids,omitempty"`
+	OriginalCreationTime          float64       `json:"original_creation_time,omitempty"`
+	LastEnterStasisTime           float64       `json:"last_enter_stasis_time,omitempty"`
+	HasResetDecayTime             bool          `json:"has_reset_decay_time,omitempty"`
+	SavedWhenStasised             bool          `json:"saved_when_stasised,omitempty"`
+	WasPlacementSnapped           bool          `json:"was_placement_snapped,omitempty"`
+	LastInAllyRangeTimeSerialized float64       `json:"last_in_ally_range_time_serialized,omitempty"`
 }
 
 type EquipmentInfo struct {
@@ -155,13 +162,20 @@ func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {
 	for _, id := range sortedUUIDKeys(structures) {
 		structure := structures[id]
 		out = append(out, StructureInfo{
-			UUID:          id.String(),
-			Blueprint:     structure.Blueprint,
-			ID:            structure.ID,
-			Owner:         ownerInfo(structure.Owner),
-			MaxHealth:     structure.MaxHealth,
-			CurrentHealth: structure.CurrentHealth,
-			Location:      locationInfo(structure.Location),
+			UUID:                          id.String(),
+			Blueprint:                     structure.Blueprint,
+			ID:                            structure.ID,
+			Owner:                         ownerInfo(structure.Owner),
+			MaxHealth:                     structure.MaxHealth,
+			CurrentHealth:                 structure.CurrentHealth,
+			Location:                      locationInfo(structure.Location),
+			LinkedStructureUUIDs:          sortedUUIDStrings(structure.LinkedStructureUUIDs),
+			OriginalCreationTime:          structure.OriginalCreationTime,
+			LastEnterStasisTime:           structure.LastEnterStasisTime,
+			HasResetDecayTime:             structure.HasResetDecayTime,
+			SavedWhenStasised:             structure.SavedWhenStasised,
+			WasPlacementSnapped:           structure.WasPlacementSnapped,
+			LastInAllyRangeTimeSerialized: structure.LastInAllyRangeTimeSerialized,
 		})
 	}
 	return out, nil
@@ -245,6 +259,15 @@ func sortedBaseStructureUUIDs(base arkobject.Base) []string {
 	for _, id := range ids {
 		out = append(out, id.String())
 	}
+	return out
+}
+
+func sortedUUIDStrings(ids []uuid.UUID) []string {
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, id.String())
+	}
+	sort.Strings(out)
 	return out
 }
 
