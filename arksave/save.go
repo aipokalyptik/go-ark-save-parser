@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -100,6 +101,18 @@ func (s *Save) ClassOf(id uuid.UUID) (string, error) {
 	}
 	r := arkbinary.NewReader(raw, s.names)
 	return r.ReadName("")
+}
+
+func (s *Save) Object(id uuid.UUID) (*arkobject.GameObject, error) {
+	raw, err := s.ObjectBinary(id)
+	if err != nil {
+		return nil, err
+	}
+	sections := make([]string, len(s.Context.Sections))
+	for i, section := range s.Context.Sections {
+		sections[i] = section.Raw
+	}
+	return arkobject.ParseGameObject(id, raw, s.names, sections)
 }
 
 func (s *Save) readHeader() error {

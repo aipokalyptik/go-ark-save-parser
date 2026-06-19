@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -82,6 +83,20 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if !bytes.Equal(raw, objectBytes) {
 		t.Fatalf("ObjectBinary() = % x, want % x", raw, objectBytes)
 	}
+
+	obj, err := save.Object(objectID)
+	if err != nil {
+		t.Fatalf("Object() error = %v", err)
+	}
+	if obj.Blueprint != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("Object().Blueprint = %q", obj.Blueprint)
+	}
+	if obj.Section != "" {
+		t.Fatalf("Object().Section = %q, want empty for synthetic header without sections", obj.Section)
+	}
+	if len(obj.Properties) != 1 || obj.Properties[0].Name != "Health" || obj.Properties[0].Type != arkproperty.TypeInt {
+		t.Fatalf("Object().Properties = %#v, want Health Int property", obj.Properties)
+	}
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
@@ -94,6 +109,20 @@ func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
 func syntheticObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(&buf, binary.LittleEndian, int32(250))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
 }
@@ -112,11 +141,17 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(2))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(5))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
 	writeArkString(&buf, "Blueprint'/Game/Test.Test_C'")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
+	writeArkString(&buf, "Health")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
+	writeArkString(&buf, "IntProperty")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	writeArkString(&buf, "None")
 	return buf.Bytes()
 }
 
