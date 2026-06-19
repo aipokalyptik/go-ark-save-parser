@@ -18,17 +18,17 @@ enough that oracle-derived tests can run against translated packages.
 
 ### Core Binary Layer
 
-- [ ] Add tests for byte position, bounds handling, seek/skip, peek, and
+- [x] Add tests for byte position, bounds handling, seek/skip, peek, and
       remaining-byte behavior.
-- [ ] Add tests for little-endian signed/unsigned integers, floats, doubles, and
+- [x] Add tests for little-endian signed/unsigned integers, floats, doubles, and
       bools.
-- [ ] Add tests for ARK strings: positive ASCII/null-terminated, empty strings,
+- [x] Add tests for ARK strings: positive ASCII/null-terminated, empty strings,
       and negative UTF-16LE strings.
-- [ ] Add tests for UUID byte order.
-- [ ] Add tests for name-table lookup and missing-name behavior.
-- [ ] Add tests for zlib inflation wrapper behavior.
-- [ ] Add tests for ARK wildcard decompression edge cases.
-- [ ] Implement the minimal binary reader/writer to pass those tests.
+- [x] Add tests for UUID byte order.
+- [x] Add tests for name-table lookup and missing-name behavior.
+- [x] Add tests for zlib inflation wrapper behavior.
+- [x] Add tests for ARK wildcard decompression edge cases.
+- [x] Implement the minimal binary reader/writer to pass those tests.
 
 ### Save Access
 
