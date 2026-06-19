@@ -1,0 +1,78 @@
+# Phase 2 Literal Go Transpilation
+
+Phase 2 is complete when the Go code mirrors upstream offline behavior closely
+enough that oracle-derived tests can run against translated packages.
+
+## Requirements
+
+- Preserve upstream behavior first, even when the shape is not idiomatic Go.
+- Keep FTP and RCON out of scope.
+- Support local `.ark`, `.arkprofile`, `.arktribe`, and local cluster files where
+  fixtures exist.
+- Treat mutation APIs as experimental and structurally tested only.
+- Add tests before implementation code for each behavior slice.
+- Keep private oracle data under `.oracle/`; committed tests must use synthetic
+  fixtures or sanitized expected values.
+
+## Task Ledger
+
+### Core Binary Layer
+
+- [ ] Add tests for byte position, bounds handling, seek/skip, peek, and
+      remaining-byte behavior.
+- [ ] Add tests for little-endian signed/unsigned integers, floats, doubles, and
+      bools.
+- [ ] Add tests for ARK strings: positive ASCII/null-terminated, empty strings,
+      and negative UTF-16LE strings.
+- [ ] Add tests for UUID byte order.
+- [ ] Add tests for name-table lookup and missing-name behavior.
+- [ ] Add tests for zlib inflation wrapper behavior.
+- [ ] Add tests for ARK wildcard decompression edge cases.
+- [ ] Implement the minimal binary reader/writer to pass those tests.
+
+### Save Access
+
+- [ ] Add synthetic SQLite `.ark` fixture tests with `custom` and `game` tables.
+- [ ] Port save context, header parsing, name table parsing, custom table reads,
+      and object binary access.
+- [ ] Add private-oracle integration tests gated behind an environment variable.
+- [ ] Validate object count and zero faulty-object core parse against oracle data.
+
+### Property Parser
+
+- [ ] Add tests for property terminator handling.
+- [ ] Add tests for primitive property types.
+- [ ] Add tests for struct, array, map, set, object-reference, and unknown struct
+      fallback behavior.
+- [ ] Port property parsing and declared-size realignment.
+- [ ] Isolate legacy parser behavior behind explicit version/format paths.
+
+### Object Model
+
+- [ ] Port generic game object headers and property containers.
+- [ ] Port actor transforms and map coordinate helpers.
+- [ ] Port inventory, owner, crafter, trait, dino, structure, equipment, stackable,
+      player, tribe, and local cluster data models as read-first wrappers.
+- [ ] Preserve raw binary/property positions needed by mutation structural tests.
+
+### Offline APIs
+
+- [ ] Port General API object queries.
+- [ ] Port Player and Tribe APIs for local files and save-contained data.
+- [ ] Port Dino, Structure, Equipment, Stackable, Base, and JSON APIs.
+- [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
+
+### Experimental Mutation
+
+- [ ] Port copy-based modification helpers where upstream behavior can be
+      translated safely.
+- [ ] Require explicit output paths.
+- [ ] Add structural write/reopen/reparse tests only.
+- [ ] Document live-server validation as out of scope.
+
+### Examples And Review
+
+- [ ] Add Go examples for runnable offline Python examples.
+- [ ] Compare normalized Go outputs with private Python oracle outputs where
+      available.
+- [ ] Run subagent spec and quality reviews on parser parity and API coverage.
