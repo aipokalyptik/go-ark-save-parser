@@ -122,11 +122,25 @@ correctness.
 
 ## Offline Skips
 
-- `examples/rcon_api/ex_00_mirror_server_log.py`: live RCON.
-- `examples/ex_ftp_config`: FTP config sample.
-- Direct `ArkFtpClient.from_config(...).download_save_file(...)` behavior:
-  acquisition boilerplate only; patch to local paths or skip.
-- Direct upload behavior such as `upload_save_file`: out of scope.
+Network-facing behavior is intentionally unsupported in this Go port.
+
+Always skipped:
+
+- `examples/rcon_api/ex_00_mirror_server_log.py`: live RCON subscription and
+  polling.
+- `examples/ex_ftp_config`: FTP config sample, not an offline parser example.
+
+Skipped behavior inside otherwise useful examples:
+
+- `ArkFtpClient.from_config(...).download_save_file(...)`: FTP acquisition
+  boilerplate. For offline oracle use, replace the downloaded path with a local
+  `.ark` fixture path before running the read-only/export/mutation-copy logic.
+- `upload_save_file(...)`: live FTP upload is out of scope. Mutation examples
+  may still be used only as copy/write/reparse structural tests against local
+  throwaway files.
+- `PlayerApi(..., ftp_config=...)` or constructor overloads that read FTP
+  configuration: replace with local save/profile/tribe inputs where the example
+  logic is otherwise offline-compatible.
 
 ## Local Cluster Candidates
 

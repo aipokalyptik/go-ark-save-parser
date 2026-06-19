@@ -99,7 +99,7 @@ enough that oracle-derived tests can run against translated packages.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
       local cluster item/dino payload parsing, and full model-specific JSON APIs.
 - [ ] Port legacy `.arktributetribe` local tribute archive parsing.
-- [ ] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
+- [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation
 
