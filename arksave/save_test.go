@@ -19,7 +19,7 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	secondObjectID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	secondObjectBytes := syntheticObjectBytes(0x10000005)
 	header := syntheticHeader()
-	actorTransforms := append(objectID[:], []byte{1, 2, 3, 4}...)
+	actorTransforms := syntheticActorTransforms(objectID)
 
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
@@ -61,6 +61,16 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	}
 	if !bytes.Equal(custom, actorTransforms) {
 		t.Fatalf("ActorTransforms bytes = % x, want % x", custom, actorTransforms)
+	}
+	transform, ok := save.Context.ActorTransforms[objectID]
+	if !ok {
+		t.Fatalf("Context.ActorTransforms missing %s", objectID)
+	}
+	if transform.X != 1 || transform.Y != 2 || transform.Z != 3 || transform.Pitch != 4 || transform.Roll != 5 || transform.Yaw != 6 || transform.Quaternion != 7 {
+		t.Fatalf("ActorTransform = %#v", transform)
+	}
+	if save.Context.ActorTransformPositions[objectID] != 0 {
+		t.Fatalf("ActorTransformPositions[%s] = %d, want 0", objectID, save.Context.ActorTransformPositions[objectID])
 	}
 
 	ids, err := save.ObjectIDs()
@@ -116,6 +126,16 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if len(classes) != 2 || classes[0] != "Blueprint'/Game/Other.Other_C'" || classes[1] != "Blueprint'/Game/Test.Test_C'" {
 		t.Fatalf("Classes() = %#v, want two sorted classes", classes)
 	}
+}
+
+func syntheticActorTransforms(id uuid.UUID) []byte {
+	var buf bytes.Buffer
+	buf.Write(id[:])
+	for _, value := range []float64{1, 2, 3, 4, 5, 6, 7} {
+		_ = binary.Write(&buf, binary.LittleEndian, value)
+	}
+	buf.Write(uuid.Nil[:])
+	return buf.Bytes()
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {

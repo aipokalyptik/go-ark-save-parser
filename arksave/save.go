@@ -2,6 +2,7 @@ package arksave
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -31,12 +32,20 @@ func Open(path string) (*Save, error) {
 		return nil, err
 	}
 	save := &Save{
-		path:    abs,
-		db:      db,
-		Context: &Context{Names: map[uint32]string{}},
-		names:   arkbinary.NewContext(),
+		path: abs,
+		db:   db,
+		Context: &Context{
+			Names:                   map[uint32]string{},
+			ActorTransforms:         map[uuid.UUID]arkobject.ActorTransform{},
+			ActorTransformPositions: map[uuid.UUID]int{},
+		},
+		names: arkbinary.NewContext(),
 	}
 	if err := save.readHeader(); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+	if err := save.readActorTransforms(); err != nil {
 		_ = db.Close()
 		return nil, err
 	}
@@ -177,6 +186,51 @@ func (s *Save) Object(id uuid.UUID) (*arkobject.GameObject, error) {
 		sections[i] = section.Raw
 	}
 	return arkobject.ParseGameObject(id, raw, s.names, sections)
+}
+
+func (s *Save) ActorTransform(id uuid.UUID) (arkobject.ActorTransform, bool) {
+	value, ok := s.Context.ActorTransforms[id]
+	return value, ok
+}
+
+func (s *Save) readActorTransforms() error {
+	raw, err := s.CustomValue("ActorTransforms")
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	transforms, positions, err := parseActorTransforms(raw)
+	if err != nil {
+		return fmt.Errorf("read ActorTransforms: %w", err)
+	}
+	s.Context.ActorTransforms = transforms
+	s.Context.ActorTransformPositions = positions
+	return nil
+}
+
+func parseActorTransforms(raw []byte) (map[uuid.UUID]arkobject.ActorTransform, map[uuid.UUID]int, error) {
+	r := arkbinary.NewReader(raw, nil)
+	transforms := map[uuid.UUID]arkobject.ActorTransform{}
+	positions := map[uuid.UUID]int{}
+	for r.HasMore() {
+		position := r.Position()
+		id, err := r.ReadUUID()
+		if err != nil {
+			return nil, nil, err
+		}
+		if id == uuid.Nil {
+			break
+		}
+		transform, err := arkobject.ReadActorTransform(r)
+		if err != nil {
+			return nil, nil, err
+		}
+		transforms[id] = transform
+		positions[id] = position
+	}
+	return transforms, positions, nil
 }
 
 func (s *Save) readHeader() error {

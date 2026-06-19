@@ -35,6 +35,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add synthetic SQLite `.ark` fixture tests with `custom` and `game` tables.
 - [x] Port save context, header parsing, name table parsing, custom table reads,
       and object binary access.
+- [x] Parse `ActorTransforms` custom table into save context.
 - [x] Add private-oracle integration tests gated behind an environment variable.
 - [x] Validate object enumeration against oracle data.
 
