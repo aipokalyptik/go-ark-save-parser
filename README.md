@@ -19,7 +19,7 @@ Implemented:
   enumeration, raw object reads, class-name lookup, and generic object parsing.
 - Property parsing for primitives, object references, byte/enum values, generic
   structs, struct arrays, simple arrays, simple maps, and simple sets.
-- Read-only General, Player/Tribe local-file, Dino, Structure, Stackable,
+- Read-only General, Player/Tribe local-file, Dino, Structure, Base, Stackable,
   Equipment, and save-info JSON API wrappers.
 - `arksave inspect`, `parse`, `players`, `tribes`, and `export-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
@@ -29,7 +29,7 @@ Still in progress:
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
 - Full domain models and APIs for dino stats/cryopods/pedigrees, full equipment
-  stats, parsed player/tribe properties, local cluster files, bases, and
+  stats, parsed player/tribe properties, local cluster files, full bases, and
   model-specific JSON export.
 - Mutation APIs. These will remain experimental and live-server-unverified.
 
