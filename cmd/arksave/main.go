@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -26,7 +28,17 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("%s requires a local .ark path", args[0])
 		}
 		return inspect(args[1], out)
-	case "players", "tribes", "export-json", "mutate":
+	case "players":
+		if len(args) != 2 {
+			return fmt.Errorf("players requires a local .arkprofile path")
+		}
+		return players(args[1], out)
+	case "tribes":
+		if len(args) != 2 {
+			return fmt.Errorf("tribes requires a local .arktribe path")
+		}
+		return tribes(args[1], out)
+	case "export-json", "mutate":
 		return fmt.Errorf("%s is planned but not implemented yet in this offline port", args[0])
 	case "ftp", "rcon":
 		return fmt.Errorf("%s is unsupported: this is an offline-only parser", args[0])
@@ -39,6 +51,8 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave inspect <save.ark>
   arksave parse <save.ark>
+  arksave players <player.arkprofile>
+  arksave tribes <tribe.arktribe>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.`)
 	return err
@@ -67,4 +81,38 @@ func inspect(path string, out io.Writer) error {
 		len(ids),
 	)
 	return err
+}
+
+func players(path string, out io.Writer) error {
+	profile, err := arkprofile.OpenPlayerProfile(path)
+	if err != nil {
+		return err
+	}
+	return printArchiveSummary(out, "Player profile", profile.Path, profile.Archive.Version, profile.Archive.Objects)
+}
+
+func tribes(path string, out io.Writer) error {
+	tribe, err := arkprofile.OpenTribeSave(path)
+	if err != nil {
+		return err
+	}
+	return printArchiveSummary(out, "Tribe save", tribe.Path, tribe.Archive.Version, tribe.Archive.Objects)
+}
+
+func printArchiveSummary(out io.Writer, label string, path string, version int32, objects []arkarchive.Object) error {
+	if _, err := fmt.Fprintf(out, "%s: %s\nArchive version: %d\nObjects: %d\n", label, path, version, len(objects)); err != nil {
+		return err
+	}
+	if len(objects) == 0 {
+		return nil
+	}
+	if _, err := fmt.Fprintln(out, "Classes:"); err != nil {
+		return err
+	}
+	for _, object := range objects {
+		if _, err := fmt.Fprintf(out, "  %s\n", object.ClassName); err != nil {
+			return err
+		}
+	}
+	return nil
 }

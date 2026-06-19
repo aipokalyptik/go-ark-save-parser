@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/binary"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
 
@@ -43,6 +45,50 @@ func TestRunRejectsNetworkCommands(t *testing.T) {
 	}
 }
 
+func TestPlayersCommandPrintsLocalProfileSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	createSyntheticArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+
+	var out bytes.Buffer
+	err := run([]string{"players", path}, &out)
+	if err != nil {
+		t.Fatalf("run(players) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Player profile:",
+		"Archive version: 7",
+		"Objects: 1",
+		"/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("players output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	createSyntheticArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
+
+	var out bytes.Buffer
+	err := run([]string{"tribes", path}, &out)
+	if err != nil {
+		t.Fatalf("run(tribes) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe save:",
+		"Archive version: 7",
+		"Objects: 1",
+		"/Script/ShooterGame.PrimalTribeData",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribes output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func createSyntheticSave(t *testing.T, path string) {
 	t.Helper()
 	db, err := sql.Open("sqlite", path)
@@ -54,6 +100,28 @@ func createSyntheticSave(t *testing.T, path string) {
 	mustExec(t, db, `create table game (key blob primary key, value blob)`)
 	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
 	mustExec(t, db, `insert into game (key, value) values (?, ?)`, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, []byte{1, 0, 0, 0, 0, 0, 0, 0})
+}
+
+func createSyntheticArchive(t *testing.T, path string, className string) {
+	t.Helper()
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
+	buf.Write(id[:])
+	writeArkString(&buf, className)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	writeStringArray(&buf, []string{"Object_0"})
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(128))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write archive fixture: %v", err)
+	}
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
@@ -87,4 +155,11 @@ func writeArkString(buf *bytes.Buffer, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
 	buf.WriteString(value)
 	buf.WriteByte(0)
+}
+
+func writeStringArray(buf *bytes.Buffer, values []string) {
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, value := range values {
+		writeArkString(buf, value)
+	}
 }
