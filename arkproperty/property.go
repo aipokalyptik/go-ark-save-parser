@@ -61,6 +61,11 @@ type Container struct {
 	Properties []Property
 }
 
+type UnknownStruct struct {
+	TypeName string
+	Raw      []byte
+}
+
 func (c Container) Value(name string) (any, bool) {
 	for _, prop := range c.Properties {
 		if prop.Name == name {
@@ -266,13 +271,13 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		if err := r.SetPosition(r.Position() - 8); err != nil {
 			return nil, err
 		}
-		container, structType, declaredSize, err := readStruct(r)
+		value, structType, declaredSize, err := readStruct(r)
 		if err != nil {
 			return nil, err
 		}
 		prop.ValueOffset = r.Position()
 		prop.DataSize = int32(declaredSize)
-		prop.Value = container
+		prop.Value = value
 		_ = structType
 	case "UInt32Property":
 		prop.Type = TypeUInt32
@@ -405,58 +410,65 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 	return Set{ElementType: elementType, Values: values}, nil
 }
 
-func readStruct(r *arkbinary.Reader) (Container, string, uint32, error) {
+func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	nrNames, err := r.ReadUInt32()
 	if err != nil {
-		return Container{}, "", 0, err
+		return nil, "", 0, err
 	}
 	structType, err := r.ReadName("")
 	if err != nil {
-		return Container{}, "", 0, err
+		return nil, "", 0, err
 	}
 	if nrNames != 0 {
 		marker, err := r.ReadUInt32()
 		if err != nil {
-			return Container{}, "", 0, err
+			return nil, "", 0, err
 		}
 		if marker != 1 {
-			return Container{}, "", 0, fmt.Errorf("invalid struct header marker %#x", marker)
+			return nil, "", 0, fmt.Errorf("invalid struct header marker %#x", marker)
 		}
 	}
 	for i := uint32(0); i < nrNames; i++ {
 		if _, err := r.ReadName(""); err != nil {
-			return Container{}, "", 0, err
+			return nil, "", 0, err
 		}
 		zero, err := r.ReadUInt32()
 		if err != nil {
-			return Container{}, "", 0, err
+			return nil, "", 0, err
 		}
 		if zero != 0 {
-			return Container{}, "", 0, fmt.Errorf("invalid struct name terminator %#x", zero)
+			return nil, "", 0, fmt.Errorf("invalid struct name terminator %#x", zero)
 		}
 	}
 	dataSize, err := r.ReadUInt32()
 	if err != nil {
-		return Container{}, "", 0, err
+		return nil, "", 0, err
 	}
 	sizeByte, err := r.ReadByte()
 	if err != nil {
-		return Container{}, "", 0, err
+		return nil, "", 0, err
 	}
 	if sizeByte != 0 && sizeByte != 8 {
 		if _, err := r.ReadUInt32(); err != nil {
-			return Container{}, "", 0, err
+			return nil, "", 0, err
 		}
 	}
 	bodyStart := r.Position()
 	bodyEnd := bodyStart + int(dataSize)
 	props, err := ParseAll(r, bodyEnd)
 	if err != nil {
-		return Container{}, "", 0, err
+		if err := r.SetPosition(bodyStart); err != nil {
+			return nil, "", 0, err
+		}
+		raw, readErr := r.ReadBytes(int(dataSize))
+		if readErr != nil {
+			return nil, "", 0, readErr
+		}
+		return UnknownStruct{TypeName: structType, Raw: raw}, structType, dataSize, nil
 	}
 	if r.Position() < bodyEnd {
 		if err := r.SetPosition(bodyEnd); err != nil {
-			return Container{}, "", 0, err
+			return nil, "", 0, err
 		}
 	}
 	return Container{Properties: props}, structType, dataSize, nil

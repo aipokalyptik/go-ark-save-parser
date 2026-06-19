@@ -259,6 +259,48 @@ func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyFallsBackToRawUnknownStruct(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "CustomPacked",
+		2: "StructProperty",
+		3: "MysteryStruct",
+		4: "None",
+	})
+	payload := []byte{0xde, 0xad, 0xbe, 0xef, 0x01, 0x02}
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(len(payload)))
+	stream.WriteByte(0)
+	stream.Write(payload)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeStruct {
+		t.Fatalf("ParseAll() = %#v, want one struct property", props)
+	}
+	got, ok := props[0].Value.(UnknownStruct)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want UnknownStruct", props[0].Value)
+	}
+	if got.TypeName != "MysteryStruct" {
+		t.Fatalf("UnknownStruct.TypeName = %q, want MysteryStruct", got.TypeName)
+	}
+	if !bytes.Equal(got.Raw, payload) {
+		t.Fatalf("UnknownStruct.Raw = % x, want % x", got.Raw, payload)
+	}
+}
+
 func TestParseMapPropertyReadsSimpleKeyValueEntries(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
