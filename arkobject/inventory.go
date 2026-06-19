@@ -48,6 +48,16 @@ type InventoryItem struct {
 	Object         *GameObject
 	Quantity       int32
 	OwnerInventory *uuid.UUID
+	Crafter        *ObjectCrafter
+}
+
+type ObjectCrafter struct {
+	CharacterName string
+	TribeName     string
+}
+
+func (c ObjectCrafter) Valid() bool {
+	return c.CharacterName != "" || c.TribeName != ""
 }
 
 func InventoryItemFromObject(object *GameObject) InventoryItem {
@@ -68,6 +78,20 @@ func InventoryItemFromObject(object *GameObject) InventoryItem {
 				item.OwnerInventory = &id
 			}
 		}
+	}
+	crafter := ObjectCrafter{}
+	if value, ok := object.Value("CrafterCharacterName"); ok {
+		if name, ok := value.(string); ok {
+			crafter.CharacterName = name
+		}
+	}
+	if value, ok := object.Value("CrafterTribeName"); ok {
+		if name, ok := value.(string); ok {
+			crafter.TribeName = name
+		}
+	}
+	if crafter.Valid() {
+		item.Crafter = &crafter
 	}
 	return item
 }

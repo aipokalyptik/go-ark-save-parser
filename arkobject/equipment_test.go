@@ -18,6 +18,8 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 			{Name: "ItemRating", Type: arkproperty.TypeFloat, Value: float32(7.5)},
 			{Name: "ItemQualityIndex", Type: arkproperty.TypeByte, Value: byte(3)},
 			{Name: "SavedDurability", Type: arkproperty.TypeFloat, Value: float32(0.75)},
+			{Name: "CrafterCharacterName", Type: arkproperty.TypeString, Value: "Survivor"},
+			{Name: "CrafterTribeName", Type: arkproperty.TypeString, Value: "Porters"},
 		},
 	}
 
@@ -31,5 +33,8 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	}
 	if item.Rating != 7.5 || item.Quality != 3 || item.CurrentDurability != 0.75 {
 		t.Fatalf("EquipmentItem equipment fields = %#v", item)
+	}
+	if item.Crafter == nil || item.Crafter.CharacterName != "Survivor" || item.Crafter.TribeName != "Porters" {
+		t.Fatalf("EquipmentItem.Crafter = %#v", item.Crafter)
 	}
 }

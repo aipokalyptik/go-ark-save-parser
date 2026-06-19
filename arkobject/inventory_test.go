@@ -32,6 +32,27 @@ func TestInventoryItemFromObjectReadsQuantityAndOwner(t *testing.T) {
 	}
 }
 
+func TestInventoryItemFromObjectReadsCrafterMetadata(t *testing.T) {
+	item := InventoryItemFromObject(&GameObject{
+		UUID:      uuid.MustParse("11112222-3333-4444-5555-666677778888"),
+		Blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+		Properties: []arkproperty.Property{
+			{Name: "CrafterCharacterName", Type: arkproperty.TypeString, Value: "Survivor"},
+			{Name: "CrafterTribeName", Type: arkproperty.TypeString, Value: "Porters"},
+		},
+	})
+
+	if item.Crafter == nil {
+		t.Fatalf("InventoryItem.Crafter = nil, want crafter metadata")
+	}
+	if item.Crafter.CharacterName != "Survivor" || item.Crafter.TribeName != "Porters" {
+		t.Fatalf("InventoryItem.Crafter = %#v, want Survivor/Porters", item.Crafter)
+	}
+	if !item.Crafter.Valid() {
+		t.Fatalf("InventoryItem.Crafter.Valid() = false, want true")
+	}
+}
+
 func TestInventoryFromObjectReadsReferencedItems(t *testing.T) {
 	first := "00112233-4455-6677-8899-aabbccddeeff"
 	second := "11112222-3333-4444-5555-666677778888"
