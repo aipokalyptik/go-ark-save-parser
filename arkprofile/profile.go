@@ -79,5 +79,5 @@ func openArchive(path string) (*arkarchive.Archive, error) {
 	if err != nil {
 		return nil, err
 	}
-	return arkarchive.Parse(data, arkarchive.Options{FromStore: true})
+	return arkarchive.Parse(data, arkarchive.Options{FromStore: true, Format: arkarchive.FormatAuto})
 }

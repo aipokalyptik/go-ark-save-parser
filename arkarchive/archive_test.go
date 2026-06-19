@@ -3,6 +3,7 @@ package arkarchive
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -60,6 +61,55 @@ func TestParseArchiveDetectsLegacyFormat(t *testing.T) {
 	}
 	if !archive.Legacy {
 		t.Fatalf("Legacy = false, want true")
+	}
+}
+
+func TestParseArchiveRejectsLegacyFormatWhenObjectsRequested(t *testing.T) {
+	var buf bytes.Buffer
+	writeInt32(&buf, 6)
+	writeInt32(&buf, 0)
+
+	_, err := Parse(buf.Bytes(), Options{Format: FormatAuto})
+	if !errors.Is(err, ErrLegacyArchiveUnsupported) {
+		t.Fatalf("Parse() error = %v, want ErrLegacyArchiveUnsupported", err)
+	}
+}
+
+func TestParseArchiveRejectsModernFormatMismatch(t *testing.T) {
+	var buf bytes.Buffer
+	writeInt32(&buf, 6)
+
+	_, err := Parse(buf.Bytes(), Options{Format: FormatModern, HeaderOnly: true})
+	if err == nil {
+		t.Fatalf("Parse() error = nil, want modern format mismatch")
+	}
+}
+
+func TestParseArchiveReadsClusterDinoWithoutVersionPrefix(t *testing.T) {
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var buf bytes.Buffer
+	writeInt32(&buf, 11)
+	writeInt32(&buf, 22)
+	writeInt32(&buf, 1)
+	buf.Write(id[:])
+	writeArkString(&buf, "/Game/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C")
+	writeUInt32(&buf, 0)
+	writeStringArray(&buf, []string{"Raptor_0"})
+	writeUInt32(&buf, 0)
+	writeInt32(&buf, -1)
+	writeUInt32(&buf, 0)
+	writeInt32(&buf, 96)
+	writeUInt32(&buf, 0)
+
+	archive, err := Parse(buf.Bytes(), Options{Format: FormatClusterDino})
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if archive.Version != 7 || archive.Legacy {
+		t.Fatalf("Archive = %#v, want version 7 modern cluster dino", archive)
+	}
+	if len(archive.Objects) != 1 || archive.Objects[0].UUID != id {
+		t.Fatalf("Objects = %#v, want one object with id %s", archive.Objects, id)
 	}
 }
 

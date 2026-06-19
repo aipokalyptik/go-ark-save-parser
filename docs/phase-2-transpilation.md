@@ -54,7 +54,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [ ] Port remaining property parsing edge cases and realignment for any compound
       payloads not already covered by their internal readers.
-- [ ] Isolate legacy parser behavior behind explicit version/format paths.
+- [x] Isolate legacy archive behavior behind explicit format paths and a typed
+      unsupported-legacy error.
+- [ ] Port legacy property/object parsing where a runnable offline oracle path exists.
 
 ### Object Model
 

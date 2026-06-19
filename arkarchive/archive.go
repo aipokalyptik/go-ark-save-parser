@@ -1,16 +1,29 @@
 package arkarchive
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/google/uuid"
 )
 
+type Format int
+
+const (
+	FormatAuto Format = iota
+	FormatModern
+	FormatLegacy
+	FormatClusterDino
+)
+
+var ErrLegacyArchiveUnsupported = errors.New("legacy archive object parsing is not implemented")
+
 type Options struct {
 	HeaderOnly  bool
 	FromStore   bool
 	ClusterDino bool
+	Format      Format
 }
 
 type Archive struct {
@@ -30,21 +43,29 @@ type Object struct {
 }
 
 func Parse(data []byte, opts Options) (*Archive, error) {
+	format := opts.Format
+	if opts.ClusterDino {
+		format = FormatClusterDino
+	}
 	r := arkbinary.NewReader(data, nil)
 	version := int32(7)
 	var err error
-	if !opts.ClusterDino {
+	if format != FormatClusterDino {
 		version, err = r.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
 	}
-	archive := &Archive{Version: version, Legacy: version != 7 && !opts.ClusterDino}
+	legacy := format == FormatLegacy || (format == FormatAuto && version != 7)
+	if format == FormatModern && version != 7 {
+		return nil, fmt.Errorf("modern archive format requires version 7, got %d", version)
+	}
+	archive := &Archive{Version: version, Legacy: legacy}
 	if opts.HeaderOnly {
 		return archive, nil
 	}
 	if archive.Legacy {
-		return nil, fmt.Errorf("legacy archive object parsing is not implemented")
+		return nil, ErrLegacyArchiveUnsupported
 	}
 	if _, err := r.ReadInt32(); err != nil {
 		return nil, err
