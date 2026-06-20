@@ -2,15 +2,12 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
-	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestStructureAPIGetAllParsesStructureObjects(t *testing.T) {
@@ -123,57 +120,27 @@ func TestStructureAPIAllWithFaultsKeepsValidStructuresAndReportsParseFaults(t *t
 func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "structures.ark")
 	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	otherID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(structureID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, structureID[:], syntheticStructureObjectBytes())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, otherID[:], syntheticObjectBytes(0x10000001))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(structureID),
+	}, map[uuid.UUID][]byte{
+		structureID: syntheticStructureObjectBytes(),
+		otherID:     syntheticObjectBytes(0x10000001),
+	})
 }
 
 func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "structures.ark")
 	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(structureID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, structureID[:], syntheticStructureObjectBytes())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedStructureObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(structureID),
+	}, map[uuid.UUID][]byte{
+		structureID: syntheticStructureObjectBytes(),
+		faultyID:    truncatedStructureObjectBytes(),
+	})
 }
 
 func syntheticStructureObjectBytes() []byte {

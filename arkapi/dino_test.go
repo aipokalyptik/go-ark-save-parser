@@ -2,15 +2,12 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
-	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestDinoAPIRecognizesApplicableBlueprints(t *testing.T) {
@@ -353,28 +350,12 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoStatsObjectBytes(statusID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, statusID[:], syntheticDinoStatusObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoStatsObjectBytes(statusID),
+		statusID: syntheticDinoStatusObjectBytes(),
+	})
 }
 
 func syntheticDinoStatsObjectBytes(statusID uuid.UUID) []byte {
@@ -417,134 +398,56 @@ func syntheticDinoStatusObjectBytes() []byte {
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	otherID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(dinoID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoObjectBytes())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, otherID[:], syntheticObjectBytes(0x10000001))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
+	}, map[uuid.UUID][]byte{
+		dinoID:  syntheticDinoObjectBytes(),
+		otherID: syntheticObjectBytes(0x10000001),
+	})
 }
 
 func openSyntheticDinoSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(dinoID))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoObjectBytes())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedDinoObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
+	}, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoObjectBytes(),
+		faultyID: truncatedDinoObjectBytes(),
+	})
 }
 
 func openSyntheticDinoFilterSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	femaleAliveID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	maleDeadID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, femaleAliveID[:], syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, maleDeadID[:], syntheticDinoObjectBytesWithFlags(3003, 4004, false, true, true, false))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		femaleAliveID: syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true),
+		maleDeadID:    syntheticDinoObjectBytesWithFlags(3003, 4004, false, true, true, false),
+	})
 }
 
 func openSyntheticDinoDetailSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoDetailObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID: syntheticDinoDetailObjectBytes(),
+	})
 }
 
 func openSyntheticDinoBabyStageSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "dinos.ark")
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoBabyObjectBytes(0.75))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID: syntheticDinoBabyObjectBytes(0.75),
+	})
 }
 
 func syntheticDinoObjectBytes() []byte {

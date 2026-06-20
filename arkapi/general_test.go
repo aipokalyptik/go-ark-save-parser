@@ -9,6 +9,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -75,22 +76,21 @@ func TestGeneralObjectsReturnsParsedSaveObjects(t *testing.T) {
 
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
-
-	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	return openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		objectID: syntheticObjectBytes(0x10000001),
+	})
+}
 
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], syntheticObjectBytes(0x10000001))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
+func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, objects map[uuid.UUID][]byte) *arksave.Save {
+	t.Helper()
 
+	path := filepath.Join(t.TempDir(), name)
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header:  syntheticHeader(),
+		Custom:  custom,
+		Objects: objects,
+	})
 	save, err := arksave.Open(path)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)

@@ -2,15 +2,12 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
-	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestStackableAPIRecognizesApplicableBlueprints(t *testing.T) {
@@ -107,55 +104,23 @@ func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 func openSyntheticStackableSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "stackables.ark")
 	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	blueprintID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, itemID[:], syntheticStackableObjectBytes(false))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, blueprintID[:], syntheticStackableObjectBytes(true))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
+		itemID:      syntheticStackableObjectBytes(false),
+		blueprintID: syntheticStackableObjectBytes(true),
+	})
 }
 
 func openSyntheticStackableSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "stackables.ark")
 	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, itemID[:], syntheticStackableObjectBytes(false))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedStackableObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
+		itemID:   syntheticStackableObjectBytes(false),
+		faultyID: truncatedStackableObjectBytes(),
+	})
 }
 
 func truncatedStackableObjectBytes() []byte {

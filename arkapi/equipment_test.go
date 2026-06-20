@@ -2,15 +2,12 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
-	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestEquipmentAPIClassifiesBlueprints(t *testing.T) {
@@ -278,107 +275,43 @@ func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
 func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "equipment.ark")
 	weaponID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	engramID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, weaponID[:], syntheticEquipmentObjectBytes(false))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, engramID[:], syntheticEquipmentObjectBytes(true))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		weaponID: syntheticEquipmentObjectBytes(false),
+		engramID: syntheticEquipmentObjectBytes(true),
+	})
 }
 
 func openSyntheticEquipmentSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "equipment.ark")
 	weaponID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, weaponID[:], syntheticEquipmentObjectBytes(false))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedEquipmentObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		weaponID: syntheticEquipmentObjectBytes(false),
+		faultyID: truncatedEquipmentObjectBytes(),
+	})
 }
 
 func openSyntheticEquipmentFilterSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "equipment.ark")
 	equippedID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	blueprintID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, equippedID[:], syntheticEquipmentObjectBytesWithFlags(false, true, false, 7.5, 5, 0.75))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, blueprintID[:], syntheticEquipmentObjectBytesWithFlags(false, false, true, 2.5, 1, 0.25))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		equippedID:  syntheticEquipmentObjectBytesWithFlags(false, true, false, 7.5, 5, 0.75),
+		blueprintID: syntheticEquipmentObjectBytesWithFlags(false, false, true, 2.5, 1, 0.25),
+	})
 }
 
 func openSyntheticArmorEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "equipment.ark")
 	armorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, armorID[:], syntheticArmorEquipmentObjectBytes())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
-
-	save, err := arksave.Open(path)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	return save
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		armorID: syntheticArmorEquipmentObjectBytes(),
+	})
 }
 
 func syntheticEquipmentObjectBytes(isEngram bool) []byte {

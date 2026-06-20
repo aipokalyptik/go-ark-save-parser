@@ -34,6 +34,8 @@ Go packages without losing oracle parity.
       examples, CLI tests, `arkprofile`, `arkapi`, `arkarchive`, `arkcluster`,
       `arktribute`, and benchmarks; lower-level domain-specific parser fixtures
       still need incremental migration.
+- [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
+      instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
 - [x] Expand `cmd/arksave` commands beyond `inspect`/`parse` with local
