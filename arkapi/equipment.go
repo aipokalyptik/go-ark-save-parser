@@ -58,6 +58,27 @@ func (e *EquipmentAPI) All() (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	return out, nil
 }
 
+func (e *EquipmentAPI) AllWithFaults() (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := e.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return e.IsApplicableBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for _, info := range objects {
+		kind := e.KindForBlueprint(info.Object.Blueprint)
+		if kind == arkobject.EquipmentUnknown {
+			continue
+		}
+		if boolProperty(info.Object, "bIsEngram") {
+			continue
+		}
+		out[info.UUID] = arkobject.EquipmentItemFromObject(info.Object, kind)
+	}
+	return out, faults, nil
+}
+
 func (e *EquipmentAPI) ByKind(kind arkobject.EquipmentKind) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	all, err := e.All()
 	if err != nil {

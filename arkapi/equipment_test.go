@@ -67,6 +67,28 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testing.T) {
+	save := openSyntheticEquipmentSaveWithFault(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	items, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("AllWithFaults() items length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Kind != arkobject.EquipmentWeapon || item.Rating != 7.5 || item.Quality != 3 {
+			t.Fatalf("Equipment item = %#v", item)
+		}
+	}
+	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'" || faults[0].Err == nil {
+		t.Fatalf("AllWithFaults() faults = %#v, want one equipment parse fault", faults)
+	}
+}
+
 func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
 	save := openSyntheticArmorEquipmentSave(t)
 	defer save.Close()
@@ -280,6 +302,33 @@ func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticEquipmentSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "equipment.ark")
+	weaponID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, weaponID[:], syntheticEquipmentObjectBytes(false))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedEquipmentObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func openSyntheticEquipmentFilterSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -362,6 +411,13 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 		writeBoolProperty(&buf, 0x1000000d, true)
 	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func truncatedEquipmentObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000f))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
 }
