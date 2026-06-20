@@ -19,6 +19,7 @@ type DinoFilterOptions struct {
 	MaxLevel    *int32
 	Blueprints  []string
 	Tamed       *bool
+	Cryopodded  *bool
 	StatMinimum int32
 	Stats       []arkobject.DinoStat
 }
@@ -177,6 +178,18 @@ func (d *DinoAPI) Babies() (map[uuid.UUID]arkobject.Dino, error) {
 	return out, nil
 }
 
+func (d *DinoAPI) InCryopods() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return dino.IsCryopodded
+	})
+}
+
+func (d *DinoAPI) NotInCryopods() (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return !dino.IsCryopodded
+	})
+}
+
 func (d *DinoAPI) Females() (map[uuid.UUID]arkobject.Dino, error) {
 	return d.filter(func(dino arkobject.Dino) bool {
 		return dino.IsFemale
@@ -267,6 +280,14 @@ func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int 
 	return counts
 }
 
+func (d *DinoAPI) CountByCryopodded(dinos map[uuid.UUID]arkobject.Dino) map[bool]int {
+	counts := map[bool]int{}
+	for _, dino := range dinos {
+		counts[dino.IsCryopodded]++
+	}
+	return counts
+}
+
 func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
 	all, err := d.All()
 	if err != nil {
@@ -336,6 +357,9 @@ func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino
 			}
 		}
 		if opts.Tamed != nil && dino.IsTamed != *opts.Tamed {
+			return false
+		}
+		if opts.Cryopodded != nil && dino.IsCryopodded != *opts.Cryopodded {
 			return false
 		}
 		if opts.MinLevel != nil || opts.MaxLevel != nil || opts.StatMinimum != 0 {

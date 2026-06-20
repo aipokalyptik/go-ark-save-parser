@@ -362,6 +362,35 @@ func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
 	}
 }
 
+func TestDinoAPIFiltersCryopoddedDinos(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	cryopodded, err := api.InCryopods()
+	if err != nil {
+		t.Fatalf("InCryopods() error = %v", err)
+	}
+	if len(cryopodded) != 1 {
+		t.Fatalf("InCryopods() length = %d, want 1", len(cryopodded))
+	}
+	notCryopodded, err := api.NotInCryopods()
+	if err != nil {
+		t.Fatalf("NotInCryopods() error = %v", err)
+	}
+	if len(notCryopodded) != 0 {
+		t.Fatalf("NotInCryopods() length = %d, want 0", len(notCryopodded))
+	}
+	wantCryopodded := true
+	filtered, err := api.Filtered(DinoFilterOptions{Cryopodded: &wantCryopodded})
+	if err != nil {
+		t.Fatalf("Filtered(cryopodded) error = %v", err)
+	}
+	if len(filtered) != 1 {
+		t.Fatalf("Filtered(cryopodded) length = %d, want 1", len(filtered))
+	}
+}
+
 func TestDinoAPIBestDinoForStatUsesParsedStatusStats(t *testing.T) {
 	save := openSyntheticDinoStatsSave(t)
 	defer save.Close()
@@ -460,6 +489,11 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	byTamed := api.CountByTamed(dinos)
 	if byTamed[true] != 2 || byTamed[false] != 1 {
 		t.Fatalf("CountByTamed() = %#v", byTamed)
+	}
+	dinos[uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")] = arkobject.Dino{IsCryopodded: true}
+	byCryopodded := api.CountByCryopodded(dinos)
+	if byCryopodded[true] != 1 || byCryopodded[false] != 2 {
+		t.Fatalf("CountByCryopodded() = %#v", byCryopodded)
 	}
 }
 
