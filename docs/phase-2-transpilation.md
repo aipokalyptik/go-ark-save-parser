@@ -201,10 +201,11 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add combined read-only Dino API filtering for level bounds, class names,
       tamed state, gene traits, cryopodded state, and stat minimums.
 - [x] Add upstream-compatible tamed dino generation and ancestor ID extraction
-      from female/male ancestor arrays; full pedigree graph reconstruction
-      remains pending.
+      from female/male ancestor arrays.
 - [x] Add read-only childless tamed dino filtering from parsed ancestor IDs;
-      full pedigree graph reconstruction remains pending.
+      full upstream pedigree rendering/export parity remains pending.
+- [x] Add read-only Dino API pedigree base helpers for child indexing by
+      ancestor ID and descendant traversal through parsed ancestor records.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild

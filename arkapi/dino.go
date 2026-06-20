@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -505,6 +506,55 @@ func (d *DinoAPI) FilterChildlessTamed(dinos map[uuid.UUID]arkobject.Dino) map[u
 		}
 	}
 	return out
+}
+
+func (d *DinoAPI) ChildrenByAncestor(dinos map[uuid.UUID]arkobject.Dino) map[arkobject.DinoID][]uuid.UUID {
+	children := map[arkobject.DinoID][]uuid.UUID{}
+	for id, dino := range dinos {
+		if !dino.IsTamed {
+			continue
+		}
+		for _, ancestorID := range dino.AncestorIDs {
+			if ancestorID.IsZero() {
+				continue
+			}
+			children[ancestorID] = append(children[ancestorID], id)
+		}
+	}
+	for ancestorID := range children {
+		sort.Slice(children[ancestorID], func(i, j int) bool {
+			return children[ancestorID][i].String() < children[ancestorID][j].String()
+		})
+	}
+	return children
+}
+
+func (d *DinoAPI) DescendantsOf(dinos map[uuid.UUID]arkobject.Dino, root arkobject.DinoID) map[uuid.UUID]arkobject.Dino {
+	children := d.ChildrenByAncestor(dinos)
+	descendants := map[uuid.UUID]arkobject.Dino{}
+	queue := append([]uuid.UUID(nil), children[root]...)
+	seen := map[uuid.UUID]struct{}{}
+	for len(queue) > 0 {
+		childID := queue[0]
+		queue = queue[1:]
+		if _, ok := seen[childID]; ok {
+			continue
+		}
+		seen[childID] = struct{}{}
+		child, ok := dinos[childID]
+		if !ok {
+			continue
+		}
+		arkDinoID := arkobject.DinoID{ID1: child.ID1, ID2: child.ID2}
+		if arkDinoID == root {
+			continue
+		}
+		descendants[childID] = child
+		if !arkDinoID.IsZero() {
+			queue = append(queue, children[arkDinoID]...)
+		}
+	}
+	return descendants
 }
 
 func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {

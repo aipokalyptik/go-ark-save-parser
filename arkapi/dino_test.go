@@ -903,6 +903,87 @@ func TestDinoAPIFilterChildlessTamedDinosUsesAncestorIDsAndSkipsBabiesAsParents(
 	}
 }
 
+func TestDinoAPIPedigreeHelpersIndexChildrenAndWalkDescendants(t *testing.T) {
+	api := NewDino(nil)
+	parentAID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	parentBID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	childID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	grandchildID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	unrelatedID := uuid.MustParse("eeeeeeee-ffff-0000-1111-222222222222")
+	wildChildID := uuid.MustParse("ffffffff-0000-1111-2222-333333333333")
+	parentAArkID := arkobject.DinoID{ID1: 11, ID2: 12}
+	parentBArkID := arkobject.DinoID{ID1: 21, ID2: 22}
+	childArkID := arkobject.DinoID{ID1: 31, ID2: 32}
+	grandchildArkID := arkobject.DinoID{ID1: 41, ID2: 42}
+	dinos := map[uuid.UUID]arkobject.Dino{
+		parentBID: {
+			ID1:     parentBArkID.ID1,
+			ID2:     parentBArkID.ID2,
+			IsTamed: true,
+		},
+		grandchildID: {
+			ID1:         grandchildArkID.ID1,
+			ID2:         grandchildArkID.ID2,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{childArkID},
+		},
+		parentAID: {
+			ID1:         parentAArkID.ID1,
+			ID2:         parentAArkID.ID2,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{childArkID},
+		},
+		unrelatedID: {
+			ID1:     51,
+			ID2:     52,
+			IsTamed: true,
+		},
+		childID: {
+			ID1:         childArkID.ID1,
+			ID2:         childArkID.ID2,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{parentAArkID, parentBArkID},
+		},
+		wildChildID: {
+			ID1:         61,
+			ID2:         62,
+			AncestorIDs: []arkobject.DinoID{parentAArkID},
+		},
+	}
+
+	children := api.ChildrenByAncestor(dinos)
+
+	if got := children[parentAArkID]; len(got) != 1 || got[0] != childID {
+		t.Fatalf("ChildrenByAncestor(parent A) = %#v, want [%s]", got, childID)
+	}
+	if got := children[parentBArkID]; len(got) != 1 || got[0] != childID {
+		t.Fatalf("ChildrenByAncestor(parent B) = %#v, want [%s]", got, childID)
+	}
+	if got := children[childArkID]; len(got) != 2 || got[0] != parentAID || got[1] != grandchildID {
+		t.Fatalf("ChildrenByAncestor(child) = %#v, want [%s %s]", got, parentAID, grandchildID)
+	}
+
+	descendants := api.DescendantsOf(dinos, parentAArkID)
+	if len(descendants) != 2 {
+		t.Fatalf("DescendantsOf(parent A) length = %d, want 2: %#v", len(descendants), descendants)
+	}
+	if _, ok := descendants[childID]; !ok {
+		t.Fatalf("DescendantsOf(parent A) missing child")
+	}
+	if _, ok := descendants[grandchildID]; !ok {
+		t.Fatalf("DescendantsOf(parent A) missing grandchild")
+	}
+	if _, ok := descendants[parentAID]; ok {
+		t.Fatalf("DescendantsOf(parent A) included root")
+	}
+	if _, ok := descendants[unrelatedID]; ok {
+		t.Fatalf("DescendantsOf(parent A) included unrelated dino")
+	}
+	if _, ok := descendants[wildChildID]; ok {
+		t.Fatalf("DescendantsOf(parent A) included wild child")
+	}
+}
+
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
