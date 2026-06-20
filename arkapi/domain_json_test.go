@@ -24,6 +24,19 @@ func TestJSONAPIExportDinosSummarizesDinoAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportDinosSkipsMalformedCryopodPayloads(t *testing.T) {
+	save := openSyntheticMalformedCryopodSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportDinos()
+	if err != nil {
+		t.Fatalf("ExportDinos() error = %v", err)
+	}
+	if len(items) != 0 {
+		t.Fatalf("ExportDinos() length = %d, want 0 valid dinos", len(items))
+	}
+}
+
 func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()

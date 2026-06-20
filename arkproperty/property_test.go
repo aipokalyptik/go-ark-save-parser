@@ -818,6 +818,46 @@ func TestParseArrayPropertyReadsCustomItemDataByteArrays(t *testing.T) {
 	}
 }
 
+func TestParseArrayPropertyReadsCustomItemDataAfterTrailingPadding(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1:  "CustomItemDatas",
+		2:  "ArrayProperty",
+		3:  "StructProperty",
+		4:  "CustomItemData",
+		5:  "CustomDataBytes",
+		6:  "CustomItemByteArrays",
+		7:  "ByteArrays",
+		8:  "CustomItemByteArray",
+		9:  "Bytes",
+		10: "ByteProperty",
+		11: "None",
+	})
+
+	first := customItemDataElementWithPayload([]byte{0x01})
+	first.Write(make([]byte, 4))
+	writeName(first, 11)
+	second := customItemDataElementWithPayload([]byte{0x02, 0x03})
+
+	stream := bytes.NewBuffer(nil)
+	writeStructArrayProperty(stream, 1, 3, 4, [][]byte{first.Bytes(), second.Bytes()})
+	writeName(stream, 11)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	customDatas := props[0].Value.(Array)
+	if len(customDatas.Values) != 2 {
+		t.Fatalf("CustomItemDatas length = %d, want 2", len(customDatas.Values))
+	}
+	secondContainer := customDatas.Values[1].(Container)
+	secondPayload := customItemDataPayload(t, secondContainer)
+	if !bytes.Equal(secondPayload, []byte{0x02, 0x03}) {
+		t.Fatalf("second CustomItemData payload = % x, want 02 03", secondPayload)
+	}
+}
+
 func TestParseStructPropertyReadsPackedVector(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -1474,4 +1514,50 @@ func writeByteArrayProperty(buf *bytes.Buffer, nameID uint32, bytePropertyID uin
 	buf.WriteByte(0)
 	writeUInt32(buf, uint32(len(values)))
 	buf.Write(values)
+}
+
+func customItemDataElementWithPayload(payload []byte) *bytes.Buffer {
+	byteArrayElement := bytes.NewBuffer(nil)
+	writeByteArrayProperty(byteArrayElement, 9, 10, payload)
+	writeName(byteArrayElement, 11)
+
+	customDataBytes := bytes.NewBuffer(nil)
+	writeStructArrayProperty(customDataBytes, 7, 3, 8, [][]byte{byteArrayElement.Bytes()})
+	writeName(customDataBytes, 11)
+
+	customItemData := bytes.NewBuffer(nil)
+	writeStructProperty(customItemData, 5, 3, 6, customDataBytes.Bytes())
+	writeName(customItemData, 11)
+	return customItemData
+}
+
+func customItemDataPayload(t *testing.T, customData Container) []byte {
+	t.Helper()
+	customDataBytesValue, ok := customData.Value("CustomDataBytes")
+	if !ok {
+		t.Fatalf("CustomDataBytes missing from %#v", customData)
+	}
+	customDataBytes, ok := customDataBytesValue.(Container)
+	if !ok {
+		t.Fatalf("CustomDataBytes type = %T, want Container", customDataBytesValue)
+	}
+	byteArraysValue, ok := customDataBytes.Value("ByteArrays")
+	if !ok {
+		t.Fatalf("ByteArrays missing from %#v", customDataBytes)
+	}
+	byteArrays, ok := byteArraysValue.(Array)
+	if !ok || len(byteArrays.Values) != 1 {
+		t.Fatalf("ByteArrays = %#v, want one byte array", byteArraysValue)
+	}
+	byteArray := byteArrays.Values[0].(Container)
+	bytesValue, ok := byteArray.Value("Bytes")
+	if !ok {
+		t.Fatalf("Bytes missing from %#v", byteArray)
+	}
+	bytesArray := bytesValue.(Array)
+	out := make([]byte, 0, len(bytesArray.Values))
+	for _, value := range bytesArray.Values {
+		out = append(out, value.(byte))
+	}
+	return out
 }

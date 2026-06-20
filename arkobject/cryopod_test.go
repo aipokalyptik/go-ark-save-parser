@@ -179,6 +179,24 @@ func TestDinoFromCryopodObjectParsesEmbeddedDinoAndStatus(t *testing.T) {
 	}
 }
 
+func TestDinoFromCryopodObjectFindsReversedEmbeddedDinoAndStatus(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	payload := syntheticCryopodDinoPayloadWithOrder(t, dinoID, statusID, true)
+	cryopod := &GameObject{
+		UUID:       uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
+		Properties: []arkproperty.Property{customItemDatasProperty(payload)},
+	}
+
+	dino, ok, err := DinoFromCryopodObject(cryopod, 1<<20)
+	if err != nil {
+		t.Fatalf("DinoFromCryopodObject() error = %v", err)
+	}
+	if !ok || dino.UUID != dinoID || dino.Stats == nil || dino.Stats.BaseLevel != 12 {
+		t.Fatalf("DinoFromCryopodObject() = %#v, %v; want reversed embedded dino/status parsed", dino, ok)
+	}
+}
+
 func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	dino, ok, err := DinoFromCryopodObject(&GameObject{}, 1<<20)
 	if err != nil {
@@ -229,14 +247,25 @@ func customItemDatasProperty(payload []byte) arkproperty.Property {
 }
 
 func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
+	return syntheticCryopodDinoPayloadWithOrder(t, dinoID, statusID, false)
+}
+
+func syntheticCryopodDinoPayloadWithOrder(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID, reversed bool) []byte {
 	t.Helper()
 
 	var decoded bytes.Buffer
 	testfixtures.WriteInt32(&decoded, 0)
 	testfixtures.WriteInt32(&decoded, 0)
 	testfixtures.WriteUInt32(&decoded, 2)
-	dinoOffsetPos := writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
-	statusOffsetPos := writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+	var dinoOffsetPos int
+	var statusOffsetPos int
+	if reversed {
+		statusOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+		dinoOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
+	} else {
+		dinoOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
+		statusOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+	}
 
 	dinoPropsOffset := decoded.Len()
 	decoded.WriteByte(0)

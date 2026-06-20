@@ -1066,6 +1066,11 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 				return Array{}, err
 			}
 			values = append(values, Container{Properties: props})
+			if structType == "CustomItemData" {
+				if err := consumeCustomItemDataPadding(r, arrayEnd); err != nil {
+					return Array{}, err
+				}
+			}
 		}
 		if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
 			return Array{}, err
@@ -1100,6 +1105,63 @@ func readArray(r *arkbinary.Reader) (Array, error) {
 		return Array{}, err
 	}
 	return Array{ElementType: elementType, Values: values}, nil
+}
+
+func consumeCustomItemDataPadding(r *arkbinary.Reader, arrayEnd int) error {
+	for r.Position()+8 <= arrayEnd {
+		pos := r.Position()
+		next, err := r.PeekUInt32()
+		if err != nil {
+			return err
+		}
+		if next != 0 {
+			_, ok, err := consumeNameIf(r, pos, "None")
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return nil
+			}
+			continue
+		}
+		if r.Position()+12 > arrayEnd {
+			return nil
+		}
+		if err := r.Skip(4); err != nil {
+			return err
+		}
+		name, err := r.ReadName("")
+		if err != nil {
+			if seekErr := r.SetPosition(pos); seekErr != nil {
+				return seekErr
+			}
+			return nil
+		}
+		if name != "None" {
+			if err := r.SetPosition(pos); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return nil
+}
+
+func consumeNameIf(r *arkbinary.Reader, pos int, want string) (string, bool, error) {
+	name, err := r.ReadName("")
+	if err != nil {
+		if seekErr := r.SetPosition(pos); seekErr != nil {
+			return "", false, seekErr
+		}
+		return "", false, nil
+	}
+	if name != want {
+		if err := r.SetPosition(pos); err != nil {
+			return "", false, err
+		}
+		return name, false, nil
+	}
+	return name, true, nil
 }
 
 func alignArrayBody(r *arkbinary.Reader, elementBodyStart int, dataSize uint32) error {

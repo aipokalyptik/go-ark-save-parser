@@ -62,7 +62,10 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 	for _, info := range objects {
 		if d.IsCryopodBlueprint(info.Object.Blueprint) {
 			dino, ok, err := arkobject.DinoFromCryopodObject(info.Object, cryopodMaxInflatedBytes)
-			if err != nil || !ok {
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
 				continue
 			}
 			out[info.UUID] = dino

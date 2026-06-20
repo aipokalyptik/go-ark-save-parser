@@ -40,8 +40,12 @@ func DinoFromCryopodObject(object *GameObject, maxInflatedBytes int64) (Dino, bo
 	if archive == nil || len(archive.Objects) < 2 {
 		return Dino{}, false, nil
 	}
-	dinoObject := gameObjectFromArchiveObject(archive.Objects[0])
-	statusObject := gameObjectFromArchiveObject(archive.Objects[1])
+	dinoArchiveObject, statusArchiveObject, ok := embeddedDinoAndStatusObjects(archive.Objects)
+	if !ok {
+		return Dino{}, false, nil
+	}
+	dinoObject := gameObjectFromArchiveObject(dinoArchiveObject)
+	statusObject := gameObjectFromArchiveObject(statusArchiveObject)
 	location := &ActorTransform{InCryopod: true}
 	dino := DinoFromObjectWithStatus(dinoObject, statusObject, location)
 	dino.IsCryopodded = true
@@ -51,6 +55,46 @@ func DinoFromCryopodObject(object *GameObject, maxInflatedBytes int64) (Dino, bo
 		dino.Location.InCryopod = true
 	}
 	return dino, true, nil
+}
+
+func embeddedDinoAndStatusObjects(objects []arkarchive.Object) (arkarchive.Object, arkarchive.Object, bool) {
+	dinoIndex := -1
+	statusIndex := -1
+	for i, object := range objects {
+		container := arkproperty.Container{Properties: object.Properties}
+		if dinoIndex < 0 && isEmbeddedDinoObject(container) {
+			dinoIndex = i
+			continue
+		}
+		if statusIndex < 0 && isEmbeddedStatusObject(container) {
+			statusIndex = i
+		}
+	}
+	if dinoIndex < 0 || statusIndex < 0 || dinoIndex == statusIndex {
+		return arkarchive.Object{}, arkarchive.Object{}, false
+	}
+	return objects[dinoIndex], objects[statusIndex], true
+}
+
+func isEmbeddedDinoObject(properties arkproperty.Container) bool {
+	_, hasID1 := properties.Value("DinoID1")
+	_, hasID2 := properties.Value("DinoID2")
+	return hasID1 || hasID2
+}
+
+func isEmbeddedStatusObject(properties arkproperty.Container) bool {
+	for _, name := range []string{
+		"BaseCharacterLevel",
+		"NumberOfLevelUpPointsApplied",
+		"NumberOfLevelUpPointsAppliedTamed",
+		"NumberOfMutationsAppliedTamed",
+		"CurrentStatusValues",
+	} {
+		if _, ok := properties.Value(name); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func gameObjectFromArchiveObject(object arkarchive.Object) *GameObject {

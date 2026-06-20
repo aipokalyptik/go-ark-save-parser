@@ -225,7 +225,7 @@ func (j *JSONAPI) ExportDomainJSON(domain string) ([]byte, error) {
 }
 
 func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
-	dinos, err := NewDino(j.save).All()
+	dinos, _, err := NewDino(j.save).AllWithFaults()
 	if err != nil {
 		return nil, err
 	}

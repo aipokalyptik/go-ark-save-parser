@@ -10,10 +10,19 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatalf("usage: %s <save.ark>", os.Args[0])
+	if len(os.Args) < 2 || len(os.Args) > 3 {
+		log.Fatalf("usage: %s [--no-cryos] <save.ark>", os.Args[0])
 	}
-	save, err := arksave.Open(os.Args[1])
+	includeCryos := true
+	savePath := os.Args[1]
+	if os.Args[1] == "--no-cryos" {
+		if len(os.Args) != 3 {
+			log.Fatalf("usage: %s [--no-cryos] <save.ark>", os.Args[0])
+		}
+		includeCryos = false
+		savePath = os.Args[2]
+	}
+	save, err := arksave.Open(savePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,6 +32,13 @@ func main() {
 	dinos, _, err := api.AllWithFaults()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if !includeCryos {
+		for id, dino := range dinos {
+			if dino.IsCryopodded {
+				delete(dinos, id)
+			}
+		}
 	}
 	tamed := 0
 	wild := 0

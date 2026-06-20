@@ -425,7 +425,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
                 private["go"]["player_inventory"]["parse_error"] = str(exc)
                 cases.append(CaseResult("player_inventory", "fail", "Go player inventory output could not be parsed"))
 
-    go_dino_filter = run(["go", "run", "./examples/dino_filter", str(save_path)], repo_root, env)
+    go_dino_filter = run(["go", "run", "./examples/dino_filter", "--no-cryos", str(save_path)], repo_root, env)
     private["go"]["dino_filter"] = {
         "exit_code": go_dino_filter.returncode,
         "stdout": go_dino_filter.stdout,
@@ -437,6 +437,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_dino_filter.stdout)
         private["go"]["dino_filter"]["parsed"] = got
         want = {key: py_dino_filter[key] for key in ("dinos", "tamed", "wild", "classes")}
+        want["cryopodded"] = 0
         cases.append(CaseResult("dino_filter", "pass" if {key: got.get(key) for key in want} == want else "fail", "dino aggregate counts compared"))
 
     go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
+	"errors"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
@@ -73,6 +75,34 @@ func TestDinoAPIAllIncludesModernCryopoddedDinos(t *testing.T) {
 	}
 	if dino.Stats == nil || dino.Stats.BaseLevel != 12 {
 		t.Fatalf("cryopodded dino stats = %#v, want base level 12", dino.Stats)
+	}
+}
+
+func TestDinoAPIAllReturnsMalformedCryopodError(t *testing.T) {
+	save := openSyntheticMalformedCryopodSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	_, err := api.All()
+	if !errors.Is(err, arkbinary.ErrUnsupportedEmbeddedDataVersion) {
+		t.Fatalf("All() error = %v, want ErrUnsupportedEmbeddedDataVersion", err)
+	}
+}
+
+func TestDinoAPIAllWithFaultsReportsMalformedCryopodError(t *testing.T) {
+	save := openSyntheticMalformedCryopodSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(dinos) != 0 {
+		t.Fatalf("AllWithFaults() dinos length = %d, want 0", len(dinos))
+	}
+	if len(faults) != 1 || !errors.Is(faults[0].Err, arkbinary.ErrUnsupportedEmbeddedDataVersion) {
+		t.Fatalf("AllWithFaults() faults = %#v, want unsupported embedded data fault", faults)
 	}
 }
 
@@ -597,6 +627,15 @@ func openSyntheticCryopoddedDinoSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticMalformedCryopodSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		podID: syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
+	})
+}
+
 func openSyntheticDinoSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -712,6 +751,14 @@ func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.U
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(decoded.Len()))
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(namesOffset))
 	payload.Write(compressed.Bytes())
+	return payload.Bytes()
+}
+
+func syntheticLegacyCryopodPayload() []byte {
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0406))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
 	return payload.Bytes()
 }
 
