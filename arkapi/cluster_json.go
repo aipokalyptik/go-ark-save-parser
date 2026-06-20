@@ -17,6 +17,11 @@ type ClusterDataInfo struct {
 	Dinos          []ClusterDinoInfo `json:"dinos"`
 }
 
+type ClusterDirectoryInfo struct {
+	Count int               `json:"count"`
+	Files []ClusterDataInfo `json:"files"`
+}
+
 type ClusterItemInfo struct {
 	Index      int     `json:"index"`
 	Version    float64 `json:"version"`
@@ -75,4 +80,19 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 
 func ExportClusterDataJSON(data *arkcluster.Data) ([]byte, error) {
 	return json.MarshalIndent(ExportClusterData(data), "", "  ")
+}
+
+func ExportClusterDirectoryData(entries []*arkcluster.Data) ClusterDirectoryInfo {
+	info := ClusterDirectoryInfo{
+		Count: len(entries),
+		Files: make([]ClusterDataInfo, 0, len(entries)),
+	}
+	for _, entry := range entries {
+		info.Files = append(info.Files, ExportClusterData(entry))
+	}
+	return info
+}
+
+func ExportClusterDirectoryDataJSON(entries []*arkcluster.Data) ([]byte, error) {
+	return json.MarshalIndent(ExportClusterDirectoryData(entries), "", "  ")
 }

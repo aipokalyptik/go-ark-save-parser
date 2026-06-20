@@ -148,7 +148,8 @@ enough that oracle-derived tests can run against translated packages.
       state counts over filtered dino maps.
 - [x] Add combined read-only Dino API filtering for level bounds, class names,
       tamed state, and stat minimums.
-- [x] Add read-only local cluster JSON export API and CLI command.
+- [x] Add read-only local cluster JSON export API and CLI command for single
+      cluster files and directories.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API convenience wrappers for weapons, armor,
       saddles, shields, and quantity counting.

@@ -562,6 +562,38 @@ func TestExportClusterJSONRedactsIdentifiersWhenRequested(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
+	dir := t.TempDir()
+	clusterPath := filepath.Join(dir, "EOS_abc123")
+	outPath := filepath.Join(dir, "clusters.json")
+	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"export-cluster-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-cluster-json directory) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-cluster-json directory output %q does not mention %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(cluster directory json) error = %v", err)
+	}
+	var decoded arkapi.ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(cluster directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 2 || len(decoded.Files) != 2 {
+		t.Fatalf("decoded ClusterDirectoryInfo = %#v, want two files", decoded)
+	}
+	if decoded.Files[0].ID != "EOS_abc123" || decoded.Files[1].ID != "EOS_def456" {
+		t.Fatalf("decoded cluster IDs = %#v", decoded.Files)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

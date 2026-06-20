@@ -79,10 +79,12 @@ Export save metadata and object classes to JSON:
 ./bin/arksave export-json /path/to/Valguero_WP.ark /tmp/save_info.json
 ```
 
-Export local cluster upload summaries to JSON:
+Export local cluster upload summaries to JSON from a single cluster file or a
+directory of local cluster files:
 
 ```sh
 ./bin/arksave export-cluster-json /path/to/EOS_abc123 /tmp/cluster.json
+./bin/arksave export-cluster-json /path/to/cluster-directory /tmp/clusters.json
 ```
 
 Export implemented domain summaries to JSON:

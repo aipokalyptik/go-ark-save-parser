@@ -492,6 +492,14 @@ func exportDomainJSON(path string, domain string, outputPath string, out io.Writ
 }
 
 func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return exportClusterDirectoryJSON(path, outputPath, out, opts)
+	}
+
 	data, err := arkcluster.Open(path)
 	if err != nil {
 		return err
@@ -509,6 +517,37 @@ func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOp
 		}
 	} else {
 		raw, err = arkapi.ExportClusterDataJSON(data)
+		if err != nil {
+			return err
+		}
+	}
+	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o600); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote cluster JSON export: %s\n", displayString(outputPath, opts))
+	return err
+}
+
+func exportClusterDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
+	entries, err := arkcluster.OpenDirectory(path)
+	if err != nil {
+		return err
+	}
+	var raw []byte
+	if opts.Redact {
+		info := arkapi.ExportClusterDirectoryData(entries)
+		for i := range info.Files {
+			info.Files[i].ID = redactedValue
+			info.Files[i].Path = redactedValue
+			info.Files[i].Items = nil
+			info.Files[i].Dinos = nil
+		}
+		raw, err = json.MarshalIndent(info, "", "  ")
+		if err != nil {
+			return err
+		}
+	} else {
+		raw, err = arkapi.ExportClusterDirectoryDataJSON(entries)
 		if err != nil {
 			return err
 		}
