@@ -1,6 +1,7 @@
 package arkobject
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -39,7 +40,14 @@ type Dino struct {
 	Stats                  *DinoStats
 	Owner                  DinoOwner
 	GeneTraits             []string
+	ParsedGeneTraits       []GeneTrait
 	Location               *ActorTransform
+}
+
+type GeneTrait struct {
+	Raw   string
+	Name  string
+	Level int
 }
 
 func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
@@ -69,6 +77,7 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	dino.UploadedFromServerName = uploadedFromServerName(properties)
 	dino.Owner = DinoOwnerFromContainer(properties)
 	dino.GeneTraits = stringArrayValue(properties, "GeneTraits")
+	dino.ParsedGeneTraits = parseGeneTraits(dino.GeneTraits)
 	if dino.Location == nil {
 		dino.Location = actorTransformValue(properties, "SavedBaseWorldLocation")
 	}
@@ -120,6 +129,31 @@ func colorSetNames(properties arkproperty.Container) [6]string {
 
 func uploadedFromServerName(properties arkproperty.Container) string {
 	return strings.TrimPrefix(stringValue(properties, "UploadedFromServerName"), "\n")
+}
+
+func parseGeneTraits(values []string) []GeneTrait {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]GeneTrait, 0, len(values))
+	for _, raw := range values {
+		out = append(out, parseGeneTrait(raw))
+	}
+	return out
+}
+
+func parseGeneTrait(raw string) GeneTrait {
+	trait := GeneTrait{Raw: raw, Name: raw}
+	open := strings.Index(raw, "[")
+	if open < 0 || !strings.HasSuffix(raw, "]") {
+		return trait
+	}
+	trait.Name = raw[:open]
+	level, err := strconv.Atoi(raw[open+1 : len(raw)-1])
+	if err == nil {
+		trait.Level = level
+	}
+	return trait
 }
 
 func babyStageForPercent(percent float64) BabyStage {

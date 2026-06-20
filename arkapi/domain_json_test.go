@@ -52,7 +52,6 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	if len(items[0].ColorSetNames) != 6 || items[0].ColorSetNames[1] != "Blue" || items[0].ColorSetNames[4] != "Black" {
 		t.Fatalf("DinoInfo color names = %#v", items[0].ColorSetNames)
 	}
-
 	statsSave := openSyntheticDinoStatsSave(t)
 	defer statsSave.Close()
 	statsItems, err := NewJSON(statsSave).ExportDinos()
@@ -80,6 +79,20 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	}
 	if len(babies) != 1 || babies[0].MaturationPercent != 75 || babies[0].BabyStage != arkobject.BabyStageAdolescent {
 		t.Fatalf("DinoInfo baby fields = %#v", babies)
+	}
+}
+
+func TestGeneTraitInfosMapsParsedGeneTraits(t *testing.T) {
+	items := geneTraitInfos([]arkobject.GeneTrait{
+		{Raw: "MutableMelee[2]", Name: "MutableMelee", Level: 2},
+		{Raw: "Robust", Name: "Robust"},
+	})
+
+	if len(items) != 2 || items[0].Name != "MutableMelee" || items[0].Level != 2 {
+		t.Fatalf("GeneTraitInfo = %#v", items)
+	}
+	if items[1].Raw != "Robust" || items[1].Name != "Robust" || items[1].Level != 0 {
+		t.Fatalf("GeneTraitInfo fallback = %#v", items[1])
 	}
 }
 

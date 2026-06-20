@@ -36,6 +36,7 @@ type DinoInfo struct {
 	Stats                  *DinoStatsInfo      `json:"stats,omitempty"`
 	Owner                  DinoOwnerInfo       `json:"owner,omitempty"`
 	GeneTraits             []string            `json:"gene_traits,omitempty"`
+	ParsedGeneTraits       []GeneTraitInfo     `json:"parsed_gene_traits,omitempty"`
 	Location               *LocationInfo       `json:"location,omitempty"`
 }
 
@@ -129,6 +130,12 @@ type DinoStatsInfo struct {
 	ImprintingPercent float64            `json:"imprinting_percent,omitempty"`
 }
 
+type GeneTraitInfo struct {
+	Raw   string `json:"raw"`
+	Name  string `json:"name"`
+	Level int    `json:"level,omitempty"`
+}
+
 type DinoStatPointsInfo struct {
 	Health        int32 `json:"health,omitempty"`
 	Stamina       int32 `json:"stamina,omitempty"`
@@ -218,6 +225,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			Stats:                  dinoStatsInfo(dino.Stats),
 			Owner:                  dinoOwnerInfo(dino.Owner),
 			GeneTraits:             dino.GeneTraits,
+			ParsedGeneTraits:       geneTraitInfos(dino.ParsedGeneTraits),
 			Location:               locationInfo(dino.Location),
 		})
 	}
@@ -393,6 +401,21 @@ func dinoStatsInfo(value *arkobject.DinoStats) *DinoStatsInfo {
 		StatValues:        dinoStatValuesInfo(value.StatValues),
 		ImprintingPercent: value.ImprintingPercent,
 	}
+}
+
+func geneTraitInfos(values []arkobject.GeneTrait) []GeneTraitInfo {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]GeneTraitInfo, 0, len(values))
+	for _, value := range values {
+		out = append(out, GeneTraitInfo{
+			Raw:   value.Raw,
+			Name:  value.Name,
+			Level: value.Level,
+		})
+	}
+	return out
 }
 
 func dinoStatPointsInfo(value arkobject.DinoStatPoints) DinoStatPointsInfo {

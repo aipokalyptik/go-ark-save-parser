@@ -93,6 +93,12 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	if len(dino.GeneTraits) != 2 || dino.GeneTraits[0] != "MutableMelee[2]" {
 		t.Fatalf("GeneTraits = %#v", dino.GeneTraits)
 	}
+	if len(dino.ParsedGeneTraits) != 2 || dino.ParsedGeneTraits[0].Name != "MutableMelee" || dino.ParsedGeneTraits[0].Level != 2 {
+		t.Fatalf("ParsedGeneTraits = %#v", dino.ParsedGeneTraits)
+	}
+	if dino.ParsedGeneTraits[1].Name != "Robust" || dino.ParsedGeneTraits[1].Level != 0 || dino.ParsedGeneTraits[1].Raw != "Robust" {
+		t.Fatalf("ParsedGeneTraits fallback = %#v", dino.ParsedGeneTraits[1])
+	}
 	if dino.Location == nil || dino.Location.X != 1 || dino.Location.Z != 3 {
 		t.Fatalf("Location = %#v", dino.Location)
 	}

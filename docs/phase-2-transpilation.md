@@ -123,6 +123,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-first linked dino status-component stats for base/current level,
       base/tamed/mutated stat points, current stat values, imprinting percent,
       and dino JSON export.
+- [x] Add typed read-first dino gene trait parsing while preserving raw trait
+      strings for compatibility.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
