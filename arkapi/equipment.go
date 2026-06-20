@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -10,6 +11,18 @@ import (
 
 type EquipmentAPI struct {
 	save *arksave.Save
+}
+
+type EquipmentFilterOptions struct {
+	Kinds          []arkobject.EquipmentKind
+	Blueprints     []string
+	NoBlueprints   bool
+	OnlyBlueprints bool
+	MinQuality     int32
+	MinRating      float64
+	MinDurability  float64
+	Equipped       *bool
+	Crafter        *arkobject.ObjectCrafter
 }
 
 func NewEquipment(save *arksave.Save) *EquipmentAPI {
@@ -244,6 +257,56 @@ func (e *EquipmentAPI) WithMinHypothermalResistance(min float64) (map[uuid.UUID]
 func (e *EquipmentAPI) WithMinHyperthermalResistance(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	return e.filter(func(item arkobject.EquipmentItem) bool {
 		return item.Kind == arkobject.EquipmentArmor && item.Stats.HyperthermalResistance >= min
+	})
+}
+
+func (e *EquipmentAPI) Filtered(opts EquipmentFilterOptions) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	if opts.NoBlueprints && opts.OnlyBlueprints {
+		return nil, fmt.Errorf("cannot filter by both no blueprints and only blueprints")
+	}
+	allowedKinds := map[arkobject.EquipmentKind]struct{}{}
+	for _, kind := range opts.Kinds {
+		allowedKinds[kind] = struct{}{}
+	}
+	allowedBlueprints := map[string]struct{}{}
+	for _, blueprint := range opts.Blueprints {
+		allowedBlueprints[blueprint] = struct{}{}
+	}
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		if len(allowedKinds) > 0 {
+			if _, ok := allowedKinds[item.Kind]; !ok {
+				return false
+			}
+		}
+		if len(allowedBlueprints) > 0 {
+			if _, ok := allowedBlueprints[item.Blueprint]; !ok {
+				return false
+			}
+		}
+		if opts.NoBlueprints && item.IsBlueprint {
+			return false
+		}
+		if opts.OnlyBlueprints && !item.IsBlueprint {
+			return false
+		}
+		if item.Quality < opts.MinQuality {
+			return false
+		}
+		if opts.MinRating != 0 && item.Rating < opts.MinRating {
+			return false
+		}
+		if opts.MinDurability != 0 && item.CurrentDurability < opts.MinDurability {
+			return false
+		}
+		if opts.Equipped != nil && item.IsEquipped != *opts.Equipped {
+			return false
+		}
+		if opts.Crafter != nil {
+			if item.Crafter == nil || *item.Crafter != *opts.Crafter {
+				return false
+			}
+		}
+		return true
 	})
 }
 

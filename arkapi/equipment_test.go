@@ -304,6 +304,52 @@ func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIFilteredCombinesUpstreamReadOnlyCriteria(t *testing.T) {
+	save := openSyntheticEquipmentFilterSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	weaponBlueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"
+	items, err := api.Filtered(EquipmentFilterOptions{
+		Kinds:         []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:    []string{weaponBlueprint},
+		NoBlueprints:  true,
+		MinQuality:    5,
+		MinRating:     7,
+		MinDurability: 0.5,
+		Equipped:      boolPtr(true),
+	})
+	if err != nil {
+		t.Fatalf("Filtered() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("Filtered() length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Kind != arkobject.EquipmentWeapon || item.Blueprint != weaponBlueprint || item.IsBlueprint || !item.IsEquipped {
+			t.Fatalf("Filtered() item = %#v", item)
+		}
+	}
+
+	blueprints, err := api.Filtered(EquipmentFilterOptions{OnlyBlueprints: true})
+	if err != nil {
+		t.Fatalf("Filtered(blueprints) error = %v", err)
+	}
+	if len(blueprints) != 1 {
+		t.Fatalf("Filtered(blueprints) length = %d, want 1", len(blueprints))
+	}
+	for _, item := range blueprints {
+		if !item.IsBlueprint {
+			t.Fatalf("Filtered(blueprints) item = %#v", item)
+		}
+	}
+
+	_, err = api.Filtered(EquipmentFilterOptions{NoBlueprints: true, OnlyBlueprints: true})
+	if err == nil {
+		t.Fatalf("Filtered(conflicting blueprint filters) error = nil, want error")
+	}
+}
+
 func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -413,6 +459,10 @@ func syntheticArmorEquipmentObjectBytes() []byte {
 	writePositionedUInt16Property(&props, 0x10000040, 5, 500)
 	writePositionedUInt16Property(&props, 0x10000040, 7, 200)
 	return testfixtures.ObjectBytesWithProperties(0x10000042, 0x10000004, props.Bytes())
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
 
 func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
