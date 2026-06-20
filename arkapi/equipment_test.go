@@ -7,6 +7,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
 
@@ -319,33 +320,25 @@ func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 }
 
 func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBlueprint bool, rating float32, quality int32, durability float32) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000f))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x1000000c, 1)
-	writeFloatProperty(&buf, 0x10000010, rating)
-	writeIntProperty(&buf, 0x10000011, quality)
-	writeFloatProperty(&buf, 0x10000012, durability)
-	writePositionedUInt16Property(&buf, 0x10000040, 2, 1000)
-	writePositionedUInt16Property(&buf, 0x10000040, 3, 1234)
-	writeStringProperty(&buf, 0x1000001b, "Survivor")
-	writeStringProperty(&buf, 0x1000001c, "Porters")
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x1000000c, 1)
+	writeFloatProperty(&props, 0x10000010, rating)
+	writeIntProperty(&props, 0x10000011, quality)
+	writeFloatProperty(&props, 0x10000012, durability)
+	writePositionedUInt16Property(&props, 0x10000040, 2, 1000)
+	writePositionedUInt16Property(&props, 0x10000040, 3, 1234)
+	writeStringProperty(&props, 0x1000001b, "Survivor")
+	writeStringProperty(&props, 0x1000001c, "Porters")
 	if isEngram {
-		writeBoolProperty(&buf, 0x10000013, true)
+		writeBoolProperty(&props, 0x10000013, true)
 	}
 	if isEquipped {
-		writeBoolProperty(&buf, 0x10000022, true)
+		writeBoolProperty(&props, 0x10000022, true)
 	}
 	if isBlueprint {
-		writeBoolProperty(&buf, 0x1000000d, true)
+		writeBoolProperty(&props, 0x1000000d, true)
 	}
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
 }
 
 func truncatedEquipmentObjectBytes() []byte {
@@ -356,20 +349,12 @@ func truncatedEquipmentObjectBytes() []byte {
 }
 
 func syntheticArmorEquipmentObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000042))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x1000000c, 1)
-	writePositionedUInt16Property(&buf, 0x10000040, 1, 1000)
-	writePositionedUInt16Property(&buf, 0x10000040, 5, 500)
-	writePositionedUInt16Property(&buf, 0x10000040, 7, 200)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x1000000c, 1)
+	writePositionedUInt16Property(&props, 0x10000040, 1, 1000)
+	writePositionedUInt16Property(&props, 0x10000040, 5, 500)
+	writePositionedUInt16Property(&props, 0x10000040, 7, 200)
+	return testfixtures.ObjectBytesWithProperties(0x10000042, 0x10000004, props.Bytes())
 }
 
 func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
