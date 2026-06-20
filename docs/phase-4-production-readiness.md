@@ -37,9 +37,10 @@ offline parser without Python or private chat context.
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local
       profile/tribe aggregate counts, dino aggregate counts, property-filtered
-      object counts, stackable item/quantity counts, equipment longneck
-      blueprint damage aggregates, dino domain JSON aggregate counts, local
-      cluster JSON aggregate counts, and local tribute aggregate counts.
+      object counts, player inventory item/location aggregates, stackable
+      item/quantity counts, equipment longneck blueprint damage aggregates,
+      dino domain JSON aggregate counts, local cluster JSON aggregate counts,
+      and local tribute aggregate counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in

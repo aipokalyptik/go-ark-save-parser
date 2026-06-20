@@ -71,6 +71,14 @@ def parse_key_value_lines(output: str) -> dict[str, Any]:
     return values
 
 
+def parse_go_player_inventory(output: str) -> dict[str, Any]:
+    values = parse_key_value_lines(output)
+    if "player" not in values or "items" not in values:
+        raise ValueError("unexpected player_inventory output")
+    values["has_location"] = "location=(" in output
+    return values
+
+
 def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.saves.asa_save import AsaSave  # type: ignore
@@ -87,6 +95,37 @@ def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
             "classes": classes,
             "class_count": len(classes),
         }
+    finally:
+        save.close()
+
+
+def python_player_inventory_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.player_api import PlayerApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    empty_cluster_dir = repo_root / ".oracle" / "output" / "empty-cluster"
+    empty_cluster_dir.mkdir(parents=True, exist_ok=True)
+    save = AsaSave(save_path)
+    try:
+        player_api = PlayerApi(
+            save,
+            force_legacy_store=True,
+            cluster_data_dir=empty_cluster_dir,
+        )
+        for player in player_api.players:
+            inventory = player_api.get_player_inventory(player, save)
+            if inventory is None:
+                continue
+            item_count = getattr(inventory, "number_of_items")
+            if callable(item_count):
+                item_count = item_count()
+            return {
+                "player_id": player.id_,
+                "items": int(item_count),
+                "has_location": player.location is not None,
+            }
+        return None
     finally:
         save.close()
 
@@ -275,6 +314,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
+    py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
@@ -285,6 +325,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
+        "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
         "go": {},
@@ -358,6 +399,27 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["local_profiles"]["parsed"] = got
         want = {key: py_local_profiles[key] for key in ("profiles", "tribes", "clusters", "tributes", "parsed_players", "parsed_tribes", "tribe_player_links")}
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
+
+    if py_player_inventory is None:
+        cases.append(CaseResult("player_inventory", "skip", "oracle save has no player inventory candidate"))
+    else:
+        go_player_inventory = run(["go", "run", "./examples/player_inventory", str(save_path), str(py_player_inventory["player_id"])], repo_root, env)
+        private["go"]["player_inventory"] = {
+            "exit_code": go_player_inventory.returncode,
+            "stdout": go_player_inventory.stdout,
+            "stderr": go_player_inventory.stderr,
+        }
+        if go_player_inventory.returncode != 0:
+            cases.append(CaseResult("player_inventory", "fail", "Go example exited non-zero"))
+        else:
+            try:
+                got = parse_go_player_inventory(go_player_inventory.stdout)
+                private["go"]["player_inventory"]["parsed"] = got
+                want = {key: py_player_inventory[key] for key in ("items", "has_location")}
+                cases.append(CaseResult("player_inventory", "pass" if {key: got.get(key) for key in want} == want else "fail", "player inventory item count and location presence compared"))
+            except Exception as exc:  # noqa: BLE001 - private report captures details
+                private["go"]["player_inventory"]["parse_error"] = str(exc)
+                cases.append(CaseResult("player_inventory", "fail", "Go player inventory output could not be parsed"))
 
     go_dino_filter = run(["go", "run", "./examples/dino_filter", str(save_path)], repo_root, env)
     private["go"]["dino_filter"] = {

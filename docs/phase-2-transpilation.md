@@ -156,6 +156,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add save-contained `PlayerAPI.PlayersWithFaults` and
       `PlayerAPI.TribeDetailsWithFaults` for partial-success player and tribe
       scans over `.ark` player-data and tribe-data objects.
+- [x] Narrow save-contained player pawn lookup to pawn classes so inventory and
+      location helpers are not blocked by unrelated unsupported objects.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.

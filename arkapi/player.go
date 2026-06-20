@@ -202,7 +202,9 @@ func (p *PlayerAPI) PlayerPawnByDataID(id uint64) (*arkobject.GameObject, bool, 
 	if p.save == nil {
 		return nil, false, nil
 	}
-	objects, err := p.save.ParsedObjects(nil)
+	objects, faults, err := p.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return strings.Contains(info.ClassName, "PlayerPawn")
+	})
 	if err != nil {
 		return nil, false, err
 	}
@@ -214,6 +216,9 @@ func (p *PlayerAPI) PlayerPawnByDataID(id uint64) (*arkobject.GameObject, bool, 
 		if numericPropertyAsUint64(value) == id {
 			return info.Object, true, nil
 		}
+	}
+	if len(faults) > 0 {
+		return nil, false, fmt.Errorf("parse player pawn candidate %s: %w", faults[0].UUID, faults[0].Err)
 	}
 	return nil, false, nil
 }

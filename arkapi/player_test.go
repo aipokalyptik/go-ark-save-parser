@@ -287,6 +287,37 @@ func TestPlayerAPIPlayerInventoryByDataID(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerInventoryByDataIDIgnoresUnrelatedBrokenObjects(t *testing.T) {
+	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	inventoryID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("44444433-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("55555533-4455-6677-8899-aabbccddeeff")
+	path := filepath.Join(t.TempDir(), "player-inventory.ark")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			playerID:    savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
+			pawnID:      savePlayerPawnObjectBytes(42, inventoryID),
+			inventoryID: saveInventoryObjectBytes(inventoryID, firstItemID),
+			faultyID:    savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	inventory, ok, err := NewPlayer(save).PlayerInventoryByDataID(42)
+	if err != nil {
+		t.Fatalf("PlayerInventoryByDataID() error = %v", err)
+	}
+	if !ok || inventory.UUID != inventoryID || inventory.NumberOfItems() != 1 {
+		t.Fatalf("PlayerInventoryByDataID() = %#v, %v; want inventory with one item", inventory, ok)
+	}
+}
+
 func TestPlayerAPIPlayerLocationByDataID(t *testing.T) {
 	save := openSyntheticPlayerTribeSave(t)
 	defer save.Close()
