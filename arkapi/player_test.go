@@ -165,6 +165,31 @@ func TestPlayerAPISaveContainedLookupAndOwnerHelpers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerPawnByDataID(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewPlayer(save)
+	pawn, ok, err := api.PlayerPawnByDataID(42)
+	if err != nil {
+		t.Fatalf("PlayerPawnByDataID() error = %v", err)
+	}
+	if !ok || pawn.UUID != uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff") {
+		t.Fatalf("PlayerPawnByDataID() = %#v, %v; want synthetic pawn", pawn, ok)
+	}
+	if _, ok, err := api.PlayerPawnByDataID(999); err != nil || ok {
+		t.Fatalf("PlayerPawnByDataID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+
+	directoryAPI, err := NewPlayerFromDirectory(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	if _, ok, err := directoryAPI.PlayerPawnByDataID(42); err != nil || ok {
+		t.Fatalf("directory PlayerPawnByDataID() = ok %v err %v, want false nil", ok, err)
+	}
+}
+
 func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
@@ -228,6 +253,7 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	tribeID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
@@ -250,6 +276,7 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 				Members:   []string{"Survivor"},
 				MemberIDs: []int32{42},
 			}),
+			pawnID: savePlayerPawnObjectBytes(42),
 		},
 	})
 	save, err := arksave.Open(path)
@@ -257,6 +284,13 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 		t.Fatalf("Open(save) error = %v", err)
 	}
 	return save
+}
+
+func savePlayerPawnObjectBytes(playerDataID int32) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteNameIntProperty(&props, "LinkedPlayerDataID", playerDataID)
+	testfixtures.WriteArkString(&props, "None")
+	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'", []string{"PlayerPawn_0"}, props.Bytes())
 }
 
 func saveTribeObjectBytes(t *testing.T, opts testfixtures.TribeArchiveOptions) []byte {

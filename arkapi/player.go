@@ -166,6 +166,26 @@ func (p *PlayerAPI) PlayerByUniqueID(id string) (arkobject.Player, bool, error) 
 	return arkobject.Player{}, false, nil
 }
 
+func (p *PlayerAPI) PlayerPawnByDataID(id uint64) (*arkobject.GameObject, bool, error) {
+	if p.save == nil {
+		return nil, false, nil
+	}
+	objects, err := p.save.ParsedObjects(nil)
+	if err != nil {
+		return nil, false, err
+	}
+	for _, info := range objects {
+		value, ok := info.Object.Value("LinkedPlayerDataID")
+		if !ok {
+			continue
+		}
+		if numericPropertyAsUint64(value) == id {
+			return info.Object, true, nil
+		}
+	}
+	return nil, false, nil
+}
+
 func (p *PlayerAPI) PlayersByTribeID(tribeID int32) ([]arkobject.Player, error) {
 	return p.filterPlayers(func(player arkobject.Player) bool {
 		return player.TribeID == tribeID
@@ -480,6 +500,32 @@ func (p *PlayerAPI) PlayerWithFewestEngramPoints() (arkobject.Player, int32, boo
 		}
 	}
 	return best, best.EngramPoints, true, nil
+}
+
+func numericPropertyAsUint64(value any) uint64 {
+	switch v := value.(type) {
+	case uint64:
+		return v
+	case uint32:
+		return uint64(v)
+	case int64:
+		if v < 0 {
+			return 0
+		}
+		return uint64(v)
+	case int32:
+		if v < 0 {
+			return 0
+		}
+		return uint64(v)
+	case int:
+		if v < 0 {
+			return 0
+		}
+		return uint64(v)
+	default:
+		return 0
+	}
 }
 
 func (p *PlayerAPI) filterPlayers(match func(arkobject.Player) bool) ([]arkobject.Player, error) {

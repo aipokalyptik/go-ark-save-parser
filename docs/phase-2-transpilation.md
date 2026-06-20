@@ -115,6 +115,8 @@ enough that oracle-derived tests can run against translated packages.
       level, and lowest engram-point lookup.
 - [x] Add read-only local Player API unlocked-engram blueprint aggregation for
       upstream unlocked-engrams example parity.
+- [x] Add save-contained Player API pawn lookup by linked player data ID as the
+      first read-only player inventory/location prerequisite.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
