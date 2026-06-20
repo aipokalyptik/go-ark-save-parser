@@ -22,6 +22,7 @@ type DinoFilterOptions struct {
 	Cryopodded  *bool
 	StatMinimum int32
 	Stats       []arkobject.DinoStat
+	GeneTraits  []string
 }
 
 type BabyFilterOptions struct {
@@ -430,9 +431,25 @@ func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino
 	for _, stat := range opts.Stats {
 		allowedStats[stat] = struct{}{}
 	}
+	allowedTraits := map[string]struct{}{}
+	for _, trait := range opts.GeneTraits {
+		allowedTraits[trait] = struct{}{}
+	}
 	return d.filter(func(dino arkobject.Dino) bool {
 		if len(allowedBlueprints) > 0 {
 			if _, ok := allowedBlueprints[dino.Blueprint]; !ok {
+				return false
+			}
+		}
+		if len(allowedTraits) > 0 {
+			matched := false
+			for _, trait := range dino.ParsedGeneTraits {
+				if _, ok := allowedTraits[trait.Name]; ok {
+					matched = true
+					break
+				}
+			}
+			if !matched {
 				return false
 			}
 		}

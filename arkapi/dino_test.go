@@ -542,6 +542,20 @@ func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
 	if len(fallback) != 1 {
 		t.Fatalf("WithGeneTrait(fallback) length = %d, want 1", len(fallback))
 	}
+	filtered, err := api.Filtered(DinoFilterOptions{GeneTraits: []string{"MutableMelee"}})
+	if err != nil {
+		t.Fatalf("Filtered(gene trait) error = %v", err)
+	}
+	if len(filtered) != 1 {
+		t.Fatalf("Filtered(gene trait) length = %d, want 1", len(filtered))
+	}
+	missing, err := api.Filtered(DinoFilterOptions{GeneTraits: []string{"MissingTrait"}})
+	if err != nil {
+		t.Fatalf("Filtered(missing gene trait) error = %v", err)
+	}
+	if len(missing) != 0 {
+		t.Fatalf("Filtered(missing gene trait) length = %d, want 0", len(missing))
+	}
 }
 
 func TestDinoAPIFiltersCryopoddedDinos(t *testing.T) {
