@@ -1,6 +1,9 @@
 package arkobject
 
-import "github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+import (
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+)
 
 func CryopodPayloadsFromObject(object *GameObject) [][]byte {
 	if object == nil {
@@ -23,6 +26,40 @@ func CryopodPayloadsFromObject(object *GameObject) [][]byte {
 		payloads = append(payloads, byteArraysFromCustomItemData(customData)...)
 	}
 	return payloads
+}
+
+func DinoFromCryopodObject(object *GameObject, maxInflatedBytes int64) (Dino, bool, error) {
+	payloads := CryopodPayloadsFromObject(object)
+	if len(payloads) == 0 {
+		return Dino{}, false, nil
+	}
+	archive, err := arkarchive.ParseEmbeddedCryopodPayload(payloads[0], maxInflatedBytes)
+	if err != nil {
+		return Dino{}, false, err
+	}
+	if archive == nil || len(archive.Objects) < 2 {
+		return Dino{}, false, nil
+	}
+	dinoObject := gameObjectFromArchiveObject(archive.Objects[0])
+	statusObject := gameObjectFromArchiveObject(archive.Objects[1])
+	location := &ActorTransform{InCryopod: true}
+	dino := DinoFromObjectWithStatus(dinoObject, statusObject, location)
+	dino.IsCryopodded = true
+	if dino.Location == nil {
+		dino.Location = location
+	} else {
+		dino.Location.InCryopod = true
+	}
+	return dino, true, nil
+}
+
+func gameObjectFromArchiveObject(object arkarchive.Object) *GameObject {
+	return &GameObject{
+		UUID:       object.UUID,
+		Blueprint:  object.ClassName,
+		Names:      object.Names,
+		Properties: object.Properties,
+	}
 }
 
 func byteArraysFromCustomItemData(customData arkproperty.Container) [][]byte {
