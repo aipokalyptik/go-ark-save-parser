@@ -87,6 +87,7 @@ type PlayerArchiveOptions struct {
 	ExtraCharacterLevel int32
 	ExperiencePoints    float32
 	TotalEngramPoints   int32
+	UnlockedEngrams     []string
 }
 
 func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiveOptions) {
@@ -121,6 +122,9 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 	}
 	if opts.TotalEngramPoints != 0 {
 		WriteNameIntProperty(&buf, "PlayerState_TotalEngramPoints", opts.TotalEngramPoints)
+	}
+	if len(opts.UnlockedEngrams) > 0 {
+		WriteNameObjectPathArrayProperty(&buf, "PlayerState_EngramBlueprints", opts.UnlockedEngrams)
 	}
 	WriteNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
 	WriteArkString(&buf, "None")
@@ -436,6 +440,20 @@ func WriteNameIntArrayProperty(buf *bytes.Buffer, name string, values []int32) {
 	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
 	for _, value := range values {
 		_ = binary.Write(buf, binary.LittleEndian, value)
+	}
+}
+
+func WriteNameObjectPathArrayProperty(buf *bytes.Buffer, name string, values []string) {
+	bodySize := 4
+	for _, value := range values {
+		bodySize += 4
+		bodySize += 4 + len(value) + 1
+	}
+	writeNameArrayHeader(buf, name, "ObjectProperty", bodySize)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, value := range values {
+		_ = binary.Write(buf, binary.LittleEndian, int32(1))
+		WriteArkString(buf, value)
 	}
 }
 

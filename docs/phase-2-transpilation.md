@@ -113,6 +113,8 @@ enough that oracle-derived tests can run against translated packages.
       experience.
 - [x] Add typed local Player API aggregate helpers for average deaths, total
       level, and lowest engram-point lookup.
+- [x] Add read-only local Player API unlocked-engram blueprint aggregation for
+      upstream unlocked-engrams example parity.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.

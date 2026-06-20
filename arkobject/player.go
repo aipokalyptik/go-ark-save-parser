@@ -21,6 +21,7 @@ type Player struct {
 	Level             int32
 	Experience        float64
 	EngramPoints      int32
+	UnlockedEngrams   []string
 }
 
 func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
@@ -29,6 +30,7 @@ func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	player.Level = 1 + int32Value(properties, "CharacterStatusComponent_ExtraCharacterLevel")
 	player.Experience = float64Value(properties, "CharacterStatusComponent_ExperiencePoints")
 	player.EngramPoints = int32Value(properties, "PlayerState_TotalEngramPoints")
+	player.UnlockedEngrams = objectReferenceStringArrayValue(properties, "PlayerState_EngramBlueprints")
 
 	raw, ok := properties.Value("MyData")
 	if !ok {
@@ -138,6 +140,31 @@ func stringArrayValue(properties arkproperty.Container, name string) []string {
 	for _, value := range array.Values {
 		if text, ok := value.(string); ok {
 			out = append(out, text)
+		}
+	}
+	return out
+}
+
+func objectReferenceStringArrayValue(properties arkproperty.Container, name string) []string {
+	raw, ok := properties.Value(name)
+	if !ok {
+		return nil
+	}
+	array, ok := raw.(arkproperty.Array)
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(array.Values))
+	for _, value := range array.Values {
+		switch v := value.(type) {
+		case arkproperty.ObjectReference:
+			if text, ok := v.Value.(string); ok && text != "" {
+				out = append(out, text)
+			}
+		case string:
+			if v != "" {
+				out = append(out, v)
+			}
 		}
 	}
 	return out

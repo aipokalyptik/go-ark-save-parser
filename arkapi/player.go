@@ -359,6 +359,27 @@ func (p *PlayerAPI) TotalEngramPoints() (int32, error) {
 	return total, nil
 }
 
+func (p *PlayerAPI) UnlockedEngrams() ([]string, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	for _, player := range players {
+		for _, engram := range player.UnlockedEngrams {
+			if engram != "" {
+				seen[engram] = true
+			}
+		}
+	}
+	out := make([]string, 0, len(seen))
+	for engram := range seen {
+		out = append(out, engram)
+	}
+	sort.Strings(out)
+	return out, nil
+}
+
 func (p *PlayerAPI) PlayerWithHighestLevel() (arkobject.Player, int32, bool, error) {
 	players, err := p.Players()
 	if err != nil {

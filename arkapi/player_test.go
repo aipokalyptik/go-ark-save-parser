@@ -632,6 +632,10 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 		ExtraCharacterLevel: 4,
 		ExperiencePoints:    123.5,
 		TotalEngramPoints:   12,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		},
 	})
 	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
 		PlayerDataID:        43,
@@ -641,6 +645,10 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 		ExtraCharacterLevel: 9,
 		ExperiencePoints:    456.25,
 		TotalEngramPoints:   30,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+		},
 	})
 
 	api, err := NewPlayerFromDirectory(dir)
@@ -702,6 +710,23 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	}
 	if totalEngramPoints != 42 {
 		t.Fatalf("TotalEngramPoints() = %d, want 42", totalEngramPoints)
+	}
+	unlockedEngrams, err := api.UnlockedEngrams()
+	if err != nil {
+		t.Fatalf("UnlockedEngrams() error = %v", err)
+	}
+	wantEngrams := []string{
+		"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+		"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+	}
+	if len(unlockedEngrams) != len(wantEngrams) {
+		t.Fatalf("UnlockedEngrams() = %#v, want %#v", unlockedEngrams, wantEngrams)
+	}
+	for i := range wantEngrams {
+		if unlockedEngrams[i] != wantEngrams[i] {
+			t.Fatalf("UnlockedEngrams() = %#v, want %#v", unlockedEngrams, wantEngrams)
+		}
 	}
 	player, level, ok, err := api.PlayerWithHighestLevel()
 	if err != nil {

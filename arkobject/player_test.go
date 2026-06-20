@@ -27,6 +27,13 @@ func TestPlayerFromContainerReadsMyDataFields(t *testing.T) {
 		{Name: "CharacterStatusComponent_ExtraCharacterLevel", Type: arkproperty.TypeInt, Value: int32(4)},
 		{Name: "CharacterStatusComponent_ExperiencePoints", Type: arkproperty.TypeFloat, Value: float32(123.5)},
 		{Name: "PlayerState_TotalEngramPoints", Type: arkproperty.TypeInt, Value: int32(12)},
+		{Name: "PlayerState_EngramBlueprints", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+			ElementType: arkproperty.TypeObject,
+			Values: []any{
+				arkproperty.ObjectReference{Type: arkproperty.ObjectReferencePath, Value: "Blueprint'/Game/Engrams/EngramA.EngramA_C'"},
+				"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			},
+		}},
 		{Name: "MyData", Type: arkproperty.TypeStruct, Value: myData},
 	}}
 
@@ -45,6 +52,9 @@ func TestPlayerFromContainerReadsMyDataFields(t *testing.T) {
 	}
 	if player.Level != 5 || player.Experience != 123.5 || player.EngramPoints != 12 {
 		t.Fatalf("Player stat fields = %#v", player)
+	}
+	if len(player.UnlockedEngrams) != 2 || player.UnlockedEngrams[0] != "Blueprint'/Game/Engrams/EngramA.EngramA_C'" || player.UnlockedEngrams[1] != "Blueprint'/Game/Engrams/EngramB.EngramB_C'" {
+		t.Fatalf("UnlockedEngrams = %#v", player.UnlockedEngrams)
 	}
 }
 
