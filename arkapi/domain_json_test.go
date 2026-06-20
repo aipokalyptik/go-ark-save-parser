@@ -3,6 +3,8 @@ package arkapi
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 )
 
 func TestJSONAPIExportDinosSummarizesDinoAPI(t *testing.T) {
@@ -18,6 +20,38 @@ func TestJSONAPIExportDinosSummarizesDinoAPI(t *testing.T) {
 	}
 	if items[0].ID1 != 1001 || !items[0].IsTamed || items[0].Location == nil || items[0].Location.X != 11 {
 		t.Fatalf("DinoInfo = %#v", items[0])
+	}
+}
+
+func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
+	save := openSyntheticDinoDetailSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportDinos()
+	if err != nil {
+		t.Fatalf("ExportDinos() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ExportDinos() length = %d, want 1", len(items))
+	}
+	if items[0].TamedName != "Blue" || !items[0].IsNeutered {
+		t.Fatalf("DinoInfo tamed fields = %#v", items[0])
+	}
+	if items[0].InventoryUUID != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
+		t.Fatalf("DinoInfo inventory UUID = %q", items[0].InventoryUUID)
+	}
+	if items[0].Owner.TribeName != "Porters" || items[0].Owner.TamerTribeID != 555 || items[0].Owner.PlayerID != 42 {
+		t.Fatalf("DinoInfo owner = %#v", items[0].Owner)
+	}
+
+	babySave := openSyntheticDinoBabyStageSave(t)
+	defer babySave.Close()
+	babies, err := NewJSON(babySave).ExportDinos()
+	if err != nil {
+		t.Fatalf("ExportDinos(baby) error = %v", err)
+	}
+	if len(babies) != 1 || babies[0].MaturationPercent != 75 || babies[0].BabyStage != arkobject.BabyStageAdolescent {
+		t.Fatalf("DinoInfo baby fields = %#v", babies)
 	}
 }
 

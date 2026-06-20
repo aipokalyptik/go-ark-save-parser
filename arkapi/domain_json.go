@@ -16,17 +16,23 @@ type DomainExport struct {
 }
 
 type DinoInfo struct {
-	UUID         string        `json:"uuid"`
-	Blueprint    string        `json:"blueprint"`
-	ID1          uint32        `json:"id1"`
-	ID2          uint32        `json:"id2"`
-	IsFemale     bool          `json:"is_female"`
-	IsTamed      bool          `json:"is_tamed"`
-	IsBaby       bool          `json:"is_baby"`
-	IsDead       bool          `json:"is_dead"`
-	IsCryopodded bool          `json:"is_cryopodded"`
-	GeneTraits   []string      `json:"gene_traits,omitempty"`
-	Location     *LocationInfo `json:"location,omitempty"`
+	UUID              string              `json:"uuid"`
+	Blueprint         string              `json:"blueprint"`
+	ID1               uint32              `json:"id1"`
+	ID2               uint32              `json:"id2"`
+	IsFemale          bool                `json:"is_female"`
+	IsTamed           bool                `json:"is_tamed"`
+	IsBaby            bool                `json:"is_baby"`
+	IsDead            bool                `json:"is_dead"`
+	IsCryopodded      bool                `json:"is_cryopodded"`
+	MaturationPercent float64             `json:"maturation_percent,omitempty"`
+	BabyStage         arkobject.BabyStage `json:"baby_stage,omitempty"`
+	InventoryUUID     string              `json:"inventory_uuid,omitempty"`
+	TamedName         string              `json:"tamed_name,omitempty"`
+	IsNeutered        bool                `json:"is_neutered,omitempty"`
+	Owner             DinoOwnerInfo       `json:"owner,omitempty"`
+	GeneTraits        []string            `json:"gene_traits,omitempty"`
+	Location          *LocationInfo       `json:"location,omitempty"`
 }
 
 type StructureInfo struct {
@@ -98,6 +104,17 @@ type CrafterInfo struct {
 	TribeName     string `json:"tribe_name,omitempty"`
 }
 
+type DinoOwnerInfo struct {
+	PlayerID          int32  `json:"player_id,omitempty"`
+	PlayerName        string `json:"player_name,omitempty"`
+	TribeName         string `json:"tribe_name,omitempty"`
+	TamerTribeID      int32  `json:"tamer_tribe_id,omitempty"`
+	TamerString       string `json:"tamer_string,omitempty"`
+	ImprinterName     string `json:"imprinter_name,omitempty"`
+	ImprinterUniqueID string `json:"imprinter_unique_id,omitempty"`
+	TargetTeam        int32  `json:"target_team,omitempty"`
+}
+
 func (j *JSONAPI) ExportDomain(domain string) (DomainExport, error) {
 	switch domain {
 	case "dinos":
@@ -137,17 +154,23 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
 		out = append(out, DinoInfo{
-			UUID:         id.String(),
-			Blueprint:    dino.Blueprint,
-			ID1:          dino.ID1,
-			ID2:          dino.ID2,
-			IsFemale:     dino.IsFemale,
-			IsTamed:      dino.IsTamed,
-			IsBaby:       dino.IsBaby,
-			IsDead:       dino.IsDead,
-			IsCryopodded: dino.IsCryopodded,
-			GeneTraits:   dino.GeneTraits,
-			Location:     locationInfo(dino.Location),
+			UUID:              id.String(),
+			Blueprint:         dino.Blueprint,
+			ID1:               dino.ID1,
+			ID2:               dino.ID2,
+			IsFemale:          dino.IsFemale,
+			IsTamed:           dino.IsTamed,
+			IsBaby:            dino.IsBaby,
+			IsDead:            dino.IsDead,
+			IsCryopodded:      dino.IsCryopodded,
+			MaturationPercent: dino.MaturationPercent,
+			BabyStage:         dino.BabyStage,
+			InventoryUUID:     optionalUUIDString(dino.InventoryUUID),
+			TamedName:         dino.TamedName,
+			IsNeutered:        dino.IsNeutered,
+			Owner:             dinoOwnerInfo(dino.Owner),
+			GeneTraits:        dino.GeneTraits,
+			Location:          locationInfo(dino.Location),
 		})
 	}
 	return out, nil
@@ -294,6 +317,26 @@ func ownerInfo(value arkobject.ObjectOwner) OwnerInfo {
 		TribeName:        value.TribeName,
 		OriginalPlacerID: value.OriginalPlacerID,
 	}
+}
+
+func dinoOwnerInfo(value arkobject.DinoOwner) DinoOwnerInfo {
+	return DinoOwnerInfo{
+		PlayerID:          value.PlayerID,
+		PlayerName:        value.PlayerName,
+		TribeName:         value.TribeName,
+		TamerTribeID:      value.TamerTribeID,
+		TamerString:       value.TamerString,
+		ImprinterName:     value.ImprinterName,
+		ImprinterUniqueID: value.ImprinterUniqueID,
+		TargetTeam:        value.TargetTeam,
+	}
+}
+
+func optionalUUIDString(value *uuid.UUID) string {
+	if value == nil {
+		return ""
+	}
+	return value.String()
 }
 
 func crafterInfo(value *arkobject.ObjectCrafter) *CrafterInfo {

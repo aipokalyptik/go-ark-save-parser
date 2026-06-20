@@ -116,6 +116,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.
+- [x] Include parsed tamed dino owner/detail and baby maturation fields in
+      dino domain JSON export.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
