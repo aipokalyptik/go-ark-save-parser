@@ -117,6 +117,8 @@ enough that oracle-derived tests can run against translated packages.
       upstream unlocked-engrams example parity.
 - [x] Add save-contained Player API pawn lookup by linked player data ID as the
       first read-only player inventory/location prerequisite.
+- [x] Add save-contained Player API inventory lookup by linked player data ID,
+      resolving pawn inventory components to inventory item UUID lists.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.

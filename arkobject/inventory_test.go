@@ -63,7 +63,7 @@ func TestInventoryFromObjectReadsReferencedItems(t *testing.T) {
 				ElementType: arkproperty.TypeObject,
 				Values: []any{
 					arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: first},
-					arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: second},
+					arkproperty.ObjectReference{Type: arkproperty.ObjectReferencePath, Value: second},
 				},
 			}},
 		},

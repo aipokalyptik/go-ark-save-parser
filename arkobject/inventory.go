@@ -27,7 +27,7 @@ func InventoryFromObject(object *GameObject) Inventory {
 	}
 	for _, value := range array.Values {
 		ref, ok := value.(arkproperty.ObjectReference)
-		if !ok || ref.Type != arkproperty.ObjectReferenceUUID {
+		if !ok {
 			continue
 		}
 		id, ok := uuidFromReferenceValue(ref.Value)

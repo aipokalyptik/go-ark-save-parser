@@ -10,8 +10,10 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
+	"github.com/google/uuid"
 )
 
 type PlayerAPI struct {
@@ -184,6 +186,30 @@ func (p *PlayerAPI) PlayerPawnByDataID(id uint64) (*arkobject.GameObject, bool, 
 		}
 	}
 	return nil, false, nil
+}
+
+func (p *PlayerAPI) PlayerInventoryByDataID(id uint64) (*arkobject.Inventory, bool, error) {
+	if p.save == nil {
+		return nil, false, nil
+	}
+	pawn, ok, err := p.PlayerPawnByDataID(id)
+	if err != nil || !ok {
+		return nil, ok, err
+	}
+	value, ok := pawn.Value("MyInventoryComponent")
+	if !ok {
+		return nil, false, nil
+	}
+	inventoryID, ok := objectReferencePropertyUUID(value)
+	if !ok {
+		return nil, false, nil
+	}
+	object, err := p.save.Object(inventoryID)
+	if err != nil {
+		return nil, false, err
+	}
+	inventory := arkobject.InventoryFromObject(object)
+	return &inventory, true, nil
 }
 
 func (p *PlayerAPI) PlayersByTribeID(tribeID int32) ([]arkobject.Player, error) {
@@ -525,6 +551,22 @@ func numericPropertyAsUint64(value any) uint64 {
 		return uint64(v)
 	default:
 		return 0
+	}
+}
+
+func objectReferencePropertyUUID(value any) (uuid.UUID, bool) {
+	ref, ok := value.(arkproperty.ObjectReference)
+	if !ok {
+		return uuid.Nil, false
+	}
+	switch v := ref.Value.(type) {
+	case uuid.UUID:
+		return v, true
+	case string:
+		id, err := uuid.Parse(v)
+		return id, err == nil
+	default:
+		return uuid.Nil, false
 	}
 }
 

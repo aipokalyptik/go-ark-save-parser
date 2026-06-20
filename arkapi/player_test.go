@@ -190,6 +190,26 @@ func TestPlayerAPIPlayerPawnByDataID(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerInventoryByDataID(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewPlayer(save)
+	inventory, ok, err := api.PlayerInventoryByDataID(42)
+	if err != nil {
+		t.Fatalf("PlayerInventoryByDataID() error = %v", err)
+	}
+	if !ok || inventory.UUID != uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff") {
+		t.Fatalf("PlayerInventoryByDataID() = %#v, %v; want synthetic inventory", inventory, ok)
+	}
+	if inventory.NumberOfItems() != 2 {
+		t.Fatalf("PlayerInventoryByDataID().NumberOfItems() = %d, want 2", inventory.NumberOfItems())
+	}
+	if _, ok, err := api.PlayerInventoryByDataID(999); err != nil || ok {
+		t.Fatalf("PlayerInventoryByDataID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+}
+
 func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
@@ -254,6 +274,9 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	tribeID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	inventoryID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("44444444-4455-6677-8899-aabbccddeeff")
+	secondItemID := uuid.MustParse("55555555-4455-6677-8899-aabbccddeeff")
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
@@ -276,7 +299,8 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 				Members:   []string{"Survivor"},
 				MemberIDs: []int32{42},
 			}),
-			pawnID: savePlayerPawnObjectBytes(42),
+			pawnID:      savePlayerPawnObjectBytes(42, inventoryID),
+			inventoryID: saveInventoryObjectBytes(inventoryID, firstItemID, secondItemID),
 		},
 	})
 	save, err := arksave.Open(path)
@@ -286,11 +310,23 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 	return save
 }
 
-func savePlayerPawnObjectBytes(playerDataID int32) []byte {
+func savePlayerPawnObjectBytes(playerDataID int32, inventoryID uuid.UUID) []byte {
 	var props bytes.Buffer
 	testfixtures.WriteNameIntProperty(&props, "LinkedPlayerDataID", playerDataID)
+	testfixtures.WriteNameObjectPathProperty(&props, "MyInventoryComponent", inventoryID.String())
 	testfixtures.WriteArkString(&props, "None")
 	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'", []string{"PlayerPawn_0"}, props.Bytes())
+}
+
+func saveInventoryObjectBytes(inventoryID uuid.UUID, itemIDs ...uuid.UUID) []byte {
+	values := make([]string, 0, len(itemIDs))
+	for _, id := range itemIDs {
+		values = append(values, id.String())
+	}
+	var props bytes.Buffer
+	testfixtures.WriteNameObjectPathArrayProperty(&props, "InventoryItems", values)
+	testfixtures.WriteArkString(&props, "None")
+	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'", []string{inventoryID.String()}, props.Bytes())
 }
 
 func saveTribeObjectBytes(t *testing.T, opts testfixtures.TribeArchiveOptions) []byte {
