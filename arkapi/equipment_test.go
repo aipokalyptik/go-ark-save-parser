@@ -425,6 +425,81 @@ func TestEquipmentAPIFilteredCombinesUpstreamReadOnlyCriteria(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPITopItemHelpersMirrorExampleSelections(t *testing.T) {
+	api := EquipmentAPI{}
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	thirdID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	items := map[uuid.UUID]arkobject.EquipmentItem{
+		firstID: {
+			Kind:  arkobject.EquipmentWeapon,
+			Stats: arkobject.EquipmentStats{Damage: 112.3, Durability: 20},
+		},
+		secondID: {
+			Kind:  arkobject.EquipmentWeapon,
+			Stats: arkobject.EquipmentStats{Damage: 175.0, Durability: 10},
+		},
+		thirdID: {
+			Kind:  arkobject.EquipmentArmor,
+			Stats: arkobject.EquipmentStats{Armor: 45, Durability: 50},
+		},
+	}
+
+	id, item, ok := api.BestWeaponDamage(items)
+	if !ok {
+		t.Fatalf("BestWeaponDamage() ok = false, want true")
+	}
+	if id != secondID || item.Stats.Damage != 175 {
+		t.Fatalf("BestWeaponDamage() = %s %#v, want second weapon", id, item)
+	}
+
+	id, item, ok = api.BestActualDurability(items)
+	if !ok {
+		t.Fatalf("BestActualDurability() ok = false, want true")
+	}
+	if id != thirdID || item.Stats.Durability != 50 {
+		t.Fatalf("BestActualDurability() = %s %#v, want armor with durability 50", id, item)
+	}
+}
+
+func TestEquipmentAPIFilterAscendantWeaponBlueprints(t *testing.T) {
+	api := EquipmentAPI{}
+	ascendantID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	primitiveID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	nonBlueprintID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	armorID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	items := map[uuid.UUID]arkobject.EquipmentItem{
+		ascendantID: {
+			Kind:        arkobject.EquipmentWeapon,
+			IsBlueprint: true,
+			Quality:     5,
+		},
+		primitiveID: {
+			Kind:        arkobject.EquipmentWeapon,
+			IsBlueprint: true,
+			Quality:     0,
+		},
+		nonBlueprintID: {
+			Kind:        arkobject.EquipmentWeapon,
+			IsBlueprint: false,
+			Quality:     5,
+		},
+		armorID: {
+			Kind:        arkobject.EquipmentArmor,
+			IsBlueprint: true,
+			Quality:     5,
+		},
+	}
+
+	filtered := api.FilterAscendantWeaponBlueprints(items)
+	if len(filtered) != 1 {
+		t.Fatalf("FilterAscendantWeaponBlueprints() length = %d, want 1", len(filtered))
+	}
+	if _, ok := filtered[ascendantID]; !ok {
+		t.Fatalf("FilterAscendantWeaponBlueprints() missing ascendant weapon blueprint: %#v", filtered)
+	}
+}
+
 func openSyntheticEquipmentSave(t *testing.T) *arksave.Save {
 	t.Helper()
 

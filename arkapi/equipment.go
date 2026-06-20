@@ -25,6 +25,8 @@ type EquipmentFilterOptions struct {
 	Crafter        *arkobject.ObjectCrafter
 }
 
+const AscendantQualityIndex int32 = 5
+
 var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
 	"/Game/ScorchedEarth/WeaponChainsaw/PrimalItem_ChainSaw.PrimalItem_ChainSaw_C":                     arkobject.EquipmentWeapon,
 	"/Game/ScorchedEarth/WeaponFlamethrower/PrimalItem_WeapFlamethrower.PrimalItem_WeapFlamethrower_C": arkobject.EquipmentWeapon,
@@ -357,6 +359,48 @@ func (e *EquipmentAPI) WithMinHyperthermalResistance(min float64) (map[uuid.UUID
 	return e.filter(func(item arkobject.EquipmentItem) bool {
 		return item.Kind == arkobject.EquipmentArmor && item.Stats.HyperthermalResistance >= min
 	})
+}
+
+func (e *EquipmentAPI) BestWeaponDamage(items map[uuid.UUID]arkobject.EquipmentItem) (uuid.UUID, arkobject.EquipmentItem, bool) {
+	return e.best(items, func(item arkobject.EquipmentItem) (float64, bool) {
+		return item.Stats.Damage, item.Kind == arkobject.EquipmentWeapon
+	})
+}
+
+func (e *EquipmentAPI) BestActualDurability(items map[uuid.UUID]arkobject.EquipmentItem) (uuid.UUID, arkobject.EquipmentItem, bool) {
+	return e.best(items, func(item arkobject.EquipmentItem) (float64, bool) {
+		return item.Stats.Durability, true
+	})
+}
+
+func (e *EquipmentAPI) FilterAscendantWeaponBlueprints(items map[uuid.UUID]arkobject.EquipmentItem) map[uuid.UUID]arkobject.EquipmentItem {
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range items {
+		if item.Kind == arkobject.EquipmentWeapon && item.IsBlueprint && item.Quality >= AscendantQualityIndex {
+			out[id] = item
+		}
+	}
+	return out
+}
+
+func (e *EquipmentAPI) best(items map[uuid.UUID]arkobject.EquipmentItem, value func(arkobject.EquipmentItem) (float64, bool)) (uuid.UUID, arkobject.EquipmentItem, bool) {
+	var bestID uuid.UUID
+	var bestItem arkobject.EquipmentItem
+	var bestValue float64
+	found := false
+	for id, item := range items {
+		current, ok := value(item)
+		if !ok {
+			continue
+		}
+		if !found || current > bestValue || (current == bestValue && id.String() < bestID.String()) {
+			bestID = id
+			bestItem = item
+			bestValue = current
+			found = true
+		}
+	}
+	return bestID, bestItem, found
 }
 
 func (e *EquipmentAPI) Filtered(opts EquipmentFilterOptions) (map[uuid.UUID]arkobject.EquipmentItem, error) {

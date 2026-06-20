@@ -237,6 +237,8 @@ enough that oracle-derived tests can run against translated packages.
       resistance, and hyperthermal resistance thresholds.
 - [x] Add typed Equipment API filtering by actual durability calculated from
       `ItemStatValues`, distinct from saved current durability percentage.
+- [x] Add read-only Equipment API top-damage, top-durability, and ascendant
+      weapon-blueprint helper flows for upstream equipment examples.
 - [x] Add equipment model helpers for crafted detection, implemented stat lists,
       and upstream-compatible internal average-stat ranking.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
