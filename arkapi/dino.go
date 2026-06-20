@@ -271,6 +271,12 @@ func (d *DinoAPI) WithGeneTrait(name string, levels ...int) (map[uuid.UUID]arkob
 	})
 }
 
+func (d *DinoAPI) OwnedByTribe(tribeID int32, includeCryopodded bool) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return dino.IsTamed && (includeCryopodded || !dino.IsCryopodded) && dino.Owner.TargetTeam == tribeID
+	})
+}
+
 func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {
 	counts := map[int32]int{}
 	for _, dino := range dinos {

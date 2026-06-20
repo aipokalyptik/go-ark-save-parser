@@ -288,6 +288,33 @@ func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
 	}
 }
 
+func TestDinoAPIOwnedByTribeFiltersTamedDinosByTargetTeam(t *testing.T) {
+	save := openSyntheticDinoDetailSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	owned, err := api.OwnedByTribe(555, true)
+	if err != nil {
+		t.Fatalf("OwnedByTribe() error = %v", err)
+	}
+	if len(owned) != 1 {
+		t.Fatalf("OwnedByTribe(555) length = %d, want 1", len(owned))
+	}
+	for _, dino := range owned {
+		if !dino.IsTamed || dino.Owner.TargetTeam != 555 {
+			t.Fatalf("OwnedByTribe(555) dino = %#v", dino)
+		}
+	}
+
+	missing, err := api.OwnedByTribe(111, true)
+	if err != nil {
+		t.Fatalf("OwnedByTribe(missing) error = %v", err)
+	}
+	if len(missing) != 0 {
+		t.Fatalf("OwnedByTribe(111) length = %d, want 0", len(missing))
+	}
+}
+
 func TestDinoAPIReadsBabyMaturationStage(t *testing.T) {
 	save := openSyntheticDinoBabyStageSave(t)
 	defer save.Close()

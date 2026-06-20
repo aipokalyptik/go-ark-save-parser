@@ -197,6 +197,7 @@ enough that oracle-derived tests can run against translated packages.
       remains pending.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
+- [x] Add read-only tamed dino ownership filtering by tribe target team.
 - [x] Add read-only local cluster JSON export API and CLI command for single
       cluster files and directories.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
