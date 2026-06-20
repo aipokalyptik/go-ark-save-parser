@@ -82,6 +82,7 @@ type PlayerArchiveOptions struct {
 	PlayerName    string
 	UniqueID      string
 	TribeID       int32
+	NumDeaths     int32
 }
 
 func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiveOptions) {
@@ -95,6 +96,9 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 		WriteNameStringProperty(&myData, "UniqueID", opts.UniqueID)
 	}
 	WriteNameIntProperty(&myData, "TribeID", opts.TribeID)
+	if opts.NumDeaths != 0 {
+		WriteNameIntProperty(&myData, "NumOfDeaths", opts.NumDeaths)
+	}
 	WriteArkString(&myData, "None")
 
 	var buf bytes.Buffer

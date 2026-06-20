@@ -98,6 +98,8 @@ enough that oracle-derived tests can run against translated packages.
       tribe names, owner IDs, and tribe member names/IDs.
 - [x] Add typed local Player/Tribe relationship helpers for tribe-to-player
       maps, tribe-of-player lookup, and profile-derived object/dino owners.
+- [x] Add typed local Player API death-stat helpers for per-player death
+      counts, total deaths, and highest-death player lookup.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless

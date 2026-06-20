@@ -334,6 +334,50 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	}
 }
 
+func TestPlayerAPILocalDeathStatistics(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		TribeID:       12345,
+		NumDeaths:     3,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		TribeID:       12345,
+		NumDeaths:     7,
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	deaths, err := api.DeathsByPlayerID()
+	if err != nil {
+		t.Fatalf("DeathsByPlayerID() error = %v", err)
+	}
+	if deaths[42] != 3 || deaths[43] != 7 {
+		t.Fatalf("DeathsByPlayerID() = %#v, want deaths for players 42 and 43", deaths)
+	}
+	total, err := api.TotalDeaths()
+	if err != nil {
+		t.Fatalf("TotalDeaths() error = %v", err)
+	}
+	if total != 10 {
+		t.Fatalf("TotalDeaths() = %d, want 10", total)
+	}
+	player, deathsValue, ok, err := api.PlayerWithMostDeaths()
+	if err != nil {
+		t.Fatalf("PlayerWithMostDeaths() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 43 || deathsValue != 7 {
+		t.Fatalf("PlayerWithMostDeaths() = %#v, %d, %v; want player 43, 7, true", player, deathsValue, ok)
+	}
+}
+
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")

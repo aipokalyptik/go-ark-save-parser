@@ -156,6 +156,47 @@ func (p *PlayerAPI) PlayersByPlayerName(name string) ([]arkobject.Player, error)
 	})
 }
 
+func (p *PlayerAPI) DeathsByPlayerID() (map[uint64]int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uint64]int32{}
+	for _, player := range players {
+		out[player.PlayerDataID] = player.NumDeaths
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TotalDeaths() (int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, err
+	}
+	var total int32
+	for _, player := range players {
+		total += player.NumDeaths
+	}
+	return total, nil
+}
+
+func (p *PlayerAPI) PlayerWithMostDeaths() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.NumDeaths > best.NumDeaths {
+			best = player
+		}
+	}
+	return best, best.NumDeaths, true, nil
+}
+
 func (p *PlayerAPI) filterPlayers(match func(arkobject.Player) bool) ([]arkobject.Player, error) {
 	players, err := p.Players()
 	if err != nil {
