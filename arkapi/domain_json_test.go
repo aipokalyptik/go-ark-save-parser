@@ -43,6 +43,15 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	if items[0].Owner.TribeName != "Porters" || items[0].Owner.TamerTribeID != 555 || items[0].Owner.PlayerID != 42 {
 		t.Fatalf("DinoInfo owner = %#v", items[0].Owner)
 	}
+	if items[0].UploadedFromServerName != "TheIsland" {
+		t.Fatalf("DinoInfo uploaded server = %q", items[0].UploadedFromServerName)
+	}
+	if len(items[0].ColorSetIndices) != 6 || items[0].ColorSetIndices[0] != 11 || items[0].ColorSetIndices[3] != 44 {
+		t.Fatalf("DinoInfo color indices = %#v", items[0].ColorSetIndices)
+	}
+	if len(items[0].ColorSetNames) != 6 || items[0].ColorSetNames[1] != "Blue" || items[0].ColorSetNames[4] != "Black" {
+		t.Fatalf("DinoInfo color names = %#v", items[0].ColorSetNames)
+	}
 
 	babySave := openSyntheticDinoBabyStageSave(t)
 	defer babySave.Close()

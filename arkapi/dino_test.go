@@ -113,6 +113,15 @@ func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
 		if dino.TamedName != "Blue" || !dino.IsNeutered {
 			t.Fatalf("dino tamed details = %#v", dino)
 		}
+		if dino.ColorSetIndices != [6]int{11, 0, 0, 44, 0, 0} {
+			t.Fatalf("ColorSetIndices = %#v", dino.ColorSetIndices)
+		}
+		if dino.ColorSetNames != [6]string{"None", "Blue", "None", "None", "Black", "None"} {
+			t.Fatalf("ColorSetNames = %#v", dino.ColorSetNames)
+		}
+		if dino.UploadedFromServerName != "TheIsland" {
+			t.Fatalf("UploadedFromServerName = %q", dino.UploadedFromServerName)
+		}
 		if dino.InventoryUUID == nil || dino.InventoryUUID.String() != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
 			t.Fatalf("InventoryUUID = %v", dino.InventoryUUID)
 		}
@@ -269,6 +278,11 @@ func syntheticDinoDetailObjectBytes() []byte {
 	writeObjectReferenceProperty(&buf, 0x10000023, inventoryID)
 	writeStringProperty(&buf, 0x10000024, "Blue")
 	writeBoolProperty(&buf, 0x10000025, true)
+	writePositionedInt8Property(&buf, 0x1000002e, 0, 11)
+	writePositionedInt8Property(&buf, 0x1000002e, 3, 44)
+	writePositionedNameProperty(&buf, 0x1000002f, 1, 0x10000034)
+	writePositionedNameProperty(&buf, 0x1000002f, 4, 0x10000031)
+	writeStringProperty(&buf, 0x10000030, "\nTheIsland")
 	writeStringProperty(&buf, 0x10000026, "Porters")
 	writeIntProperty(&buf, 0x10000027, 555)
 	writeStringProperty(&buf, 0x10000028, "Porters")
@@ -341,4 +355,29 @@ func writeDoubleProperty(buf *bytes.Buffer, name uint32, value float64) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writePositionedInt8Property(buf *bytes.Buffer, name uint32, position int32, value int8) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000032))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+	_ = binary.Write(buf, binary.LittleEndian, int32(position))
+	buf.WriteByte(1)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	buf.WriteByte(byte(value))
+}
+
+func writePositionedNameProperty(buf *bytes.Buffer, name uint32, position int32, valueName uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000033))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(8))
+	_ = binary.Write(buf, binary.LittleEndian, int32(position))
+	buf.WriteByte(1)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, valueName)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 }

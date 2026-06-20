@@ -32,6 +32,11 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 			}},
 			{Name: "TamedName", Type: arkproperty.TypeString, Value: "Blue"},
 			{Name: "bNeutered", Type: arkproperty.TypeBool, Value: true},
+			{Name: "ColorSetIndices", Type: arkproperty.TypeInt8, Position: 0, Value: int8(11)},
+			{Name: "ColorSetIndices", Type: arkproperty.TypeInt8, Position: 3, Value: int8(44)},
+			{Name: "ColorSetNames", Type: arkproperty.TypeName, Position: 1, Value: "Blue"},
+			{Name: "ColorSetNames", Type: arkproperty.TypeName, Position: 4, Value: "Black"},
+			{Name: "UploadedFromServerName", Type: arkproperty.TypeString, Value: "\nTheIsland"},
 			{Name: "TribeName", Type: arkproperty.TypeString, Value: "Porters"},
 			{Name: "TamingTeamID", Type: arkproperty.TypeInt, Value: int32(555)},
 			{Name: "TamerString", Type: arkproperty.TypeString, Value: "Porters"},
@@ -67,6 +72,17 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	}
 	if dino.TamedName != "Blue" || !dino.IsNeutered {
 		t.Fatalf("Tamed detail fields = %#v", dino)
+	}
+	wantColorIndices := [6]int{11, 0, 0, 44, 0, 0}
+	if dino.ColorSetIndices != wantColorIndices {
+		t.Fatalf("ColorSetIndices = %#v, want %#v", dino.ColorSetIndices, wantColorIndices)
+	}
+	wantColorNames := [6]string{"None", "Blue", "None", "None", "Black", "None"}
+	if dino.ColorSetNames != wantColorNames {
+		t.Fatalf("ColorSetNames = %#v, want %#v", dino.ColorSetNames, wantColorNames)
+	}
+	if dino.UploadedFromServerName != "TheIsland" {
+		t.Fatalf("UploadedFromServerName = %q, want TheIsland", dino.UploadedFromServerName)
 	}
 	if dino.Owner.TribeName != "Porters" || dino.Owner.TamerTribeID != 555 || dino.Owner.TamerString != "Porters" {
 		t.Fatalf("Dino owner tribe fields = %#v", dino.Owner)

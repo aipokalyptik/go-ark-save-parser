@@ -90,6 +90,15 @@ func (c Container) Value(name string) (any, bool) {
 	return nil, false
 }
 
+func (c Container) PositionedValue(name string, position int32) (any, bool) {
+	for _, prop := range c.Properties {
+		if prop.Name == name && prop.Position == position {
+			return prop.Value, true
+		}
+	}
+	return nil, false
+}
+
 type Property struct {
 	Name         string
 	Type         Type

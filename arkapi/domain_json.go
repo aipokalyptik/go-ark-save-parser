@@ -16,23 +16,26 @@ type DomainExport struct {
 }
 
 type DinoInfo struct {
-	UUID              string              `json:"uuid"`
-	Blueprint         string              `json:"blueprint"`
-	ID1               uint32              `json:"id1"`
-	ID2               uint32              `json:"id2"`
-	IsFemale          bool                `json:"is_female"`
-	IsTamed           bool                `json:"is_tamed"`
-	IsBaby            bool                `json:"is_baby"`
-	IsDead            bool                `json:"is_dead"`
-	IsCryopodded      bool                `json:"is_cryopodded"`
-	MaturationPercent float64             `json:"maturation_percent,omitempty"`
-	BabyStage         arkobject.BabyStage `json:"baby_stage,omitempty"`
-	InventoryUUID     string              `json:"inventory_uuid,omitempty"`
-	TamedName         string              `json:"tamed_name,omitempty"`
-	IsNeutered        bool                `json:"is_neutered,omitempty"`
-	Owner             DinoOwnerInfo       `json:"owner,omitempty"`
-	GeneTraits        []string            `json:"gene_traits,omitempty"`
-	Location          *LocationInfo       `json:"location,omitempty"`
+	UUID                   string              `json:"uuid"`
+	Blueprint              string              `json:"blueprint"`
+	ID1                    uint32              `json:"id1"`
+	ID2                    uint32              `json:"id2"`
+	IsFemale               bool                `json:"is_female"`
+	IsTamed                bool                `json:"is_tamed"`
+	IsBaby                 bool                `json:"is_baby"`
+	IsDead                 bool                `json:"is_dead"`
+	IsCryopodded           bool                `json:"is_cryopodded"`
+	MaturationPercent      float64             `json:"maturation_percent,omitempty"`
+	BabyStage              arkobject.BabyStage `json:"baby_stage,omitempty"`
+	InventoryUUID          string              `json:"inventory_uuid,omitempty"`
+	TamedName              string              `json:"tamed_name,omitempty"`
+	IsNeutered             bool                `json:"is_neutered,omitempty"`
+	ColorSetIndices        []int               `json:"color_set_indices,omitempty"`
+	ColorSetNames          []string            `json:"color_set_names,omitempty"`
+	UploadedFromServerName string              `json:"uploaded_from_server_name,omitempty"`
+	Owner                  DinoOwnerInfo       `json:"owner,omitempty"`
+	GeneTraits             []string            `json:"gene_traits,omitempty"`
+	Location               *LocationInfo       `json:"location,omitempty"`
 }
 
 type StructureInfo struct {
@@ -154,23 +157,26 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
 		out = append(out, DinoInfo{
-			UUID:              id.String(),
-			Blueprint:         dino.Blueprint,
-			ID1:               dino.ID1,
-			ID2:               dino.ID2,
-			IsFemale:          dino.IsFemale,
-			IsTamed:           dino.IsTamed,
-			IsBaby:            dino.IsBaby,
-			IsDead:            dino.IsDead,
-			IsCryopodded:      dino.IsCryopodded,
-			MaturationPercent: dino.MaturationPercent,
-			BabyStage:         dino.BabyStage,
-			InventoryUUID:     optionalUUIDString(dino.InventoryUUID),
-			TamedName:         dino.TamedName,
-			IsNeutered:        dino.IsNeutered,
-			Owner:             dinoOwnerInfo(dino.Owner),
-			GeneTraits:        dino.GeneTraits,
-			Location:          locationInfo(dino.Location),
+			UUID:                   id.String(),
+			Blueprint:              dino.Blueprint,
+			ID1:                    dino.ID1,
+			ID2:                    dino.ID2,
+			IsFemale:               dino.IsFemale,
+			IsTamed:                dino.IsTamed,
+			IsBaby:                 dino.IsBaby,
+			IsDead:                 dino.IsDead,
+			IsCryopodded:           dino.IsCryopodded,
+			MaturationPercent:      dino.MaturationPercent,
+			BabyStage:              dino.BabyStage,
+			InventoryUUID:          optionalUUIDString(dino.InventoryUUID),
+			TamedName:              dino.TamedName,
+			IsNeutered:             dino.IsNeutered,
+			ColorSetIndices:        intArrayFromFixed6(dino.ColorSetIndices),
+			ColorSetNames:          stringArrayFromFixed6(dino.ColorSetNames),
+			UploadedFromServerName: dino.UploadedFromServerName,
+			Owner:                  dinoOwnerInfo(dino.Owner),
+			GeneTraits:             dino.GeneTraits,
+			Location:               locationInfo(dino.Location),
 		})
 	}
 	return out, nil
@@ -337,6 +343,18 @@ func optionalUUIDString(value *uuid.UUID) string {
 		return ""
 	}
 	return value.String()
+}
+
+func intArrayFromFixed6(values [6]int) []int {
+	out := make([]int, len(values))
+	copy(out, values[:])
+	return out
+}
+
+func stringArrayFromFixed6(values [6]string) []string {
+	out := make([]string, len(values))
+	copy(out, values[:])
+	return out
 }
 
 func crafterInfo(value *arkobject.ObjectCrafter) *CrafterInfo {

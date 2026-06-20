@@ -1,6 +1,8 @@
 package arkobject
 
 import (
+	"strings"
+
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
 )
@@ -15,25 +17,28 @@ const (
 )
 
 type Dino struct {
-	UUID                uuid.UUID
-	Blueprint           string
-	Object              *GameObject
-	ID1                 uint32
-	ID2                 uint32
-	IsFemale            bool
-	IsTamed             bool
-	IsBaby              bool
-	IsDead              bool
-	IsCryopodded        bool
-	MaturationPercent   float64
-	BabyStage           BabyStage
-	StatusComponentUUID *uuid.UUID
-	InventoryUUID       *uuid.UUID
-	TamedName           string
-	IsNeutered          bool
-	Owner               DinoOwner
-	GeneTraits          []string
-	Location            *ActorTransform
+	UUID                   uuid.UUID
+	Blueprint              string
+	Object                 *GameObject
+	ID1                    uint32
+	ID2                    uint32
+	IsFemale               bool
+	IsTamed                bool
+	IsBaby                 bool
+	IsDead                 bool
+	IsCryopodded           bool
+	MaturationPercent      float64
+	BabyStage              BabyStage
+	StatusComponentUUID    *uuid.UUID
+	InventoryUUID          *uuid.UUID
+	TamedName              string
+	IsNeutered             bool
+	ColorSetIndices        [6]int
+	ColorSetNames          [6]string
+	UploadedFromServerName string
+	Owner                  DinoOwner
+	GeneTraits             []string
+	Location               *ActorTransform
 }
 
 func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
@@ -58,12 +63,53 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	dino.InventoryUUID = objectReferenceUUID(properties, "MyInventoryComponent")
 	dino.TamedName = stringValue(properties, "TamedName")
 	dino.IsNeutered = boolValue(properties, "bNeutered")
+	dino.ColorSetIndices = colorSetIndices(properties)
+	dino.ColorSetNames = colorSetNames(properties)
+	dino.UploadedFromServerName = uploadedFromServerName(properties)
 	dino.Owner = DinoOwnerFromContainer(properties)
 	dino.GeneTraits = stringArrayValue(properties, "GeneTraits")
 	if dino.Location == nil {
 		dino.Location = actorTransformValue(properties, "SavedBaseWorldLocation")
 	}
 	return dino
+}
+
+func colorSetIndices(properties arkproperty.Container) [6]int {
+	var values [6]int
+	for i := range values {
+		value, ok := properties.PositionedValue("ColorSetIndices", int32(i))
+		if !ok {
+			continue
+		}
+		switch v := value.(type) {
+		case int8:
+			values[i] = int(v)
+		case int32:
+			values[i] = int(v)
+		case int:
+			values[i] = v
+		}
+	}
+	return values
+}
+
+func colorSetNames(properties arkproperty.Container) [6]string {
+	var values [6]string
+	for i := range values {
+		values[i] = "None"
+		value, ok := properties.PositionedValue("ColorSetNames", int32(i))
+		if !ok {
+			continue
+		}
+		if name, ok := value.(string); ok && name != "" {
+			values[i] = name
+		}
+	}
+	return values
+}
+
+func uploadedFromServerName(properties arkproperty.Container) string {
+	return strings.TrimPrefix(stringValue(properties, "UploadedFromServerName"), "\n")
 }
 
 func babyStageForPercent(percent float64) BabyStage {
