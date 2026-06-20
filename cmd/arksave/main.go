@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -119,6 +120,7 @@ func usage(out io.Writer) error {
   arksave [--redact] export-cluster-json <cluster-file> <out.json>
   arksave [--redact] mutate copy <save.ark> <out.ark>
   arksave [--redact] mutate remove-object <save.ark> <out.ark> <uuid>
+  arksave [--redact] mutate put-custom <save.ark> <out.ark> <key> <hex-value>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.
 Use --redact to hide local paths and identifier/detail fields in command output and JSON exports.`)
@@ -360,6 +362,19 @@ func mutate(args []string, out io.Writer, opts runOptions) error {
 			return err
 		}
 		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy without object %s: %s\n", displayString(id.String(), opts), displayString(args[2], opts))
+		return err
+	case "put-custom":
+		if len(args) != 5 {
+			return fmt.Errorf("mutate put-custom requires a local .ark path, explicit output path, custom key, and hex value")
+		}
+		value, err := hex.DecodeString(args[4])
+		if err != nil {
+			return fmt.Errorf("decode custom hex value: %w", err)
+		}
+		if err := arkmutation.PutCustomValue(args[1], args[2], args[3], value); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with custom key %s: %s\n", displayString(args[3], opts), displayString(args[2], opts))
 		return err
 	default:
 		return fmt.Errorf("unknown mutate subcommand %q", args[0])

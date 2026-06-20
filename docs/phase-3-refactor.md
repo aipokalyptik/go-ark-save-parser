@@ -57,5 +57,6 @@ Go packages without losing oracle parity.
       profile/tribe file and directory summaries plus save-info/domain JSON
       exports.
 - [x] Keep mutation helpers in an explicit experimental surface that requires an
-      output path.
+      output path, including copy, object removal, and custom-table upsert CLI
+      commands.
 - [x] Re-run oracle integration after major parser/API expansion.

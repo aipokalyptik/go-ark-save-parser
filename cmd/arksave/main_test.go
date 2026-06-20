@@ -733,6 +733,34 @@ func TestMutateRemoveObjectCommandWritesReopenableCopy(t *testing.T) {
 	}
 }
 
+func TestMutatePutCustomCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "custom.ark")
+	createSyntheticSave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "put-custom", savePath, outPath, "Extra", "090807"}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate put-custom) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), "Extra") {
+		t.Fatalf("mutate put-custom output %q missing path or key", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	got, err := save.CustomValue("Extra")
+	if err != nil {
+		t.Fatalf("CustomValue(Extra) error = %v", err)
+	}
+	_ = save.Close()
+	if !bytes.Equal(got, []byte{9, 8, 7}) {
+		t.Fatalf("CustomValue(Extra) = % x, want 09 08 07", got)
+	}
+}
+
 func createSyntheticSave(t *testing.T, path string) {
 	t.Helper()
 	objectID := uuid.MustParse("00010203-0405-0607-0809-0a0b0c0d0e0f")
