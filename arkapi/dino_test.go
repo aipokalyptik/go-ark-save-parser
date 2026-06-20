@@ -770,6 +770,65 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	}
 }
 
+func TestDinoAPIFilterChildlessTamedDinosUsesAncestorIDsAndSkipsBabiesAsParents(t *testing.T) {
+	api := NewDino(nil)
+	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	childID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	babyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	unrelatedID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	wildID := uuid.MustParse("eeeeeeee-ffff-0000-1111-222222222222")
+	dinos := map[uuid.UUID]arkobject.Dino{
+		parentID: {
+			ID1:     11,
+			ID2:     12,
+			IsTamed: true,
+		},
+		childID: {
+			ID1:         21,
+			ID2:         22,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{{ID1: 11, ID2: 12}},
+		},
+		babyID: {
+			ID1:         31,
+			ID2:         32,
+			IsTamed:     true,
+			IsBaby:      true,
+			AncestorIDs: []arkobject.DinoID{{ID1: 21, ID2: 22}},
+		},
+		unrelatedID: {
+			ID1:     41,
+			ID2:     42,
+			IsTamed: true,
+		},
+		wildID: {
+			ID1: 51,
+			ID2: 52,
+		},
+	}
+
+	childless := api.FilterChildlessTamed(dinos)
+
+	if len(childless) != 3 {
+		t.Fatalf("FilterChildlessTamed() length = %d, want 3: %#v", len(childless), childless)
+	}
+	if _, ok := childless[parentID]; ok {
+		t.Fatalf("FilterChildlessTamed() included parent ancestor")
+	}
+	if _, ok := childless[childID]; !ok {
+		t.Fatalf("FilterChildlessTamed() excluded adult child referenced only by baby")
+	}
+	if _, ok := childless[babyID]; !ok {
+		t.Fatalf("FilterChildlessTamed() excluded baby")
+	}
+	if _, ok := childless[unrelatedID]; !ok {
+		t.Fatalf("FilterChildlessTamed() excluded unrelated tamed dino")
+	}
+	if _, ok := childless[wildID]; ok {
+		t.Fatalf("FilterChildlessTamed() included wild dino")
+	}
+}
+
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 

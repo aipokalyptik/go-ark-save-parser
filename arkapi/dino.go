@@ -366,6 +366,39 @@ func (d *DinoAPI) ContainerOfInventory(inventoryID uuid.UUID, includeCryopodded 
 	return uuid.Nil, arkobject.Dino{}, false, nil
 }
 
+func (d *DinoAPI) ChildlessTamed() (map[uuid.UUID]arkobject.Dino, error) {
+	tamed, err := d.Tamed()
+	if err != nil {
+		return nil, err
+	}
+	return d.FilterChildlessTamed(tamed), nil
+}
+
+func (d *DinoAPI) FilterChildlessTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
+	ancestorIDs := map[arkobject.DinoID]struct{}{}
+	for _, dino := range dinos {
+		if !dino.IsTamed || dino.IsBaby {
+			continue
+		}
+		for _, ancestorID := range dino.AncestorIDs {
+			if !ancestorID.IsZero() {
+				ancestorIDs[ancestorID] = struct{}{}
+			}
+		}
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range dinos {
+		if !dino.IsTamed {
+			continue
+		}
+		dinoID := arkobject.DinoID{ID1: dino.ID1, ID2: dino.ID2}
+		if _, ok := ancestorIDs[dinoID]; !ok {
+			out[id] = dino
+		}
+	}
+	return out
+}
+
 func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {
 	counts := map[int32]int{}
 	for _, dino := range dinos {

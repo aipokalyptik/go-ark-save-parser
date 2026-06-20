@@ -197,6 +197,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add upstream-compatible tamed dino generation and ancestor ID extraction
       from female/male ancestor arrays; full pedigree graph reconstruction
       remains pending.
+- [x] Add read-only childless tamed dino filtering from parsed ancestor IDs;
+      full pedigree graph reconstruction remains pending.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild
