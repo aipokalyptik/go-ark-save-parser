@@ -53,7 +53,7 @@ func WriteArchiveWithProperties(tb testing.TB, path string, className string, pr
 	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeArchivePrefix(&buf, id, className, []string{"Object_0"})
+	WriteArchivePrefix(&buf, id, className, []string{"Object_0"})
 	offsetPos := buf.Len()
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
@@ -106,7 +106,7 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 	WriteArkString(&myData, "None")
 
 	var buf bytes.Buffer
-	writeArchivePrefix(&buf, id, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C", []string{"PlayerData_0"})
+	WriteArchivePrefix(&buf, id, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C", []string{"PlayerData_0"})
 	offsetPos := buf.Len()
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
@@ -167,7 +167,7 @@ func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveO
 	WriteArkString(&tribeData, "None")
 
 	var buf bytes.Buffer
-	writeArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
+	WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
 	offsetPos := buf.Len()
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
@@ -229,6 +229,14 @@ func WriteStringArray(buf *bytes.Buffer, values []string) {
 	for _, value := range values {
 		WriteArkString(buf, value)
 	}
+}
+
+func WriteInt32(buf *bytes.Buffer, value int32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteUInt32(buf *bytes.Buffer, value uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
 func WriteNameIntProperty(buf *bytes.Buffer, name string, value int32) {
@@ -365,18 +373,18 @@ func MustExec(tb testing.TB, db *sql.DB, query string, args ...any) {
 	}
 }
 
-func writeArchivePrefix(buf *bytes.Buffer, id uuid.UUID, className string, names []string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(7))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+func WriteArchivePrefix(buf *bytes.Buffer, id uuid.UUID, className string, names []string) {
+	WriteInt32(buf, 7)
+	WriteInt32(buf, 0)
+	WriteInt32(buf, 0)
+	WriteInt32(buf, 1)
 	buf.Write(id[:])
 	WriteArkString(buf, className)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	WriteUInt32(buf, 0)
 	WriteStringArray(buf, names)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	WriteUInt32(buf, 0)
+	WriteInt32(buf, -1)
+	WriteUInt32(buf, 0)
 }
 
 func writeFile(tb testing.TB, path string, data []byte, label string) {

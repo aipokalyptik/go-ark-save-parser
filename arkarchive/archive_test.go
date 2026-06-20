@@ -6,25 +6,26 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
 
 func TestParseArchiveReadsVersionAndObjectHeaders(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 11)
-	writeInt32(&buf, 22)
-	writeInt32(&buf, 1)
+	testfixtures.WriteInt32(&buf, 7)
+	testfixtures.WriteInt32(&buf, 11)
+	testfixtures.WriteInt32(&buf, 22)
+	testfixtures.WriteInt32(&buf, 1)
 	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"TribeData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, 128)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteStringArray(&buf, []string{"TribeData_0"})
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, -1)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 128)
+	testfixtures.WriteUInt32(&buf, 0)
 
 	archive, err := Parse(buf.Bytes(), Options{})
 	if err != nil {
@@ -53,7 +54,7 @@ func TestParseArchiveReadsVersionAndObjectHeaders(t *testing.T) {
 
 func TestParseArchiveDetectsLegacyFormat(t *testing.T) {
 	var buf bytes.Buffer
-	writeInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 6)
 
 	archive, err := Parse(buf.Bytes(), Options{HeaderOnly: true})
 	if err != nil {
@@ -66,8 +67,8 @@ func TestParseArchiveDetectsLegacyFormat(t *testing.T) {
 
 func TestParseArchiveRejectsLegacyFormatWhenObjectsRequested(t *testing.T) {
 	var buf bytes.Buffer
-	writeInt32(&buf, 6)
-	writeInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 0)
 
 	_, err := Parse(buf.Bytes(), Options{Format: FormatAuto})
 	if !errors.Is(err, ErrLegacyArchiveUnsupported) {
@@ -77,7 +78,7 @@ func TestParseArchiveRejectsLegacyFormatWhenObjectsRequested(t *testing.T) {
 
 func TestParseArchiveRejectsModernFormatMismatch(t *testing.T) {
 	var buf bytes.Buffer
-	writeInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 6)
 
 	_, err := Parse(buf.Bytes(), Options{Format: FormatModern, HeaderOnly: true})
 	if err == nil {
@@ -88,18 +89,18 @@ func TestParseArchiveRejectsModernFormatMismatch(t *testing.T) {
 func TestParseArchiveReadsClusterDinoWithoutVersionPrefix(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeInt32(&buf, 11)
-	writeInt32(&buf, 22)
-	writeInt32(&buf, 1)
+	testfixtures.WriteInt32(&buf, 11)
+	testfixtures.WriteInt32(&buf, 22)
+	testfixtures.WriteInt32(&buf, 1)
 	buf.Write(id[:])
-	writeArkString(&buf, "/Game/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"Raptor_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, 96)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteArkString(&buf, "/Game/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C")
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteStringArray(&buf, []string{"Raptor_0"})
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, -1)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 96)
+	testfixtures.WriteUInt32(&buf, 0)
 
 	archive, err := Parse(buf.Bytes(), Options{Format: FormatClusterDino})
 	if err != nil {
@@ -116,24 +117,14 @@ func TestParseArchiveReadsClusterDinoWithoutVersionPrefix(t *testing.T) {
 func TestParseArchiveReadsObjectProperties(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"TribeData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
 	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 0)
+	testfixtures.WriteUInt32(&buf, 0)
 	propertiesOffset := int32(buf.Len() - 1)
 	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeArchiveIntProperty(&buf, "TribeID", 12345)
-	writeArkString(&buf, "None")
+	testfixtures.WriteNameIntProperty(&buf, "TribeID", 12345)
+	testfixtures.WriteArkString(&buf, "None")
 
 	archive, err := Parse(buf.Bytes(), Options{Format: FormatModern})
 	if err != nil {
@@ -204,88 +195,38 @@ func TestParseArchiveStrictPropertiesReturnsPropertyErrors(t *testing.T) {
 func archiveWithValidThenBrokenProperties() []byte {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalTribeData")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"TribeData_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
 	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 0)
+	testfixtures.WriteUInt32(&buf, 0)
 	propertiesOffset := int32(buf.Len() - 1)
 	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeArchiveIntProperty(&buf, "TribeID", 12345)
-	writeArkString(&buf, "Owner")
-	writeArkString(&buf, "ObjectProperty")
-	writeInt32(&buf, 2)
-	writeInt32(&buf, 0)
+	testfixtures.WriteNameIntProperty(&buf, "TribeID", 12345)
+	testfixtures.WriteArkString(&buf, "Owner")
+	testfixtures.WriteArkString(&buf, "ObjectProperty")
+	testfixtures.WriteInt32(&buf, 2)
+	testfixtures.WriteInt32(&buf, 0)
 	buf.WriteByte(0)
 	_ = binary.Write(&buf, binary.LittleEndian, int16(5))
-	writeArkString(&buf, "None")
+	testfixtures.WriteArkString(&buf, "None")
 	return buf.Bytes()
 }
 
 func archiveWithBrokenObjectProperty() []byte {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	writeInt32(&buf, 7)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 0)
-	writeInt32(&buf, 1)
-	buf.Write(id[:])
-	writeArkString(&buf, "/Script/ShooterGame.PrimalLocalProfile")
-	writeUInt32(&buf, 0)
-	writeStringArray(&buf, []string{"Profile_0"})
-	writeUInt32(&buf, 0)
-	writeInt32(&buf, -1)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalLocalProfile", []string{"Profile_0"})
 	offsetPos := buf.Len()
-	writeInt32(&buf, 0)
-	writeUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 0)
+	testfixtures.WriteUInt32(&buf, 0)
 	propertiesOffset := int32(buf.Len() - 1)
 	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	writeArkString(&buf, "Owner")
-	writeArkString(&buf, "ObjectProperty")
-	writeInt32(&buf, 2)
-	writeInt32(&buf, 0)
+	testfixtures.WriteArkString(&buf, "Owner")
+	testfixtures.WriteArkString(&buf, "ObjectProperty")
+	testfixtures.WriteInt32(&buf, 2)
+	testfixtures.WriteInt32(&buf, 0)
 	buf.WriteByte(0)
 	_ = binary.Write(&buf, binary.LittleEndian, int16(5))
-	writeArkString(&buf, "None")
+	testfixtures.WriteArkString(&buf, "None")
 	return buf.Bytes()
-}
-
-func writeInt32(buf *bytes.Buffer, value int32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeUInt32(buf *bytes.Buffer, value uint32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeArkString(buf *bytes.Buffer, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
-	buf.WriteString(value)
-	buf.WriteByte(0)
-}
-
-func writeStringArray(buf *bytes.Buffer, values []string) {
-	writeUInt32(buf, uint32(len(values)))
-	for _, value := range values {
-		writeArkString(buf, value)
-	}
-}
-
-func writeArchiveIntProperty(buf *bytes.Buffer, name string, value int32) {
-	writeArkString(buf, name)
-	writeArkString(buf, "IntProperty")
-	writeInt32(buf, 4)
-	writeInt32(buf, 0)
-	buf.WriteByte(0)
-	writeInt32(buf, value)
 }
