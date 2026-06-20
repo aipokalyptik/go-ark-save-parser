@@ -34,7 +34,9 @@ offline parser without Python or private chat context.
 - [x] Synthetic domain JSON export tests for dinos, structures, equipment,
       stackables, and bases.
 - [x] Private oracle comparison harness for implemented read-only Go examples;
-      current aggregate status is in `docs/oracle-comparison-summary.md`.
+      current aggregate status is in `docs/oracle-comparison-summary.md` and
+      covers map summary, object classes, and local profile/tribe aggregate
+      counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in

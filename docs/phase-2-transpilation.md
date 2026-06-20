@@ -191,6 +191,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go outputs with the private Python oracle for the
       implemented direct read-only counterparts: `map_summary` and
       `object_classes`.
+- [x] Compare normalized Go `local_profiles` aggregate counts with the private
+      Python oracle using upstream `PlayerApi` over local profile/tribe files.
 - [ ] Compare normalized Go outputs with private Python oracle outputs where
       available for the remaining runnable upstream examples.
 - [x] Run subagent spec and quality reviews on parser parity and API coverage;

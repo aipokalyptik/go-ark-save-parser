@@ -53,6 +53,23 @@ def parse_go_map_summary(output: str) -> dict[str, Any]:
     }
 
 
+def parse_key_value_lines(output: str) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    for line in output.splitlines():
+        for part in line.split():
+            if "=" not in part:
+                continue
+            key, value = part.split("=", 1)
+            try:
+                if "." in value:
+                    values[key] = float(value)
+                else:
+                    values[key] = int(value)
+            except ValueError:
+                values[key] = value
+    return values
+
+
 def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.saves.asa_save import AsaSave  # type: ignore
@@ -73,11 +90,42 @@ def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
         save.close()
 
 
+def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.player_api import PlayerApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save_dir = save_path.parent
+    empty_cluster_dir = repo_root / ".oracle" / "output" / "empty-cluster"
+    empty_cluster_dir.mkdir(parents=True, exist_ok=True)
+    save = AsaSave(save_path)
+    try:
+        player_api = PlayerApi(
+            save,
+            no_pawns=True,
+            bypass_inventory=True,
+            force_legacy_store=True,
+            cluster_data_dir=empty_cluster_dir,
+        )
+        return {
+            "profiles": len(player_api.profile_paths),
+            "tribes": len(player_api.tribe_paths),
+            "clusters": len([path for path in save_dir.iterdir() if path.is_file() and path.suffix == "" and not path.name.startswith(".")]),
+            "tributes": len(list(save_dir.glob("*.arktributetribe"))) + len(list(save_dir.glob("*.arktributetribetribe"))),
+            "parsed_players": len(player_api.players),
+            "parsed_tribes": len(player_api.tribes),
+            "tribe_player_links": sum(len(players) for players in player_api.tribe_to_player_map.values()),
+        }
+    finally:
+        save.close()
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = os.environ.copy()
     env.setdefault("PYTHONWARNINGS", "ignore")
     py = python_oracle(save_path, upstream_src)
-    private: dict[str, Any] = {"save_path": str(save_path), "python": py, "go": {}}
+    py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
+    private: dict[str, Any] = {"save_path": str(save_path), "python": py, "python_local_profiles": py_local_profiles, "go": {}}
     cases: list[CaseResult] = []
 
     go_map = run(["go", "run", "./examples/map_summary", str(save_path)], repo_root, env)
@@ -110,6 +158,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got_classes = sorted(line for line in go_classes.stdout.splitlines() if line)
         private["go"]["object_classes"]["classes"] = got_classes
         cases.append(CaseResult("object_classes", "pass" if got_classes == py["classes"] else "fail", "class list compared"))
+
+    go_local_profiles = run(["go", "run", "./examples/local_profiles", str(save_path.parent)], repo_root, env)
+    private["go"]["local_profiles"] = {
+        "exit_code": go_local_profiles.returncode,
+        "stdout": go_local_profiles.stdout,
+        "stderr": go_local_profiles.stderr,
+    }
+    if go_local_profiles.returncode != 0:
+        cases.append(CaseResult("local_profiles", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_local_profiles.stdout)
+        private["go"]["local_profiles"]["parsed"] = got
+        want = {key: py_local_profiles[key] for key in ("profiles", "tribes", "clusters", "tributes", "parsed_players", "parsed_tribes", "tribe_player_links")}
+        cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
 
     return cases, private
 
