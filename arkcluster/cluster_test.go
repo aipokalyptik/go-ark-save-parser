@@ -2,23 +2,21 @@ package arkcluster
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"math"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
-	"github.com/google/uuid"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestDiscoverFindsLocalClusterFilesOnly(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
-	writeArchiveFile(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
-	writeArchiveFile(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
-	writeArchiveFile(t, filepath.Join(dir, "456.arktribe"), "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "456.arktribe"), "/Script/ShooterGame.PrimalTribeData")
 	if err := os.WriteFile(filepath.Join(dir, "Valguero_WP.ark"), []byte("not sqlite"), 0o600); err != nil {
 		t.Fatalf("write map placeholder: %v", err)
 	}
@@ -40,7 +38,7 @@ func TestDiscoverFindsLocalClusterFilesOnly(t *testing.T) {
 
 func TestOpenLoadsLocalClusterArchiveMetadata(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
-	writeArchiveFile(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	data, err := Open(path)
 	if err != nil {
@@ -78,21 +76,21 @@ func TestOpenDirectoryRejectsClusterArchiveAboveConfiguredLimit(t *testing.T) {
 func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
 	var item bytes.Buffer
-	writeDoubleProperty(&item, "Version", 7)
-	writeDoubleProperty(&item, "UploadTime", 12345)
-	writeObjectPathProperty(&item, "ItemArchetype", "BlueprintGeneratedClass /Game/Test/PrimalItem_Test.PrimalItem_Test_C")
-	writeIntProperty(&item, "ItemQuantity", 3)
-	writeArkString(&item, "None")
+	testfixtures.WriteNameDoubleProperty(&item, "Version", 7)
+	testfixtures.WriteNameDoubleProperty(&item, "UploadTime", 12345)
+	testfixtures.WriteNameObjectPathProperty(&item, "ItemArchetype", "BlueprintGeneratedClass /Game/Test/PrimalItem_Test.PrimalItem_Test_C")
+	testfixtures.WriteNameIntProperty(&item, "ItemQuantity", 3)
+	testfixtures.WriteArkString(&item, "None")
 
 	var payload bytes.Buffer
-	writeStructArrayProperty(&payload, "ArkItems", "ArkTributeInventoryItem", [][]byte{item.Bytes()})
-	writeArkString(&payload, "None")
+	testfixtures.WriteNameStructArrayProperty(&payload, "ArkItems", "ArkTributeInventoryItem", [][]byte{item.Bytes()})
+	testfixtures.WriteArkString(&payload, "None")
 
 	var props bytes.Buffer
-	writeStructProperty(&props, "MyArkData", "ArkInventoryData", payload.Bytes())
-	writeArkString(&props, "None")
+	testfixtures.WriteNameStructProperty(&props, "MyArkData", "ArkInventoryData", payload.Bytes())
+	testfixtures.WriteArkString(&props, "None")
 
-	writeArchiveFileWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
+	testfixtures.WriteArchiveWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
 
 	data, err := Open(path)
 	if err != nil {
@@ -116,20 +114,20 @@ func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 func TestOpenRecordsLocalClusterDinoArchiveParseErrors(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
 	var dino bytes.Buffer
-	writeDoubleProperty(&dino, "Version", 7)
-	writeDoubleProperty(&dino, "UploadTime", 12345)
-	writeByteArrayProperty(&dino, "DinoData", []byte("not an archive"))
-	writeArkString(&dino, "None")
+	testfixtures.WriteNameDoubleProperty(&dino, "Version", 7)
+	testfixtures.WriteNameDoubleProperty(&dino, "UploadTime", 12345)
+	testfixtures.WriteNameByteArrayProperty(&dino, "DinoData", []byte("not an archive"))
+	testfixtures.WriteArkString(&dino, "None")
 
 	var payload bytes.Buffer
-	writeStructArrayProperty(&payload, "ArkTamedDinosData", "ArkTributeDinoData", [][]byte{dino.Bytes()})
-	writeArkString(&payload, "None")
+	testfixtures.WriteNameStructArrayProperty(&payload, "ArkTamedDinosData", "ArkTributeDinoData", [][]byte{dino.Bytes()})
+	testfixtures.WriteArkString(&payload, "None")
 
 	var props bytes.Buffer
-	writeStructProperty(&props, "MyArkData", "ArkInventoryData", payload.Bytes())
-	writeArkString(&props, "None")
+	testfixtures.WriteNameStructProperty(&props, "MyArkData", "ArkInventoryData", payload.Bytes())
+	testfixtures.WriteArkString(&props, "None")
 
-	writeArchiveFileWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
+	testfixtures.WriteArchiveWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
 
 	data, err := Open(path)
 	if err != nil {
@@ -150,41 +148,6 @@ func TestOpenRecordsLocalClusterDinoArchiveParseErrors(t *testing.T) {
 	}
 }
 
-func writeArchiveFile(t *testing.T, path string, className string) {
-	t.Helper()
-	writeArchiveFileWithProperties(t, path, className, nil)
-}
-
-func writeArchiveFileWithProperties(t *testing.T, path string, className string, props []byte) {
-	t.Helper()
-	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	buf.Write(id[:])
-	writeArkString(&buf, className)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	writeStringArray(&buf, []string{"Object_0"})
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	offsetPos := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	if len(props) > 0 {
-		propertiesOffset := int32(buf.Len() - 1)
-		binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-		buf.Write(props)
-	} else {
-		binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(128))
-	}
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write archive fixture: %v", err)
-	}
-}
-
 func writeSparseFile(t *testing.T, path string, size int64) {
 	t.Helper()
 	file, err := os.Create(path)
@@ -197,96 +160,5 @@ func writeSparseFile(t *testing.T, path string, size int64) {
 	}
 	if err := file.Close(); err != nil {
 		t.Fatalf("close sparse file: %v", err)
-	}
-}
-
-func writeArkString(buf *bytes.Buffer, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
-	buf.WriteString(value)
-	buf.WriteByte(0)
-}
-
-func writeStringArray(buf *bytes.Buffer, values []string) {
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	for _, value := range values {
-		writeArkString(buf, value)
-	}
-}
-
-func writeDoubleProperty(buf *bytes.Buffer, name string, value float64) {
-	writeArkString(buf, name)
-	writeArkString(buf, "DoubleProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(8))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, math.Float64bits(value))
-}
-
-func writeIntProperty(buf *bytes.Buffer, name string, value int32) {
-	writeArkString(buf, name)
-	writeArkString(buf, "IntProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeObjectPathProperty(buf *bytes.Buffer, name string, value string) {
-	var body bytes.Buffer
-	_ = binary.Write(&body, binary.LittleEndian, int32(1))
-	writeArkString(&body, value)
-
-	writeArkString(buf, name)
-	writeArkString(buf, "ObjectProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(body.Len()))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	buf.Write(body.Bytes())
-}
-
-func writeByteArrayProperty(buf *bytes.Buffer, name string, values []byte) {
-	writeArkString(buf, name)
-	writeArkString(buf, "ArrayProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(4+len(values)))
-	writeArkString(buf, "ByteProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(1))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(4+len(values)))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	buf.Write(values)
-}
-
-func writeStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {
-	writeArkString(buf, name)
-	writeArkString(buf, "StructProperty")
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
-	buf.WriteByte(0)
-	buf.Write(body)
-}
-
-func writeStructArrayProperty(buf *bytes.Buffer, name string, structType string, elements [][]byte) {
-	bodySize := 4
-	for _, element := range elements {
-		bodySize += len(element)
-	}
-	writeArkString(buf, name)
-	writeArkString(buf, "ArrayProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
-	writeArkString(buf, "StructProperty")
-	_ = binary.Write(buf, binary.LittleEndian, int32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	writeArkString(buf, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(elements)))
-	for _, element := range elements {
-		buf.Write(element)
 	}
 }

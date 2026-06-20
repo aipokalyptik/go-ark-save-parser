@@ -46,24 +46,25 @@ func WriteSave(tb testing.TB, path string, opts SaveOptions) {
 
 func WriteArchive(tb testing.TB, path string, className string) {
 	tb.Helper()
+	WriteArchiveWithProperties(tb, path, className, nil)
+}
+
+func WriteArchiveWithProperties(tb testing.TB, path string, className string, properties []byte) {
+	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
+	writeArchivePrefix(&buf, id, className, []string{"Object_0"})
+	offsetPos := buf.Len()
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	buf.Write(id[:])
-	WriteArkString(&buf, className)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	WriteStringArray(&buf, []string{"Object_0"})
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(128))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		tb.Fatalf("write archive fixture: %v", err)
+	if len(properties) > 0 {
+		propertiesOffset := int32(buf.Len() - 1)
+		binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+		buf.Write(properties)
+	} else {
+		binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(128))
 	}
+	writeFile(tb, path, buf.Bytes(), "archive fixture")
 }
 
 func WritePlayerArchive(tb testing.TB, path string) {
@@ -257,6 +258,40 @@ func WriteNameFloatProperty(buf *bytes.Buffer, name string, value float32) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
+func WriteNameDoubleProperty(buf *bytes.Buffer, name string, value float64) {
+	WriteArkString(buf, name)
+	WriteArkString(buf, "DoubleProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(8))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteNameObjectPathProperty(buf *bytes.Buffer, name string, value string) {
+	var body bytes.Buffer
+	_ = binary.Write(&body, binary.LittleEndian, int32(1))
+	WriteArkString(&body, value)
+
+	WriteArkString(buf, name)
+	WriteArkString(buf, "ObjectProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(body.Len()))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	buf.Write(body.Bytes())
+}
+
+func WriteNameByteArrayProperty(buf *bytes.Buffer, name string, values []byte) {
+	WriteArkString(buf, name)
+	WriteArkString(buf, "ArrayProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(4+len(values)))
+	WriteArkString(buf, "ByteProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(4+len(values)))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	buf.Write(values)
+}
+
 func WriteNameStringArrayProperty(buf *bytes.Buffer, name string, values []string) {
 	bodySize := 4
 	for _, value := range values {
@@ -299,6 +334,28 @@ func WriteNameStructProperty(buf *bytes.Buffer, name string, structType string, 
 	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
 	buf.WriteByte(0)
 	buf.Write(body)
+}
+
+func WriteNameStructArrayProperty(buf *bytes.Buffer, name string, structType string, elements [][]byte) {
+	bodySize := 4
+	for _, element := range elements {
+		bodySize += len(element)
+	}
+	WriteArkString(buf, name)
+	WriteArkString(buf, "ArrayProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	WriteArkString(buf, "StructProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+	WriteArkString(buf, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	WriteArkString(buf, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(elements)))
+	for _, element := range elements {
+		buf.Write(element)
+	}
 }
 
 func MustExec(tb testing.TB, db *sql.DB, query string, args ...any) {
