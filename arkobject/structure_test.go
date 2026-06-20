@@ -9,6 +9,7 @@ import (
 
 func TestStructureFromObjectReadsCoreFields(t *testing.T) {
 	linkedID := "00112233-4455-6677-8899-aabbccddeeff"
+	inventoryID := "99999999-aaaa-bbbb-cccc-ddddeeeeffff"
 	object := &GameObject{
 		UUID:      uuid.MustParse("11112222-3333-4444-5555-666677778888"),
 		Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
@@ -24,6 +25,12 @@ func TestStructureFromObjectReadsCoreFields(t *testing.T) {
 					arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: linkedID},
 				},
 			}},
+			{Name: "MyInventoryComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{
+				Type:  arkproperty.ObjectReferenceUUID,
+				Value: inventoryID,
+			}},
+			{Name: "CurrentItemCount", Type: arkproperty.TypeInt, Value: int32(12)},
+			{Name: "MaxItemCount", Type: arkproperty.TypeInt, Value: int32(300)},
 			{Name: "bSavedWhenStasised", Type: arkproperty.TypeBool, Value: true},
 		},
 	}
@@ -45,6 +52,12 @@ func TestStructureFromObjectReadsCoreFields(t *testing.T) {
 	}
 	if len(structure.LinkedStructureUUIDs) != 1 || structure.LinkedStructureUUIDs[0].String() != linkedID {
 		t.Fatalf("LinkedStructureUUIDs = %#v", structure.LinkedStructureUUIDs)
+	}
+	if structure.InventoryUUID == nil || structure.InventoryUUID.String() != inventoryID {
+		t.Fatalf("InventoryUUID = %v, want %s", structure.InventoryUUID, inventoryID)
+	}
+	if structure.ItemCount != 12 || structure.MaxItemCount != 300 || structure.OpenSlots() != 288 || structure.IsEmpty() {
+		t.Fatalf("inventory counts = current %d max %d open %d empty %v", structure.ItemCount, structure.MaxItemCount, structure.OpenSlots(), structure.IsEmpty())
 	}
 	if !structure.SavedWhenStasised {
 		t.Fatalf("SavedWhenStasised = false, want true")

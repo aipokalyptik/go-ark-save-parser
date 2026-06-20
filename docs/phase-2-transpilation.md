@@ -79,6 +79,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-first player and tribe wrappers for parsed profile containers.
 - [x] Add read-first dino wrapper for parsed object identity and status fields.
 - [x] Add read-first base summary wrapper for grouped structures.
+- [x] Add read-first structure inventory metadata for `MyInventoryComponent`,
+      `CurrentItemCount`, `MaxItemCount`, open slot, and empty-container queries.
 - [ ] Port remaining inventory, owner, trait, dino, structure, equipment,
       stackable, player, tribe, and local cluster data models as read-first wrappers.
 - [x] Preserve raw binary/property positions and encoded byte spans needed by
@@ -185,6 +187,8 @@ enough that oracle-derived tests can run against translated packages.
       baby/juvenile/adolescent stage classification.
 - [x] Add typed dino stat ranking and mutation-count helpers for read-only
       equivalents of upstream best-stat and most-mutated-tamed example flows.
+- [x] Add structure container lookup by inventory UUID and stackable owner
+      filtering/counting through owning structure inventories.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [x] Add read-only Base API filtering by minimum grouped structure count.
 - [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,

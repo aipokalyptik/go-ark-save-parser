@@ -98,6 +98,40 @@ func (s *StackableAPI) Consumables() (map[uuid.UUID]arkobject.InventoryItem, err
 	return s.byBlueprintSubstring("/PrimalItemConsumable")
 }
 
+func (s *StackableAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+	return s.FilterOwnedBy(all, owner)
+}
+
+func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
+	structures := NewStructure(s.save)
+	containers := map[uuid.UUID]*arkobject.Structure{}
+	out := map[uuid.UUID]arkobject.InventoryItem{}
+	for id, item := range items {
+		if item.OwnerInventory == nil {
+			continue
+		}
+		container, cached := containers[*item.OwnerInventory]
+		if !cached {
+			_, structure, ok, err := structures.ContainerOfInventory(*item.OwnerInventory)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				container = &structure
+			}
+			containers[*item.OwnerInventory] = container
+		}
+		if container != nil && container.IsOwnedBy(owner) {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
+
 func (s *StackableAPI) byBlueprintSubstring(substring string) (map[uuid.UUID]arkobject.InventoryItem, error) {
 	all, err := s.All()
 	if err != nil {

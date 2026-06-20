@@ -128,6 +128,47 @@ func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	}
 }
 
+func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T) {
+	save := openSyntheticStackableOwnedByStructureSave(t)
+	defer save.Close()
+
+	api := NewStackable(save)
+	items, err := api.ByClass([]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"})
+	if err != nil {
+		t.Fatalf("ByClass() error = %v", err)
+	}
+	owned, err := api.FilterOwnedBy(items, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("FilterOwnedBy() error = %v", err)
+	}
+	if len(owned) != 1 || api.Count(owned) != 100 {
+		t.Fatalf("FilterOwnedBy() = len %d count %d, want one owned stack of 100", len(owned), api.Count(owned))
+	}
+
+	allOwned, err := api.OwnedBy(arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("OwnedBy() error = %v", err)
+	}
+	if len(allOwned) != 1 || api.Count(allOwned) != 100 {
+		t.Fatalf("OwnedBy() = len %d count %d, want one owned stack of 100", len(allOwned), api.Count(allOwned))
+	}
+}
+
+func openSyntheticStackableOwnedByStructureSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	ownedItemID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	otherItemID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
+		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
+		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
+		otherItemID: syntheticStackableObjectBytesWithOwnerInventory(otherInventoryID),
+	})
+}
+
 func openSyntheticMixedStackableSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -179,4 +220,11 @@ func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) 
 		testfixtures.WriteBoolPropertyID(&props, 0x1000000d, 0x1000000e, true)
 	}
 	return testfixtures.ObjectBytesWithProperties(className, 0x10000004, props.Bytes())
+}
+
+func syntheticStackableObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x1000000c, 100)
+	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
+	return testfixtures.ObjectBytesWithProperties(0x1000000b, 0x10000004, props.Bytes())
 }

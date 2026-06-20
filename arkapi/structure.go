@@ -119,6 +119,33 @@ func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, ra
 	return out, nil
 }
 
+func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range all {
+		if structure.InventoryUUID != nil {
+			out[id] = structure
+		}
+	}
+	return out, nil
+}
+
+func (s *StructureAPI) ContainerOfInventory(inventoryID uuid.UUID) (uuid.UUID, arkobject.Structure, bool, error) {
+	structures, err := s.AllWithInventory()
+	if err != nil {
+		return uuid.Nil, arkobject.Structure{}, false, err
+	}
+	for id, structure := range structures {
+		if structure.InventoryUUID != nil && *structure.InventoryUUID == inventoryID {
+			return id, structure, true, nil
+		}
+	}
+	return uuid.Nil, arkobject.Structure{}, false, nil
+}
+
 func isStructureBlueprint(name string) bool {
 	if name == "" {
 		return false

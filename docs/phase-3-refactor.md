@@ -25,6 +25,8 @@ Go packages without losing oracle parity.
       IDs, parsed player summaries, and parsed tribe detail objects.
 - [x] Add typed dino stat and mutation selection helpers for best-stat and
       most-mutated-tamed read-only workflows.
+- [x] Add typed structure inventory-container lookup and stackable owner filter
+      helpers for upstream owner-count example flows.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

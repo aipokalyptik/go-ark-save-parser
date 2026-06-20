@@ -97,6 +97,35 @@ func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	}
 }
 
+func TestStructureAPIContainerOfInventoryFindsInventoryBearingStructure(t *testing.T) {
+	save := openSyntheticStructureWithInventorySave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	id, structure, ok, err := api.ContainerOfInventory(inventoryID)
+	if err != nil {
+		t.Fatalf("ContainerOfInventory() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ContainerOfInventory() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") {
+		t.Fatalf("ContainerOfInventory() id = %s", id)
+	}
+	if structure.InventoryUUID == nil || *structure.InventoryUUID != inventoryID || structure.Owner.TribeID != 555 {
+		t.Fatalf("ContainerOfInventory() structure = %#v", structure)
+	}
+
+	_, _, ok, err = api.ContainerOfInventory(uuid.MustParse("11111111-2222-3333-4444-555555555555"))
+	if err != nil {
+		t.Fatalf("ContainerOfInventory(missing) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("ContainerOfInventory(missing) ok = true, want false")
+	}
+}
+
 func TestStructureAPIAllWithFaultsKeepsValidStructuresAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticStructureSaveWithFault(t)
 	defer save.Close()
@@ -144,12 +173,35 @@ func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticStructureWithInventorySave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(structureID),
+	}, map[uuid.UUID][]byte{
+		structureID: syntheticStructureWithInventoryObjectBytes(uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")),
+	})
+}
+
 func syntheticStructureObjectBytes() []byte {
 	var props bytes.Buffer
 	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
 	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
 	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
 	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+}
+
+func syntheticStructureWithInventoryObjectBytes(inventoryID uuid.UUID) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000023, 0x1000001f, inventoryID)
+	testfixtures.WriteIntPropertyID(&props, 0x10000045, 0x10000003, 12)
+	testfixtures.WriteIntPropertyID(&props, 0x10000046, 0x10000003, 300)
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
 
