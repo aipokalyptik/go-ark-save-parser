@@ -163,6 +163,12 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	if items[0].Kind != "weapon" || items[0].Rating != 7.5 || items[0].Crafter == nil || items[0].Crafter.TribeName != "Porters" {
 		t.Fatalf("EquipmentInfo = %#v", items[0])
 	}
+	if !items[0].IsCrafted || items[0].AverageStat != 1117 {
+		t.Fatalf("EquipmentInfo ranking fields = crafted %v average %f, want crafted true average 1117", items[0].IsCrafted, items[0].AverageStat)
+	}
+	if len(items[0].ImplementedStats) != 2 || items[0].ImplementedStats[0] != "durability" || items[0].ImplementedStats[1] != "damage" {
+		t.Fatalf("EquipmentInfo implemented stats = %#v, want durability and damage", items[0].ImplementedStats)
+	}
 	if items[0].Stats == nil || items[0].Stats.Damage != 112.3 || items[0].Stats.Durability != 62.5 {
 		t.Fatalf("EquipmentInfo stats = %#v", items[0].Stats)
 	}
@@ -178,6 +184,12 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	}
 	if armorItems[0].Stats.Armor != 12 || armorItems[0].Stats.HypothermalResistance != 8.8 || armorItems[0].Stats.HyperthermalResistance != 15.6 {
 		t.Fatalf("EquipmentInfo armor stats = %#v", armorItems[0].Stats)
+	}
+	if armorItems[0].AverageStat != 425 {
+		t.Fatalf("EquipmentInfo armor average stat = %f, want 425", armorItems[0].AverageStat)
+	}
+	if len(armorItems[0].ImplementedStats) != 4 || armorItems[0].ImplementedStats[2] != "hypothermal_resistance" {
+		t.Fatalf("EquipmentInfo armor implemented stats = %#v", armorItems[0].ImplementedStats)
 	}
 }
 

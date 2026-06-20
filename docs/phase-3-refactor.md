@@ -31,6 +31,8 @@ Go packages without losing oracle parity.
       containers for upstream owner-of-items workflows.
 - [x] Add typed equipment crafted and average-stat ranking helpers for upstream
       equipment ranking workflows.
+- [x] Surface equipment crafted and average-stat ranking helpers through domain
+      JSON export for CLI/library consumers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

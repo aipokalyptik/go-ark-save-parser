@@ -68,6 +68,9 @@ type EquipmentInfo struct {
 	Rating            float64             `json:"rating"`
 	Quality           int32               `json:"quality"`
 	CurrentDurability float64             `json:"current_durability"`
+	IsCrafted         bool                `json:"is_crafted"`
+	AverageStat       float64             `json:"average_stat,omitempty"`
+	ImplementedStats  []string            `json:"implemented_stats,omitempty"`
 	Stats             *EquipmentStatsInfo `json:"stats,omitempty"`
 	Crafter           *CrafterInfo        `json:"crafter,omitempty"`
 }
@@ -289,6 +292,9 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 			Rating:            item.Rating,
 			Quality:           item.Quality,
 			CurrentDurability: item.CurrentDurability,
+			IsCrafted:         item.IsCrafted(),
+			AverageStat:       item.AverageStat(),
+			ImplementedStats:  equipmentStatNames(item.ImplementedStats()),
 			Stats:             equipmentStatsInfo(item.Stats),
 			Crafter:           crafterInfo(item.Crafter),
 		}
@@ -509,6 +515,17 @@ func equipmentStatsInfo(value arkobject.EquipmentStats) *EquipmentStatsInfo {
 		HypothermalResistance:  finiteFloat(value.HypothermalResistance),
 		HyperthermalResistance: finiteFloat(value.HyperthermalResistance),
 	}
+}
+
+func equipmentStatNames(stats []arkobject.EquipmentStat) []string {
+	if len(stats) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(stats))
+	for _, stat := range stats {
+		out = append(out, equipmentStatName(stat))
+	}
+	return out
 }
 
 func finiteFloat(value float64) float64 {
