@@ -113,6 +113,20 @@ func TestGeneTraitInfosMapsParsedGeneTraits(t *testing.T) {
 	}
 }
 
+func TestDinoIDInfosMapsAncestorIDs(t *testing.T) {
+	items := dinoIDInfos([]arkobject.DinoID{
+		{ID1: 11, ID2: 12},
+		{ID1: 21, ID2: 22},
+	})
+
+	if len(items) != 2 || items[0].ID1 != 11 || items[0].ID2 != 12 {
+		t.Fatalf("DinoIDInfo = %#v", items)
+	}
+	if items[1].ID1 != 21 || items[1].ID2 != 22 {
+		t.Fatalf("DinoIDInfo second = %#v", items[1])
+	}
+}
+
 func TestJSONAPIExportStructuresSummarizesStructureAPI(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()

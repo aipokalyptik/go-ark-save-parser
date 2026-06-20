@@ -29,6 +29,7 @@ type Dino struct {
 	IsDead                 bool
 	IsCryopodded           bool
 	Generation             int
+	AncestorIDs            []DinoID
 	MaturationPercent      float64
 	BabyStage              BabyStage
 	StatusComponentUUID    *uuid.UUID
@@ -49,6 +50,11 @@ type GeneTrait struct {
 	Raw   string
 	Name  string
 	Level int
+}
+
+type DinoID struct {
+	ID1 uint32
+	ID2 uint32
 }
 
 func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
@@ -72,6 +78,7 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	if dino.IsTamed {
 		dino.Generation = max(arrayLength(properties, "DinoAncestors"), arrayLength(properties, "DinoAncestorsMale")) + 1
 	}
+	dino.AncestorIDs = ancestorIDs(properties)
 	dino.StatusComponentUUID = objectReferenceUUID(properties, "MyCharacterStatusComponent")
 	dino.InventoryUUID = objectReferenceUUID(properties, "MyInventoryComponent")
 	dino.TamedName = stringValue(properties, "TamedName")
@@ -185,6 +192,45 @@ func uint32Value(properties arkproperty.Container, name string) uint32 {
 	default:
 		return 0
 	}
+}
+
+func ancestorIDs(properties arkproperty.Container) []DinoID {
+	var out []DinoID
+	for _, name := range []string{"DinoAncestors", "DinoAncestorsMale"} {
+		value, ok := properties.Value(name)
+		if !ok {
+			continue
+		}
+		array, ok := value.(arkproperty.Array)
+		if !ok {
+			continue
+		}
+		for _, entry := range array.Values {
+			container, ok := entry.(arkproperty.Container)
+			if !ok {
+				continue
+			}
+			female := DinoID{
+				ID1: uint32Value(container, "FemaleDinoID1"),
+				ID2: uint32Value(container, "FemaleDinoID2"),
+			}
+			if !female.IsZero() {
+				out = append(out, female)
+			}
+			male := DinoID{
+				ID1: uint32Value(container, "MaleDinoID1"),
+				ID2: uint32Value(container, "MaleDinoID2"),
+			}
+			if !male.IsZero() {
+				out = append(out, male)
+			}
+		}
+	}
+	return out
+}
+
+func (id DinoID) IsZero() bool {
+	return id.ID1 == 0 && id.ID2 == 0
 }
 
 func arrayLength(properties arkproperty.Container, name string) int {

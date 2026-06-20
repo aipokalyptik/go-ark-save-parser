@@ -138,6 +138,49 @@ func TestDinoFromObjectCalculatesTamedGenerationFromAncestorArrays(t *testing.T)
 	}
 }
 
+func TestDinoFromObjectReadsAncestorIDsInUpstreamOrder(t *testing.T) {
+	object := &GameObject{
+		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),
+		Properties: []arkproperty.Property{
+			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+			{Name: "DinoAncestors", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+				ElementType: arkproperty.TypeStruct,
+				Values: []any{
+					arkproperty.Container{Properties: []arkproperty.Property{
+						{Name: "FemaleDinoID1", Type: arkproperty.TypeUInt32, Value: uint32(11)},
+						{Name: "FemaleDinoID2", Type: arkproperty.TypeUInt32, Value: uint32(12)},
+						{Name: "MaleDinoID1", Type: arkproperty.TypeUInt32, Value: uint32(21)},
+						{Name: "MaleDinoID2", Type: arkproperty.TypeUInt32, Value: uint32(22)},
+					}},
+				},
+			}},
+			{Name: "DinoAncestorsMale", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+				ElementType: arkproperty.TypeStruct,
+				Values: []any{
+					arkproperty.Container{Properties: []arkproperty.Property{
+						{Name: "FemaleDinoID1", Type: arkproperty.TypeUInt32, Value: uint32(31)},
+						{Name: "FemaleDinoID2", Type: arkproperty.TypeUInt32, Value: uint32(32)},
+						{Name: "MaleDinoID1", Type: arkproperty.TypeUInt32, Value: uint32(41)},
+						{Name: "MaleDinoID2", Type: arkproperty.TypeUInt32, Value: uint32(42)},
+					}},
+				},
+			}},
+		},
+	}
+
+	dino := DinoFromObject(object, nil)
+
+	want := []DinoID{{ID1: 11, ID2: 12}, {ID1: 21, ID2: 22}, {ID1: 31, ID2: 32}, {ID1: 41, ID2: 42}}
+	if len(dino.AncestorIDs) != len(want) {
+		t.Fatalf("AncestorIDs length = %d, want %d: %#v", len(dino.AncestorIDs), len(want), dino.AncestorIDs)
+	}
+	for i := range want {
+		if dino.AncestorIDs[i] != want[i] {
+			t.Fatalf("AncestorIDs[%d] = %#v, want %#v", i, dino.AncestorIDs[i], want[i])
+		}
+	}
+}
+
 func TestDinoFromObjectSetsFirstGenerationForTamedDinosWithoutAncestors(t *testing.T) {
 	object := &GameObject{
 		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),

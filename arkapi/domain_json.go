@@ -27,6 +27,7 @@ type DinoInfo struct {
 	IsDead                 bool                `json:"is_dead"`
 	IsCryopodded           bool                `json:"is_cryopodded"`
 	Generation             int                 `json:"generation,omitempty"`
+	AncestorIDs            []DinoIDInfo        `json:"ancestor_ids,omitempty"`
 	MaturationPercent      float64             `json:"maturation_percent,omitempty"`
 	BabyStage              arkobject.BabyStage `json:"baby_stage,omitempty"`
 	InventoryUUID          string              `json:"inventory_uuid,omitempty"`
@@ -156,6 +157,11 @@ type GeneTraitInfo struct {
 	Level int    `json:"level,omitempty"`
 }
 
+type DinoIDInfo struct {
+	ID1 uint32 `json:"id1"`
+	ID2 uint32 `json:"id2"`
+}
+
 type EquipmentStatsInfo struct {
 	Internal               map[string]uint16 `json:"internal,omitempty"`
 	Damage                 float64           `json:"damage,omitempty"`
@@ -244,6 +250,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			IsDead:                 dino.IsDead,
 			IsCryopodded:           dino.IsCryopodded,
 			Generation:             dino.Generation,
+			AncestorIDs:            dinoIDInfos(dino.AncestorIDs),
 			MaturationPercent:      dino.MaturationPercent,
 			BabyStage:              dino.BabyStage,
 			InventoryUUID:          optionalUUIDString(dino.InventoryUUID),
@@ -468,6 +475,17 @@ func geneTraitInfos(values []arkobject.GeneTrait) []GeneTraitInfo {
 			Name:  value.Name,
 			Level: value.Level,
 		})
+	}
+	return out
+}
+
+func dinoIDInfos(values []arkobject.DinoID) []DinoIDInfo {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]DinoIDInfo, 0, len(values))
+	for _, value := range values {
+		out = append(out, DinoIDInfo{ID1: value.ID1, ID2: value.ID2})
 	}
 	return out
 }
