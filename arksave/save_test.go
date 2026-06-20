@@ -152,6 +152,47 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	}
 }
 
+func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	header := syntheticHeader()
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], syntheticObjectBytes(0x10000001))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedObjectBytes(0x10000005))
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	parsed, faults, err := save.ParsedObjectsWithFaults(nil)
+	if err != nil {
+		t.Fatalf("ParsedObjectsWithFaults(nil) error = %v", err)
+	}
+	if len(parsed) != 1 || parsed[0].UUID != objectID {
+		t.Fatalf("ParsedObjectsWithFaults parsed = %#v, want object %s", parsed, objectID)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID {
+		t.Fatalf("ParsedObjectsWithFaults faults = %#v, want fault for %s", faults, faultyID)
+	}
+	if faults[0].ClassName != "Blueprint'/Game/Other.Other_C'" || faults[0].Err == nil {
+		t.Fatalf("fault = %#v, want class name and parse error", faults[0])
+	}
+}
+
 func syntheticActorTransforms(id uuid.UUID) []byte {
 	var buf bytes.Buffer
 	buf.Write(id[:])
@@ -187,6 +228,16 @@ func syntheticObjectBytes(classNameID uint32) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(250))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func truncatedObjectBytes(classNameID uint32) []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	return buf.Bytes()
 }
 

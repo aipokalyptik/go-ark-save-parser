@@ -33,6 +33,12 @@ type ParsedObjectInfo struct {
 	Object    *arkobject.GameObject
 }
 
+type FaultyObjectInfo struct {
+	UUID      uuid.UUID
+	ClassName string
+	Err       error
+}
+
 func Open(path string) (*Save, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
@@ -197,6 +203,7 @@ func (s *Save) ParsedObjects(match func(ObjectClassInfo) bool) ([]ParsedObjectIn
 	}
 	defer rows.Close()
 
+	sections := s.objectSections()
 	var infos []ParsedObjectInfo
 	for rows.Next() {
 		var key []byte
@@ -217,10 +224,6 @@ func (s *Save) ParsedObjects(match func(ObjectClassInfo) bool) ([]ParsedObjectIn
 		if match != nil && !match(classInfo) {
 			continue
 		}
-		sections := make([]string, len(s.Context.Sections))
-		for i, section := range s.Context.Sections {
-			sections[i] = section.Raw
-		}
 		object, err := arkobject.ParseGameObject(id, raw, s.names, sections)
 		if err != nil {
 			return nil, err
@@ -230,10 +233,55 @@ func (s *Save) ParsedObjects(match func(ObjectClassInfo) bool) ([]ParsedObjectIn
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	sort.Slice(infos, func(i int, j int) bool {
-		return infos[i].UUID.String() < infos[j].UUID.String()
-	})
+	sortParsedObjects(infos)
 	return infos, nil
+}
+
+func (s *Save) ParsedObjectsWithFaults(match func(ObjectClassInfo) bool) ([]ParsedObjectInfo, []FaultyObjectInfo, error) {
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	sections := s.objectSections()
+	var infos []ParsedObjectInfo
+	var faults []FaultyObjectInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, nil, err
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			faults = append(faults, FaultyObjectInfo{UUID: id, Err: err})
+			continue
+		}
+		classInfo := ObjectClassInfo{UUID: id, ClassName: className}
+		if match != nil && !match(classInfo) {
+			continue
+		}
+		object, err := arkobject.ParseGameObject(id, raw, s.names, sections)
+		if err != nil {
+			faults = append(faults, FaultyObjectInfo{UUID: id, ClassName: className, Err: err})
+			continue
+		}
+		infos = append(infos, ParsedObjectInfo{UUID: id, ClassName: className, Object: object})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	sortParsedObjects(infos)
+	sort.Slice(faults, func(i int, j int) bool {
+		return faults[i].UUID.String() < faults[j].UUID.String()
+	})
+	return infos, faults, nil
 }
 
 func (s *Save) ParsedObject(id uuid.UUID) (*arkobject.GameObject, error) {
@@ -241,11 +289,7 @@ func (s *Save) ParsedObject(id uuid.UUID) (*arkobject.GameObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	sections := make([]string, len(s.Context.Sections))
-	for i, section := range s.Context.Sections {
-		sections[i] = section.Raw
-	}
-	return arkobject.ParseGameObject(id, raw, s.names, sections)
+	return arkobject.ParseGameObject(id, raw, s.names, s.objectSections())
 }
 
 func (s *Save) ParsedObjectsByClassContains(substr string) ([]ParsedObjectInfo, error) {
@@ -290,11 +334,21 @@ func (s *Save) Object(id uuid.UUID) (*arkobject.GameObject, error) {
 	if err != nil {
 		return nil, err
 	}
+	return arkobject.ParseGameObject(id, raw, s.names, s.objectSections())
+}
+
+func (s *Save) objectSections() []string {
 	sections := make([]string, len(s.Context.Sections))
 	for i, section := range s.Context.Sections {
 		sections[i] = section.Raw
 	}
-	return arkobject.ParseGameObject(id, raw, s.names, sections)
+	return sections
+}
+
+func sortParsedObjects(infos []ParsedObjectInfo) {
+	sort.Slice(infos, func(i int, j int) bool {
+		return infos[i].UUID.String() < infos[j].UUID.String()
+	})
 }
 
 func (s *Save) ActorTransform(id uuid.UUID) (arkobject.ActorTransform, bool) {

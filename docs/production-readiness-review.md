@@ -39,6 +39,9 @@ Public verification reported by reviewers:
 - Broad save parsing does not yet expose an upstream-style faulty-object policy.
   Current parsed-object paths can abort on the first object/property parse
   error instead of collecting faulty objects for caller policy decisions.
+  Addressed after this review for save object parsing by adding
+  `ParsedObjectsWithFaults`, which returns parsed objects plus per-object fault
+  records while preserving the existing fail-fast `ParsedObjects` behavior.
 - CLI `players` and `tribes` paths can print archive metadata while suppressing
   normalized parse failures. Automation can mistake partial output for a fully
   successful parse. Addressed after this review by returning wrapped normalized
@@ -67,6 +70,5 @@ Public verification reported by reviewers:
 ## Next Actions
 
 1. Expand oracle comparison coverage one runnable offline example at a time.
-2. Add a faulty-object reporting path for full-save object parsing.
-3. Continue filling domain/API gaps with synthetic tests and private oracle
+2. Continue filling domain/API gaps with synthetic tests and private oracle
    comparison where runnable upstream behavior exists.
