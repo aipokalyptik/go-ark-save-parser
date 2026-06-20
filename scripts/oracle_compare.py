@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
@@ -159,6 +160,42 @@ def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
     }
 
 
+def python_local_tribute_oracle(save_path: Path) -> dict[str, Any]:
+    save_dir = save_path.parent
+    files = sorted(
+        path
+        for path in save_dir.iterdir()
+        if path.is_file() and path.suffix in {".arktributetribe", ".arktributetribetribe"}
+    )
+    player_ids = 0
+    tribe_ids = 0
+    for path in files:
+        raw = path.read_bytes()
+        offset = 0
+        for label in ("player_data_ids", "tribe_data_ids"):
+            if offset + 4 > len(raw):
+                raise ValueError(f"{path.name}: missing {label} count")
+            count = struct.unpack_from("<i", raw, offset)[0]
+            offset += 4
+            if count < 0:
+                raise ValueError(f"{path.name}: negative {label} count")
+            byte_count = count * 8
+            if offset + byte_count > len(raw):
+                raise ValueError(f"{path.name}: {label} count exceeds file size")
+            if label == "player_data_ids":
+                player_ids += count
+            else:
+                tribe_ids += count
+            offset += byte_count
+        if offset != len(raw):
+            raise ValueError(f"{path.name}: trailing bytes")
+    return {
+        "tribute_files": len(files),
+        "player_data_ids": player_ids,
+        "tribe_data_ids": tribe_ids,
+    }
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = os.environ.copy()
     env.setdefault("PYTHONWARNINGS", "ignore")
@@ -166,12 +203,14 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
+    py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
         "save_path": str(save_path),
         "python": py,
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
         "python_cluster_data": py_cluster_data,
+        "python_local_tribute": py_local_tribute,
         "go": {},
     }
     cases: list[CaseResult] = []
@@ -310,6 +349,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             except Exception as exc:  # noqa: BLE001 - private report captures details
                 private["go"]["cluster_json"]["parse_error"] = str(exc)
                 cases.append(CaseResult("cluster_json", "fail", "Go cluster JSON could not be parsed"))
+
+    go_local_tribute = run(["go", "run", "./examples/local_tribute", str(save_path.parent)], repo_root, env)
+    private["go"]["local_tribute"] = {
+        "exit_code": go_local_tribute.returncode,
+        "stdout": go_local_tribute.stdout,
+        "stderr": go_local_tribute.stderr,
+    }
+    if go_local_tribute.returncode != 0:
+        cases.append(CaseResult("local_tribute", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_local_tribute.stdout)
+        private["go"]["local_tribute"]["parsed"] = got
+        cases.append(CaseResult("local_tribute", "pass" if {key: got.get(key) for key in py_local_tribute} == py_local_tribute else "fail", "local tribute aggregate counts compared"))
 
     return cases, private
 
