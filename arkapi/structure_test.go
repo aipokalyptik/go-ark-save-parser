@@ -155,6 +155,34 @@ func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	}
 }
 
+func TestStructureAPIFilterByLocationFiltersProvidedStructures(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	all, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structure := all[id]
+	coords := structure.Location.AsMapCoords("Valguero")
+
+	filtered := api.FilterByLocation("Valguero", coords, 0.01, map[uuid.UUID]arkobject.Structure{
+		id: structure,
+		uuid.MustParse("11111111-2222-3333-4444-555555555555"): {
+			ID:       999,
+			Location: &arkobject.ActorTransform{X: 999999, Y: 999999},
+		},
+	})
+	if len(filtered) != 1 {
+		t.Fatalf("FilterByLocation() length = %d, want 1: %#v", len(filtered), filtered)
+	}
+	if got := filtered[id]; got.ID != 123 {
+		t.Fatalf("FilterByLocation() structure = %#v, want ID 123", got)
+	}
+}
+
 func TestStructureAPIContainerOfInventoryFindsInventoryBearingStructure(t *testing.T) {
 	save := openSyntheticStructureWithInventorySave(t)
 	defer save.Close()

@@ -179,6 +179,22 @@ func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, ra
 	return out, nil
 }
 
+func (s *StructureAPI) FilterByLocation(mapName string, coords arkobject.MapCoords, radius float64, structures map[uuid.UUID]arkobject.Structure) map[uuid.UUID]arkobject.Structure {
+	if mapName == "" && s.save.Context != nil {
+		mapName = s.save.Context.MapName
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range structures {
+		if structure.Location == nil {
+			continue
+		}
+		if structure.Location.IsAtMapCoordinate(mapName, coords, radius) {
+			out[id] = structure
+		}
+	}
+	return out
+}
+
 func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {
 	all, err := s.All()
 	if err != nil {

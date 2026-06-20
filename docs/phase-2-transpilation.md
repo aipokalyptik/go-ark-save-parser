@@ -243,6 +243,8 @@ enough that oracle-derived tests can run against translated packages.
       `get_by_id` parity.
 - [x] Add read-only Structure API connected-structure traversal from parsed
       `LinkedStructures` UUID references.
+- [x] Add read-only Structure API subset location filtering for upstream
+      `filter_by_location` parity.
 - [x] Add equipment owner filtering/counting through owning structure
       inventories for upstream owner-of-items example flows.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
