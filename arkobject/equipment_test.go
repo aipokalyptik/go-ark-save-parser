@@ -45,6 +45,15 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	if item.Crafter == nil || item.Crafter.CharacterName != "Survivor" || item.Crafter.TribeName != "Porters" {
 		t.Fatalf("EquipmentItem.Crafter = %#v", item.Crafter)
 	}
+	if !item.IsCrafted() {
+		t.Fatalf("EquipmentItem.IsCrafted() = false, want true")
+	}
+	if got := item.AverageStat(); got != 1117 {
+		t.Fatalf("EquipmentItem.AverageStat() = %f, want 1117", got)
+	}
+	if stats := item.ImplementedStats(); len(stats) != 2 || stats[0] != EquipmentStatDurability || stats[1] != EquipmentStatDamage {
+		t.Fatalf("EquipmentItem.ImplementedStats() = %#v, want durability and damage", stats)
+	}
 }
 
 func TestEquipmentItemFromObjectReadsArmorStats(t *testing.T) {
@@ -66,5 +75,54 @@ func TestEquipmentItemFromObjectReadsArmorStats(t *testing.T) {
 	}
 	if item.Stats.Armor != 12 || item.Stats.HypothermalResistance != 8.8 || item.Stats.HyperthermalResistance != 15.6 {
 		t.Fatalf("EquipmentItem armor stats = %#v", item.Stats)
+	}
+	if got := item.AverageStat(); got != 425 {
+		t.Fatalf("EquipmentItem.AverageStat() = %f, want 425", got)
+	}
+	if stats := item.ImplementedStats(); len(stats) != 4 ||
+		stats[0] != EquipmentStatDurability ||
+		stats[1] != EquipmentStatArmor ||
+		stats[2] != EquipmentStatHypothermalResistance ||
+		stats[3] != EquipmentStatHyperthermalResistance {
+		t.Fatalf("EquipmentItem.ImplementedStats() = %#v, want durability, armor, hypo, hyper", stats)
+	}
+}
+
+func TestEquipmentItemAverageStatUsesKindSpecificInternalStats(t *testing.T) {
+	shield := EquipmentItem{
+		Kind: EquipmentShield,
+		Stats: EquipmentStats{Internal: map[EquipmentStat]uint16{
+			EquipmentStatDurability: 900,
+			EquipmentStatArmor:      100,
+		}},
+	}
+	if got := shield.AverageStat(); got != 900 {
+		t.Fatalf("shield AverageStat() = %f, want durability only", got)
+	}
+
+	saddle := EquipmentItem{
+		Kind: EquipmentSaddle,
+		Stats: EquipmentStats{Internal: map[EquipmentStat]uint16{
+			EquipmentStatDurability: 900,
+			EquipmentStatArmor:      100,
+		}},
+	}
+	if got := saddle.AverageStat(); got != 500 {
+		t.Fatalf("saddle AverageStat() = %f, want average durability and armor", got)
+	}
+}
+
+func TestEquipmentItemIsCraftedRequiresValidCrafterMetadata(t *testing.T) {
+	zero := EquipmentItem{}
+	if zero.IsCrafted() {
+		t.Fatalf("zero EquipmentItem IsCrafted() = true, want false")
+	}
+	emptyCrafter := EquipmentItem{InventoryItem: InventoryItem{Crafter: &ObjectCrafter{}}}
+	if emptyCrafter.IsCrafted() {
+		t.Fatalf("empty crafter IsCrafted() = true, want false")
+	}
+	namedCrafter := EquipmentItem{InventoryItem: InventoryItem{Crafter: &ObjectCrafter{CharacterName: "Survivor"}}}
+	if !namedCrafter.IsCrafted() {
+		t.Fatalf("named crafter IsCrafted() = false, want true")
 	}
 }

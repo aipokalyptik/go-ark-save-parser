@@ -179,6 +179,8 @@ enough that oracle-derived tests can run against translated packages.
       resistance, and hyperthermal resistance thresholds.
 - [x] Add typed Equipment API filtering by actual durability calculated from
       `ItemStatValues`, distinct from saved current durability percentage.
+- [x] Add equipment model helpers for crafted detection, implemented stat lists,
+      and upstream-compatible internal average-stat ranking.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
       baby/adult, sex, and alive/dead queries.
 - [x] Add read-first tamed dino details for tamed name, neuter state,

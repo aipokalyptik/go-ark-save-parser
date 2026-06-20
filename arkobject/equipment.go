@@ -69,6 +69,42 @@ func EquipmentItemFromObject(object *GameObject, kind EquipmentKind) EquipmentIt
 	return item
 }
 
+func (e EquipmentItem) IsCrafted() bool {
+	return e.Crafter != nil && e.Crafter.Valid()
+}
+
+func (e EquipmentItem) ImplementedStats() []EquipmentStat {
+	switch e.Kind {
+	case EquipmentWeapon:
+		return []EquipmentStat{EquipmentStatDurability, EquipmentStatDamage}
+	case EquipmentArmor:
+		return []EquipmentStat{
+			EquipmentStatDurability,
+			EquipmentStatArmor,
+			EquipmentStatHypothermalResistance,
+			EquipmentStatHyperthermalResistance,
+		}
+	case EquipmentSaddle:
+		return []EquipmentStat{EquipmentStatDurability, EquipmentStatArmor}
+	case EquipmentShield:
+		return []EquipmentStat{EquipmentStatDurability}
+	default:
+		return nil
+	}
+}
+
+func (e EquipmentItem) AverageStat() float64 {
+	stats := e.ImplementedStats()
+	if len(stats) == 0 {
+		return 0
+	}
+	var total float64
+	for _, stat := range stats {
+		total += float64(e.Stats.Internal[stat])
+	}
+	return total / float64(len(stats))
+}
+
 func equipmentStats(properties arkproperty.Container, kind EquipmentKind, blueprint string) EquipmentStats {
 	stats := EquipmentStats{Internal: map[EquipmentStat]uint16{}}
 	for _, stat := range []EquipmentStat{

@@ -29,6 +29,8 @@ Go packages without losing oracle parity.
       helpers for upstream owner-count example flows.
 - [x] Add typed equipment owner filter helpers through structure inventory
       containers for upstream owner-of-items workflows.
+- [x] Add typed equipment crafted and average-stat ranking helpers for upstream
+      equipment ranking workflows.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.
