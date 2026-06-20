@@ -210,6 +210,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild
       inclusion.
 - [x] Add read-only tamed dino ownership filtering by tribe target team.
+- [x] Add read-only wild-tamed dino helper/filter parity for tamed dinos with
+      no parsed ancestor records.
 - [x] Add read-only wild-by-class and tamed-by-class Dino API helpers.
 - [x] Add read-only wild/tamed minimum-level Dino API helpers.
 - [x] Add read-only tamed dino container lookup by inventory UUID.

@@ -384,6 +384,39 @@ func TestDinoAPIOwnedByTribeFiltersTamedDinosByTargetTeam(t *testing.T) {
 	}
 }
 
+func TestDinoAPIWildTamedFiltersTamedDinosWithoutAncestors(t *testing.T) {
+	api := DinoAPI{}
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	thirdID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	dinos := map[uuid.UUID]arkobject.Dino{
+		firstID: {
+			IsTamed: true,
+		},
+		secondID: {
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{{ID1: 1, ID2: 2}},
+		},
+		thirdID: {
+			IsTamed: false,
+		},
+	}
+
+	wildTamed := api.FilterWildTamed(dinos)
+	if len(wildTamed) != 1 {
+		t.Fatalf("FilterWildTamed() length = %d, want 1", len(wildTamed))
+	}
+	if _, ok := wildTamed[firstID]; !ok {
+		t.Fatalf("FilterWildTamed() missing ancestorless tamed dino: %#v", wildTamed)
+	}
+	if !dinos[firstID].IsWildTamed() {
+		t.Fatalf("IsWildTamed() = false, want true")
+	}
+	if dinos[secondID].IsWildTamed() || dinos[thirdID].IsWildTamed() {
+		t.Fatalf("IsWildTamed() classified bred or wild dino as wild-tamed")
+	}
+}
+
 func TestDinoAPIContainerOfInventoryFindsInventoryBearingDino(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()

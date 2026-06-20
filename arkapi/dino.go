@@ -350,6 +350,24 @@ func (d *DinoAPI) OwnedByTribe(tribeID int32, includeCryopodded bool) (map[uuid.
 	})
 }
 
+func (d *DinoAPI) WildTamed() (map[uuid.UUID]arkobject.Dino, error) {
+	tamed, err := d.Tamed()
+	if err != nil {
+		return nil, err
+	}
+	return d.FilterWildTamed(tamed), nil
+}
+
+func (d *DinoAPI) FilterWildTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range dinos {
+		if dino.IsWildTamed() {
+			out[id] = dino
+		}
+	}
+	return out
+}
+
 func (d *DinoAPI) ContainerOfInventory(inventoryID uuid.UUID, includeCryopodded bool) (uuid.UUID, arkobject.Dino, bool, error) {
 	tamed, err := d.Tamed()
 	if err != nil {

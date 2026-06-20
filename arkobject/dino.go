@@ -111,6 +111,10 @@ func (d Dino) ShortName() string {
 	return ShortNameFromBlueprint(d.Blueprint)
 }
 
+func (d Dino) IsWildTamed() bool {
+	return d.IsTamed && len(d.AncestorIDs) == 0
+}
+
 func colorSetIndices(properties arkproperty.Container) [6]int {
 	var values [6]int
 	for i := range values {
