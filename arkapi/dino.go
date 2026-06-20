@@ -12,6 +12,8 @@ type DinoAPI struct {
 	save *arksave.Save
 }
 
+const cryopodMaxInflatedBytes int64 = 512 * 1024 * 1024
+
 type DinoFilterOptions struct {
 	MinLevel    *int32
 	MaxLevel    *int32
@@ -58,6 +60,11 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 	out := map[uuid.UUID]arkobject.Dino{}
 	for _, info := range objects {
 		if d.IsCryopodBlueprint(info.Object.Blueprint) {
+			dino, ok, err := arkobject.DinoFromCryopodObject(info.Object, cryopodMaxInflatedBytes)
+			if err != nil || !ok {
+				continue
+			}
+			out[info.UUID] = dino
 			continue
 		}
 		var location *arkobject.ActorTransform
@@ -85,6 +92,14 @@ func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fault
 	out := map[uuid.UUID]arkobject.Dino{}
 	for _, info := range objects {
 		if d.IsCryopodBlueprint(info.Object.Blueprint) {
+			dino, ok, parseErr := arkobject.DinoFromCryopodObject(info.Object, cryopodMaxInflatedBytes)
+			if parseErr != nil {
+				faults = append(faults, arksave.FaultyObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Err: parseErr})
+				continue
+			}
+			if ok {
+				out[info.UUID] = dino
+			}
 			continue
 		}
 		var location *arkobject.ActorTransform

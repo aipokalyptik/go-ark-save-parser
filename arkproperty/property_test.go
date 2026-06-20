@@ -735,6 +735,89 @@ func TestParseArrayPropertyReadsGenericStructValues(t *testing.T) {
 	}
 }
 
+func TestParseArrayPropertyReadsCustomItemDataByteArrays(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1:  "CustomItemDatas",
+		2:  "ArrayProperty",
+		3:  "StructProperty",
+		4:  "CustomItemData",
+		5:  "CustomDataBytes",
+		6:  "CustomItemByteArrays",
+		7:  "ByteArrays",
+		8:  "CustomItemByteArray",
+		9:  "Bytes",
+		10: "ByteProperty",
+		11: "None",
+	})
+
+	payload := []byte{0x78, 0x9c, 0x01, 0x02}
+	byteArrayElement := bytes.NewBuffer(nil)
+	writeByteArrayProperty(byteArrayElement, 9, 10, payload)
+	writeName(byteArrayElement, 11)
+
+	customDataBytes := bytes.NewBuffer(nil)
+	writeStructArrayProperty(customDataBytes, 7, 3, 8, [][]byte{byteArrayElement.Bytes()})
+	writeName(customDataBytes, 11)
+
+	customItemData := bytes.NewBuffer(nil)
+	writeStructProperty(customItemData, 5, 3, 6, customDataBytes.Bytes())
+	writeName(customItemData, 11)
+
+	stream := bytes.NewBuffer(nil)
+	writeStructArrayProperty(stream, 1, 3, 4, [][]byte{customItemData.Bytes()})
+	writeName(stream, 11)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeArray {
+		t.Fatalf("ParseAll() = %#v, want CustomItemDatas array", props)
+	}
+	customDatas, ok := props[0].Value.(Array)
+	if !ok || customDatas.StructType != "CustomItemData" || len(customDatas.Values) != 1 {
+		t.Fatalf("CustomItemDatas = %#v, want one CustomItemData", props[0].Value)
+	}
+	customData, ok := customDatas.Values[0].(Container)
+	if !ok {
+		t.Fatalf("CustomItemData value type = %T, want Container", customDatas.Values[0])
+	}
+	customDataBytesValue, ok := customData.Value("CustomDataBytes")
+	if !ok {
+		t.Fatalf("CustomDataBytes missing from %#v", customData)
+	}
+	customDataBytesContainer, ok := customDataBytesValue.(Container)
+	if !ok {
+		t.Fatalf("CustomDataBytes value type = %T, want Container", customDataBytesValue)
+	}
+	byteArraysValue, ok := customDataBytesContainer.Value("ByteArrays")
+	if !ok {
+		t.Fatalf("ByteArrays missing from %#v", customDataBytesContainer)
+	}
+	byteArrays, ok := byteArraysValue.(Array)
+	if !ok || byteArrays.StructType != "CustomItemByteArray" || len(byteArrays.Values) != 1 {
+		t.Fatalf("ByteArrays = %#v, want one CustomItemByteArray", byteArraysValue)
+	}
+	byteArray, ok := byteArrays.Values[0].(Container)
+	if !ok {
+		t.Fatalf("CustomItemByteArray value type = %T, want Container", byteArrays.Values[0])
+	}
+	bytesValue, ok := byteArray.Value("Bytes")
+	if !ok {
+		t.Fatalf("Bytes missing from %#v", byteArray)
+	}
+	bytesArray, ok := bytesValue.(Array)
+	if !ok || bytesArray.ElementType != TypeByte || len(bytesArray.Values) != len(payload) {
+		t.Fatalf("Bytes = %#v, want byte array length %d", bytesValue, len(payload))
+	}
+	for i, want := range payload {
+		if bytesArray.Values[i] != want {
+			t.Fatalf("Bytes[%d] = %#v, want %#v", i, bytesArray.Values[i], want)
+		}
+	}
+}
+
 func TestParseStructPropertyReadsPackedVector(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -1343,4 +1426,52 @@ func writeArkString(buf *bytes.Buffer, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
 	buf.WriteString(value)
 	buf.WriteByte(0)
+}
+
+func writeStructProperty(buf *bytes.Buffer, nameID uint32, structPropertyID uint32, structTypeID uint32, body []byte) {
+	writeName(buf, nameID)
+	writeName(buf, structPropertyID)
+	writeUInt32(buf, 1)
+	writeName(buf, structTypeID)
+	writeUInt32(buf, 1)
+	writeName(buf, structTypeID)
+	writeUInt32(buf, 0)
+	writeUInt32(buf, uint32(len(body)))
+	buf.WriteByte(0)
+	buf.Write(body)
+}
+
+func writeStructArrayProperty(buf *bytes.Buffer, nameID uint32, structPropertyID uint32, structTypeID uint32, elements [][]byte) {
+	bodySize := 4
+	for _, element := range elements {
+		bodySize += len(element)
+	}
+	writeName(buf, nameID)
+	writeName(buf, 2)
+	writeInt32(buf, int32(bodySize))
+	writeName(buf, structPropertyID)
+	writeUInt32(buf, 1)
+	writeName(buf, structTypeID)
+	writeUInt32(buf, 1)
+	writeName(buf, structTypeID)
+	writeUInt32(buf, 0)
+	writeUInt32(buf, uint32(bodySize))
+	buf.WriteByte(0)
+	writeUInt32(buf, uint32(len(elements)))
+	for _, element := range elements {
+		buf.Write(element)
+	}
+}
+
+func writeByteArrayProperty(buf *bytes.Buffer, nameID uint32, bytePropertyID uint32, values []byte) {
+	bodySize := 4 + len(values)
+	writeName(buf, nameID)
+	writeName(buf, 2)
+	writeInt32(buf, int32(bodySize))
+	writeName(buf, bytePropertyID)
+	writeUInt32(buf, 0)
+	writeUInt32(buf, uint32(bodySize))
+	buf.WriteByte(0)
+	writeUInt32(buf, uint32(len(values)))
+	buf.Write(values)
 }

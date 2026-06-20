@@ -26,6 +26,10 @@ Implemented:
 - Fault-tolerant read paths for dino, structure, equipment, stackable, and base
   scans that preserve valid parsed objects while reporting per-object parse
   failures.
+- Modern cryopod dino/status payload extraction for parsed `CustomItemDatas`
+  byte arrays. Empty cryopods are ignored, successfully parsed cryopodded dinos
+  are returned from the Dino API keyed by cryopod item UUID, and unsupported
+  embedded data can be reported through the fault-tolerant path.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files. Uploaded item summaries
   include blueprint, quantity, rating, quality, and crafter metadata where
@@ -42,11 +46,10 @@ Still in progress:
 
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
-- Full domain models and APIs for cryopodded dino extraction, pedigrees,
-  save-contained player/tribe data, richer local cluster item/dino domain
-  models, and remaining model-specific JSON export edges. Dino scans recognize
-  common cryopod item classes and ignore empty pod placeholders, but embedded
-  cryopodded dino parsing is not complete.
+- Full domain models and APIs for legacy/modded cryopod variants, saddles and
+  cosmetics inside cryopods, pedigrees, save-contained player/tribe data,
+  richer local cluster item/dino domain models, and remaining model-specific
+  JSON export edges.
 - Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
   helpers remain experimental and live-server-unverified.
 

@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
 	"testing"
 
@@ -44,6 +45,34 @@ func TestDinoAPIAllIgnoresEmptyCryopodItems(t *testing.T) {
 		if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || dino.IsCryopodded {
 			t.Fatalf("All() dino = %s %#v, want only active non-cryopodded dino", id, dino)
 		}
+	}
+}
+
+func TestDinoAPIAllIncludesModernCryopoddedDinos(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("All() length = %d, want one cryopodded dino", len(dinos))
+	}
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	dino, ok := dinos[podID]
+	if !ok {
+		t.Fatalf("All() missing cryopodded dino keyed by cryopod UUID %s: %#v", podID, dinos)
+	}
+	if dino.ID1 != 1001 || dino.ID2 != 2002 || !dino.IsTamed || !dino.IsCryopodded {
+		t.Fatalf("cryopodded dino = %#v", dino)
+	}
+	if dino.Location == nil || !dino.Location.InCryopod {
+		t.Fatalf("cryopodded dino location = %#v, want in cryopod", dino.Location)
+	}
+	if dino.Stats == nil || dino.Stats.BaseLevel != 12 {
+		t.Fatalf("cryopodded dino stats = %#v, want base level 12", dino.Stats)
 	}
 }
 
@@ -522,6 +551,18 @@ func openSyntheticDinoSaveWithEmptyCryopod(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticCryopoddedDinoSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	payload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		podID: syntheticCryopodItemObjectBytes(payload),
+	})
+}
+
 func openSyntheticDinoSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -568,11 +609,76 @@ func syntheticDinoObjectBytes() []byte {
 	return syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true)
 }
 
+func syntheticCryopodItemObjectBytes(payload []byte) []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000047))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeCustomItemDatasProperty(&buf, payload)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
 func truncatedDinoObjectBytes() []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
+}
+
+func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
+	t.Helper()
+
+	var decoded bytes.Buffer
+	_ = binary.Write(&decoded, binary.LittleEndian, int32(0))
+	_ = binary.Write(&decoded, binary.LittleEndian, int32(0))
+	_ = binary.Write(&decoded, binary.LittleEndian, uint32(2))
+	dinoOffsetPos := writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
+	statusOffsetPos := writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+
+	dinoPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000001, 1001)
+	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000002, 2002)
+	writeCryopodEmbeddedNameDoubleProperty(&decoded, 0x10000003, 42)
+	writeCryopodEmbeddedNone(&decoded)
+	statusPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000005, 12)
+	writeCryopodEmbeddedNone(&decoded)
+
+	binary.LittleEndian.PutUint32(decoded.Bytes()[dinoOffsetPos:dinoOffsetPos+4], uint32(dinoPropsOffset))
+	binary.LittleEndian.PutUint32(decoded.Bytes()[statusOffsetPos:statusOffsetPos+4], uint32(statusPropsOffset))
+
+	namesOffset := decoded.Len()
+	_ = binary.Write(&decoded, binary.LittleEndian, uint32(7))
+	writeArkString(&decoded, "None")
+	writeArkString(&decoded, "DinoID1")
+	writeArkString(&decoded, "DinoID2")
+	writeArkString(&decoded, "TamedTimeStamp")
+	writeArkString(&decoded, "IntProperty")
+	writeArkString(&decoded, "BaseCharacterLevel")
+	writeArkString(&decoded, "DoubleProperty")
+
+	var compressed bytes.Buffer
+	writer := zlib.NewWriter(&compressed)
+	if _, err := writer.Write(decoded.Bytes()); err != nil {
+		t.Fatalf("zlib write: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("zlib close: %v", err)
+	}
+
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0407))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(decoded.Len()))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(namesOffset))
+	payload.Write(compressed.Bytes())
+	return payload.Bytes()
 }
 
 func syntheticDinoDetailObjectBytes() []byte {
@@ -660,6 +766,88 @@ func writeObjectReferenceProperty(buf *bytes.Buffer, name uint32, id uuid.UUID) 
 	buf.Write(id[:])
 }
 
+func writeCustomItemDatasProperty(buf *bytes.Buffer, payload []byte) {
+	byteValues := make([]byte, len(payload))
+	copy(byteValues, payload)
+
+	var bytesElement bytes.Buffer
+	writeByteArrayProperty(&bytesElement, 0x1000004f, 0x10000050, byteValues)
+	_ = binary.Write(&bytesElement, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&bytesElement, binary.LittleEndian, int32(0))
+
+	var customDataBytes bytes.Buffer
+	writeStructArrayProperty(&customDataBytes, 0x1000004d, 0x10000049, 0x1000004e, [][]byte{bytesElement.Bytes()})
+	_ = binary.Write(&customDataBytes, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&customDataBytes, binary.LittleEndian, int32(0))
+
+	var customItemData bytes.Buffer
+	writeStructProperty(&customItemData, 0x1000004b, 0x10000049, 0x1000004c, customDataBytes.Bytes())
+	_ = binary.Write(&customItemData, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&customItemData, binary.LittleEndian, int32(0))
+
+	writeStructArrayProperty(buf, 0x10000048, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
+}
+
+func writeStructProperty(buf *bytes.Buffer, name uint32, structProperty uint32, structType uint32, body []byte) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, structProperty)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
+	buf.WriteByte(0)
+	buf.Write(body)
+}
+
+func writeStructArrayProperty(buf *bytes.Buffer, name uint32, structProperty uint32, structType uint32, elements [][]byte) {
+	bodySize := 4
+	for _, element := range elements {
+		bodySize += len(element)
+	}
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	_ = binary.Write(buf, binary.LittleEndian, structProperty)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(elements)))
+	for _, element := range elements {
+		buf.Write(element)
+	}
+}
+
+func writeByteArrayProperty(buf *bytes.Buffer, name uint32, byteProperty uint32, values []byte) {
+	bodySize := 4 + len(values)
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	_ = binary.Write(buf, binary.LittleEndian, byteProperty)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	buf.Write(values)
+}
+
 func writeDoubleProperty(buf *bytes.Buffer, name uint32, value float64) {
 	_ = binary.Write(buf, binary.LittleEndian, name)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
@@ -669,6 +857,50 @@ func writeDoubleProperty(buf *bytes.Buffer, name uint32, value float64) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeCryopodEmbeddedObjectHeader(buf *bytes.Buffer, id uuid.UUID, className string, names []string) int {
+	buf.Write(id[:])
+	writeArkString(buf, className)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(names)))
+	for _, name := range names {
+		writeArkString(buf, name)
+	}
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	offsetPos := buf.Len()
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	return offsetPos
+}
+
+func writeCryopodEmbeddedNameIntProperty(buf *bytes.Buffer, nameID uint32, value int32) {
+	writeCryopodEmbeddedName(buf, nameID)
+	writeCryopodEmbeddedName(buf, 0x10000004)
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeCryopodEmbeddedNameDoubleProperty(buf *bytes.Buffer, nameID uint32, value float64) {
+	writeCryopodEmbeddedName(buf, nameID)
+	writeCryopodEmbeddedName(buf, 0x10000006)
+	_ = binary.Write(buf, binary.LittleEndian, int32(8))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeCryopodEmbeddedNone(buf *bytes.Buffer) {
+	writeCryopodEmbeddedName(buf, 0x10000000)
+}
+
+func writeCryopodEmbeddedName(buf *bytes.Buffer, nameID uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, nameID)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 }
 
 func writePositionedInt8Property(buf *bytes.Buffer, name uint32, position int32, value int8) {
