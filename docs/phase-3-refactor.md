@@ -27,6 +27,8 @@ Go packages without losing oracle parity.
       most-mutated-tamed read-only workflows.
 - [x] Add typed structure inventory-container lookup and stackable owner filter
       helpers for upstream owner-count example flows.
+- [x] Add typed equipment owner filter helpers through structure inventory
+      containers for upstream owner-of-items workflows.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

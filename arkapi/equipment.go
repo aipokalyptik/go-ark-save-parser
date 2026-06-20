@@ -152,6 +152,40 @@ func (e *EquipmentAPI) ByCrafter(crafter arkobject.ObjectCrafter) (map[uuid.UUID
 	return out, nil
 }
 
+func (e *EquipmentAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	all, err := e.All()
+	if err != nil {
+		return nil, err
+	}
+	return e.FilterOwnedBy(all, owner)
+}
+
+func (e *EquipmentAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.EquipmentItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	structures := NewStructure(e.save)
+	containers := map[uuid.UUID]*arkobject.Structure{}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range items {
+		if item.OwnerInventory == nil {
+			continue
+		}
+		container, cached := containers[*item.OwnerInventory]
+		if !cached {
+			_, structure, ok, err := structures.ContainerOfInventory(*item.OwnerInventory)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				container = &structure
+			}
+			containers[*item.OwnerInventory] = container
+		}
+		if container != nil && container.IsOwnedBy(owner) {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
+
 func (e *EquipmentAPI) Equipped() (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	return e.filter(func(item arkobject.EquipmentItem) bool {
 		return item.IsEquipped

@@ -231,6 +231,37 @@ func TestEquipmentAPIByCrafterFiltersLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIFilterOwnedByFindsItemsThroughOwnerInventory(t *testing.T) {
+	save := openSyntheticEquipmentOwnedByStructureSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	weapons, err := api.Weapons()
+	if err != nil {
+		t.Fatalf("Weapons() error = %v", err)
+	}
+	owned, err := api.FilterOwnedBy(weapons, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("FilterOwnedBy() error = %v", err)
+	}
+	if len(owned) != 1 || api.Count(owned) != 1 {
+		t.Fatalf("FilterOwnedBy() = len %d count %d, want one owned weapon", len(owned), api.Count(owned))
+	}
+	for _, item := range owned {
+		if item.OwnerInventory == nil || *item.OwnerInventory != uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff") {
+			t.Fatalf("owned item owner inventory = %v", item.OwnerInventory)
+		}
+	}
+
+	allOwned, err := api.OwnedBy(arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("OwnedBy() error = %v", err)
+	}
+	if len(allOwned) != 1 || api.Count(allOwned) != 1 {
+		t.Fatalf("OwnedBy() = len %d count %d, want one owned weapon", len(allOwned), api.Count(allOwned))
+	}
+}
+
 func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
 	save := openSyntheticEquipmentFilterSave(t)
 	defer save.Close()
@@ -315,6 +346,21 @@ func openSyntheticArmorEquipmentSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticEquipmentOwnedByStructureSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	ownedItemID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	otherItemID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
+		ownedItemID: syntheticEquipmentObjectBytesWithOwnerInventory(inventoryID),
+		otherItemID: syntheticEquipmentObjectBytesWithOwnerInventory(otherInventoryID),
+	})
+}
+
 func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 	return syntheticEquipmentObjectBytesWithFlags(isEngram, false, false, 7.5, 3, 0.75)
 }
@@ -338,6 +384,18 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 	if isBlueprint {
 		writeBoolProperty(&props, 0x1000000d, true)
 	}
+	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
+}
+
+func syntheticEquipmentObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x1000000c, 1)
+	writeFloatProperty(&props, 0x10000010, 7.5)
+	writeIntProperty(&props, 0x10000011, 3)
+	writeFloatProperty(&props, 0x10000012, 0.75)
+	writePositionedUInt16Property(&props, 0x10000040, 2, 1000)
+	writePositionedUInt16Property(&props, 0x10000040, 3, 1234)
+	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
 	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
 }
 
