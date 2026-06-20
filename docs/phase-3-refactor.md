@@ -33,7 +33,7 @@ Go packages without losing oracle parity.
       writers, shared object header/terminator wrapping, and shared
       sparse-file/max-size fixtures plus header/string/property encoding for
       examples, CLI tests, `arkprofile`, `arkapi`, `arkarchive`, `arkcluster`,
-      `arktribute`, and benchmarks. Structure, stackable, and equipment
+      `arktribute`, and benchmarks. Structure, base, stackable, and equipment
       synthetic object builders now use the shared object wrapper; remaining
       lower-level domain-specific parser fixtures still need incremental
       migration.

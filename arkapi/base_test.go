@@ -7,6 +7,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
 
@@ -133,23 +134,15 @@ func openSyntheticBaseSaveWithFault(t *testing.T) *arksave.Save {
 }
 
 func syntheticBaseStructureObjectBytes(structureID int32, linked ...uuid.UUID) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x10000006, structureID)
-	writeFloatProperty(&buf, 0x10000007, 10000)
-	writeFloatProperty(&buf, 0x10000008, 9000)
-	writeIntProperty(&buf, 0x10000009, 555)
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x10000006, structureID)
+	writeFloatProperty(&props, 0x10000007, 10000)
+	writeFloatProperty(&props, 0x10000008, 9000)
+	writeIntProperty(&props, 0x10000009, 555)
 	if len(linked) > 0 {
-		writeObjectReferenceArrayProperty(&buf, 0x1000001d, linked)
+		writeObjectReferenceArrayProperty(&props, 0x1000001d, linked)
 	}
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
 
 func syntheticBaseActorTransforms(first uuid.UUID, second uuid.UUID) []byte {
