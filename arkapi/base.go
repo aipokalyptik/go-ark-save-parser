@@ -91,6 +91,23 @@ func (b *BaseAPI) All() ([]arkobject.Base, error) {
 	return bases, nil
 }
 
+func (b *BaseAPI) AllWithMinStructures(minStructures int) ([]arkobject.Base, error) {
+	all, err := b.All()
+	if err != nil {
+		return nil, err
+	}
+	if minStructures <= 0 {
+		return all, nil
+	}
+	out := make([]arkobject.Base, 0, len(all))
+	for _, base := range all {
+		if base.StructureCount >= minStructures {
+			out = append(out, base)
+		}
+	}
+	return out, nil
+}
+
 func closestStructure(structures map[uuid.UUID]arkobject.Structure, mapName string, coords arkobject.MapCoords) uuid.UUID {
 	var closest uuid.UUID
 	closestDistance := math.Inf(1)

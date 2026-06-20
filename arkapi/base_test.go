@@ -69,6 +69,20 @@ func TestBaseAPIAllGroupsLinkedStructures(t *testing.T) {
 	if base.AverageLocation.X != 500 || base.AverageLocation.Y != 500 {
 		t.Fatalf("AverageLocation = %#v", base.AverageLocation)
 	}
+	minTwo, err := api.AllWithMinStructures(2)
+	if err != nil {
+		t.Fatalf("AllWithMinStructures(2) error = %v", err)
+	}
+	if len(minTwo) != 1 {
+		t.Fatalf("AllWithMinStructures(2) length = %d, want 1", len(minTwo))
+	}
+	minThree, err := api.AllWithMinStructures(3)
+	if err != nil {
+		t.Fatalf("AllWithMinStructures(3) error = %v", err)
+	}
+	if len(minThree) != 0 {
+		t.Fatalf("AllWithMinStructures(3) length = %d, want 0", len(minThree))
+	}
 }
 
 func openSyntheticBaseSave(t *testing.T) *arksave.Save {
