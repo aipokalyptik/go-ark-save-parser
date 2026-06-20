@@ -2,6 +2,7 @@ package arkarchive
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
 	"errors"
 	"testing"
@@ -114,6 +115,35 @@ func TestParseArchiveReadsClusterDinoWithoutVersionPrefix(t *testing.T) {
 	}
 }
 
+func TestParseEmbeddedCryopodPayloadReadsObjectProperties(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	payload := syntheticEmbeddedCryopodPayload(t, dinoID, statusID)
+
+	archive, err := ParseEmbeddedCryopodPayload(payload, 1<<20)
+	if err != nil {
+		t.Fatalf("ParseEmbeddedCryopodPayload() error = %v", err)
+	}
+	if archive.Version != 0x0407 || archive.Legacy {
+		t.Fatalf("archive = %#v, want modern embedded archive version 0x0407", archive)
+	}
+	if len(archive.Objects) != 2 {
+		t.Fatalf("Objects length = %d, want 2", len(archive.Objects))
+	}
+	if archive.Objects[0].UUID != dinoID || archive.Objects[0].ClassName != "Dino" {
+		t.Fatalf("dino object = %#v", archive.Objects[0])
+	}
+	if len(archive.Objects[0].Properties) != 1 || archive.Objects[0].Properties[0].Name != "DinoID1" || archive.Objects[0].Properties[0].Value != int32(1001) {
+		t.Fatalf("dino properties = %#v, want DinoID1 1001", archive.Objects[0].Properties)
+	}
+	if archive.Objects[1].UUID != statusID {
+		t.Fatalf("status UUID = %s, want %s", archive.Objects[1].UUID, statusID)
+	}
+	if len(archive.Objects[1].Properties) != 1 || archive.Objects[1].Properties[0].Name != "BaseCharacterLevel" || archive.Objects[1].Properties[0].Value != int32(12) {
+		t.Fatalf("status properties = %#v, want BaseCharacterLevel 12", archive.Objects[1].Properties)
+	}
+}
+
 func TestParseArchiveReadsObjectProperties(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var buf bytes.Buffer
@@ -140,6 +170,84 @@ func TestParseArchiveReadsObjectProperties(t *testing.T) {
 	if props[0].Name != "TribeID" || props[0].Value != int32(12345) {
 		t.Fatalf("Property = %#v, want TribeID 12345", props[0])
 	}
+}
+
+func syntheticEmbeddedCryopodPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
+	t.Helper()
+
+	var decoded bytes.Buffer
+	testfixtures.WriteInt32(&decoded, 0)
+	testfixtures.WriteInt32(&decoded, 0)
+	testfixtures.WriteUInt32(&decoded, 2)
+	dinoOffsetPos := writeEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
+	statusOffsetPos := writeEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+
+	dinoPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeEmbeddedNameIntProperty(&decoded, 0x10000001, 1001)
+	writeEmbeddedNone(&decoded)
+	statusPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeEmbeddedNameIntProperty(&decoded, 0x10000003, 12)
+	writeEmbeddedNone(&decoded)
+
+	binary.LittleEndian.PutUint32(decoded.Bytes()[dinoOffsetPos:dinoOffsetPos+4], uint32(dinoPropsOffset))
+	binary.LittleEndian.PutUint32(decoded.Bytes()[statusOffsetPos:statusOffsetPos+4], uint32(statusPropsOffset))
+
+	namesOffset := decoded.Len()
+	testfixtures.WriteUInt32(&decoded, 4)
+	testfixtures.WriteArkString(&decoded, "None")
+	testfixtures.WriteArkString(&decoded, "DinoID1")
+	testfixtures.WriteArkString(&decoded, "IntProperty")
+	testfixtures.WriteArkString(&decoded, "BaseCharacterLevel")
+
+	var compressed bytes.Buffer
+	writer := zlib.NewWriter(&compressed)
+	if _, err := writer.Write(decoded.Bytes()); err != nil {
+		t.Fatalf("zlib write: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("zlib close: %v", err)
+	}
+
+	var payload bytes.Buffer
+	testfixtures.WriteUInt32(&payload, 0x0407)
+	testfixtures.WriteUInt32(&payload, uint32(decoded.Len()))
+	testfixtures.WriteUInt32(&payload, uint32(namesOffset))
+	payload.Write(compressed.Bytes())
+	return payload.Bytes()
+}
+
+func writeEmbeddedObjectHeader(buf *bytes.Buffer, id uuid.UUID, className string, names []string) int {
+	buf.Write(id[:])
+	testfixtures.WriteArkString(buf, className)
+	testfixtures.WriteUInt32(buf, 0)
+	testfixtures.WriteStringArray(buf, names)
+	testfixtures.WriteUInt32(buf, 0)
+	testfixtures.WriteInt32(buf, 0)
+	testfixtures.WriteUInt32(buf, 0)
+	offsetPos := buf.Len()
+	testfixtures.WriteInt32(buf, 0)
+	testfixtures.WriteUInt32(buf, 0)
+	return offsetPos
+}
+
+func writeEmbeddedNameIntProperty(buf *bytes.Buffer, nameID uint32, value int32) {
+	writeEmbeddedName(buf, nameID)
+	writeEmbeddedName(buf, 0x10000002)
+	testfixtures.WriteInt32(buf, 4)
+	testfixtures.WriteInt32(buf, 0)
+	buf.WriteByte(0)
+	testfixtures.WriteInt32(buf, value)
+}
+
+func writeEmbeddedNone(buf *bytes.Buffer) {
+	writeEmbeddedName(buf, 0x10000000)
+}
+
+func writeEmbeddedName(buf *bytes.Buffer, nameID uint32) {
+	testfixtures.WriteUInt32(buf, nameID)
+	testfixtures.WriteInt32(buf, 0)
 }
 
 func TestParseArchiveRecordsPropertyErrorsByDefault(t *testing.T) {

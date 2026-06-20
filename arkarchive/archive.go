@@ -134,6 +134,36 @@ func Parse(data []byte, opts Options) (*Archive, error) {
 	return archive, nil
 }
 
+func ParseEmbeddedCryopodPayload(data []byte, maxInflatedBytes int64) (*Archive, error) {
+	decoded, err := arkbinary.DecodeEmbeddedCompressedData(data, maxInflatedBytes)
+	if err != nil {
+		return nil, err
+	}
+	r := arkbinary.NewReader(decoded.Data, decoded.Context)
+	if err := r.Skip(8); err != nil {
+		return nil, err
+	}
+	count, err := r.ReadInt32()
+	if err != nil {
+		return nil, err
+	}
+	if count < 0 {
+		return nil, fmt.Errorf("negative embedded archive object count %d", count)
+	}
+	archive := &Archive{Version: int32(decoded.Version), Objects: make([]Object, 0, count)}
+	for i := int32(0); i < count; i++ {
+		obj, err := readObject(r, false)
+		if err != nil {
+			return nil, err
+		}
+		archive.Objects = append(archive.Objects, obj)
+	}
+	if err := readObjectProperties(r, archive, FormatModern, false); err != nil {
+		return nil, err
+	}
+	return archive, nil
+}
+
 func readObjectProperties(r *arkbinary.Reader, archive *Archive, format Format, strict bool) error {
 	if format == FormatClusterDino {
 		return nil
