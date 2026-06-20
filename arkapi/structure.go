@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -88,6 +89,27 @@ func (s *StructureAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Str
 		}
 	}
 	return out, nil
+}
+
+func (s *StructureAPI) ByID(id uuid.UUID) (arkobject.Structure, bool, error) {
+	obj, err := s.save.Object(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return arkobject.Structure{}, false, nil
+		}
+		return arkobject.Structure{}, false, err
+	}
+	if obj == nil || !isStructureBlueprint(obj.Blueprint) {
+		return arkobject.Structure{}, false, nil
+	}
+	if _, ok := obj.Value("StructureID"); !ok {
+		return arkobject.Structure{}, false, nil
+	}
+	var location *arkobject.ActorTransform
+	if transform, ok := s.save.ActorTransform(id); ok {
+		location = &transform
+	}
+	return arkobject.StructureFromObject(obj, location), true, nil
 }
 
 func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (map[uuid.UUID]arkobject.Structure, error) {

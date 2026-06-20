@@ -59,6 +59,32 @@ func TestStructureAPIGetByClassFiltersBlueprints(t *testing.T) {
 	}
 }
 
+func TestStructureAPIGetByIDReturnsSingleStructure(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structure, ok, err := api.ByID(id)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+	if structure.ID != 123 || structure.Owner.TribeID != 555 || structure.Location == nil || structure.Location.X != 11 {
+		t.Fatalf("ByID() structure = %#v", structure)
+	}
+
+	_, ok, err = api.ByID(uuid.MustParse("11111111-2222-3333-4444-555555555555"))
+	if err != nil {
+		t.Fatalf("ByID(missing) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("ByID(missing) ok = true, want false")
+	}
+}
+
 func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()
