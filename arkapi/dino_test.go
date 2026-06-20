@@ -165,6 +165,42 @@ func TestDinoAPIClassHelpersFilterWildAndTamedDinos(t *testing.T) {
 	}
 }
 
+func TestDinoAPIByDinoIDFindsMatchingDinoAndHonorsWildInclusion(t *testing.T) {
+	save := openSyntheticDinoFilterSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, dino, ok, err := api.ByDinoID(arkobject.DinoID{ID1: 1001, ID2: 2002}, false)
+	if err != nil {
+		t.Fatalf("ByDinoID(tamed) error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByDinoID(tamed) ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || !dino.IsTamed || dino.ID1 != 1001 || dino.ID2 != 2002 {
+		t.Fatalf("ByDinoID(tamed) = %s %#v", id, dino)
+	}
+
+	_, _, ok, err = api.ByDinoID(arkobject.DinoID{ID1: 3003, ID2: 4004}, false)
+	if err != nil {
+		t.Fatalf("ByDinoID(wild excluded) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("ByDinoID(wild excluded) ok = true, want false")
+	}
+
+	id, dino, ok, err = api.ByDinoID(arkobject.DinoID{ID1: 3003, ID2: 4004}, true)
+	if err != nil {
+		t.Fatalf("ByDinoID(wild included) error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByDinoID(wild included) ok = false, want true")
+	}
+	if id != uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff") || dino.IsTamed || dino.ID1 != 3003 || dino.ID2 != 4004 {
+		t.Fatalf("ByDinoID(wild included) = %s %#v", id, dino)
+	}
+}
+
 func TestDinoAPIAllWithFaultsKeepsValidDinosAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticDinoSaveWithFault(t)
 	defer save.Close()

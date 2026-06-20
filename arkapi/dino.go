@@ -174,6 +174,22 @@ func (d *DinoAPI) TamedByClass(blueprints []string, includeCryopodded bool) (map
 	return out, nil
 }
 
+func (d *DinoAPI) ByDinoID(dinoID arkobject.DinoID, includeWild bool) (uuid.UUID, arkobject.Dino, bool, error) {
+	all, err := d.All()
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, false, err
+	}
+	for id, dino := range all {
+		if !includeWild && !dino.IsTamed {
+			continue
+		}
+		if dino.ID1 == dinoID.ID1 && dino.ID2 == dinoID.ID2 {
+			return id, dino, true, nil
+		}
+	}
+	return uuid.Nil, arkobject.Dino{}, false, nil
+}
+
 func (d *DinoAPI) Tamed() (map[uuid.UUID]arkobject.Dino, error) {
 	all, err := d.All()
 	if err != nil {
