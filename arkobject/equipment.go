@@ -34,9 +34,12 @@ type EquipmentItem struct {
 }
 
 type EquipmentStats struct {
-	Internal   map[EquipmentStat]uint16
-	Damage     float64
-	Durability float64
+	Internal               map[EquipmentStat]uint16
+	Damage                 float64
+	Durability             float64
+	Armor                  float64
+	HypothermalResistance  float64
+	HyperthermalResistance float64
 }
 
 func EquipmentItemFromObject(object *GameObject, kind EquipmentKind) EquipmentItem {
@@ -86,6 +89,15 @@ func equipmentStats(properties arkproperty.Container, kind EquipmentKind, bluepr
 	if value, ok := stats.Internal[EquipmentStatDurability]; ok {
 		stats.Durability = defaultEquipmentDurability(blueprint) * (0.00025*float64(value) + 1)
 	}
+	if value, ok := stats.Internal[EquipmentStatArmor]; ok && (kind == EquipmentArmor || kind == EquipmentSaddle || kind == EquipmentShield) {
+		stats.Armor = round1(defaultEquipmentArmor(blueprint) * (0.0002*float64(value) + 1))
+	}
+	if value, ok := stats.Internal[EquipmentStatHypothermalResistance]; ok && kind == EquipmentArmor {
+		stats.HypothermalResistance = round1(defaultEquipmentHypothermal(blueprint) * (0.0002*float64(value) + 1))
+	}
+	if value, ok := stats.Internal[EquipmentStatHyperthermalResistance]; ok && kind == EquipmentArmor {
+		stats.HyperthermalResistance = round1(defaultEquipmentHyperthermal(blueprint) * (0.0002*float64(value) + 1))
+	}
 	return stats
 }
 
@@ -94,6 +106,31 @@ func defaultEquipmentDurability(blueprint string) float64 {
 		return 50
 	}
 	return 1
+}
+
+func defaultEquipmentArmor(blueprint string) float64 {
+	if blueprint == "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'" {
+		return 10
+	}
+	return 1
+}
+
+func defaultEquipmentHypothermal(blueprint string) float64 {
+	if blueprint == "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'" {
+		return 8
+	}
+	return 0
+}
+
+func defaultEquipmentHyperthermal(blueprint string) float64 {
+	if blueprint == "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'" {
+		return 15
+	}
+	return 0
+}
+
+func round1(value float64) float64 {
+	return float64(int(value*10+0.5)) / 10
 }
 
 func uint16PositionedValue(properties arkproperty.Container, name string, position int32) (uint16, bool) {

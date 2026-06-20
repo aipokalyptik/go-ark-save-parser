@@ -46,3 +46,25 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 		t.Fatalf("EquipmentItem.Crafter = %#v", item.Crafter)
 	}
 }
+
+func TestEquipmentItemFromObjectReadsArmorStats(t *testing.T) {
+	object := &GameObject{
+		UUID:      uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"),
+		Blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'",
+		Properties: []arkproperty.Property{
+			{Name: "ItemQuantity", Type: arkproperty.TypeInt, Value: int32(1)},
+			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatArmor), Value: uint16(1000)},
+			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatHypothermalResistance), Value: uint16(500)},
+			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatHyperthermalResistance), Value: uint16(200)},
+		},
+	}
+
+	item := EquipmentItemFromObject(object, EquipmentArmor)
+
+	if item.Stats.Internal[EquipmentStatArmor] != 1000 || item.Stats.Internal[EquipmentStatHypothermalResistance] != 500 {
+		t.Fatalf("EquipmentItem internal armor stats = %#v", item.Stats.Internal)
+	}
+	if item.Stats.Armor != 12 || item.Stats.HypothermalResistance != 8.8 || item.Stats.HyperthermalResistance != 15.6 {
+		t.Fatalf("EquipmentItem armor stats = %#v", item.Stats)
+	}
+}

@@ -138,9 +138,12 @@ type GeneTraitInfo struct {
 }
 
 type EquipmentStatsInfo struct {
-	Internal   map[string]uint16 `json:"internal,omitempty"`
-	Damage     float64           `json:"damage,omitempty"`
-	Durability float64           `json:"durability,omitempty"`
+	Internal               map[string]uint16 `json:"internal,omitempty"`
+	Damage                 float64           `json:"damage,omitempty"`
+	Durability             float64           `json:"durability,omitempty"`
+	Armor                  float64           `json:"armor,omitempty"`
+	HypothermalResistance  float64           `json:"hypothermal_resistance,omitempty"`
+	HyperthermalResistance float64           `json:"hyperthermal_resistance,omitempty"`
 }
 
 type DinoStatPointsInfo struct {
@@ -487,14 +490,22 @@ func crafterInfo(value *arkobject.ObjectCrafter) *CrafterInfo {
 }
 
 func equipmentStatsInfo(value arkobject.EquipmentStats) *EquipmentStatsInfo {
-	if len(value.Internal) == 0 && value.Damage == 0 && value.Durability == 0 {
+	if len(value.Internal) == 0 && value.Damage == 0 && value.Durability == 0 && value.Armor == 0 &&
+		value.HypothermalResistance == 0 && value.HyperthermalResistance == 0 {
 		return nil
 	}
 	internal := map[string]uint16{}
 	for stat, raw := range value.Internal {
 		internal[equipmentStatName(stat)] = raw
 	}
-	return &EquipmentStatsInfo{Internal: internal, Damage: value.Damage, Durability: value.Durability}
+	return &EquipmentStatsInfo{
+		Internal:               internal,
+		Damage:                 value.Damage,
+		Durability:             value.Durability,
+		Armor:                  value.Armor,
+		HypothermalResistance:  value.HypothermalResistance,
+		HyperthermalResistance: value.HyperthermalResistance,
+	}
 }
 
 func equipmentStatName(stat arkobject.EquipmentStat) string {

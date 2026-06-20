@@ -149,6 +149,19 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	if items[0].Stats == nil || items[0].Stats.Damage != 112.3 || items[0].Stats.Durability != 62.5 {
 		t.Fatalf("EquipmentInfo stats = %#v", items[0].Stats)
 	}
+
+	armorSave := openSyntheticArmorEquipmentSave(t)
+	defer armorSave.Close()
+	armorItems, err := NewJSON(armorSave).ExportEquipment()
+	if err != nil {
+		t.Fatalf("ExportEquipment(armor) error = %v", err)
+	}
+	if len(armorItems) != 1 || armorItems[0].Stats == nil {
+		t.Fatalf("EquipmentInfo armor stats missing = %#v", armorItems)
+	}
+	if armorItems[0].Stats.Armor != 12 || armorItems[0].Stats.HypothermalResistance != 8.8 || armorItems[0].Stats.HyperthermalResistance != 15.6 {
+		t.Fatalf("EquipmentInfo armor stats = %#v", armorItems[0].Stats)
+	}
 }
 
 func TestJSONAPIExportStackablesSummarizesStackableAPI(t *testing.T) {

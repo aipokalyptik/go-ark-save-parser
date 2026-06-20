@@ -60,6 +60,25 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
+	save := openSyntheticArmorEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	armor, err := api.ByKind(arkobject.EquipmentArmor)
+	if err != nil {
+		t.Fatalf("ByKind(armor) error = %v", err)
+	}
+	if len(armor) != 1 {
+		t.Fatalf("ByKind(armor) length = %d, want 1", len(armor))
+	}
+	for _, item := range armor {
+		if item.Stats.Armor != 12 || item.Stats.HypothermalResistance != 8.8 || item.Stats.HyperthermalResistance != 15.6 {
+			t.Fatalf("Armor equipment stats = %#v", item.Stats)
+		}
+	}
+}
+
 func TestEquipmentAPIByCrafterFiltersLocalSaveItems(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()
@@ -177,6 +196,31 @@ func openSyntheticEquipmentFilterSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticArmorEquipmentSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "equipment.ark")
+	armorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, armorID[:], syntheticArmorEquipmentObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 	return syntheticEquipmentObjectBytesWithFlags(isEngram, false, false, 7.5, 3, 0.75)
 }
@@ -206,6 +250,23 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 	if isBlueprint {
 		writeBoolProperty(&buf, 0x1000000d, true)
 	}
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func syntheticArmorEquipmentObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000042))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeIntProperty(&buf, 0x1000000c, 1)
+	writePositionedUInt16Property(&buf, 0x10000040, 1, 1000)
+	writePositionedUInt16Property(&buf, 0x10000040, 5, 500)
+	writePositionedUInt16Property(&buf, 0x10000040, 7, 200)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()

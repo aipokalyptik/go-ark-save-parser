@@ -140,7 +140,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(66))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(67))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -273,6 +273,8 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "ItemStatValues")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000041))
 	writeArkString(&buf, "UInt16Property")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000042))
+	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'")
 	return buf.Bytes()
 }
 
