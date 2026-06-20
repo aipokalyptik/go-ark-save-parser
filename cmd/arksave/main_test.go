@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"os"
@@ -635,24 +634,7 @@ func createSyntheticArchive(t *testing.T, path string, className string) {
 
 func createSyntheticTribute(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
 	t.Helper()
-	var buf bytes.Buffer
-	writeTributeIDs(t, &buf, playerIDs)
-	writeTributeIDs(t, &buf, tribeIDs)
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write tribute fixture: %v", err)
-	}
-}
-
-func writeTributeIDs(t *testing.T, buf *bytes.Buffer, ids []uint64) {
-	t.Helper()
-	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
-		t.Fatalf("write tribute count: %v", err)
-	}
-	for _, id := range ids {
-		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
-			t.Fatalf("write tribute id: %v", err)
-		}
-	}
+	testfixtures.WriteTributeFile(t, path, playerIDs, tribeIDs)
 }
 
 func assertPrivateFileMode(t *testing.T, path string) {

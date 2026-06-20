@@ -1,8 +1,6 @@
 package examples_test
 
 import (
-	"bytes"
-	"encoding/binary"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,7 +32,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
-	writeTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
@@ -58,27 +56,5 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	}
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("go run ./%s output %q does not contain %q", name, out, want)
-	}
-}
-
-func writeTributeFile(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
-	t.Helper()
-	var buf bytes.Buffer
-	writeTributeIDs(t, &buf, playerIDs)
-	writeTributeIDs(t, &buf, tribeIDs)
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write tribute fixture: %v", err)
-	}
-}
-
-func writeTributeIDs(t *testing.T, buf *bytes.Buffer, ids []uint64) {
-	t.Helper()
-	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
-		t.Fatalf("write tribute count: %v", err)
-	}
-	for _, id := range ids {
-		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
-			t.Fatalf("write tribute id: %v", err)
-		}
 	}
 }

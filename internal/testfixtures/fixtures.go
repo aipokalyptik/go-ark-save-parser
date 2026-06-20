@@ -178,6 +178,31 @@ func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveO
 	writeFile(tb, path, buf.Bytes(), "tribe archive fixture")
 }
 
+func WriteTributeFile(tb testing.TB, path string, playerIDs []uint64, tribeIDs []uint64) {
+	tb.Helper()
+	writeFile(tb, path, TributeBytes(tb, playerIDs, tribeIDs), "tribute fixture")
+}
+
+func TributeBytes(tb testing.TB, playerIDs []uint64, tribeIDs []uint64) []byte {
+	tb.Helper()
+	var buf bytes.Buffer
+	WriteIDList(tb, &buf, playerIDs)
+	WriteIDList(tb, &buf, tribeIDs)
+	return buf.Bytes()
+}
+
+func WriteIDList(tb testing.TB, buf *bytes.Buffer, ids []uint64) {
+	tb.Helper()
+	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
+		tb.Fatalf("write ID list count: %v", err)
+	}
+	for _, id := range ids {
+		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
+			tb.Fatalf("write ID list value: %v", err)
+		}
+	}
+}
+
 func Header(mapName string, names map[uint32]string) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, int16(12))

@@ -2,16 +2,14 @@ package arkmutation
 
 import (
 	"bytes"
-	"database/sql"
-	"encoding/binary"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestRemoveObjectWritesCopyAndReopens(t *testing.T) {
@@ -99,46 +97,8 @@ func TestCopySaveRequiresDistinctNewOutputPath(t *testing.T) {
 
 func createSyntheticSave(t *testing.T, path string, objectID uuid.UUID, objectBytes []byte) {
 	t.Helper()
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	defer db.Close()
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], objectBytes)
-}
-
-func syntheticHeader() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int16(12))
-	nameOffsetPosition := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, float64(1234.5))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(77))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	for buf.Len() < 30 {
-		buf.WriteByte(0)
-	}
-	writeArkString(&buf, "Valguero_WP")
-	nameOffset := int32(buf.Len())
-	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
-	writeArkString(&buf, "None")
-	return buf.Bytes()
-}
-
-func writeArkString(buf *bytes.Buffer, s string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(s)+1))
-	buf.WriteString(s)
-	buf.WriteByte(0)
-}
-
-func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
-	t.Helper()
-	if _, err := db.Exec(query, args...); err != nil {
-		t.Fatalf("exec %q: %v", query, err)
-	}
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header:  testfixtures.Header("Valguero_WP", map[uint32]string{0x10000000: "None"}),
+		Objects: map[uuid.UUID][]byte{objectID: objectBytes},
+	})
 }

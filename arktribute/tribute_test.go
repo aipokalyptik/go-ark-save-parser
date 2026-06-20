@@ -1,18 +1,17 @@
 package arktribute
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestParseReadsLocalTributeIDLists(t *testing.T) {
-	raw := tributeBytes(t, []uint64{11, 22}, []uint64{33})
+	raw := testfixtures.TributeBytes(t, []uint64{11, 22}, []uint64{33})
 
 	playerIDs, tribeIDs, err := Parse(raw)
 	if err != nil {
@@ -27,7 +26,7 @@ func TestParseRejectsMalformedLocalTributeData(t *testing.T) {
 	tests := map[string][]byte{
 		"short":    {1, 0, 0},
 		"negative": {0xff, 0xff, 0xff, 0xff},
-		"trailing": append(tributeBytes(t, nil, nil), 0),
+		"trailing": append(testfixtures.TributeBytes(t, nil, nil), 0),
 	}
 	for name, raw := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -41,8 +40,8 @@ func TestParseRejectsMalformedLocalTributeData(t *testing.T) {
 func TestDiscoverFindsLocalTributeFilesOnly(t *testing.T) {
 	dir := t.TempDir()
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
-	writeTributeFile(t, tributePath, []uint64{1}, []uint64{2})
-	writeTributeFile(t, filepath.Join(dir, "def.arktributetribetribe"), nil, nil)
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{1}, []uint64{2})
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "def.arktributetribetribe"), nil, nil)
 	if err := os.WriteFile(filepath.Join(dir, "EOS_abc123"), []byte("cluster"), 0o600); err != nil {
 		t.Fatalf("write cluster placeholder: %v", err)
 	}
@@ -61,7 +60,7 @@ func TestDiscoverFindsLocalTributeFilesOnly(t *testing.T) {
 
 func TestOpenLoadsLocalTributeFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
-	writeTributeFile(t, path, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, path, []uint64{11, 22}, []uint64{33})
 
 	data, err := Open(path)
 	if err != nil {
@@ -82,33 +81,6 @@ func TestOpenRejectsLocalTributeFileAboveConfiguredLimit(t *testing.T) {
 	_, err := OpenWithOptions(path, Options{MaxFileSize: 16})
 	if !errors.Is(err, safefile.ErrFileTooLarge) {
 		t.Fatalf("OpenWithOptions() error = %v, want ErrFileTooLarge", err)
-	}
-}
-
-func tributeBytes(t *testing.T, playerIDs []uint64, tribeIDs []uint64) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	writeIDList(t, &buf, playerIDs)
-	writeIDList(t, &buf, tribeIDs)
-	return buf.Bytes()
-}
-
-func writeTributeFile(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
-	t.Helper()
-	if err := os.WriteFile(path, tributeBytes(t, playerIDs, tribeIDs), 0o600); err != nil {
-		t.Fatalf("write tribute fixture: %v", err)
-	}
-}
-
-func writeIDList(t *testing.T, buf *bytes.Buffer, ids []uint64) {
-	t.Helper()
-	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
-		t.Fatalf("write count: %v", err)
-	}
-	for _, id := range ids {
-		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
-			t.Fatalf("write id: %v", err)
-		}
 	}
 }
 

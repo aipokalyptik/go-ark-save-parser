@@ -1,8 +1,6 @@
 package arkapi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,7 +20,7 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 	testfixtures.WriteArchive(t, profilePath, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
 	testfixtures.WriteArchive(t, tribePath, "/Script/ShooterGame.PrimalTribeData")
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
-	writeTributeFile(t, tributePath, []uint64{11}, []uint64{22})
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{11}, []uint64{22})
 	if err := os.WriteFile(ignoredPath, []byte("ignore"), 0o600); err != nil {
 		t.Fatalf("write ignored file: %v", err)
 	}
@@ -598,7 +596,7 @@ func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 func TestPlayerAPILoadsLocalTributeIndexes(t *testing.T) {
 	dir := t.TempDir()
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
-	writeTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 
 	api, err := NewPlayerFromDirectory(dir)
 	if err != nil {
@@ -610,27 +608,5 @@ func TestPlayerAPILoadsLocalTributeIndexes(t *testing.T) {
 	}
 	if len(tributes) != 1 || tributes[0].ID != "abc" || len(tributes[0].PlayerDataIDs) != 2 || len(tributes[0].TribeDataIDs) != 1 {
 		t.Fatalf("Tributes() = %#v", tributes)
-	}
-}
-
-func writeTributeFile(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
-	t.Helper()
-	var buf bytes.Buffer
-	writeTributeIDs(t, &buf, playerIDs)
-	writeTributeIDs(t, &buf, tribeIDs)
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write tribute fixture: %v", err)
-	}
-}
-
-func writeTributeIDs(t *testing.T, buf *bytes.Buffer, ids []uint64) {
-	t.Helper()
-	if err := binary.Write(buf, binary.LittleEndian, int32(len(ids))); err != nil {
-		t.Fatalf("write tribute count: %v", err)
-	}
-	for _, id := range ids {
-		if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
-			t.Fatalf("write tribute id: %v", err)
-		}
 	}
 }
