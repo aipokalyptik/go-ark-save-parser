@@ -116,6 +116,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only local cluster item/dino payload extraction, including
       `ArkItems`, `ArkTamedDinosData`, upload metadata, item blueprint summaries,
       and best-effort cluster dino archive parsing.
+- [x] Add richer local cluster uploaded item metadata for quantity, rating,
+      quality index, and crafter names where present.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

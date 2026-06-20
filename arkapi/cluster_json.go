@@ -23,11 +23,15 @@ type ClusterDirectoryInfo struct {
 }
 
 type ClusterItemInfo struct {
-	Index      int     `json:"index"`
-	Version    float64 `json:"version"`
-	UploadTime float64 `json:"upload_time"`
-	Blueprint  string  `json:"blueprint,omitempty"`
-	Quantity   int32   `json:"quantity"`
+	Index                int     `json:"index"`
+	Version              float64 `json:"version"`
+	UploadTime           float64 `json:"upload_time"`
+	Blueprint            string  `json:"blueprint,omitempty"`
+	Quantity             int32   `json:"quantity"`
+	Rating               float64 `json:"rating,omitempty"`
+	Quality              int32   `json:"quality,omitempty"`
+	CrafterCharacterName string  `json:"crafter_character_name,omitempty"`
+	CrafterTribeName     string  `json:"crafter_tribe_name,omitempty"`
 }
 
 type ClusterDinoInfo struct {
@@ -54,11 +58,15 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 	}
 	for _, item := range data.Items {
 		info.Items = append(info.Items, ClusterItemInfo{
-			Index:      item.Index,
-			Version:    item.Version,
-			UploadTime: item.UploadTime,
-			Blueprint:  item.Blueprint,
-			Quantity:   item.Quantity,
+			Index:                item.Index,
+			Version:              item.Version,
+			UploadTime:           item.UploadTime,
+			Blueprint:            item.Blueprint,
+			Quantity:             item.Quantity,
+			Rating:               item.Rating,
+			Quality:              item.Quality,
+			CrafterCharacterName: item.CrafterCharacterName,
+			CrafterTribeName:     item.CrafterTribeName,
 		})
 	}
 	for _, dino := range data.Dinos {

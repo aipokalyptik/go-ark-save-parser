@@ -34,12 +34,16 @@ type Data struct {
 }
 
 type Item struct {
-	Index      int
-	Version    float64
-	UploadTime float64
-	Blueprint  string
-	Quantity   int32
-	Properties arkproperty.Container
+	Index                int
+	Version              float64
+	UploadTime           float64
+	Blueprint            string
+	Quantity             int32
+	Rating               float64
+	Quality              int32
+	CrafterCharacterName string
+	CrafterTribeName     string
+	Properties           arkproperty.Container
 }
 
 type Dino struct {
@@ -197,6 +201,10 @@ func parseItems(raw any) ([]Item, error) {
 		itemProperties := itemPayloadProperties(container)
 		item.Blueprint = blueprintValue(itemProperties, "ItemArchetype")
 		item.Quantity = int32Value(itemProperties, "ItemQuantity")
+		item.Rating = numberValue(itemProperties, "ItemRating")
+		item.Quality = int32Value(itemProperties, "ItemQualityIndex")
+		item.CrafterCharacterName = stringValue(itemProperties, "CrafterCharacterName")
+		item.CrafterTribeName = stringValue(itemProperties, "CrafterTribeName")
 		items = append(items, item)
 	}
 	return items, nil
@@ -305,6 +313,15 @@ func blueprintValue(container arkproperty.Container, name string) string {
 		return trimBlueprintPrefix(value)
 	}
 	return ""
+}
+
+func stringValue(container arkproperty.Container, name string) string {
+	raw, ok := container.Value(name)
+	if !ok {
+		return ""
+	}
+	value, _ := raw.(string)
+	return value
 }
 
 func trimBlueprintPrefix(value string) string {

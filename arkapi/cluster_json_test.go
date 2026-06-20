@@ -14,11 +14,15 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 		Path:    "/tmp/EOS_abc123",
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Items: []arkcluster.Item{{
-			Index:      0,
-			Version:    7,
-			UploadTime: 12345,
-			Blueprint:  "/Game/Test/Item.Item_C",
-			Quantity:   2,
+			Index:                0,
+			Version:              7,
+			UploadTime:           12345,
+			Blueprint:            "/Game/Test/Item.Item_C",
+			Quantity:             2,
+			Rating:               7.5,
+			Quality:              2,
+			CrafterCharacterName: "Survivor",
+			CrafterTribeName:     "Porters",
 		}},
 		Dinos: []arkcluster.Dino{{
 			Index:      0,
@@ -36,6 +40,9 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	}
 	if info.ItemCount != 1 || len(info.Items) != 1 || info.Items[0].Blueprint != "/Game/Test/Item.Item_C" {
 		t.Fatalf("ClusterDataInfo items = %#v", info.Items)
+	}
+	if info.Items[0].Rating != 7.5 || info.Items[0].Quality != 2 || info.Items[0].CrafterCharacterName != "Survivor" || info.Items[0].CrafterTribeName != "Porters" {
+		t.Fatalf("ClusterDataInfo item metadata = %#v", info.Items[0])
 	}
 	if info.DinoCount != 1 || len(info.Dinos) != 1 || info.Dinos[0].ObjectCount != 1 {
 		t.Fatalf("ClusterDataInfo dinos = %#v", info.Dinos)

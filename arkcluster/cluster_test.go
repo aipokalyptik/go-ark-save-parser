@@ -80,6 +80,10 @@ func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	testfixtures.WriteNameDoubleProperty(&item, "UploadTime", 12345)
 	testfixtures.WriteNameObjectPathProperty(&item, "ItemArchetype", "BlueprintGeneratedClass /Game/Test/PrimalItem_Test.PrimalItem_Test_C")
 	testfixtures.WriteNameIntProperty(&item, "ItemQuantity", 3)
+	testfixtures.WriteNameFloatProperty(&item, "ItemRating", 7.5)
+	testfixtures.WriteNameIntProperty(&item, "ItemQualityIndex", 2)
+	testfixtures.WriteNameStringProperty(&item, "CrafterCharacterName", "Survivor")
+	testfixtures.WriteNameStringProperty(&item, "CrafterTribeName", "Porters")
 	testfixtures.WriteArkString(&item, "None")
 
 	var payload bytes.Buffer
@@ -108,6 +112,12 @@ func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	}
 	if itemData.Quantity != 3 {
 		t.Fatalf("Item quantity = %d, want 3", itemData.Quantity)
+	}
+	if itemData.Rating != 7.5 || itemData.Quality != 2 {
+		t.Fatalf("Item rating/quality = %.2f/%d, want 7.5/2", itemData.Rating, itemData.Quality)
+	}
+	if itemData.CrafterCharacterName != "Survivor" || itemData.CrafterTribeName != "Porters" {
+		t.Fatalf("Item crafter = %q/%q, want Survivor/Porters", itemData.CrafterCharacterName, itemData.CrafterTribeName)
 	}
 }
 

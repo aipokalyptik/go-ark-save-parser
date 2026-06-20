@@ -24,9 +24,10 @@ Implemented:
 - Read-only General, Player/Tribe local-file, local tribute, Dino, Structure,
   Base, Stackable, Equipment, save-info JSON, and domain JSON API wrappers.
 - Local cluster archive discovery plus read-only item/dino upload payload
-  summaries for extensionless local cluster files. Uploaded dino summaries
-  include a `parse_error` field when embedded dino archive bytes cannot yet be
-  parsed.
+  summaries for extensionless local cluster files. Uploaded item summaries
+  include blueprint, quantity, rating, quality, and crafter metadata where
+  present. Uploaded dino summaries include a `parse_error` field when embedded
+  dino archive bytes cannot yet be parsed.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
