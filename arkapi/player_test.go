@@ -271,6 +271,69 @@ func TestPlayerAPIFiltersLocalTribesByNameOwnerAndMembers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+		TribeID:       12345,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		UniqueID:      "eos-scout",
+		TribeID:       12345,
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout", "Inactive"},
+		MemberIDs: []int32{42, 43, 99},
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	tribePlayers, err := api.TribePlayerMap()
+	if err != nil {
+		t.Fatalf("TribePlayerMap() error = %v", err)
+	}
+	if len(tribePlayers[12345]) != 2 {
+		t.Fatalf("TribePlayerMap()[12345] = %#v, want two active local players", tribePlayers[12345])
+	}
+	player, ok, err := api.PlayerByDataID(42)
+	if err != nil || !ok {
+		t.Fatalf("PlayerByDataID(42) = %#v, %v, %v; want player, true, nil", player, ok, err)
+	}
+	tribe, ok, err := api.TribeOfPlayer(player)
+	if err != nil {
+		t.Fatalf("TribeOfPlayer() error = %v", err)
+	}
+	if !ok || tribe.Name != "Porters" {
+		t.Fatalf("TribeOfPlayer() = %#v, %v; want Porters, true", tribe, ok)
+	}
+	objectOwner, ok, err := api.ObjectOwnerByPlayerDataID(42)
+	if err != nil {
+		t.Fatalf("ObjectOwnerByPlayerDataID() error = %v", err)
+	}
+	if !ok || objectOwner.PlayerID != 42 || objectOwner.PlayerName != "PlatformName" || objectOwner.TribeName != "Porters" {
+		t.Fatalf("ObjectOwnerByPlayerDataID() = %#v, %v; want profile-derived owner", objectOwner, ok)
+	}
+	dinoOwner, ok, err := api.DinoOwnerByPlayerDataID(42)
+	if err != nil {
+		t.Fatalf("DinoOwnerByPlayerDataID() error = %v", err)
+	}
+	if !ok || dinoOwner.PlayerID != 42 || dinoOwner.ImprinterName != "Survivor" || dinoOwner.TamerString != "Porters" {
+		t.Fatalf("DinoOwnerByPlayerDataID() = %#v, %v; want profile-derived dino owner", dinoOwner, ok)
+	}
+}
+
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")

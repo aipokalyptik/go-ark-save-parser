@@ -96,6 +96,8 @@ enough that oracle-derived tests can run against translated packages.
       and parsed tribe detail objects.
 - [x] Add typed local Player/Tribe API filters for player names, unique IDs,
       tribe names, owner IDs, and tribe member names/IDs.
+- [x] Add typed local Player/Tribe relationship helpers for tribe-to-player
+      maps, tribe-of-player lookup, and profile-derived object/dino owners.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless

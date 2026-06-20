@@ -31,3 +31,32 @@ func TestObjectOwnerEqualMatchesWhenKnownIDsAgree(t *testing.T) {
 		t.Fatalf("Equal() = true for different tribe IDs")
 	}
 }
+
+func TestOwnersFromProfileMirrorUpstreamOwnerMappings(t *testing.T) {
+	player := Player{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+	}
+	tribe := Tribe{Name: "Porters", TribeID: 777}
+
+	objectOwner := ObjectOwnerFromProfile(player, tribe)
+	if objectOwner.PlayerID != 42 || objectOwner.OriginalPlacerID != 42 || objectOwner.PlayerName != "PlatformName" {
+		t.Fatalf("ObjectOwnerFromProfile() player fields = %#v", objectOwner)
+	}
+	if objectOwner.TribeID != 777 || objectOwner.TribeName != "Porters" {
+		t.Fatalf("ObjectOwnerFromProfile() tribe fields = %#v", objectOwner)
+	}
+
+	dinoOwner := DinoOwnerFromProfile(player, tribe)
+	if dinoOwner.PlayerID != 42 || dinoOwner.PlayerName != "PlatformName" {
+		t.Fatalf("DinoOwnerFromProfile() player fields = %#v", dinoOwner)
+	}
+	if dinoOwner.ImprinterName != "Survivor" || dinoOwner.ImprinterUniqueID != "eos-survivor" {
+		t.Fatalf("DinoOwnerFromProfile() imprinter fields = %#v", dinoOwner)
+	}
+	if dinoOwner.TribeName != "Porters" || dinoOwner.TamerTribeID != 777 || dinoOwner.TamerString != "Porters" || dinoOwner.TargetTeam != 777 {
+		t.Fatalf("DinoOwnerFromProfile() tribe fields = %#v", dinoOwner)
+	}
+}

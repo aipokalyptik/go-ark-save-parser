@@ -251,6 +251,60 @@ func (p *PlayerAPI) TribeByID(id int32) (arkobject.Tribe, bool, error) {
 	return arkobject.Tribe{}, false, nil
 }
 
+func (p *PlayerAPI) TribePlayerMap() (map[int32][]arkobject.Player, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return nil, err
+	}
+	byID := map[uint64]arkobject.Player{}
+	for _, player := range players {
+		byID[player.PlayerDataID] = player
+	}
+	out := map[int32][]arkobject.Player{}
+	for _, tribe := range tribes {
+		out[tribe.TribeID] = []arkobject.Player{}
+		for _, memberID := range tribe.MemberIDs {
+			player, ok := byID[uint64(memberID)]
+			if ok {
+				out[tribe.TribeID] = append(out[tribe.TribeID], player)
+			}
+		}
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TribeOfPlayer(player arkobject.Player) (arkobject.Tribe, bool, error) {
+	return p.TribeByID(player.TribeID)
+}
+
+func (p *PlayerAPI) ObjectOwnerByPlayerDataID(id uint64) (arkobject.ObjectOwner, bool, error) {
+	player, ok, err := p.PlayerByDataID(id)
+	if err != nil || !ok {
+		return arkobject.ObjectOwner{}, false, err
+	}
+	tribe, ok, err := p.TribeOfPlayer(player)
+	if err != nil || !ok {
+		return arkobject.ObjectOwner{}, false, err
+	}
+	return arkobject.ObjectOwnerFromProfile(player, tribe), true, nil
+}
+
+func (p *PlayerAPI) DinoOwnerByPlayerDataID(id uint64) (arkobject.DinoOwner, bool, error) {
+	player, ok, err := p.PlayerByDataID(id)
+	if err != nil || !ok {
+		return arkobject.DinoOwner{}, false, err
+	}
+	tribe, ok, err := p.TribeOfPlayer(player)
+	if err != nil || !ok {
+		return arkobject.DinoOwner{}, false, err
+	}
+	return arkobject.DinoOwnerFromProfile(player, tribe), true, nil
+}
+
 func (p *PlayerAPI) TribesByName(name string) ([]arkobject.Tribe, error) {
 	return p.filterTribes(func(tribe arkobject.Tribe) bool {
 		return tribe.Name == name
