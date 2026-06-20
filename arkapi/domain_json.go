@@ -49,6 +49,11 @@ type StructureInfo struct {
 	MaxHealth                     float64       `json:"max_health"`
 	CurrentHealth                 float64       `json:"current_health"`
 	Location                      *LocationInfo `json:"location,omitempty"`
+	InventoryUUID                 string        `json:"inventory_uuid,omitempty"`
+	ItemCount                     int32         `json:"item_count,omitempty"`
+	MaxItemCount                  int32         `json:"max_item_count,omitempty"`
+	OpenSlots                     int32         `json:"open_slots,omitempty"`
+	IsEmpty                       bool          `json:"is_empty,omitempty"`
 	LinkedStructureUUIDs          []string      `json:"linked_structure_uuids,omitempty"`
 	OriginalCreationTime          float64       `json:"original_creation_time,omitempty"`
 	LastEnterStasisTime           float64       `json:"last_enter_stasis_time,omitempty"`
@@ -262,6 +267,11 @@ func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {
 			MaxHealth:                     structure.MaxHealth,
 			CurrentHealth:                 structure.CurrentHealth,
 			Location:                      locationInfo(structure.Location),
+			InventoryUUID:                 optionalUUIDString(structure.InventoryUUID),
+			ItemCount:                     structure.ItemCount,
+			MaxItemCount:                  structure.MaxItemCount,
+			OpenSlots:                     structure.OpenSlots(),
+			IsEmpty:                       structure.IsEmpty(),
 			LinkedStructureUUIDs:          sortedUUIDStrings(structure.LinkedStructureUUIDs),
 			OriginalCreationTime:          structure.OriginalCreationTime,
 			LastEnterStasisTime:           structure.LastEnterStasisTime,

@@ -149,6 +149,26 @@ func TestJSONAPIExportStructuresIncludesLinkedStructureMetadata(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportStructuresIncludesInventoryMetadata(t *testing.T) {
+	save := openSyntheticStructureWithInventorySave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportStructures()
+	if err != nil {
+		t.Fatalf("ExportStructures() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ExportStructures() length = %d, want 1", len(items))
+	}
+	item := items[0]
+	if item.InventoryUUID != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
+		t.Fatalf("StructureInfo inventory UUID = %q", item.InventoryUUID)
+	}
+	if item.ItemCount != 12 || item.MaxItemCount != 300 || item.OpenSlots != 288 || item.IsEmpty {
+		t.Fatalf("StructureInfo inventory counts = current %d max %d open %d empty %v", item.ItemCount, item.MaxItemCount, item.OpenSlots, item.IsEmpty)
+	}
+}
+
 func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()
