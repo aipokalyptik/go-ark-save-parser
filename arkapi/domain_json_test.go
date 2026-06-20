@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -177,6 +178,46 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	}
 	if armorItems[0].Stats.Armor != 12 || armorItems[0].Stats.HypothermalResistance != 8.8 || armorItems[0].Stats.HyperthermalResistance != 15.6 {
 		t.Fatalf("EquipmentInfo armor stats = %#v", armorItems[0].Stats)
+	}
+}
+
+func TestEquipmentStatsInfoOmitsNonFiniteValues(t *testing.T) {
+	info := EquipmentInfo{
+		Rating:            math.NaN(),
+		CurrentDurability: math.Inf(1),
+		Stats: equipmentStatsInfo(arkobject.EquipmentStats{
+			Internal:               map[arkobject.EquipmentStat]uint16{arkobject.EquipmentStatDamage: 123},
+			Damage:                 math.NaN(),
+			Durability:             math.Inf(1),
+			Armor:                  math.Inf(-1),
+			HypothermalResistance:  8.8,
+			HyperthermalResistance: 15.6,
+		}),
+	}
+	info.sanitize()
+	if info.Rating != 0 || info.CurrentDurability != 0 {
+		t.Fatalf("non-finite top-level equipment floats were not sanitized: %#v", info)
+	}
+	if _, err := json.Marshal(info); err != nil {
+		t.Fatalf("json.Marshal(equipment info) error = %v", err)
+	}
+
+	stats := equipmentStatsInfo(arkobject.EquipmentStats{
+		Internal:               map[arkobject.EquipmentStat]uint16{arkobject.EquipmentStatDamage: 123},
+		Damage:                 math.NaN(),
+		Durability:             math.Inf(1),
+		Armor:                  math.Inf(-1),
+		HypothermalResistance:  8.8,
+		HyperthermalResistance: 15.6,
+	})
+	if stats == nil {
+		t.Fatalf("equipmentStatsInfo() = nil, want stats with finite fields")
+	}
+	if stats.Damage != 0 || stats.Durability != 0 || stats.Armor != 0 {
+		t.Fatalf("non-finite stats were not sanitized: %#v", stats)
+	}
+	if _, err := json.Marshal(stats); err != nil {
+		t.Fatalf("json.Marshal(equipment stats) error = %v", err)
 	}
 }
 

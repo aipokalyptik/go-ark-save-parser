@@ -3,6 +3,7 @@ package arkapi
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -278,7 +279,7 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 	out := make([]EquipmentInfo, 0, len(equipment))
 	for _, id := range sortedUUIDKeys(equipment) {
 		item := equipment[id]
-		out = append(out, EquipmentInfo{
+		info := EquipmentInfo{
 			UUID:              id.String(),
 			Blueprint:         item.Blueprint,
 			Kind:              string(item.Kind),
@@ -290,7 +291,9 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 			CurrentDurability: item.CurrentDurability,
 			Stats:             equipmentStatsInfo(item.Stats),
 			Crafter:           crafterInfo(item.Crafter),
-		})
+		}
+		info.sanitize()
+		out = append(out, info)
 	}
 	return out, nil
 }
@@ -500,12 +503,24 @@ func equipmentStatsInfo(value arkobject.EquipmentStats) *EquipmentStatsInfo {
 	}
 	return &EquipmentStatsInfo{
 		Internal:               internal,
-		Damage:                 value.Damage,
-		Durability:             value.Durability,
-		Armor:                  value.Armor,
-		HypothermalResistance:  value.HypothermalResistance,
-		HyperthermalResistance: value.HyperthermalResistance,
+		Damage:                 finiteFloat(value.Damage),
+		Durability:             finiteFloat(value.Durability),
+		Armor:                  finiteFloat(value.Armor),
+		HypothermalResistance:  finiteFloat(value.HypothermalResistance),
+		HyperthermalResistance: finiteFloat(value.HyperthermalResistance),
 	}
+}
+
+func finiteFloat(value float64) float64 {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0
+	}
+	return value
+}
+
+func (e *EquipmentInfo) sanitize() {
+	e.Rating = finiteFloat(e.Rating)
+	e.CurrentDurability = finiteFloat(e.CurrentDurability)
 }
 
 func equipmentStatName(stat arkobject.EquipmentStat) string {

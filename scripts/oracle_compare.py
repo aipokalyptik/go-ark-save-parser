@@ -182,6 +182,30 @@ def python_stackable_count_oracle(save_path: Path, upstream_src: Path) -> dict[s
         save.close()
 
 
+def python_equipment_longneck_blueprint_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.classes.equipment import Weapons  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    blueprint = Weapons.advanced.longneck
+    save = AsaSave(save_path)
+    try:
+        api = EquipmentApi(save)
+        weapons = api.get_filtered(
+            EquipmentApi.Classes.WEAPON,
+            classes=[blueprint],
+            only_blueprints=True,
+        )
+        return {
+            "blueprint": blueprint,
+            "longneck_bp_count": len(weapons),
+            "max_damage": max((weapon.damage for weapon in weapons.values()), default=None),
+        }
+    finally:
+        save.close()
+
+
 def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData  # type: ignore
@@ -236,6 +260,12 @@ def python_local_tribute_oracle(save_path: Path) -> dict[str, Any]:
     }
 
 
+def normalize_blueprint(value: str) -> str:
+    if value.startswith("Blueprint'") and value.endswith("'"):
+        return value[len("Blueprint'") : -1]
+    return value
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = os.environ.copy()
     env.setdefault("PYTHONWARNINGS", "ignore")
@@ -244,6 +274,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
+    py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
@@ -253,6 +284,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_dino_filter": py_dino_filter,
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
+        "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
         "go": {},
@@ -367,6 +399,40 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["stackable_count"]["parsed"] = got
         want = {key: py_stackable_count[key] for key in ("items", "total")}
         cases.append(CaseResult("stackable_count", "pass" if {key: got.get(key) for key in want} == want else "fail", "stackable item count and total quantity compared"))
+
+    equipment_json_path = repo_root / ".oracle" / "output" / "export-domain-equipment.json"
+    go_equipment_json = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "equipment", str(equipment_json_path)], repo_root, env)
+    private["go"]["equipment_longneck_blueprint_damage"] = {
+        "exit_code": go_equipment_json.returncode,
+        "stdout": go_equipment_json.stdout,
+        "stderr": go_equipment_json.stderr,
+        "output": str(equipment_json_path),
+    }
+    if py_equipment_longneck_blueprint["longneck_bp_count"] == 0:
+        cases.append(CaseResult("equipment_longneck_blueprint_damage", "skip", "oracle save has no longneck blueprints"))
+    elif go_equipment_json.returncode != 0:
+        cases.append(CaseResult("equipment_longneck_blueprint_damage", "fail", "Go CLI exited non-zero"))
+    else:
+        try:
+            got_export = json.loads(equipment_json_path.read_text(encoding="utf-8"))
+            blueprint = py_equipment_longneck_blueprint["blueprint"]
+            items = [
+                item
+                for item in got_export.get("items", [])
+                if normalize_blueprint(item.get("blueprint", "")) == blueprint
+                and item.get("kind") == "weapon"
+                and item.get("is_blueprint")
+            ]
+            got = {
+                "longneck_bp_count": len(items),
+                "max_damage": max((float((item.get("stats") or {}).get("damage") or 0) for item in items), default=None),
+            }
+            private["go"]["equipment_longneck_blueprint_damage"]["parsed"] = got
+            want = {key: py_equipment_longneck_blueprint[key] for key in ("longneck_bp_count", "max_damage")}
+            cases.append(CaseResult("equipment_longneck_blueprint_damage", "pass" if got == want else "fail", "longneck blueprint count and max damage compared"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["equipment_longneck_blueprint_damage"]["parse_error"] = str(exc)
+            cases.append(CaseResult("equipment_longneck_blueprint_damage", "fail", "Go equipment domain JSON could not be parsed"))
 
     domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
     go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)
