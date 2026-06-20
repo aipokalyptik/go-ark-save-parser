@@ -26,6 +26,13 @@ func (g *GameObject) Value(name string) (any, bool) {
 	return nil, false
 }
 
+func (g *GameObject) Container() arkproperty.Container {
+	if g == nil {
+		return arkproperty.Container{}
+	}
+	return arkproperty.Container{Properties: g.Properties}
+}
+
 func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string) (*GameObject, error) {
 	r := arkbinary.NewReader(data, ctx)
 	blueprint, err := r.ReadName("")

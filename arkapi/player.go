@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"sort"
@@ -9,14 +10,20 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
+	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
 )
 
 type PlayerAPI struct {
+	save         *arksave.Save
 	profilePaths []string
 	tribePaths   []string
 	clusterPaths []string
 	tributePaths []string
+}
+
+func NewPlayer(save *arksave.Save) *PlayerAPI {
+	return &PlayerAPI{save: save}
 }
 
 func NewPlayerFromDirectory(dir string) (*PlayerAPI, error) {
@@ -97,6 +104,9 @@ func (p *PlayerAPI) Profiles() ([]*arkprofile.PlayerProfile, error) {
 }
 
 func (p *PlayerAPI) Players() ([]arkobject.Player, error) {
+	if p.save != nil {
+		return p.savePlayers()
+	}
 	profiles, err := p.Profiles()
 	if err != nil {
 		return nil, err
@@ -106,6 +116,24 @@ func (p *PlayerAPI) Players() ([]arkobject.Player, error) {
 		player, err := profile.Player()
 		if err != nil {
 			return nil, err
+		}
+		out = append(out, player)
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {
+	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return isPlayerDataClass(info.ClassName)
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Player, 0, len(objects))
+	for _, info := range objects {
+		player, err := arkobject.PlayerFromContainer(info.Object.Container())
+		if err != nil {
+			return nil, fmt.Errorf("parse player object %s: %w", info.UUID, err)
 		}
 		out = append(out, player)
 	}
@@ -500,6 +528,9 @@ func (p *PlayerAPI) TribeSummaries() ([]arkprofile.TribeSummary, error) {
 }
 
 func (p *PlayerAPI) TribeDetails() ([]arkobject.Tribe, error) {
+	if p.save != nil {
+		return p.saveTribeDetails()
+	}
 	tribes, err := p.Tribes()
 	if err != nil {
 		return nil, err
@@ -511,6 +542,24 @@ func (p *PlayerAPI) TribeDetails() ([]arkobject.Tribe, error) {
 			return nil, err
 		}
 		out = append(out, detail)
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) saveTribeDetails() ([]arkobject.Tribe, error) {
+	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return isTribeDataClass(info.ClassName)
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]arkobject.Tribe, 0, len(objects))
+	for _, info := range objects {
+		tribe, err := arkobject.TribeFromContainer(info.Object.Container())
+		if err != nil {
+			return nil, fmt.Errorf("parse tribe object %s: %w", info.UUID, err)
+		}
+		out = append(out, tribe)
 	}
 	return out, nil
 }
@@ -709,4 +758,12 @@ func containsInt32(values []int32, want int32) bool {
 		}
 	}
 	return false
+}
+
+func isPlayerDataClass(className string) bool {
+	return strings.Contains(className, "PrimalPlayerDataBP")
+}
+
+func isTribeDataClass(className string) bool {
+	return strings.Contains(className, "PrimalTribeData")
 }

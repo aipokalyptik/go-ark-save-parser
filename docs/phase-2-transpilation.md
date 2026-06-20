@@ -121,9 +121,11 @@ enough that oracle-derived tests can run against translated packages.
       directory discovery, local cluster/tribute indexing, lookup filters, and
       aggregate helpers.
 - [x] Add CLI directory summaries for local player profiles and tribe saves.
-- [ ] Port save-contained Player and Tribe APIs and any remaining upstream
-      local-file edge behavior not covered by parsed `.arkprofile` /
-      `.arktribe` files.
+- [x] Port save-contained Player and Tribe API parsing for `.ark` game-table
+      `PrimalPlayerDataBP` and `PrimalTribeData` objects, including lookup,
+      tribe-player relation, and owner helper reuse.
+- [ ] Port any remaining upstream Player/Tribe edge behavior not covered by
+      parsed `.arkprofile`, `.arktribe`, or save-contained player/tribe objects.
 - [x] Add first read-only Structure API surface for class, owner, and location
       queries with optional class filters.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
