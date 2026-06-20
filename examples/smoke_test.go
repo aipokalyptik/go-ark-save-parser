@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
@@ -17,6 +18,8 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
+	objectCopyPath := filepath.Join(dir, "object-copy.ark")
+	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	profilePath := filepath.Join(dir, "123.arkprofile")
@@ -94,6 +97,32 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "mutation_copy", "wrote copy:", savePath, copyPath)
 	if _, err := os.Stat(copyPath); err != nil {
 		t.Fatalf("mutation_copy output missing: %v", err)
+	}
+	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")
+	objectCopy, err := arksave.Open(objectCopyPath)
+	if err != nil {
+		t.Fatalf("Open(object mutation copy) error = %v", err)
+	}
+	raw, err := objectCopy.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", objectID, err)
+	}
+	_ = objectCopy.Close()
+	if !bytes.Equal(raw, []byte{9, 8, 7}) {
+		t.Fatalf("ObjectBinary(%s) = % x, want 09 08 07", objectID, raw)
+	}
+	runExample(t, "mutation_copy", "wrote custom value:", "put-custom", savePath, customCopyPath, "Extra", "090807")
+	customCopy, err := arksave.Open(customCopyPath)
+	if err != nil {
+		t.Fatalf("Open(custom mutation copy) error = %v", err)
+	}
+	customValue, err := customCopy.CustomValue("Extra")
+	if err != nil {
+		t.Fatalf("CustomValue(Extra) error = %v", err)
+	}
+	_ = customCopy.Close()
+	if !bytes.Equal(customValue, []byte{9, 8, 7}) {
+		t.Fatalf("CustomValue(Extra) = % x, want 09 08 07", customValue)
 	}
 }
 

@@ -203,6 +203,8 @@ go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file
 go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
+go run ./examples/mutation_copy put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
+go run ./examples/mutation_copy put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```
 
 ## Mutation Safety
