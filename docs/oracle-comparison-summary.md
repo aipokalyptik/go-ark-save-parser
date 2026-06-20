@@ -10,7 +10,8 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `object_classes`: `pass` (class list compared)
 - `export_json`: `pass` (save-info JSON metrics and class list compared)
 - `local_profiles`: `pass` (local profile and tribe aggregate counts compared)
+- `cluster_json`: `pass` (local cluster upload counts compared)
 
 ## Counts
 
-- `pass`: 4
+- `pass`: 5

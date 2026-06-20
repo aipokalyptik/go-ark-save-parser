@@ -120,12 +120,37 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
         save.close()
 
 
+def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData  # type: ignore
+
+    cluster_dir = upstream_src.parent / "examples" / "player_api" / "cluster_data"
+    files = sorted(path for path in cluster_dir.iterdir() if path.is_file())
+    if not files:
+        return None
+    cluster_file = files[0]
+    cluster = ClusterData(cluster_file.parent, cluster_file.name)
+    return {
+        "path": str(cluster_file),
+        "id": cluster_file.name,
+        "items": len(cluster.items),
+        "dinos": len(cluster.dinos),
+    }
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = os.environ.copy()
     env.setdefault("PYTHONWARNINGS", "ignore")
     py = python_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
-    private: dict[str, Any] = {"save_path": str(save_path), "python": py, "python_local_profiles": py_local_profiles, "go": {}}
+    py_cluster_data = python_cluster_data_oracle(upstream_src)
+    private: dict[str, Any] = {
+        "save_path": str(save_path),
+        "python": py,
+        "python_local_profiles": py_local_profiles,
+        "python_cluster_data": py_cluster_data,
+        "go": {},
+    }
     cases: list[CaseResult] = []
 
     go_map = run(["go", "run", "./examples/map_summary", str(save_path)], repo_root, env)
@@ -195,6 +220,32 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["local_profiles"]["parsed"] = got
         want = {key: py_local_profiles[key] for key in ("profiles", "tribes", "clusters", "tributes", "parsed_players", "parsed_tribes", "tribe_player_links")}
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
+
+    if py_cluster_data is None:
+        cases.append(CaseResult("cluster_json", "skip", "no upstream local cluster fixture found"))
+    else:
+        go_cluster_json = run(["go", "run", "./examples/cluster_json", py_cluster_data["path"]], repo_root, env)
+        private["go"]["cluster_json"] = {
+            "exit_code": go_cluster_json.returncode,
+            "stdout": go_cluster_json.stdout,
+            "stderr": go_cluster_json.stderr,
+        }
+        if go_cluster_json.returncode != 0:
+            cases.append(CaseResult("cluster_json", "fail", "Go example exited non-zero"))
+        else:
+            try:
+                got_cluster = json.loads(go_cluster_json.stdout)
+                private["go"]["cluster_json"]["parsed"] = got_cluster
+                want = {
+                    "id": py_cluster_data["id"],
+                    "item_count": py_cluster_data["items"],
+                    "dino_count": py_cluster_data["dinos"],
+                }
+                got = {key: got_cluster[key] for key in want}
+                cases.append(CaseResult("cluster_json", "pass" if got == want else "fail", "local cluster upload counts compared"))
+            except Exception as exc:  # noqa: BLE001 - private report captures details
+                private["go"]["cluster_json"]["parse_error"] = str(exc)
+                cases.append(CaseResult("cluster_json", "fail", "Go cluster JSON could not be parsed"))
 
     return cases, private
 

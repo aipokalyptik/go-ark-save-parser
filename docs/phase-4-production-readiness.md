@@ -35,8 +35,8 @@ offline parser without Python or private chat context.
       stackables, and bases.
 - [x] Private oracle comparison harness for implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md` and
-      covers map summary, object classes, save-info JSON export, and local
-      profile/tribe aggregate counts.
+      covers map summary, object classes, save-info JSON export, local
+      profile/tribe aggregate counts, and local cluster JSON aggregate counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in
