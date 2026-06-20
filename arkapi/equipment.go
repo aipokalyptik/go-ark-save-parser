@@ -137,6 +137,31 @@ func (e *EquipmentAPI) WithMinDurability(min float64) (map[uuid.UUID]arkobject.E
 	})
 }
 
+func (e *EquipmentAPI) WithMinDamage(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Kind == arkobject.EquipmentWeapon && item.Stats.Damage >= min
+	})
+}
+
+func (e *EquipmentAPI) WithMinArmor(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return (item.Kind == arkobject.EquipmentArmor || item.Kind == arkobject.EquipmentSaddle || item.Kind == arkobject.EquipmentShield) &&
+			item.Stats.Armor >= min
+	})
+}
+
+func (e *EquipmentAPI) WithMinHypothermalResistance(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Kind == arkobject.EquipmentArmor && item.Stats.HypothermalResistance >= min
+	})
+}
+
+func (e *EquipmentAPI) WithMinHyperthermalResistance(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Kind == arkobject.EquipmentArmor && item.Stats.HyperthermalResistance >= min
+	})
+}
+
 func (e *EquipmentAPI) filter(match func(arkobject.EquipmentItem) bool) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	all, err := e.All()
 	if err != nil {

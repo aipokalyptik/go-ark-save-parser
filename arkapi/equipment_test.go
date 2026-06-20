@@ -79,6 +79,60 @@ func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIFiltersByParsedEquipmentStats(t *testing.T) {
+	weaponSave := openSyntheticEquipmentSave(t)
+	defer weaponSave.Close()
+
+	weaponAPI := NewEquipment(weaponSave)
+	highDamage, err := weaponAPI.WithMinDamage(112)
+	if err != nil {
+		t.Fatalf("WithMinDamage() error = %v", err)
+	}
+	if len(highDamage) != 1 {
+		t.Fatalf("WithMinDamage(112) length = %d, want 1", len(highDamage))
+	}
+	tooMuchDamage, err := weaponAPI.WithMinDamage(113)
+	if err != nil {
+		t.Fatalf("WithMinDamage(113) error = %v", err)
+	}
+	if len(tooMuchDamage) != 0 {
+		t.Fatalf("WithMinDamage(113) length = %d, want 0", len(tooMuchDamage))
+	}
+
+	armorSave := openSyntheticArmorEquipmentSave(t)
+	defer armorSave.Close()
+
+	armorAPI := NewEquipment(armorSave)
+	armored, err := armorAPI.WithMinArmor(12)
+	if err != nil {
+		t.Fatalf("WithMinArmor() error = %v", err)
+	}
+	if len(armored) != 1 {
+		t.Fatalf("WithMinArmor(12) length = %d, want 1", len(armored))
+	}
+	tooMuchArmor, err := armorAPI.WithMinArmor(13)
+	if err != nil {
+		t.Fatalf("WithMinArmor(13) error = %v", err)
+	}
+	if len(tooMuchArmor) != 0 {
+		t.Fatalf("WithMinArmor(13) length = %d, want 0", len(tooMuchArmor))
+	}
+	cold, err := armorAPI.WithMinHypothermalResistance(8.8)
+	if err != nil {
+		t.Fatalf("WithMinHypothermalResistance() error = %v", err)
+	}
+	if len(cold) != 1 {
+		t.Fatalf("WithMinHypothermalResistance() length = %d, want 1", len(cold))
+	}
+	heat, err := armorAPI.WithMinHyperthermalResistance(15.6)
+	if err != nil {
+		t.Fatalf("WithMinHyperthermalResistance() error = %v", err)
+	}
+	if len(heat) != 1 {
+		t.Fatalf("WithMinHyperthermalResistance() length = %d, want 1", len(heat))
+	}
+}
+
 func TestEquipmentAPIByCrafterFiltersLocalSaveItems(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()
