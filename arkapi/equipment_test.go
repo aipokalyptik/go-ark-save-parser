@@ -98,6 +98,20 @@ func TestEquipmentAPIFiltersByParsedEquipmentStats(t *testing.T) {
 	if len(tooMuchDamage) != 0 {
 		t.Fatalf("WithMinDamage(113) length = %d, want 0", len(tooMuchDamage))
 	}
+	actualDurability, err := weaponAPI.WithMinActualDurability(62.5)
+	if err != nil {
+		t.Fatalf("WithMinActualDurability() error = %v", err)
+	}
+	if len(actualDurability) != 1 {
+		t.Fatalf("WithMinActualDurability(62.5) length = %d, want 1", len(actualDurability))
+	}
+	tooMuchActualDurability, err := weaponAPI.WithMinActualDurability(62.6)
+	if err != nil {
+		t.Fatalf("WithMinActualDurability(62.6) error = %v", err)
+	}
+	if len(tooMuchActualDurability) != 0 {
+		t.Fatalf("WithMinActualDurability(62.6) length = %d, want 0", len(tooMuchActualDurability))
+	}
 
 	armorSave := openSyntheticArmorEquipmentSave(t)
 	defer armorSave.Close()

@@ -137,6 +137,12 @@ func (e *EquipmentAPI) WithMinDurability(min float64) (map[uuid.UUID]arkobject.E
 	})
 }
 
+func (e *EquipmentAPI) WithMinActualDurability(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.filter(func(item arkobject.EquipmentItem) bool {
+		return item.Stats.Durability >= min
+	})
+}
+
 func (e *EquipmentAPI) WithMinDamage(min float64) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	return e.filter(func(item arkobject.EquipmentItem) bool {
 		return item.Kind == arkobject.EquipmentWeapon && item.Stats.Damage >= min
