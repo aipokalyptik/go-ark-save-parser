@@ -102,6 +102,44 @@ func TestParseGameObjectReadsStringEncodedObjectNames(t *testing.T) {
 	}
 }
 
+func TestGameObjectShortNameFollowsUpstreamBlueprintRules(t *testing.T) {
+	tests := []struct {
+		name      string
+		blueprint string
+		want      string
+	}{
+		{
+			name:      "dino",
+			blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			want:      "Raptor",
+		},
+		{
+			name:      "resource",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+			want:      "Resource_Stone",
+		},
+		{
+			name:      "structure",
+			blueprint: "Blueprint'/Game/Structures/Stone/PrimalItemStructure_Wall_Stone.PrimalItemStructure_Wall_Stone_C'",
+			want:      "Wall_Stone",
+		},
+		{
+			name:      "status",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C'",
+			want:      "Status",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			object := GameObject{Blueprint: tt.blueprint}
+			if got := object.ShortName(); got != tt.want {
+				t.Fatalf("ShortName() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func writeName(buf *bytes.Buffer, id uint32) {
 	writeUInt32(buf, id)
 	writeInt32(buf, 0)

@@ -747,6 +747,10 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 		byClass["Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'"] != 1 {
 		t.Fatalf("CountByClass() = %#v", byClass)
 	}
+	byShortName := api.CountByShortName(dinos)
+	if byShortName["Raptor"] != 2 || byShortName["Dodo"] != 1 {
+		t.Fatalf("CountByShortName() = %#v", byShortName)
+	}
 	byTamed := api.CountByTamed(dinos)
 	if byTamed[true] != 2 || byTamed[false] != 1 {
 		t.Fatalf("CountByTamed() = %#v", byTamed)
@@ -764,6 +768,10 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	if byCryopoddedClass["all"] != 1 ||
 		byCryopoddedClass["Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'"] != 1 {
 		t.Fatalf("CountCryopoddedByClass() = %#v", byCryopoddedClass)
+	}
+	byCryopoddedShortName := api.CountCryopoddedByShortName(dinos)
+	if byCryopoddedShortName["all"] != 1 || byCryopoddedShortName["Dodo"] != 1 {
+		t.Fatalf("CountCryopoddedByShortName() = %#v", byCryopoddedShortName)
 	}
 	if _, ok := byCryopoddedClass["Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"]; ok {
 		t.Fatalf("CountCryopoddedByClass() counted non-cryopodded raptor: %#v", byCryopoddedClass)

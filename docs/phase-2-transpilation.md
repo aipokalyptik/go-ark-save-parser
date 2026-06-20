@@ -190,6 +190,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add typed Dino API gene trait filters by trait name and optional level.
 - [x] Add read-only Dino API aggregate helpers for level, class, and tamed
       state counts over filtered dino maps.
+- [x] Add upstream-compatible object/dino short-name extraction and dino
+      short-name count helpers without changing full-blueprint counts.
 - [x] Add upstream-style cryopodded dino aggregate counts by class with an
       overall `all` total.
 - [x] Add combined read-only Dino API filtering for level bounds, class names,

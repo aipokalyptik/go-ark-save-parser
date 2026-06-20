@@ -104,6 +104,13 @@ func DinoFromObjectWithStatus(object *GameObject, statusObject *GameObject, loca
 	return dino
 }
 
+func (d Dino) ShortName() string {
+	if d.Object != nil {
+		return d.Object.ShortName()
+	}
+	return ShortNameFromBlueprint(d.Blueprint)
+}
+
 func colorSetIndices(properties arkproperty.Container) [6]int {
 	var values [6]int
 	for i := range values {

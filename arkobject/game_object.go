@@ -2,6 +2,7 @@ package arkobject
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -31,6 +32,45 @@ func (g *GameObject) Container() arkproperty.Container {
 		return arkproperty.Container{}
 	}
 	return arkproperty.Container{Properties: g.Properties}
+}
+
+func (g *GameObject) ShortName() string {
+	if g == nil {
+		return ""
+	}
+	return ShortNameFromBlueprint(g.Blueprint)
+}
+
+func ShortNameFromBlueprint(blueprint string) string {
+	short := blueprint
+	if slash := strings.LastIndex(short, "/"); slash >= 0 {
+		short = short[slash+1:]
+	}
+	if dot := strings.Index(short, "."); dot >= 0 {
+		short = short[:dot]
+	}
+	replacements := []struct {
+		old string
+		new string
+	}{
+		{old: "_Character_BP", new: ""},
+		{old: "_ASA_C", new: ""},
+		{old: "StructureBP_", new: ""},
+		{old: "PrimalItemStructure_", new: ""},
+		{old: "PrimalItem_", new: ""},
+		{old: "PrimalItem", new: ""},
+		{old: "DinoCharacterStatus_BP", new: "Status"},
+	}
+	for _, replacement := range replacements {
+		short = strings.ReplaceAll(short, replacement.old, replacement.new)
+	}
+	for _, suffix := range []string{"_C", "_BP"} {
+		short = strings.TrimSuffix(short, suffix)
+	}
+	for _, prefix := range []string{"PrimalItemResource_", "PrimalItemAmmo_", "BP_"} {
+		short = strings.TrimPrefix(short, prefix)
+	}
+	return short
 }
 
 func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string) (*GameObject, error) {

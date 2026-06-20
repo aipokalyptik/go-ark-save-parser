@@ -418,6 +418,14 @@ func (d *DinoAPI) CountByClass(dinos map[uuid.UUID]arkobject.Dino) map[string]in
 	return counts
 }
 
+func (d *DinoAPI) CountByShortName(dinos map[uuid.UUID]arkobject.Dino) map[string]int {
+	counts := map[string]int{}
+	for _, dino := range dinos {
+		counts[dino.ShortName()]++
+	}
+	return counts
+}
+
 func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int {
 	counts := map[bool]int{}
 	for _, dino := range dinos {
@@ -442,6 +450,18 @@ func (d *DinoAPI) CountCryopoddedByClass(dinos map[uuid.UUID]arkobject.Dino) map
 		}
 		counts["all"]++
 		counts[dino.Blueprint]++
+	}
+	return counts
+}
+
+func (d *DinoAPI) CountCryopoddedByShortName(dinos map[uuid.UUID]arkobject.Dino) map[string]int {
+	counts := map[string]int{"all": 0}
+	for _, dino := range dinos {
+		if !dino.IsCryopodded {
+			continue
+		}
+		counts["all"]++
+		counts[dino.ShortName()]++
 	}
 	return counts
 }

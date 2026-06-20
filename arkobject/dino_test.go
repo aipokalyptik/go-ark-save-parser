@@ -102,6 +102,9 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	if dino.Location == nil || dino.Location.X != 1 || dino.Location.Z != 3 {
 		t.Fatalf("Location = %#v", dino.Location)
 	}
+	if dino.ShortName() != "Raptor" {
+		t.Fatalf("ShortName() = %q, want Raptor", dino.ShortName())
+	}
 }
 
 func TestDinoFromObjectPrefersSaveContextLocation(t *testing.T) {
