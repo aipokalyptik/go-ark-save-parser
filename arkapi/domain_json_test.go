@@ -213,6 +213,25 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportEquipmentIncludesOwnerInventory(t *testing.T) {
+	save := openSyntheticEquipmentOwnedByStructureSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportEquipment()
+	if err != nil {
+		t.Fatalf("ExportEquipment() error = %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("ExportEquipment() length = %d, want 2", len(items))
+	}
+	if items[0].OwnerInventoryUUID != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
+		t.Fatalf("EquipmentInfo owner inventory = %q", items[0].OwnerInventoryUUID)
+	}
+	if items[1].OwnerInventoryUUID != "11111111-2222-3333-4444-555555555555" {
+		t.Fatalf("EquipmentInfo second owner inventory = %q", items[1].OwnerInventoryUUID)
+	}
+}
+
 func TestEquipmentStatsInfoOmitsNonFiniteValues(t *testing.T) {
 	info := EquipmentInfo{
 		Rating:            math.NaN(),

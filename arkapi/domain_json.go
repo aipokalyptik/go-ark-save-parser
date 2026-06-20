@@ -64,20 +64,21 @@ type StructureInfo struct {
 }
 
 type EquipmentInfo struct {
-	UUID              string              `json:"uuid"`
-	Blueprint         string              `json:"blueprint"`
-	Kind              string              `json:"kind"`
-	Quantity          int32               `json:"quantity"`
-	IsEquipped        bool                `json:"is_equipped"`
-	IsBlueprint       bool                `json:"is_blueprint"`
-	Rating            float64             `json:"rating"`
-	Quality           int32               `json:"quality"`
-	CurrentDurability float64             `json:"current_durability"`
-	IsCrafted         bool                `json:"is_crafted"`
-	AverageStat       float64             `json:"average_stat,omitempty"`
-	ImplementedStats  []string            `json:"implemented_stats,omitempty"`
-	Stats             *EquipmentStatsInfo `json:"stats,omitempty"`
-	Crafter           *CrafterInfo        `json:"crafter,omitempty"`
+	UUID               string              `json:"uuid"`
+	Blueprint          string              `json:"blueprint"`
+	Kind               string              `json:"kind"`
+	Quantity           int32               `json:"quantity"`
+	OwnerInventoryUUID string              `json:"owner_inventory_uuid,omitempty"`
+	IsEquipped         bool                `json:"is_equipped"`
+	IsBlueprint        bool                `json:"is_blueprint"`
+	Rating             float64             `json:"rating"`
+	Quality            int32               `json:"quality"`
+	CurrentDurability  float64             `json:"current_durability"`
+	IsCrafted          bool                `json:"is_crafted"`
+	AverageStat        float64             `json:"average_stat,omitempty"`
+	ImplementedStats   []string            `json:"implemented_stats,omitempty"`
+	Stats              *EquipmentStatsInfo `json:"stats,omitempty"`
+	Crafter            *CrafterInfo        `json:"crafter,omitempty"`
 }
 
 type StackableInfo struct {
@@ -294,20 +295,21 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 	for _, id := range sortedUUIDKeys(equipment) {
 		item := equipment[id]
 		info := EquipmentInfo{
-			UUID:              id.String(),
-			Blueprint:         item.Blueprint,
-			Kind:              string(item.Kind),
-			Quantity:          item.Quantity,
-			IsEquipped:        item.IsEquipped,
-			IsBlueprint:       item.IsBlueprint,
-			Rating:            item.Rating,
-			Quality:           item.Quality,
-			CurrentDurability: item.CurrentDurability,
-			IsCrafted:         item.IsCrafted(),
-			AverageStat:       item.AverageStat(),
-			ImplementedStats:  equipmentStatNames(item.ImplementedStats()),
-			Stats:             equipmentStatsInfo(item.Stats),
-			Crafter:           crafterInfo(item.Crafter),
+			UUID:               id.String(),
+			Blueprint:          item.Blueprint,
+			Kind:               string(item.Kind),
+			Quantity:           item.Quantity,
+			OwnerInventoryUUID: optionalUUIDString(item.OwnerInventory),
+			IsEquipped:         item.IsEquipped,
+			IsBlueprint:        item.IsBlueprint,
+			Rating:             item.Rating,
+			Quality:            item.Quality,
+			CurrentDurability:  item.CurrentDurability,
+			IsCrafted:          item.IsCrafted(),
+			AverageStat:        item.AverageStat(),
+			ImplementedStats:   equipmentStatNames(item.ImplementedStats()),
+			Stats:              equipmentStatsInfo(item.Stats),
+			Crafter:            crafterInfo(item.Crafter),
 		}
 		info.sanitize()
 		out = append(out, info)

@@ -151,6 +151,8 @@ enough that oracle-derived tests can run against translated packages.
       metadata in structure domain JSON export.
 - [x] Include stackable owner inventory UUIDs in stackable domain JSON export
       for owner/container correlation.
+- [x] Include equipment owner inventory UUIDs in equipment domain JSON export
+      for owner/container correlation.
 - [x] Route structure domain JSON export through the fault-tolerant structure
       scan so malformed matching rows do not abort valid exports.
 - [x] Include parsed tamed dino owner/detail and baby maturation fields in
