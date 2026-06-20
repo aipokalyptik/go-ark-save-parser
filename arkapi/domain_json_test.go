@@ -1,11 +1,17 @@
 package arkapi
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"math"
+	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
+	"github.com/google/uuid"
 )
 
 func TestJSONAPIExportDinosSummarizesDinoAPI(t *testing.T) {
@@ -99,6 +105,41 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportDinosIncludesPedigreeUUIDs(t *testing.T) {
+	save := openSyntheticDinoPedigreeSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportDinos()
+	if err != nil {
+		t.Fatalf("ExportDinos() error = %v", err)
+	}
+	if len(items) != 3 {
+		t.Fatalf("ExportDinos() length = %d, want 3: %#v", len(items), items)
+	}
+	byUUID := map[string]DinoInfo{}
+	for _, item := range items {
+		byUUID[item.UUID] = item
+	}
+	parentID := "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"
+	childID := "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+	grandchildID := "cccccccc-dddd-eeee-ffff-000000000000"
+
+	parent := byUUID[parentID]
+	if len(parent.ChildUUIDs) != 1 || parent.ChildUUIDs[0] != childID {
+		t.Fatalf("parent ChildUUIDs = %#v, want [%s]", parent.ChildUUIDs, childID)
+	}
+	if len(parent.DescendantUUIDs) != 2 || parent.DescendantUUIDs[0] != childID || parent.DescendantUUIDs[1] != grandchildID {
+		t.Fatalf("parent DescendantUUIDs = %#v, want child and grandchild", parent.DescendantUUIDs)
+	}
+	child := byUUID[childID]
+	if len(child.ChildUUIDs) != 1 || child.ChildUUIDs[0] != grandchildID {
+		t.Fatalf("child ChildUUIDs = %#v, want [%s]", child.ChildUUIDs, grandchildID)
+	}
+	if len(child.DescendantUUIDs) != 1 || child.DescendantUUIDs[0] != grandchildID {
+		t.Fatalf("child DescendantUUIDs = %#v, want [%s]", child.DescendantUUIDs, grandchildID)
+	}
+}
+
 func TestGeneTraitInfosMapsParsedGeneTraits(t *testing.T) {
 	items := geneTraitInfos([]arkobject.GeneTrait{
 		{Raw: "MutableMelee[2]", Name: "MutableMelee", Level: 2},
@@ -125,6 +166,62 @@ func TestDinoIDInfosMapsAncestorIDs(t *testing.T) {
 	if items[1].ID1 != 21 || items[1].ID2 != 22 {
 		t.Fatalf("DinoIDInfo second = %#v", items[1])
 	}
+}
+
+func openSyntheticDinoPedigreeSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	childID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	grandchildID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	path := filepath.Join(t.TempDir(), "pedigree.ark")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			0x10000015: "DinoID1",
+			0x10000016: "DinoID2",
+			0x10000018: "TamedTimeStamp",
+			0x10000019: "DoubleProperty",
+			0x1000001e: "ArrayProperty",
+			0x10000049: "StructProperty",
+			0x10000052: "DinoAncestor",
+			0x10000053: "FemaleDinoID1",
+			0x10000054: "FemaleDinoID2",
+			0x10000055: "DinoAncestors",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			parentID:     pedigreeDinoObjectBytes(11, 12),
+			childID:      pedigreeDinoObjectBytes(21, 22, arkobject.DinoID{ID1: 11, ID2: 12}),
+			grandchildID: pedigreeDinoObjectBytes(31, 32, arkobject.DinoID{ID1: 21, ID2: 22}),
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open(pedigree) error = %v", err)
+	}
+	return save
+}
+
+func pedigreeDinoObjectBytes(id1 int32, id2 int32, ancestors ...arkobject.DinoID) []byte {
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x10000015, id1)
+	writeIntProperty(&props, 0x10000016, id2)
+	writeDoubleProperty(&props, 0x10000018, 42)
+	if len(ancestors) > 0 {
+		elements := make([][]byte, 0, len(ancestors))
+		for _, ancestor := range ancestors {
+			var element bytes.Buffer
+			writeIntProperty(&element, 0x10000053, int32(ancestor.ID1))
+			writeIntProperty(&element, 0x10000054, int32(ancestor.ID2))
+			_ = binary.Write(&element, binary.LittleEndian, uint32(0x10000004))
+			_ = binary.Write(&element, binary.LittleEndian, int32(0))
+			elements = append(elements, element.Bytes())
+		}
+		writeStructArrayProperty(&props, 0x10000055, 0x10000049, 0x10000052, elements)
+	}
+	return testfixtures.ObjectBytesWithProperties(0x10000014, 0x10000004, props.Bytes())
 }
 
 func TestJSONAPIExportStructuresSummarizesStructureAPI(t *testing.T) {

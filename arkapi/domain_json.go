@@ -28,6 +28,8 @@ type DinoInfo struct {
 	IsCryopodded           bool                `json:"is_cryopodded"`
 	Generation             int                 `json:"generation,omitempty"`
 	AncestorIDs            []DinoIDInfo        `json:"ancestor_ids,omitempty"`
+	ChildUUIDs             []string            `json:"child_uuids,omitempty"`
+	DescendantUUIDs        []string            `json:"descendant_uuids,omitempty"`
 	MaturationPercent      float64             `json:"maturation_percent,omitempty"`
 	BabyStage              arkobject.BabyStage `json:"baby_stage,omitempty"`
 	InventoryUUID          string              `json:"inventory_uuid,omitempty"`
@@ -233,13 +235,16 @@ func (j *JSONAPI) ExportDomainJSON(domain string) ([]byte, error) {
 }
 
 func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
-	dinos, _, err := NewDino(j.save).AllWithFaults()
+	dinoAPI := NewDino(j.save)
+	dinos, _, err := dinoAPI.AllWithFaults()
 	if err != nil {
 		return nil, err
 	}
+	children := dinoAPI.ChildrenByAncestor(dinos)
 	out := make([]DinoInfo, 0, len(dinos))
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
+		dinoID := arkobject.DinoID{ID1: dino.ID1, ID2: dino.ID2}
 		out = append(out, DinoInfo{
 			UUID:                   id.String(),
 			Blueprint:              dino.Blueprint,
@@ -252,6 +257,8 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			IsCryopodded:           dino.IsCryopodded,
 			Generation:             dino.Generation,
 			AncestorIDs:            dinoIDInfos(dino.AncestorIDs),
+			ChildUUIDs:             sortedUUIDStrings(children[dinoID]),
+			DescendantUUIDs:        sortedUUIDStrings(sortedUUIDKeys(descendantsFromChildren(children, dinos, dinoID))),
 			MaturationPercent:      dino.MaturationPercent,
 			BabyStage:              dino.BabyStage,
 			InventoryUUID:          optionalUUIDString(dino.InventoryUUID),
@@ -268,6 +275,33 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 		})
 	}
 	return out, nil
+}
+
+func descendantsFromChildren(children map[arkobject.DinoID][]uuid.UUID, dinos map[uuid.UUID]arkobject.Dino, root arkobject.DinoID) map[uuid.UUID]arkobject.Dino {
+	descendants := map[uuid.UUID]arkobject.Dino{}
+	queue := append([]uuid.UUID(nil), children[root]...)
+	seen := map[uuid.UUID]struct{}{}
+	for len(queue) > 0 {
+		childID := queue[0]
+		queue = queue[1:]
+		if _, ok := seen[childID]; ok {
+			continue
+		}
+		seen[childID] = struct{}{}
+		child, ok := dinos[childID]
+		if !ok {
+			continue
+		}
+		arkDinoID := arkobject.DinoID{ID1: child.ID1, ID2: child.ID2}
+		if arkDinoID == root {
+			continue
+		}
+		descendants[childID] = child
+		if !arkDinoID.IsZero() {
+			queue = append(queue, children[arkDinoID]...)
+		}
+	}
+	return descendants
 }
 
 func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {

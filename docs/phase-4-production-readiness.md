@@ -50,10 +50,11 @@ offline parser without Python or private chat context.
 ## Remaining Production Gaps
 
 - Full domain parity for legacy/modded cryopod variants, legacy/modded saddle
-  payloads and cosmetics inside cryopods, full pedigree rendering/tree exports,
-  richer equipment stats, player/tribe details, and base import/export remains
-  incomplete. Modern cryopod dino/status and saddle payloads can be parsed when
-  `CustomItemDatas` uses the supported embedded archive formats.
+  payloads and cosmetics inside cryopods, richer pedigree rendering/tree export
+  helpers beyond JSON child/descendant references, richer equipment stats,
+  player/tribe details, and base import/export remains incomplete. Modern
+  cryopod dino/status and saddle payloads can be parsed when `CustomItemDatas`
+  uses the supported embedded archive formats.
 - Legacy archive object parsing remains unsupported outside modern archive and
   compact local tribute index formats.
 - Mutation helpers are structurally tested only and require live-server manual

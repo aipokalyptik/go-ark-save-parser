@@ -206,6 +206,8 @@ enough that oracle-derived tests can run against translated packages.
       full upstream pedigree rendering/export parity remains pending.
 - [x] Add read-only Dino API pedigree base helpers for child indexing by
       ancestor ID and descendant traversal through parsed ancestor records.
+- [x] Include child and descendant UUID references in dino domain JSON export
+      so consumers can build pedigree trees without reimplementing traversal.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild
