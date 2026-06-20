@@ -112,6 +112,22 @@ func TestJSONAPIExportStructuresSummarizesStructureAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportStructuresSkipsFaultyMatchingRows(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportStructures()
+	if err != nil {
+		t.Fatalf("ExportStructures() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ExportStructures() length = %d, want 1", len(items))
+	}
+	if items[0].UUID != "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff" || items[0].ID != 123 {
+		t.Fatalf("StructureInfo = %#v", items[0])
+	}
+}
+
 func TestJSONAPIExportStructuresIncludesLinkedStructureMetadata(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()

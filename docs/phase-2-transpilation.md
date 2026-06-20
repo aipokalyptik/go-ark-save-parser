@@ -53,6 +53,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and generic parsing for struct arrays.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
+- [x] Add tests and parsing for map entries with generic struct values.
 - [x] Add raw fallback preservation for packed unknown structs.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [x] Add declared-size realignment and overread detection for compound array,
@@ -140,6 +141,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.
+- [x] Route structure domain JSON export through the fault-tolerant structure
+      scan so malformed matching rows do not abort valid exports.
 - [x] Include parsed tamed dino owner/detail and baby maturation fields in
       dino domain JSON export.
 - [x] Add read-first dino color-set indices/names and uploaded-server origin

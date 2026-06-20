@@ -243,7 +243,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 }
 
 func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {
-	structures, err := NewStructure(j.save).All()
+	structures, _, err := NewStructure(j.save).AllWithFaults()
 	if err != nil {
 		return nil, err
 	}

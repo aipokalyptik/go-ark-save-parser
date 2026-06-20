@@ -955,6 +955,76 @@ func TestParseMapPropertyReadsSimpleKeyValueEntries(t *testing.T) {
 	}
 }
 
+func TestParseMapPropertyReadsStructValues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "EntriesByLevel",
+		2: "MapProperty",
+		3: "IntProperty",
+		4: "StructProperty",
+		5: "EntryStruct",
+		6: "Label",
+		7: "StrProperty",
+		8: "None",
+	})
+
+	var entry bytes.Buffer
+	writeName(&entry, 6)
+	writeName(&entry, 7)
+	writeInt32(&entry, 10)
+	writeInt32(&entry, 0)
+	entry.WriteByte(0)
+	writeArkString(&entry, "alpha")
+	writeName(&entry, 8)
+
+	bodySize := 8 + 4 + entry.Len()
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 2)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeName(stream, 4)
+	writeInt32(stream, 1)
+	writeName(stream, 5)
+	writeUInt32(stream, 1)
+	writeName(stream, 5)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(bodySize))
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, 1)
+	writeInt32(stream, 7)
+	stream.Write(entry.Bytes())
+	writeName(stream, 8)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeMap {
+		t.Fatalf("ParseAll() = %#v, want one map property", props)
+	}
+	got, ok := props[0].Value.(Map)
+	if !ok {
+		t.Fatalf("MapProperty value type = %T, want Map", props[0].Value)
+	}
+	if got.KeyType != TypeInt || got.ValueType != TypeStruct || len(got.Entries) != 1 {
+		t.Fatalf("Map = %#v, want Int->Struct length 1", got)
+	}
+	if got.Entries[0].Key != int32(7) {
+		t.Fatalf("map key = %#v, want 7", got.Entries[0].Key)
+	}
+	container, ok := got.Entries[0].Value.(Container)
+	if !ok {
+		t.Fatalf("map value type = %T, want Container", got.Entries[0].Value)
+	}
+	value, ok := container.Value("Label")
+	if !ok || value != "alpha" {
+		t.Fatalf("Label = %#v, %v; want alpha, true", value, ok)
+	}
+}
+
 func TestParseSetPropertyReadsSimpleValues(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

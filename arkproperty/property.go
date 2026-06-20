@@ -604,6 +604,7 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		return Map{}, err
 	}
 	bodyStart := r.Position()
+	bodyEnd := bodyStart + int(dataSize)
 	if _, err := r.ReadUInt32(); err != nil {
 		return Map{}, err
 	}
@@ -617,7 +618,7 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		if err != nil {
 			return Map{}, err
 		}
-		value, err := readValue(valueType, r)
+		value, err := readMapValue(valueType, r, bodyEnd)
 		if err != nil {
 			return Map{}, err
 		}
@@ -627,6 +628,20 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		return Map{}, err
 	}
 	return Map{KeyType: keyType, ValueType: valueType, Entries: entries}, nil
+}
+
+func readMapValue(t Type, r *arkbinary.Reader, bodyEnd int) (any, error) {
+	if t != TypeStruct {
+		return readValue(t, r)
+	}
+	props, err := ParseAllPartial(r, bodyEnd)
+	if err != nil {
+		if len(props) > 0 {
+			return Container{Properties: props}, err
+		}
+		return nil, err
+	}
+	return Container{Properties: props}, nil
 }
 
 func readSet(r *arkbinary.Reader) (Set, error) {
@@ -999,6 +1014,8 @@ func typeFromPropertyName(name string) (Type, error) {
 		return TypeSoftObject, nil
 	case "StrProperty":
 		return TypeString, nil
+	case "StructProperty":
+		return TypeStruct, nil
 	case "UInt32Property":
 		return TypeUInt32, nil
 	case "UInt16Property":
