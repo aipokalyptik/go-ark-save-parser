@@ -58,14 +58,17 @@ func TestRunRejectsUnknownOption(t *testing.T) {
 	}
 }
 
-func TestPlayersCommandPrintsLocalProfileSummary(t *testing.T) {
+func TestPlayersCommandReturnsErrorWhenParsedProfileSummaryMissing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
 	createSyntheticArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
 
 	var out bytes.Buffer
 	err := run([]string{"players", path}, &out)
-	if err != nil {
-		t.Fatalf("run(players) error = %v", err)
+	if err == nil {
+		t.Fatalf("run(players) error = nil, want missing normalized profile error")
+	}
+	if !strings.Contains(err.Error(), "parse player profile details") {
+		t.Fatalf("run(players) error = %v, want normalized parse context", err)
 	}
 	got := out.String()
 	for _, want := range []string{
@@ -183,14 +186,17 @@ func TestTribesCommandRedactsLocalTribeDetails(t *testing.T) {
 	}
 }
 
-func TestTribesCommandKeepsMetadataWhenSummaryMissing(t *testing.T) {
+func TestTribesCommandReturnsErrorWhenParsedSummaryMissing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
 	createSyntheticArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
 
 	var out bytes.Buffer
 	err := run([]string{"tribes", path}, &out)
-	if err != nil {
-		t.Fatalf("run(tribes) error = %v", err)
+	if err == nil {
+		t.Fatalf("run(tribes) error = nil, want missing normalized tribe error")
+	}
+	if !strings.Contains(err.Error(), "parse tribe details") {
+		t.Fatalf("run(tribes) error = %v, want normalized parse context", err)
 	}
 	got := out.String()
 	for _, want := range []string{

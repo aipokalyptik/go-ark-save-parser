@@ -160,7 +160,7 @@ func players(path string, out io.Writer, opts runOptions) error {
 	}
 	player, err := profile.Player()
 	if err != nil {
-		return nil
+		return fmt.Errorf("parse player profile details: %w", err)
 	}
 	_, err = fmt.Fprintf(
 		out,
@@ -184,7 +184,7 @@ func tribes(path string, out io.Writer, opts runOptions) error {
 	}
 	summary, err := tribe.Summary()
 	if err != nil {
-		return nil
+		return fmt.Errorf("parse tribe details: %w", err)
 	}
 	_, err = fmt.Fprintf(
 		out,

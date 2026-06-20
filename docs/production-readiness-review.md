@@ -41,7 +41,8 @@ Public verification reported by reviewers:
   error instead of collecting faulty objects for caller policy decisions.
 - CLI `players` and `tribes` paths can print archive metadata while suppressing
   normalized parse failures. Automation can mistake partial output for a fully
-  successful parse.
+  successful parse. Addressed after this review by returning wrapped normalized
+  parse errors while preserving already-printed archive metadata.
 - Local cluster uploaded dino archive parse failures are not surfaced in the
   cluster JSON model. Unsupported embedded dino formats can appear as empty or
   partially parsed uploads.
@@ -62,11 +63,9 @@ Public verification reported by reviewers:
 
 ## Next Actions
 
-1. Add committed tests and CLI behavior so `players` and `tribes` fail visibly
-   when normalized profile/tribe parsing fails.
-2. Add parse-status/error fields for local cluster uploaded dino summaries so
+1. Add parse-status/error fields for local cluster uploaded dino summaries so
    unsupported embedded dino archive payloads are visible in JSON.
-3. Expand oracle comparison coverage one runnable offline example at a time.
-4. Add a faulty-object reporting path for full-save object parsing.
-5. Continue filling domain/API gaps with synthetic tests and private oracle
+2. Expand oracle comparison coverage one runnable offline example at a time.
+3. Add a faulty-object reporting path for full-save object parsing.
+4. Continue filling domain/API gaps with synthetic tests and private oracle
    comparison where runnable upstream behavior exists.
