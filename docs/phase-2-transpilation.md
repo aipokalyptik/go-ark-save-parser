@@ -101,7 +101,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add typed local Player API death-stat helpers for per-player death
       counts, total deaths, and highest-death player lookup.
 - [x] Add typed local Player API level, experience, and engram point parsing
-      plus level/experience lookup helpers.
+      plus level, experience, and engram point lookup helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless

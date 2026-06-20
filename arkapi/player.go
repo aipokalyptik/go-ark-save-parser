@@ -221,6 +221,30 @@ func (p *PlayerAPI) ExperienceByPlayerID() (map[uint64]float64, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) EngramPointsByPlayerID() (map[uint64]int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uint64]int32{}
+	for _, player := range players {
+		out[player.PlayerDataID] = player.EngramPoints
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TotalEngramPoints() (int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, err
+	}
+	var total int32
+	for _, player := range players {
+		total += player.EngramPoints
+	}
+	return total, nil
+}
+
 func (p *PlayerAPI) PlayerWithHighestLevel() (arkobject.Player, int32, bool, error) {
 	players, err := p.Players()
 	if err != nil {
@@ -253,6 +277,23 @@ func (p *PlayerAPI) PlayerWithHighestExperience() (arkobject.Player, float64, bo
 		}
 	}
 	return best, best.Experience, true, nil
+}
+
+func (p *PlayerAPI) PlayerWithMostEngramPoints() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.EngramPoints > best.EngramPoints {
+			best = player
+		}
+	}
+	return best, best.EngramPoints, true, nil
 }
 
 func (p *PlayerAPI) filterPlayers(match func(arkobject.Player) bool) ([]arkobject.Player, error) {

@@ -417,6 +417,20 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	if xp[42] != 123.5 || xp[43] != 456.25 {
 		t.Fatalf("ExperienceByPlayerID() = %#v, want profile XP values", xp)
 	}
+	engramPoints, err := api.EngramPointsByPlayerID()
+	if err != nil {
+		t.Fatalf("EngramPointsByPlayerID() error = %v", err)
+	}
+	if engramPoints[42] != 12 || engramPoints[43] != 30 {
+		t.Fatalf("EngramPointsByPlayerID() = %#v, want profile engram point values", engramPoints)
+	}
+	totalEngramPoints, err := api.TotalEngramPoints()
+	if err != nil {
+		t.Fatalf("TotalEngramPoints() error = %v", err)
+	}
+	if totalEngramPoints != 42 {
+		t.Fatalf("TotalEngramPoints() = %d, want 42", totalEngramPoints)
+	}
 	player, level, ok, err := api.PlayerWithHighestLevel()
 	if err != nil {
 		t.Fatalf("PlayerWithHighestLevel() error = %v", err)
@@ -430,6 +444,13 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	}
 	if !ok || player.PlayerDataID != 43 || experience != 456.25 {
 		t.Fatalf("PlayerWithHighestExperience() = %#v, %f, %v; want player 43, XP 456.25, true", player, experience, ok)
+	}
+	player, points, ok, err := api.PlayerWithMostEngramPoints()
+	if err != nil {
+		t.Fatalf("PlayerWithMostEngramPoints() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 43 || points != 30 {
+		t.Fatalf("PlayerWithMostEngramPoints() = %#v, %d, %v; want player 43, 30, true", player, points, ok)
 	}
 }
 
