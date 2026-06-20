@@ -72,6 +72,30 @@ func (e *EquipmentAPI) ByKind(kind arkobject.EquipmentKind) (map[uuid.UUID]arkob
 	return out, nil
 }
 
+func (e *EquipmentAPI) Weapons() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.ByKind(arkobject.EquipmentWeapon)
+}
+
+func (e *EquipmentAPI) Saddles() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.ByKind(arkobject.EquipmentSaddle)
+}
+
+func (e *EquipmentAPI) Armor() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.ByKind(arkobject.EquipmentArmor)
+}
+
+func (e *EquipmentAPI) Shields() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	return e.ByKind(arkobject.EquipmentShield)
+}
+
+func (e *EquipmentAPI) Count(items map[uuid.UUID]arkobject.EquipmentItem) int32 {
+	var count int32
+	for _, item := range items {
+		count += item.Quantity
+	}
+	return count
+}
+
 func (e *EquipmentAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	all, err := e.All()
 	if err != nil {

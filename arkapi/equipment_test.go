@@ -58,6 +58,13 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	if len(weapons) != 1 {
 		t.Fatalf("ByKind(weapon) length = %d, want 1", len(weapons))
 	}
+	weapons, err = api.Weapons()
+	if err != nil {
+		t.Fatalf("Weapons() error = %v", err)
+	}
+	if len(weapons) != 1 {
+		t.Fatalf("Weapons() length = %d, want 1", len(weapons))
+	}
 }
 
 func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
@@ -72,10 +79,46 @@ func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
 	if len(armor) != 1 {
 		t.Fatalf("ByKind(armor) length = %d, want 1", len(armor))
 	}
+	armor, err = api.Armor()
+	if err != nil {
+		t.Fatalf("Armor() error = %v", err)
+	}
+	if len(armor) != 1 {
+		t.Fatalf("Armor() length = %d, want 1", len(armor))
+	}
+	saddles, err := api.Saddles()
+	if err != nil {
+		t.Fatalf("Saddles() error = %v", err)
+	}
+	if len(saddles) != 0 {
+		t.Fatalf("Saddles() length = %d, want 0", len(saddles))
+	}
+	shields, err := api.Shields()
+	if err != nil {
+		t.Fatalf("Shields() error = %v", err)
+	}
+	if len(shields) != 0 {
+		t.Fatalf("Shields() length = %d, want 0", len(shields))
+	}
 	for _, item := range armor {
 		if item.Stats.Armor != 12 || item.Stats.HypothermalResistance != 8.8 || item.Stats.HyperthermalResistance != 15.6 {
 			t.Fatalf("Armor equipment stats = %#v", item.Stats)
 		}
+	}
+}
+
+func TestEquipmentAPICountsQuantities(t *testing.T) {
+	api := NewEquipment(nil)
+	items := map[uuid.UUID]arkobject.EquipmentItem{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			InventoryItem: arkobject.InventoryItem{Quantity: 2},
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			InventoryItem: arkobject.InventoryItem{Quantity: 3},
+		},
+	}
+	if got := api.Count(items); got != 5 {
+		t.Fatalf("Count() = %d, want 5", got)
 	}
 }
 
