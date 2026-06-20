@@ -31,7 +31,7 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
 - `equipment_summary`: parse local equipment items and print aggregate counts
-  for weapons, armor, saddles, and shields.
+  for weapons, armor, direct saddles, modern cryopod saddles, and shields.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
 

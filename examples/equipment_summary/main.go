@@ -28,6 +28,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
 		os.Exit(1)
 	}
+	cryopodSaddles, _, err := arkapi.NewDino(save).SaddlesFromCryopodsWithFaults()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read cryopod saddles: %v\n", err)
+		os.Exit(1)
+	}
 
 	var weapons, armor, saddles, shields int
 	for _, item := range items {
@@ -44,11 +49,12 @@ func main() {
 	}
 
 	fmt.Printf(
-		"items=%d weapons=%d armor=%d saddles=%d shields=%d\n",
+		"items=%d weapons=%d armor=%d saddles=%d cryopod_saddles=%d shields=%d\n",
 		len(items),
 		weapons,
 		armor,
 		saddles,
+		len(cryopodSaddles),
 		shields,
 	)
 }
