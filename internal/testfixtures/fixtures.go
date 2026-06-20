@@ -332,6 +332,25 @@ func WriteObjectReferencePropertyID(buf *bytes.Buffer, name uint32, propertyType
 	buf.Write(id[:])
 }
 
+func WriteObjectReferenceArrayPropertyID(buf *bytes.Buffer, name uint32, arrayPropertyType uint32, objectPropertyType uint32, values []uuid.UUID) {
+	bodySize := int32(4 + len(values)*18)
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, arrayPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, bodySize)
+	_ = binary.Write(buf, binary.LittleEndian, objectPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, bodySize)
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(values)))
+	for _, id := range values {
+		_ = binary.Write(buf, binary.LittleEndian, int16(0))
+		buf.Write(id[:])
+	}
+}
+
 func WritePositionedIntPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value int32) {
 	writePropertyIDHeader(buf, name, propertyType, 4, position, false)
 	_ = binary.Write(buf, binary.LittleEndian, value)

@@ -23,6 +23,10 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	dinoID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	stackableID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	pawnID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	inventoryID := uuid.MustParse("44444444-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("55555555-4455-6677-8899-aabbccddeeff")
+	secondItemID := uuid.MustParse("66666666-4455-6677-8899-aabbccddeeff")
 	resourceBlueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Electronics.PrimalItemResource_Electronics_C'"
 	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
@@ -33,11 +37,20 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			0x10000004: resourceBlueprint,
 			0x10000005: "ItemQuantity",
 			0x10000006: "IntProperty",
+			0x10000007: "Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'",
+			0x10000008: "LinkedPlayerDataID",
+			0x10000009: "MyInventoryComponent",
+			0x1000000a: "ObjectProperty",
+			0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'",
+			0x1000000c: "InventoryItems",
+			0x1000000d: "ArrayProperty",
 		}),
 		Objects: map[uuid.UUID][]byte{
 			objectID:    testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
 			dinoID:      testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
 			stackableID: stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
+			pawnID:      playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, inventoryID),
+			inventoryID: inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
 		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
@@ -55,9 +68,10 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
-	runExample(t, "property_filter", "objects=3 classes=3", savePath, "None")
+	runExample(t, "property_filter", "objects=5 classes=5", savePath, "None")
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 classes=1", savePath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
+	runExample(t, "player_inventory", "items=2", savePath, "42")
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
@@ -78,6 +92,19 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("go run ./%s output %q does not contain %q", name, out, want)
 	}
+}
+
+func playerPawnObjectBytes(classNameID uint32, noneNameID uint32, linkedPlayerDataIDName uint32, intPropertyID uint32, inventoryNameID uint32, objectPropertyID uint32, inventoryID uuid.UUID) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, linkedPlayerDataIDName, intPropertyID, 42)
+	testfixtures.WriteObjectReferencePropertyID(&props, inventoryNameID, objectPropertyID, inventoryID)
+	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
+}
+
+func inventoryObjectBytes(classNameID uint32, noneNameID uint32, itemsNameID uint32, arrayPropertyID uint32, objectPropertyID uint32, itemIDs ...uuid.UUID) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteObjectReferenceArrayPropertyID(&props, itemsNameID, arrayPropertyID, objectPropertyID, itemIDs)
+	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
 }
 
 func stackableObjectBytes(classNameID uint32, noneNameID uint32, quantityNameID uint32, intPropertyID uint32, quantity int32) []byte {
