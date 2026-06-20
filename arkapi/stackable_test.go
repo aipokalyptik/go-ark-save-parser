@@ -14,6 +14,7 @@ func TestStackableAPIRecognizesApplicableBlueprints(t *testing.T) {
 	api := StackableAPI{}
 	for _, blueprint := range []string{
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		"/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C",
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Consumables/PrimalItemConsumable_Berry.PrimalItemConsumable_Berry_C'",
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItemAmmo_ArrowStone.PrimalItemAmmo_ArrowStone_C'",
 	} {

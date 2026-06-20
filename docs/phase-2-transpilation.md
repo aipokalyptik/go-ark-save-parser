@@ -217,6 +217,8 @@ enough that oracle-derived tests can run against translated packages.
       Python oracle for save metrics and object class lists.
 - [x] Compare normalized Go `property_filter` aggregate counts with the
       upstream property-name prefilter workflow.
+- [x] Compare normalized Go `stackable_count` aggregate counts with the
+      upstream `StackableApi.get_by_class` and `get_count` workflow.
 - [x] Compare normalized Go `cluster_json` aggregate counts with the upstream
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local

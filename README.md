@@ -36,7 +36,7 @@ Implemented:
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering seven aggregate read-only cases.
+  covering ten aggregate read-only cases.
 
 Still in progress:
 
@@ -184,6 +184,7 @@ Run standalone Go examples:
 go run ./examples/map_summary /path/to/Valguero_WP.ark
 go run ./examples/object_classes /path/to/Valguero_WP.ark
 go run ./examples/property_filter /path/to/Valguero_WP.ark TamerString Health
+go run ./examples/stackable_count /path/to/Valguero_WP.ark /Game/Path/PrimalItemResource_Example.PrimalItemResource_Example_C
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file

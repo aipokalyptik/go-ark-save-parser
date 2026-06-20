@@ -17,7 +17,7 @@ func NewStackable(save *arksave.Save) *StackableAPI {
 }
 
 func (s *StackableAPI) IsApplicableBlueprint(blueprint string) bool {
-	return strings.Contains(blueprint, "Resources/PrimalItemResource") ||
+	return strings.Contains(blueprint, "PrimalItemResource") ||
 		strings.Contains(blueprint, "/PrimalItemConsumable") ||
 		strings.Contains(blueprint, "PrimalItemAmmo")
 }

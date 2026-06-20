@@ -159,6 +159,29 @@ def python_property_filter_oracle(save_path: Path, upstream_src: Path) -> dict[s
         save.close()
 
 
+def python_stackable_count_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.stackable_api import StackableApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        blueprint = next(
+            blueprint
+            for blueprint in sorted(save.get_all_present_classes() or [])
+            if StackableApi.is_applicable_bp(blueprint)
+        )
+        api = StackableApi(save)
+        items = api.get_by_class(StackableApi.Classes.RESOURCE, [blueprint])
+        return {
+            "blueprint": blueprint,
+            "items": len(items),
+            "total": api.get_count(items),
+        }
+    finally:
+        save.close()
+
+
 def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData  # type: ignore
@@ -220,6 +243,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
+    py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
@@ -228,6 +252,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
         "python_property_filter": py_property_filter,
+        "python_stackable_count": py_stackable_count,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
         "go": {},
@@ -328,6 +353,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_property_filter.stdout)
         private["go"]["property_filter"]["parsed"] = got
         cases.append(CaseResult("property_filter", "pass" if {key: got.get(key) for key in py_property_filter} == py_property_filter else "fail", "property-name filtered object counts compared"))
+
+    go_stackable_count = run(["go", "run", "./examples/stackable_count", str(save_path), py_stackable_count["blueprint"]], repo_root, env)
+    private["go"]["stackable_count"] = {
+        "exit_code": go_stackable_count.returncode,
+        "stdout": go_stackable_count.stdout,
+        "stderr": go_stackable_count.stderr,
+    }
+    if go_stackable_count.returncode != 0:
+        cases.append(CaseResult("stackable_count", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_stackable_count.stdout)
+        private["go"]["stackable_count"]["parsed"] = got
+        want = {key: py_stackable_count[key] for key in ("items", "total")}
+        cases.append(CaseResult("stackable_count", "pass" if {key: got.get(key) for key in want} == want else "fail", "stackable item count and total quantity compared"))
 
     domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
     go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)

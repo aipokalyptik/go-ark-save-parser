@@ -27,6 +27,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   prefilter workflow without deep-parsing every object.
 - `dino_filter`: parse local dino objects, run basic tamed/wild filters, and
   print aggregate class counts.
+- `stackable_count`: filter resource, consumable, or ammo stackables by one or
+  more explicit blueprint paths and print aggregate item and quantity counts.
 
 ## Profile, Tribe, And Cluster Examples
 

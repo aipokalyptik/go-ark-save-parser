@@ -12,10 +12,11 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `local_profiles`: `pass` (local profile and tribe aggregate counts compared)
 - `dino_filter`: `pass` (dino aggregate counts compared)
 - `property_filter`: `pass` (property-name filtered object counts compared)
+- `stackable_count`: `pass` (stackable item count and total quantity compared)
 - `domain_json_dinos`: `pass` (dino domain JSON aggregate counts compared)
 - `cluster_json`: `pass` (local cluster upload counts compared)
 - `local_tribute`: `pass` (local tribute aggregate counts compared)
 
 ## Counts
 
-- `pass`: 9
+- `pass`: 10
