@@ -246,6 +246,78 @@ func TestStructureAPIFilterByLocationFiltersProvidedStructures(t *testing.T) {
 	}
 }
 
+func TestStructureAPIHeatmapCountsStructureMapCells(t *testing.T) {
+	api := StructureAPI{}
+	first := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	second := arkobject.MapCoords{Lat: 12.8, Long: 34.1}.AsActorTransform("Valguero")
+	third := arkobject.MapCoords{Lat: 70.2, Long: 10.9}.AsActorTransform("Valguero")
+	owner := arkobject.ObjectOwner{TribeID: 555}
+	structures := map[uuid.UUID]arkobject.Structure{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			ID:        101,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			Owner:     owner,
+			Location:  &first,
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			ID:        102,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Door_Stone.PrimalStructure_Door_Stone_C'",
+			Owner:     owner,
+			Location:  &second,
+		},
+		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
+			ID:        103,
+			Blueprint: "Blueprint'/Game/Structures/Wood/PrimalStructure_Wall_Wood.PrimalStructure_Wall_Wood_C'",
+			Owner:     arkobject.ObjectOwner{TribeID: 777},
+			Location:  &third,
+		},
+	}
+
+	heatmap, err := api.Heatmap("Valguero", 100, structures, nil, &owner, 2)
+	if err != nil {
+		t.Fatalf("Heatmap() error = %v", err)
+	}
+	if len(heatmap) != 100 || len(heatmap[0]) != 100 {
+		t.Fatalf("Heatmap() dimensions = %dx%d, want 100x100", len(heatmap), len(heatmap[0]))
+	}
+	if heatmap[12][34] != 2 {
+		t.Fatalf("Heatmap()[12][34] = %d, want 2", heatmap[12][34])
+	}
+	if heatmap[70][10] != 0 {
+		t.Fatalf("Heatmap()[70][10] = %d, want owner-filtered and thresholded 0", heatmap[70][10])
+	}
+}
+
+func TestStructureAPIHeatmapFiltersProvidedStructuresByClass(t *testing.T) {
+	api := StructureAPI{}
+	first := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	second := arkobject.MapCoords{Lat: 12.8, Long: 34.1}.AsActorTransform("Valguero")
+	structures := map[uuid.UUID]arkobject.Structure{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			ID:        101,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			Location:  &first,
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			ID:        102,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Door_Stone.PrimalStructure_Door_Stone_C'",
+			Location:  &second,
+		},
+	}
+
+	heatmap, err := api.Heatmap("Valguero", 100, structures, []string{"Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'"}, nil, 1)
+	if err != nil {
+		t.Fatalf("Heatmap(class) error = %v", err)
+	}
+	if heatmap[12][34] != 1 {
+		t.Fatalf("Heatmap(class)[12][34] = %d, want only one matching blueprint", heatmap[12][34])
+	}
+
+	if _, err := api.Heatmap("Valguero", 0, structures, nil, nil, 1); err == nil {
+		t.Fatalf("Heatmap(resolution 0) error = nil, want error")
+	}
+}
+
 func TestStructureAPIContainerOfInventoryFindsInventoryBearingStructure(t *testing.T) {
 	save := openSyntheticStructureWithInventorySave(t)
 	defer save.Close()

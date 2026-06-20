@@ -3,6 +3,8 @@ package arkapi
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"math"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -213,6 +215,59 @@ func (s *StructureAPI) FilterByLocation(mapName string, coords arkobject.MapCoor
 	return out
 }
 
+func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uuid.UUID]arkobject.Structure, blueprints []string, owner *arkobject.ObjectOwner, minInSection int) ([][]int, error) {
+	if resolution <= 0 {
+		return nil, fmt.Errorf("resolution must be positive")
+	}
+	if mapName == "" && s.save != nil && s.save.Context != nil {
+		mapName = s.save.Context.MapName
+	}
+	var err error
+	if structures == nil {
+		if len(blueprints) > 0 {
+			structures, err = s.ByClass(blueprints)
+		} else {
+			structures, err = s.All()
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	allowed := blueprintSet(blueprints)
+	heatmap := make([][]int, resolution)
+	for i := range heatmap {
+		heatmap[i] = make([]int, resolution)
+	}
+	for _, structure := range structures {
+		if structure.Location == nil {
+			continue
+		}
+		if len(allowed) > 0 {
+			if _, ok := allowed[structure.Blueprint]; !ok {
+				continue
+			}
+		}
+		if owner != nil && !structure.IsOwnedBy(*owner) {
+			continue
+		}
+		coords := structure.Location.AsMapCoords(mapName)
+		x := int(math.Floor(coords.Lat))
+		y := int(math.Floor(coords.Long))
+		if x < 0 || x >= resolution || y < 0 || y >= resolution {
+			continue
+		}
+		heatmap[x][y]++
+	}
+	for i := range heatmap {
+		for j := range heatmap[i] {
+			if heatmap[i][j] < minInSection {
+				heatmap[i][j] = 0
+			}
+		}
+	}
+	return heatmap, nil
+}
+
 func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {
 	all, err := s.All()
 	if err != nil {
@@ -238,6 +293,14 @@ func (s *StructureAPI) ContainerOfInventory(inventoryID uuid.UUID) (uuid.UUID, a
 		}
 	}
 	return uuid.Nil, arkobject.Structure{}, false, nil
+}
+
+func blueprintSet(blueprints []string) map[string]struct{} {
+	allowed := map[string]struct{}{}
+	for _, blueprint := range blueprints {
+		allowed[blueprint] = struct{}{}
+	}
+	return allowed
 }
 
 func isStructureBlueprint(name string) bool {
