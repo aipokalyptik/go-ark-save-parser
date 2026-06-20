@@ -233,6 +233,56 @@ func TestInflateZlibWithLimitRejectsOversizedOutput(t *testing.T) {
 	}
 }
 
+func TestDecodeEmbeddedCompressedDataInflatesAndReadsNameTable(t *testing.T) {
+	var inflated bytes.Buffer
+	inflated.Write([]byte{0x01, 0x02, 0x03})
+	namesOffset := uint32(inflated.Len())
+	_ = binary.Write(&inflated, binary.LittleEndian, uint32(2))
+	writeTestArkString(&inflated, "DinoID1")
+	writeTestArkString(&inflated, "DinoID2")
+
+	var compressed bytes.Buffer
+	writer := zlib.NewWriter(&compressed)
+	if _, err := writer.Write(inflated.Bytes()); err != nil {
+		t.Fatalf("zlib write: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("zlib close: %v", err)
+	}
+
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0407))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(inflated.Len()))
+	_ = binary.Write(&payload, binary.LittleEndian, namesOffset)
+	payload.Write(compressed.Bytes())
+
+	decoded, err := DecodeEmbeddedCompressedData(payload.Bytes(), 1024)
+	if err != nil {
+		t.Fatalf("DecodeEmbeddedCompressedData() error = %v", err)
+	}
+	if !bytes.Equal(decoded.Data, inflated.Bytes()) {
+		t.Fatalf("decoded data = % x, want % x", decoded.Data, inflated.Bytes())
+	}
+	if decoded.Names[0x10000000] != "DinoID1" || decoded.Names[0x10000001] != "DinoID2" {
+		t.Fatalf("decoded names = %#v", decoded.Names)
+	}
+	if name, ok := decoded.Context.Name(0x10000001); !ok || name != "DinoID2" {
+		t.Fatalf("decoded context name = %q, %v; want DinoID2, true", name, ok)
+	}
+}
+
+func TestDecodeEmbeddedCompressedDataRejectsLegacyVersion(t *testing.T) {
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0406))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+
+	_, err := DecodeEmbeddedCompressedData(payload.Bytes(), 1024)
+	if !errors.Is(err, ErrUnsupportedEmbeddedDataVersion) {
+		t.Fatalf("DecodeEmbeddedCompressedData() error = %v, want ErrUnsupportedEmbeddedDataVersion", err)
+	}
+}
+
 func TestWildcardDecompressMatchesUpstreamRules(t *testing.T) {
 	got, err := WildcardDecompress([]byte{
 		0x01,
@@ -254,4 +304,10 @@ func TestWildcardDecompressMatchesUpstreamRules(t *testing.T) {
 	if !bytes.Equal(got, want) {
 		t.Fatalf("WildcardDecompress() = % x, want % x", got, want)
 	}
+}
+
+func writeTestArkString(buf *bytes.Buffer, s string) {
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(s)+1))
+	buf.WriteString(s)
+	buf.WriteByte(0)
 }
