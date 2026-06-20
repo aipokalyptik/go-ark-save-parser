@@ -233,6 +233,59 @@ func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int 
 	return counts
 }
 
+func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
+	all, err := d.All()
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, err
+	}
+	var bestID uuid.UUID
+	var bestDino arkobject.Dino
+	var bestStat arkobject.DinoStat
+	var bestPoints int32
+	found := false
+	for id, dino := range all {
+		if dino.Stats == nil {
+			continue
+		}
+		stat, points, ok := dino.Stats.BestStat(scopes...)
+		if !ok {
+			continue
+		}
+		if !found || points > bestPoints || (points == bestPoints && id.String() < bestID.String()) {
+			bestID = id
+			bestDino = dino
+			bestStat = stat
+			bestPoints = points
+			found = true
+		}
+	}
+	return bestID, bestDino, bestStat, bestPoints, found, nil
+}
+
+func (d *DinoAPI) MostMutatedTamed() (uuid.UUID, arkobject.Dino, int32, bool, error) {
+	tamed, err := d.Tamed()
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, 0, false, err
+	}
+	var bestID uuid.UUID
+	var bestDino arkobject.Dino
+	var bestTotal int32
+	found := false
+	for id, dino := range tamed {
+		if dino.Stats == nil {
+			continue
+		}
+		total := dino.Stats.TotalMutations()
+		if !found || total > bestTotal || (total == bestTotal && id.String() < bestID.String()) {
+			bestID = id
+			bestDino = dino
+			bestTotal = total
+			found = true
+		}
+	}
+	return bestID, bestDino, bestTotal, found, nil
+}
+
 func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino, error) {
 	allowedBlueprints := map[string]struct{}{}
 	for _, blueprint := range opts.Blueprints {

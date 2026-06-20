@@ -183,11 +183,13 @@ enough that oracle-derived tests can run against translated packages.
       inventory UUID, and owner/tamer/imprinter fields.
 - [x] Add read-first baby dino maturation percentage and upstream-compatible
       baby/juvenile/adolescent stage classification.
+- [x] Add typed dino stat ranking and mutation-count helpers for read-only
+      equivalents of upstream best-stat and most-mutated-tamed example flows.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [x] Add read-only Base API filtering by minimum grouped structure count.
-- [ ] Port remaining full Dino, Structure, Equipment, Stackable, Base, richer
-      local cluster item/dino domain models, and remaining model-specific JSON
-      API edge behavior.
+- [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
+      Base, richer local cluster item/dino domain models, and remaining
+      model-specific JSON API edge behavior.
 - [x] Port compact `.arktributetribe` / `.arktributetribetribe` local tribute
       index parsing for player-data and tribe-data ID lists.
 - [ ] Port legacy archive object parsing for any other runnable local oracle path

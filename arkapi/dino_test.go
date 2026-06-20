@@ -312,6 +312,72 @@ func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
 	}
 }
 
+func TestDinoAPIBestDinoForStatUsesParsedStatusStats(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, dino, stat, points, ok, err := api.BestDinoForStat()
+	if err != nil {
+		t.Fatalf("BestDinoForStat() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("BestDinoForStat() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") {
+		t.Fatalf("BestDinoForStat() id = %s", id)
+	}
+	if dino.ID1 != 1001 || stat != arkobject.DinoStatHealth || points != 6 {
+		t.Fatalf("BestDinoForStat() = %#v, %v, %d; want dino 1001 health 6", dino, stat, points)
+	}
+
+	_, _, baseStat, basePoints, ok, err := api.BestDinoForStat(arkobject.StatScopeBase)
+	if err != nil {
+		t.Fatalf("BestDinoForStat(base) error = %v", err)
+	}
+	if !ok || baseStat != arkobject.DinoStatHealth || basePoints != 5 {
+		t.Fatalf("BestDinoForStat(base) = %v, %d, %v; want health, 5, true", baseStat, basePoints, ok)
+	}
+}
+
+func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {
+	save := openSyntheticTamedDinoStatsSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, dino, total, ok, err := api.MostMutatedTamed()
+	if err != nil {
+		t.Fatalf("MostMutatedTamed() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("MostMutatedTamed() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || dino.ID1 != 1001 || total != 1 {
+		t.Fatalf("MostMutatedTamed() = %s, %#v, %d; want synthetic dino total 1", id, dino, total)
+	}
+}
+
+func TestDinoAPIStatSelectionReportsNoResultWhenStatsAreMissing(t *testing.T) {
+	save := openSyntheticDinoSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	_, _, _, _, ok, err := api.BestDinoForStat()
+	if err != nil {
+		t.Fatalf("BestDinoForStat() error = %v", err)
+	}
+	if ok {
+		t.Fatalf("BestDinoForStat() ok = true, want false")
+	}
+	_, _, _, ok, err = api.MostMutatedTamed()
+	if err != nil {
+		t.Fatalf("MostMutatedTamed() error = %v", err)
+	}
+	if ok {
+		t.Fatalf("MostMutatedTamed() ok = true, want false")
+	}
+}
+
 func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	api := NewDino(nil)
 	dinos := map[uuid.UUID]arkobject.Dino{
@@ -353,12 +419,23 @@ func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytes(statusID),
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
 		statusID: syntheticDinoStatusObjectBytes(),
 	})
 }
 
-func syntheticDinoStatsObjectBytes(statusID uuid.UUID) []byte {
+func openSyntheticTamedDinoStatsSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
+		statusID: syntheticDinoStatusObjectBytes(),
+	})
+}
+
+func syntheticDinoStatsObjectBytesWithTamed(statusID uuid.UUID, tamed bool) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -368,6 +445,9 @@ func syntheticDinoStatsObjectBytes(statusID uuid.UUID) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	writeIntProperty(&buf, 0x10000015, 1001)
 	writeIntProperty(&buf, 0x10000016, 2002)
+	if tamed {
+		writeDoubleProperty(&buf, 0x10000018, 42)
+	}
 	writeObjectReferenceProperty(&buf, 0x10000035, statusID)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))

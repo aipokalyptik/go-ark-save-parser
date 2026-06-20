@@ -67,6 +67,21 @@ type DinoStats struct {
 	ImprintingPercent float64
 }
 
+var dinoStatOrder = []DinoStat{
+	DinoStatHealth,
+	DinoStatStamina,
+	DinoStatTorpidity,
+	DinoStatOxygen,
+	DinoStatFood,
+	DinoStatWater,
+	DinoStatTemperature,
+	DinoStatWeight,
+	DinoStatMeleeDamage,
+	DinoStatMovementSpeed,
+	DinoStatFortitude,
+	DinoStatCraftingSpeed,
+}
+
 func DinoStatsFromObject(object *GameObject) DinoStats {
 	if object == nil {
 		return DinoStats{}
@@ -103,27 +118,36 @@ func (s DinoStats) Points(stat DinoStat, scopes ...StatScope) int32 {
 }
 
 func (s DinoStats) StatsAtLeast(value int32, scopes ...StatScope) []DinoStat {
-	stats := []DinoStat{
-		DinoStatHealth,
-		DinoStatStamina,
-		DinoStatTorpidity,
-		DinoStatOxygen,
-		DinoStatFood,
-		DinoStatWater,
-		DinoStatTemperature,
-		DinoStatWeight,
-		DinoStatMeleeDamage,
-		DinoStatMovementSpeed,
-		DinoStatFortitude,
-		DinoStatCraftingSpeed,
-	}
-	out := make([]DinoStat, 0, len(stats))
-	for _, stat := range stats {
+	out := make([]DinoStat, 0, len(dinoStatOrder))
+	for _, stat := range dinoStatOrder {
 		if s.Points(stat, scopes...) >= value {
 			out = append(out, stat)
 		}
 	}
 	return out
+}
+
+func (s DinoStats) BestStat(scopes ...StatScope) (DinoStat, int32, bool) {
+	var bestStat DinoStat
+	var bestPoints int32
+	found := false
+	for _, stat := range dinoStatOrder {
+		points := s.Points(stat, scopes...)
+		if !found || points > bestPoints {
+			bestStat = stat
+			bestPoints = points
+			found = true
+		}
+	}
+	return bestStat, bestPoints, found
+}
+
+func (s DinoStats) TotalMutations() int32 {
+	var total int32
+	for _, stat := range dinoStatOrder {
+		total += s.MutatedStatPoints.point(stat)
+	}
+	return total
 }
 
 func statPoints(properties arkproperty.Container, name string) DinoStatPoints {

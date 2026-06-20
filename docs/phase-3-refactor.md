@@ -23,6 +23,8 @@ Go packages without losing oracle parity.
       equipment, stackable, player, tribe, inventory, and local cluster data.
 - [x] Add first typed local player/tribe lookup layer for player data IDs, tribe
       IDs, parsed player summaries, and parsed tribe detail objects.
+- [x] Add typed dino stat and mutation selection helpers for best-stat and
+      most-mutated-tamed read-only workflows.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

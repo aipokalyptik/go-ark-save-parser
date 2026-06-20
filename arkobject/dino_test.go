@@ -163,4 +163,41 @@ func TestDinoStatsFromObjectReadsPositionedStatusFields(t *testing.T) {
 	if len(statsAtLeast) != 1 || statsAtLeast[0] != DinoStatHealth {
 		t.Fatalf("StatsAtLeast(6) = %#v, want health only", statsAtLeast)
 	}
+	if stat, points, ok := stats.BestStat(); !ok || stat != DinoStatHealth || points != 6 {
+		t.Fatalf("BestStat() = %v, %d, %v; want health, 6, true", stat, points, ok)
+	}
+	if stat, points, ok := stats.BestStat(StatScopeBase); !ok || stat != DinoStatHealth || points != 5 {
+		t.Fatalf("BestStat(base) = %v, %d, %v; want health, 5, true", stat, points, ok)
+	}
+	if got := stats.TotalMutations(); got != 1 {
+		t.Fatalf("TotalMutations() = %d, want 1", got)
+	}
+}
+
+func TestDinoStatsBestStatBreaksTiesByStableStatOrder(t *testing.T) {
+	stats := DinoStats{
+		BaseStatPoints: DinoStatPoints{
+			Stamina: 5,
+			Weight:  5,
+		},
+	}
+
+	stat, points, ok := stats.BestStat(StatScopeBase)
+	if !ok || stat != DinoStatStamina || points != 5 {
+		t.Fatalf("BestStat(base) = %v, %d, %v; want stamina, 5, true", stat, points, ok)
+	}
+}
+
+func TestDinoStatsTotalMutationsSumsAllStatMutationPoints(t *testing.T) {
+	stats := DinoStats{
+		MutatedStatPoints: DinoStatPoints{
+			Health:      1,
+			Weight:      2,
+			MeleeDamage: 3,
+		},
+	}
+
+	if got := stats.TotalMutations(); got != 6 {
+		t.Fatalf("TotalMutations() = %d, want 6", got)
+	}
 }
