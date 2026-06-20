@@ -30,6 +30,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   path when comparing against no-cryopod oracle data.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
+- `equipment_summary`: parse local equipment items and print aggregate counts
+  for weapons, armor, saddles, and shields.
 
 ## Profile, Tribe, And Cluster Examples
 
