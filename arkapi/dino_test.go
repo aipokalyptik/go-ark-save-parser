@@ -132,6 +132,39 @@ func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {
 	}
 }
 
+func TestDinoAPIClassHelpersFilterWildAndTamedDinos(t *testing.T) {
+	save := openSyntheticDinoFilterSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	blueprints := []string{"Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"}
+	tamed, err := api.TamedByClass(blueprints, true)
+	if err != nil {
+		t.Fatalf("TamedByClass() error = %v", err)
+	}
+	if len(tamed) != 1 {
+		t.Fatalf("TamedByClass() length = %d, want 1", len(tamed))
+	}
+	for _, dino := range tamed {
+		if !dino.IsTamed {
+			t.Fatalf("TamedByClass() dino = %#v", dino)
+		}
+	}
+
+	wild, err := api.WildByClass(blueprints)
+	if err != nil {
+		t.Fatalf("WildByClass() error = %v", err)
+	}
+	if len(wild) != 1 {
+		t.Fatalf("WildByClass() length = %d, want 1", len(wild))
+	}
+	for _, dino := range wild {
+		if dino.IsTamed {
+			t.Fatalf("WildByClass() dino = %#v", dino)
+		}
+	}
+}
+
 func TestDinoAPIAllWithFaultsKeepsValidDinosAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticDinoSaveWithFault(t)
 	defer save.Close()

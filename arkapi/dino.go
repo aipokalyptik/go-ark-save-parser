@@ -145,6 +145,34 @@ func (d *DinoAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Dino, er
 	return out, nil
 }
 
+func (d *DinoAPI) WildByClass(blueprints []string) (map[uuid.UUID]arkobject.Dino, error) {
+	byClass, err := d.ByClass(blueprints)
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range byClass {
+		if !dino.IsTamed {
+			out[id] = dino
+		}
+	}
+	return out, nil
+}
+
+func (d *DinoAPI) TamedByClass(blueprints []string, includeCryopodded bool) (map[uuid.UUID]arkobject.Dino, error) {
+	byClass, err := d.ByClass(blueprints)
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range byClass {
+		if dino.IsTamed && (includeCryopodded || !dino.IsCryopodded) {
+			out[id] = dino
+		}
+	}
+	return out, nil
+}
+
 func (d *DinoAPI) Tamed() (map[uuid.UUID]arkobject.Dino, error) {
 	all, err := d.All()
 	if err != nil {
