@@ -334,6 +334,22 @@ func (d *DinoAPI) OwnedByTribe(tribeID int32, includeCryopodded bool) (map[uuid.
 	})
 }
 
+func (d *DinoAPI) ContainerOfInventory(inventoryID uuid.UUID, includeCryopodded bool) (uuid.UUID, arkobject.Dino, bool, error) {
+	tamed, err := d.Tamed()
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, false, err
+	}
+	for id, dino := range tamed {
+		if !includeCryopodded && dino.IsCryopodded {
+			continue
+		}
+		if dino.InventoryUUID != nil && *dino.InventoryUUID == inventoryID {
+			return id, dino, true, nil
+		}
+	}
+	return uuid.Nil, arkobject.Dino{}, false, nil
+}
+
 func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {
 	counts := map[int32]int{}
 	for _, dino := range dinos {

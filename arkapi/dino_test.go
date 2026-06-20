@@ -348,6 +348,35 @@ func TestDinoAPIOwnedByTribeFiltersTamedDinosByTargetTeam(t *testing.T) {
 	}
 }
 
+func TestDinoAPIContainerOfInventoryFindsInventoryBearingDino(t *testing.T) {
+	save := openSyntheticDinoDetailSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	id, dino, ok, err := api.ContainerOfInventory(inventoryID, true)
+	if err != nil {
+		t.Fatalf("ContainerOfInventory() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ContainerOfInventory() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") {
+		t.Fatalf("ContainerOfInventory() id = %s", id)
+	}
+	if dino.InventoryUUID == nil || *dino.InventoryUUID != inventoryID || !dino.IsTamed {
+		t.Fatalf("ContainerOfInventory() dino = %#v", dino)
+	}
+
+	_, _, ok, err = api.ContainerOfInventory(uuid.MustParse("11111111-2222-3333-4444-555555555555"), true)
+	if err != nil {
+		t.Fatalf("ContainerOfInventory(missing) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("ContainerOfInventory(missing) ok = true, want false")
+	}
+}
+
 func TestDinoAPIReadsBabyMaturationStage(t *testing.T) {
 	save := openSyntheticDinoBabyStageSave(t)
 	defer save.Close()
