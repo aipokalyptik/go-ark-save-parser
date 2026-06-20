@@ -37,7 +37,8 @@ Go packages without losing oracle parity.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
 - [x] Expand `cmd/arksave` commands beyond `inspect`/`parse` with local
-      profile/tribe metadata and save-info JSON export.
+      profile/tribe file and directory summaries plus save-info/domain JSON
+      exports.
 - [x] Keep mutation helpers in an explicit experimental surface that requires an
       output path.
 - [x] Re-run oracle integration after major parser/API expansion.

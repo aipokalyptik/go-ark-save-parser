@@ -152,6 +152,54 @@ func TestPlayersCommandRedactsLocalProfileDetails(t *testing.T) {
 	}
 }
 
+func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             777,
+		NumDeaths:           3,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    12.5,
+		TotalEngramPoints:   14,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        43,
+		CharacterName:       "Scout",
+		PlayerName:          "OtherPlatform",
+		TribeID:             888,
+		NumDeaths:           1,
+		ExtraCharacterLevel: 4,
+		ExperiencePoints:    7.5,
+		TotalEngramPoints:   6,
+	})
+
+	var out bytes.Buffer
+	err := run([]string{"players", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(players directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Player directory:",
+		"Profiles: 2",
+		"Players: 2",
+		"Total deaths: 4",
+		"Average deaths: 2.00",
+		"Total level: 15",
+		"Average level: 7.50",
+		"Total experience: 20.00",
+		"Total engram points: 20",
+		"  player id=42 character=Survivor platform=PlatformName tribe=777 level=10 deaths=3",
+		"  player id=43 character=Scout platform=OtherPlatform tribe=888 level=5 deaths=1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("players directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestTribesCommandPrintsLocalTribeSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
 	testfixtures.WriteTribeArchive(t, path)
@@ -199,6 +247,45 @@ func TestTribesCommandRedactsLocalTribeDetails(t *testing.T) {
 	for _, leaked := range []string{path, "Porters", "/Script/ShooterGame.PrimalTribeData"} {
 		if strings.Contains(got, leaked) {
 			t.Fatalf("redacted tribes output %q contains private detail %q", got, leaked)
+		}
+	}
+}
+
+func TestTribesCommandPrintsDirectorySummary(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:     "Builders",
+		TribeID:  222,
+		OwnerID:  43,
+		NumDinos: 3,
+		Members:  []string{"Builder"},
+	})
+
+	var out bytes.Buffer
+	err := run([]string{"tribes", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(tribes directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe directory:",
+		"Tribe files: 2",
+		"Tribes: 2",
+		"Total dinos: 10",
+		"Average dinos: 5.00",
+		"  tribe id=222 name=Builders owner=43 members=1 dinos=3",
+		"  tribe id=12345 name=Porters owner=42 members=2 dinos=7",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribes directory output %q does not contain %q", got, want)
 		}
 	}
 }

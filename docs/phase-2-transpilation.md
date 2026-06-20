@@ -117,7 +117,13 @@ enough that oracle-derived tests can run against translated packages.
       `ArkItems`, `ArkTamedDinosData`, upload metadata, item blueprint summaries,
       and best-effort cluster dino archive parsing.
 - [x] Add offline CLI summary for local cluster files and directories.
-- [ ] Port full Player and Tribe APIs for parsed local files and save-contained data.
+- [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
+      directory discovery, local cluster/tribute indexing, lookup filters, and
+      aggregate helpers.
+- [x] Add CLI directory summaries for local player profiles and tribe saves.
+- [ ] Port save-contained Player and Tribe APIs and any remaining upstream
+      local-file edge behavior not covered by parsed `.arkprofile` /
+      `.arktribe` files.
 - [x] Add first read-only Structure API surface for class, owner, and location
       queries with optional class filters.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
@@ -165,9 +171,9 @@ enough that oracle-derived tests can run against translated packages.
       baby/juvenile/adolescent stage classification.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [x] Add read-only Base API filtering by minimum grouped structure count.
-- [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
-      richer local cluster item/dino domain models, and complete model-specific
-      JSON APIs.
+- [ ] Port remaining full Dino, Structure, Equipment, Stackable, Base, richer
+      local cluster item/dino domain models, and remaining model-specific JSON
+      API edge behavior.
 - [x] Port compact `.arktributetribe` / `.arktributetribetribe` local tribute
       index parsing for player-data and tribe-data ID lists.
 - [ ] Port legacy archive object parsing for any other runnable local oracle path

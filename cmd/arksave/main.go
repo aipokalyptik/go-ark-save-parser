@@ -110,8 +110,8 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
-  arksave [--redact] players <player.arkprofile>
-  arksave [--redact] tribes <tribe.arktribe>
+  arksave [--redact] players <player.arkprofile-or-directory>
+  arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
   arksave [--redact] tribute <tribute-file-or-directory>
   arksave [--redact] export-json <save.ark> <out.json>
@@ -151,6 +151,14 @@ func inspect(path string, out io.Writer) error {
 }
 
 func players(path string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return playersDirectory(path, out, opts)
+	}
+
 	profile, err := arkprofile.OpenPlayerProfile(path)
 	if err != nil {
 		return err
@@ -174,7 +182,83 @@ func players(path string, out io.Writer, opts runOptions) error {
 	return err
 }
 
+func playersDirectory(path string, out io.Writer, opts runOptions) error {
+	api, err := arkapi.NewPlayerFromDirectory(path)
+	if err != nil {
+		return err
+	}
+	players, err := api.Players()
+	if err != nil {
+		return err
+	}
+	totalDeaths, err := api.TotalDeaths()
+	if err != nil {
+		return err
+	}
+	averageDeaths, hasAverageDeaths, err := api.AverageDeaths()
+	if err != nil {
+		return err
+	}
+	totalLevel, err := api.TotalLevel()
+	if err != nil {
+		return err
+	}
+	averageLevel, hasAverageLevel, err := api.AverageLevel()
+	if err != nil {
+		return err
+	}
+	totalExperience, err := api.TotalExperience()
+	if err != nil {
+		return err
+	}
+	totalEngramPoints, err := api.TotalEngramPoints()
+	if err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(
+		out,
+		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nTotal engram points: %d\n",
+		displayString(path, opts),
+		len(api.ProfilePaths()),
+		len(players),
+		totalDeaths,
+		optionalFloat(averageDeaths, hasAverageDeaths),
+		totalLevel,
+		optionalFloat(averageLevel, hasAverageLevel),
+		totalExperience,
+		totalEngramPoints,
+	); err != nil {
+		return err
+	}
+	if opts.Redact {
+		return nil
+	}
+	for _, player := range players {
+		if _, err := fmt.Fprintf(
+			out,
+			"  player id=%d character=%s platform=%s tribe=%d level=%d deaths=%d\n",
+			player.PlayerDataID,
+			player.CharacterName,
+			player.PlayerName,
+			player.TribeID,
+			player.Level,
+			player.NumDeaths,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func tribes(path string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return tribesDirectory(path, out, opts)
+	}
+
 	tribe, err := arkprofile.OpenTribeSave(path)
 	if err != nil {
 		return err
@@ -196,6 +280,53 @@ func tribes(path string, out io.Writer, opts runOptions) error {
 		summary.NumDinos,
 	)
 	return err
+}
+
+func tribesDirectory(path string, out io.Writer, opts runOptions) error {
+	api, err := arkapi.NewPlayerFromDirectory(path)
+	if err != nil {
+		return err
+	}
+	tribes, err := api.TribeDetails()
+	if err != nil {
+		return err
+	}
+	totalDinos, err := api.TotalTribeDinos()
+	if err != nil {
+		return err
+	}
+	averageDinos, hasAverageDinos, err := api.AverageTribeDinos()
+	if err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(
+		out,
+		"Tribe directory: %s\nTribe files: %d\nTribes: %d\nTotal dinos: %d\nAverage dinos: %.2f\n",
+		displayString(path, opts),
+		len(api.TribePaths()),
+		len(tribes),
+		totalDinos,
+		optionalFloat(averageDinos, hasAverageDinos),
+	); err != nil {
+		return err
+	}
+	if opts.Redact {
+		return nil
+	}
+	for _, tribe := range tribes {
+		if _, err := fmt.Fprintf(
+			out,
+			"  tribe id=%d name=%s owner=%d members=%d dinos=%d\n",
+			tribe.TribeID,
+			tribe.Name,
+			tribe.OwnerID,
+			len(tribe.Members),
+			tribe.NumDinos,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func mutate(args []string, out io.Writer, opts runOptions) error {
@@ -477,6 +608,13 @@ func displayString(value string, opts runOptions) string {
 func displayInt[T ~int | ~int16 | ~int32 | ~int64 | ~uint | ~uint16 | ~uint32 | ~uint64](value T, opts runOptions) any {
 	if opts.Redact {
 		return redactedValue
+	}
+	return value
+}
+
+func optionalFloat(value float64, ok bool) float64 {
+	if !ok {
+		return 0
 	}
 	return value
 }

@@ -36,9 +36,9 @@ Still in progress:
 
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
-- Full domain models and APIs for dino stats/cryopods/pedigrees, full equipment
-  stats, parsed player/tribe properties, richer local cluster item/dino domain
-  models, full bases, and model-specific JSON export.
+- Full domain models and APIs for dino stats/cryopods/pedigrees, save-contained
+  player/tribe data, richer local cluster item/dino domain models, and remaining
+  model-specific JSON export edges.
 - Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
   helpers remain experimental and live-server-unverified.
 
@@ -122,11 +122,14 @@ command. JSON export files are written with `0600` permissions by default, but
 you should still treat them as private and avoid committing or sharing them
 unless they have been reviewed and sanitized.
 
-Inspect local profile and tribe archive metadata:
+Inspect local profile and tribe archive metadata, or point at a save directory
+to aggregate all local `.arkprofile` / `.arktribe` files in it:
 
 ```sh
 ./bin/arksave players /path/to/76561198000000000.arkprofile
+./bin/arksave players /path/to/save-directory
 ./bin/arksave tribes /path/to/123456789.arktribe
+./bin/arksave tribes /path/to/save-directory
 ```
 
 Inspect local cluster uploads:
