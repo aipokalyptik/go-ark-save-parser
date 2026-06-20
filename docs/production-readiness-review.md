@@ -1,0 +1,72 @@
+# Production Readiness Review
+
+Date: 2026-06-20
+
+Scope: read-only subagent review of parser parity, API coverage, privacy,
+documentation, examples, and production readiness. Reviewers did not inspect or
+print private `.oracle` contents.
+
+## Result
+
+The project is a useful offline read-only foundation, but it is not yet
+production-complete against the original compatibility goal. Current blockers
+are parity evidence and full offline domain/API coverage, not basic build
+health.
+
+Public verification reported by reviewers:
+
+- `go test ./...` passes.
+- `make build` passes.
+
+## Blockers
+
+- Oracle parity evidence is still narrow. The committed oracle comparison
+  summary currently covers implemented direct read-only counterparts for
+  `map_summary` and `object_classes`, while Phase 4 still requires comparison
+  coverage for every runnable offline Python example.
+- Full offline API/domain compatibility remains incomplete. Phase 2 still has
+  open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
+  richer local cluster models, remaining read-first object wrappers, and
+  complete model-specific JSON APIs.
+
+## High-Priority Risks
+
+- Dynamic property parity remains incomplete. Unknown top-level property types
+  and unsupported compound value encodings can still fail full object parsing.
+- Legacy archive and embedded cryopod paths remain unsupported outside modern
+  archive and compact tribute-index formats. This is documented, but it remains
+  a blocker for broad upstream parity.
+- Broad save parsing does not yet expose an upstream-style faulty-object policy.
+  Current parsed-object paths can abort on the first object/property parse
+  error instead of collecting faulty objects for caller policy decisions.
+- CLI `players` and `tribes` paths can print archive metadata while suppressing
+  normalized parse failures. Automation can mistake partial output for a fully
+  successful parse.
+- Local cluster uploaded dino archive parse failures are not surfaced in the
+  cluster JSON model. Unsupported embedded dino formats can appear as empty or
+  partially parsed uploads.
+
+## Medium-Priority Risks
+
+- Best-effort archive parsing records per-object property errors, but some
+  higher-level callers can still treat partial data as authoritative unless
+  strict modes or explicit parse-status fields are used.
+- Mutation helpers are structurally tested only. This is correctly documented as
+  live-server-unverified, but upstream behavioral parity is not proven.
+- Example privacy guidance is weaker than CLI privacy guidance. Example outputs
+  can contain paths, IDs, class names, player/tribe details, locations, and
+  upload identifiers, but the examples README does not repeat the privacy
+  warning or provide redaction-mode equivalents.
+- Legacy/unsupported archive behavior is documented, but user-facing CLI/API
+  error behavior should be made more explicit and tested.
+
+## Next Actions
+
+1. Add committed tests and CLI behavior so `players` and `tribes` fail visibly
+   when normalized profile/tribe parsing fails.
+2. Add parse-status/error fields for local cluster uploaded dino summaries so
+   unsupported embedded dino archive payloads are visible in JSON.
+3. Expand oracle comparison coverage one runnable offline example at a time.
+4. Add a faulty-object reporting path for full-save object parsing.
+5. Continue filling domain/API gaps with synthetic tests and private oracle
+   comparison where runnable upstream behavior exists.

@@ -193,4 +193,5 @@ enough that oracle-derived tests can run against translated packages.
       `object_classes`.
 - [ ] Compare normalized Go outputs with private Python oracle outputs where
       available for the remaining runnable upstream examples.
-- [ ] Run subagent spec and quality reviews on parser parity and API coverage.
+- [x] Run subagent spec and quality reviews on parser parity and API coverage;
+      current findings are recorded in `docs/production-readiness-review.md`.

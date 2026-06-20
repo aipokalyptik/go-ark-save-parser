@@ -36,8 +36,10 @@ offline parser without Python or private chat context.
 - [x] Private oracle comparison harness for implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md`.
 - [ ] Private oracle comparison suite for every runnable Python example.
-- [ ] Final review for parser parity, API coverage, privacy, docs, and release
-      readiness.
+- [x] Final review for parser parity, API coverage, privacy, docs, and release
+      readiness. Current review findings are recorded in
+      `docs/production-readiness-review.md`; production readiness is still
+      blocked by the remaining gaps below.
 
 ## Remaining Production Gaps
 
