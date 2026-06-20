@@ -36,7 +36,8 @@ offline parser without Python or private chat context.
 - [x] Private oracle comparison harness for implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local
-      profile/tribe aggregate counts, and local cluster JSON aggregate counts.
+      profile/tribe aggregate counts, dino aggregate counts, and local cluster
+      JSON aggregate counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in
@@ -51,8 +52,10 @@ offline parser without Python or private chat context.
   compact local tribute index formats.
 - Mutation helpers are structurally tested only and require live-server manual
   validation before being treated as production-safe for real servers.
-- Latest read-only review found remaining production blockers in oracle parity
-  evidence and full domain/API parity. Runtime redaction now exists for
-  supported CLI summaries and JSON exports, and whole-file profile/tribe/cluster
-  reads have default size guards. Future commands still need explicit privacy
-  and resource-bound review before committed output is considered safe.
+- Latest read-only review found remaining production blockers in full
+  domain/API parity and complete runnable-example oracle coverage. Runtime
+  redaction now exists for supported CLI summaries and JSON exports,
+  fault-tolerant domain scans exist for the currently implemented object-scan
+  APIs, and whole-file profile/tribe/cluster reads have default size guards.
+  Future commands still need explicit privacy and resource-bound review before
+  committed output is considered safe.

@@ -23,6 +23,9 @@ Implemented:
   and simple sets.
 - Read-only General, Player/Tribe local-file, local tribute, Dino, Structure,
   Base, Stackable, Equipment, save-info JSON, and domain JSON API wrappers.
+- Fault-tolerant read paths for dino, structure, equipment, stackable, and base
+  scans that preserve valid parsed objects while reporting per-object parse
+  failures.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files. Uploaded item summaries
   include blueprint, quantity, rating, quality, and crafter metadata where
@@ -32,6 +35,8 @@ Implemented:
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
+- Private Python oracle comparison for implemented offline Go examples, currently
+  covering six aggregate read-only cases.
 
 Still in progress:
 
@@ -165,6 +170,12 @@ Run the private oracle integration test:
 ```sh
 ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-test
 ARK_ORACLE_SAVE=/absolute/path/to/save.ark ARK_ORACLE_TRIBUTE=/absolute/path/to/file.arktributetribe make oracle-test
+```
+
+Run the private oracle comparison suite for implemented Go examples:
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-compare
 ```
 
 Run standalone Go examples:

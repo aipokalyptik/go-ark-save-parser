@@ -10,8 +10,8 @@ print private `.oracle` contents.
 
 The project is a useful offline read-only foundation, but it is not yet
 production-complete against the original compatibility goal. Current blockers
-are parity evidence and full offline domain/API coverage, not basic build
-health.
+are complete runnable-example oracle coverage and full offline domain/API
+coverage, not basic build health.
 
 Public verification reported by reviewers:
 
@@ -20,10 +20,12 @@ Public verification reported by reviewers:
 
 ## Blockers
 
-- Oracle parity evidence is still narrow. The committed oracle comparison
-  summary currently covers implemented direct read-only counterparts for
-  `map_summary` and `object_classes`, while Phase 4 still requires comparison
-  coverage for every runnable offline Python example.
+- Oracle parity evidence has expanded but is still incomplete. The committed
+  oracle comparison summary currently covers six implemented aggregate
+  read-only cases: `map_summary`, `object_classes`, `export_json`,
+  `local_profiles`, `dino_filter`, and `cluster_json`. Phase 4 still requires
+  comparison coverage for every runnable offline Python example where a Go
+  counterpart exists or is feasible.
 - Full offline API/domain compatibility remains incomplete. Phase 2 still has
   open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
   richer local cluster models, remaining read-first object wrappers, and
@@ -42,6 +44,8 @@ Public verification reported by reviewers:
   Addressed after this review for save object parsing by adding
   `ParsedObjectsWithFaults`, which returns parsed objects plus per-object fault
   records while preserving the existing fail-fast `ParsedObjects` behavior.
+  Addressed further for the implemented dino, structure, equipment, stackable,
+  and base APIs by adding `AllWithFaults` variants for partial-success scans.
 - CLI `players` and `tribes` paths can print archive metadata while suppressing
   normalized parse failures. Automation can mistake partial output for a fully
   successful parse. Addressed after this review by returning wrapped normalized
@@ -77,3 +81,5 @@ Public verification reported by reviewers:
 1. Expand oracle comparison coverage one runnable offline example at a time.
 2. Continue filling domain/API gaps with synthetic tests and private oracle
    comparison where runnable upstream behavior exists.
+3. Continue routing high-volume CLI/examples through fault-tolerant object scans
+   where upstream behavior skips faulty rows instead of aborting the run.
