@@ -51,6 +51,18 @@ func (b *BaseAPI) All() ([]arkobject.Base, error) {
 	if err != nil {
 		return nil, err
 	}
+	return basesFromStructures(structures), nil
+}
+
+func (b *BaseAPI) AllWithFaults() ([]arkobject.Base, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := b.structures.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	return basesFromStructures(structures), faults, nil
+}
+
+func basesFromStructures(structures map[uuid.UUID]arkobject.Structure) []arkobject.Base {
 	adjacent := make(map[uuid.UUID][]uuid.UUID, len(structures))
 	for id, structure := range structures {
 		for _, linkedID := range structure.LinkedStructureUUIDs {
@@ -88,7 +100,7 @@ func (b *BaseAPI) All() ([]arkobject.Base, error) {
 	sort.Slice(bases, func(i int, j int) bool {
 		return bases[i].KeystoneUUID.String() < bases[j].KeystoneUUID.String()
 	})
-	return bases, nil
+	return bases
 }
 
 func (b *BaseAPI) AllWithMinStructures(minStructures int) ([]arkobject.Base, error) {
