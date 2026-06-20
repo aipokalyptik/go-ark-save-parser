@@ -20,7 +20,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 ## Profile, Tribe, And Cluster Examples
 
 - `local_profiles`: scan a directory for local `.arkprofile`, `.arktribe`, and
-  extensionless local cluster files, then print discovered and parsed counts.
+  extensionless local cluster files, then print discovered counts, parsed
+  counts, aggregate tribe-player links, deaths, levels, and experience.
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
 

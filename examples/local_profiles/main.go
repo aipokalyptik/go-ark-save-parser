@@ -31,4 +31,34 @@ func main() {
 	} else {
 		fmt.Printf("parsed_tribes=%d\n", len(tribes))
 	}
+
+	tribePlayers, err := api.TribePlayerMap()
+	if err != nil {
+		log.Printf("tribe player map: %v", err)
+	} else {
+		links := 0
+		for _, players := range tribePlayers {
+			links += len(players)
+		}
+		fmt.Printf("tribe_player_links=%d\n", links)
+	}
+
+	totalDeaths, err := api.TotalDeaths()
+	if err != nil {
+		log.Printf("total deaths: %v", err)
+	} else {
+		fmt.Printf("total_deaths=%d\n", totalDeaths)
+	}
+
+	if _, level, ok, err := api.PlayerWithHighestLevel(); err != nil {
+		log.Printf("highest level: %v", err)
+	} else if ok {
+		fmt.Printf("highest_level=%d\n", level)
+	}
+
+	if _, experience, ok, err := api.PlayerWithHighestExperience(); err != nil {
+		log.Printf("highest experience: %v", err)
+	} else if ok {
+		fmt.Printf("highest_experience=%.2f\n", experience)
+	}
 }
