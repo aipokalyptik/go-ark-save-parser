@@ -114,6 +114,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add first read-only Structure API surface for class, owner, and location
       queries with optional class filters.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
+- [x] Add read-only Stackable API category filters for resources, ammo, and
+      consumables.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.

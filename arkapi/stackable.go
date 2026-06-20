@@ -65,6 +65,32 @@ func (s *StackableAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Inv
 	return out, nil
 }
 
+func (s *StackableAPI) Resources() (map[uuid.UUID]arkobject.InventoryItem, error) {
+	return s.byBlueprintSubstring("Resources/PrimalItemResource")
+}
+
+func (s *StackableAPI) Ammo() (map[uuid.UUID]arkobject.InventoryItem, error) {
+	return s.byBlueprintSubstring("PrimalItemAmmo")
+}
+
+func (s *StackableAPI) Consumables() (map[uuid.UUID]arkobject.InventoryItem, error) {
+	return s.byBlueprintSubstring("/PrimalItemConsumable")
+}
+
+func (s *StackableAPI) byBlueprintSubstring(substring string) (map[uuid.UUID]arkobject.InventoryItem, error) {
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.InventoryItem{}
+	for id, item := range all {
+		if strings.Contains(item.Blueprint, substring) {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
+
 func boolProperty(object *arkobject.GameObject, name string) bool {
 	value, ok := object.Value(name)
 	if !ok {

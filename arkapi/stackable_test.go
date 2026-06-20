@@ -63,6 +63,28 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	if len(filtered) != 1 {
 		t.Fatalf("ByClass() length = %d, want 1", len(filtered))
 	}
+
+	resources, err := api.Resources()
+	if err != nil {
+		t.Fatalf("Resources() error = %v", err)
+	}
+	if len(resources) != 1 {
+		t.Fatalf("Resources() length = %d, want 1", len(resources))
+	}
+	ammo, err := api.Ammo()
+	if err != nil {
+		t.Fatalf("Ammo() error = %v", err)
+	}
+	if len(ammo) != 0 {
+		t.Fatalf("Ammo() length = %d, want 0", len(ammo))
+	}
+	consumables, err := api.Consumables()
+	if err != nil {
+		t.Fatalf("Consumables() error = %v", err)
+	}
+	if len(consumables) != 0 {
+		t.Fatalf("Consumables() length = %d, want 0", len(consumables))
+	}
 }
 
 func openSyntheticStackableSave(t *testing.T) *arksave.Save {
