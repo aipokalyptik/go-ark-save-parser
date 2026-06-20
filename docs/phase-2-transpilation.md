@@ -249,6 +249,9 @@ enough that oracle-derived tests can run against translated packages.
       `filter_by_owner` parity, including its invert behavior.
 - [x] Add read-only Structure API heatmap generation with class, owner, and
       minimum-cell filters for upstream `create_heatmap` parity.
+- [x] Add read-only Structure API discovery of missed inventory-bearing
+      container structures plus engram filtering for upstream `get_all_objects`
+      parity.
 - [x] Add equipment owner filtering/counting through owning structure
       inventories for upstream owner-of-items example flows.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.

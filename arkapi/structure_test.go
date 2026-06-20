@@ -31,6 +31,33 @@ func TestStructureAPIGetAllParsesStructureObjects(t *testing.T) {
 	}
 }
 
+func TestStructureAPIAllIncludesMissedInventoryContainersAndSkipsEngrams(t *testing.T) {
+	save := openSyntheticStructureDiscoverySave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	structures, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+
+	normalID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	missedID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	engramID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	if len(structures) != 2 {
+		t.Fatalf("All() length = %d, want normal plus missed container: %#v", len(structures), structures)
+	}
+	if _, ok := structures[normalID]; !ok {
+		t.Fatalf("All() missing normal structure %s: %#v", normalID, structures)
+	}
+	if got, ok := structures[missedID]; !ok || got.InventoryUUID == nil || got.ID != 456 {
+		t.Fatalf("All() missed container = %#v, %v; want parsed inventory-bearing structure", got, ok)
+	}
+	if _, ok := structures[engramID]; ok {
+		t.Fatalf("All() included engram structure %s: %#v", engramID, structures)
+	}
+}
+
 func TestStructureAPIGetOwnedByFiltersByOwner(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()
@@ -381,6 +408,19 @@ func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticStructureDiscoverySave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	normalID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	missedID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	engramID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", nil, map[uuid.UUID][]byte{
+		normalID: syntheticStructureObjectBytes(),
+		missedID: syntheticStructureContainerObjectBytes(456, uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")),
+		engramID: syntheticStructureEngramObjectBytes(),
+	})
+}
+
 func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -423,6 +463,23 @@ func syntheticStructureWithInventoryObjectBytes(inventoryID uuid.UUID) []byte {
 	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000023, 0x1000001f, inventoryID)
 	testfixtures.WriteIntPropertyID(&props, 0x10000045, 0x10000003, 12)
 	testfixtures.WriteIntPropertyID(&props, 0x10000046, 0x10000003, 300)
+	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+}
+
+func syntheticStructureContainerObjectBytes(structureID int32, inventoryID uuid.UUID) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, structureID)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000023, 0x1000001f, inventoryID)
+	return testfixtures.ObjectBytesWithProperties(0x10000043, 0x10000004, props.Bytes())
+}
+
+func syntheticStructureEngramObjectBytes() []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 789)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	testfixtures.WriteBoolPropertyID(&props, 0x10000013, 0x1000000e, true)
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
 

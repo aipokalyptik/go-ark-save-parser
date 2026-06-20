@@ -27,9 +27,17 @@ func (s *StructureAPI) All() (map[uuid.UUID]arkobject.Structure, error) {
 	if err != nil {
 		return nil, err
 	}
+	containers, err := s.missedInventoryContainers()
+	if err != nil {
+		return nil, err
+	}
+	objects = append(objects, containers...)
 	out := map[uuid.UUID]arkobject.Structure{}
 	for _, info := range objects {
-		if _, ok := info.Object.Value("StructureID"); !ok {
+		if _, exists := out[info.UUID]; exists {
+			continue
+		}
+		if !isParsedStructure(info.Object) {
 			continue
 		}
 		var location *arkobject.ActorTransform
@@ -48,9 +56,18 @@ func (s *StructureAPI) AllWithFaults() (map[uuid.UUID]arkobject.Structure, []ark
 	if err != nil {
 		return nil, nil, err
 	}
+	containers, containerFaults, err := s.missedInventoryContainersWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	objects = append(objects, containers...)
+	faults = append(faults, containerFaults...)
 	out := map[uuid.UUID]arkobject.Structure{}
 	for _, info := range objects {
-		if _, ok := info.Object.Value("StructureID"); !ok {
+		if _, exists := out[info.UUID]; exists {
+			continue
+		}
+		if !isParsedStructure(info.Object) {
 			continue
 		}
 		var location *arkobject.ActorTransform
@@ -60,6 +77,46 @@ func (s *StructureAPI) AllWithFaults() (map[uuid.UUID]arkobject.Structure, []ark
 		out[info.UUID] = arkobject.StructureFromObject(info.Object, location)
 	}
 	return out, faults, nil
+}
+
+func (s *StructureAPI) missedInventoryContainers() ([]arksave.ParsedObjectInfo, error) {
+	infos, err := s.save.ObjectClassInfosWithAnyProperty([]string{"MyInventoryComponent"})
+	if err != nil {
+		return nil, err
+	}
+	objects := make([]arksave.ParsedObjectInfo, 0, len(infos))
+	for _, info := range infos {
+		if isStructureBlueprint(info.ClassName) || !isPotentialStructureContainer(info.ClassName) {
+			continue
+		}
+		object, err := s.save.ParsedObject(info.UUID)
+		if err != nil {
+			return nil, err
+		}
+		objects = append(objects, arksave.ParsedObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Object: object})
+	}
+	return objects, nil
+}
+
+func (s *StructureAPI) missedInventoryContainersWithFaults() ([]arksave.ParsedObjectInfo, []arksave.FaultyObjectInfo, error) {
+	infos, err := s.save.ObjectClassInfosWithAnyProperty([]string{"MyInventoryComponent"})
+	if err != nil {
+		return nil, nil, err
+	}
+	objects := make([]arksave.ParsedObjectInfo, 0, len(infos))
+	var faults []arksave.FaultyObjectInfo
+	for _, info := range infos {
+		if isStructureBlueprint(info.ClassName) || !isPotentialStructureContainer(info.ClassName) {
+			continue
+		}
+		object, err := s.save.ParsedObject(info.UUID)
+		if err != nil {
+			faults = append(faults, arksave.FaultyObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Err: err})
+			continue
+		}
+		objects = append(objects, arksave.ParsedObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Object: object})
+	}
+	return objects, faults, nil
 }
 
 func (s *StructureAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.Structure, error) {
@@ -301,6 +358,26 @@ func blueprintSet(blueprints []string) map[string]struct{} {
 		allowed[blueprint] = struct{}{}
 	}
 	return allowed
+}
+
+func isParsedStructure(object *arkobject.GameObject) bool {
+	if object == nil {
+		return false
+	}
+	if boolProperty(object, "bIsEngram") {
+		return false
+	}
+	_, ok := object.Value("StructureID")
+	return ok
+}
+
+func isPotentialStructureContainer(name string) bool {
+	if name == "" {
+		return false
+	}
+	return !strings.Contains(name, "PlayerPawn") &&
+		!strings.Contains(name, "/Dinos/") &&
+		!strings.Contains(name, "Character_BP")
 }
 
 func isStructureBlueprint(name string) bool {
