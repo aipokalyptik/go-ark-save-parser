@@ -21,9 +21,10 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers eleven implemented aggregate
+  oracle comparison summary currently covers thirteen implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `export_json`,
-  `local_profiles`, `dino_filter`, `property_filter`, `stackable_count`,
+  `local_profiles`, `local_profile_player_aggregates`, `player_inventory`,
+  `dino_filter`, `property_filter`, `stackable_count`,
   `equipment_longneck_blueprint_damage`, `domain_json_dinos`, `cluster_json`,
   and `local_tribute`. Phase 4 still requires comparison coverage for every
   runnable offline Python example where a Go counterpart exists or is feasible.
@@ -36,9 +37,10 @@ Public verification reported by reviewers:
 
 - Dynamic property parity remains incomplete. Unknown top-level property types
   and unsupported compound value encodings can still fail full object parsing.
-- Legacy archive and embedded cryopod paths remain unsupported outside modern
-  archive and compact tribute-index formats. This is documented, but it remains
-  a blocker for broad upstream parity.
+- Legacy archive and legacy/modded embedded cryopod paths remain unsupported
+  outside modern archive and compact tribute-index formats. Modern cryopod
+  dino/status payloads now have a parsed API path, but broad upstream parity
+  still requires legacy/modded variants plus saddle/cosmetic payload support.
 - Broad save parsing now exposes an initial upstream-style faulty-object policy
   through `arksave.ParsedObjectsWithFaults` and `arkapi.GeneralAPI.ObjectsWithFaults`.
   Several domain APIs also expose partial-success scans, including dino,
@@ -89,10 +91,10 @@ Public verification reported by reviewers:
   archive summaries.
 - Some upstream read-only examples are not stable oracle candidates on the
   private save yet. In particular, `DinoApi.get_all_babies(include_wild=True)`
-  produced high-volume parser debug output and failed in an embedded cryopod
-  path before returning a stable aggregate; defer that comparison until
-  embedded cryopod/legacy archive handling is improved or a quieter upstream
-  invocation is available.
+  produced high-volume parser debug output and previously failed in an embedded
+  cryopod path before returning a stable aggregate; defer that comparison until
+  the remaining legacy/modded cryopod handling is improved or a quieter
+  upstream invocation is available.
 
 ## Next Actions
 
