@@ -131,7 +131,9 @@ you should still treat them as private and avoid committing or sharing them
 unless they have been reviewed and sanitized.
 
 Inspect local profile and tribe archive metadata, or point at a save directory
-to aggregate all local `.arkprofile` / `.arktribe` files in it:
+to aggregate all local `.arkprofile` / `.arktribe` files in it. Player directory
+summaries include deaths, levels, experience, engram points, and unique unlocked
+engram blueprint counts:
 
 ```sh
 ./bin/arksave players /path/to/76561198000000000.arkprofile

@@ -215,9 +215,13 @@ func playersDirectory(path string, out io.Writer, opts runOptions) error {
 	if err != nil {
 		return err
 	}
+	unlockedEngrams, err := api.UnlockedEngrams()
+	if err != nil {
+		return err
+	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nTotal engram points: %d\n",
+		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nTotal engram points: %d\nUnlocked engrams: %d\n",
 		displayString(path, opts),
 		len(api.ProfilePaths()),
 		len(players),
@@ -227,6 +231,7 @@ func playersDirectory(path string, out io.Writer, opts runOptions) error {
 		optionalFloat(averageLevel, hasAverageLevel),
 		totalExperience,
 		totalEngramPoints,
+		len(unlockedEngrams),
 	); err != nil {
 		return err
 	}

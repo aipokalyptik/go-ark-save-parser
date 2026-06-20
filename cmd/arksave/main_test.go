@@ -163,6 +163,10 @@ func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
 		ExtraCharacterLevel: 9,
 		ExperiencePoints:    12.5,
 		TotalEngramPoints:   14,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		},
 	})
 	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
 		PlayerDataID:        43,
@@ -173,6 +177,10 @@ func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
 		ExtraCharacterLevel: 4,
 		ExperiencePoints:    7.5,
 		TotalEngramPoints:   6,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+		},
 	})
 
 	var out bytes.Buffer
@@ -191,6 +199,7 @@ func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
 		"Average level: 7.50",
 		"Total experience: 20.00",
 		"Total engram points: 20",
+		"Unlocked engrams: 3",
 		"  player id=42 character=Survivor platform=PlatformName tribe=777 level=10 deaths=3",
 		"  player id=43 character=Scout platform=OtherPlatform tribe=888 level=5 deaths=1",
 	} {
