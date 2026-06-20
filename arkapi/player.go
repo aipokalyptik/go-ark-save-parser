@@ -709,6 +709,17 @@ func (p *PlayerAPI) TribeDetails() ([]arkobject.Tribe, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) TribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.FaultyObjectInfo, error) {
+	if p.save != nil {
+		return p.saveTribeDetailsWithFaults()
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return nil, nil, err
+	}
+	return tribes, nil, nil
+}
+
 func (p *PlayerAPI) saveTribeDetails() ([]arkobject.Tribe, error) {
 	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
 		return isTribeDataClass(info.ClassName)
@@ -725,6 +736,25 @@ func (p *PlayerAPI) saveTribeDetails() ([]arkobject.Tribe, error) {
 		out = append(out, tribe)
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) saveTribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := p.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isTribeDataClass(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := make([]arkobject.Tribe, 0, len(objects))
+	for _, info := range objects {
+		tribe, err := arkobject.TribeFromContainer(info.Object.Container())
+		if err != nil {
+			faults = append(faults, arksave.FaultyObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Err: fmt.Errorf("parse tribe object %s: %w", info.UUID, err)})
+			continue
+		}
+		out = append(out, tribe)
+	}
+	return out, faults, nil
 }
 
 func (p *PlayerAPI) TribeDinoCountsByID() (map[int32]int32, error) {
