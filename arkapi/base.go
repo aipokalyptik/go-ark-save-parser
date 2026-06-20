@@ -22,27 +22,35 @@ func NewBase(save *arksave.Save, mapName string) *BaseAPI {
 }
 
 func (b *BaseAPI) At(coords arkobject.MapCoords, radius float64, owner *arkobject.ObjectOwner) (*arkobject.Base, error) {
-	all, err := b.structures.All()
+	nearby, err := b.structures.AtLocation(b.mapName, coords, radius, nil)
 	if err != nil {
 		return nil, err
-	}
-	nearby := map[uuid.UUID]arkobject.Structure{}
-	for id, structure := range all {
-		if structure.Location == nil {
-			continue
-		}
-		if owner != nil && !structure.IsOwnedBy(*owner) {
-			continue
-		}
-		if structure.Location.IsAtMapCoordinate(b.mapName, coords, radius) {
-			nearby[id] = structure
-		}
 	}
 	if len(nearby) == 0 {
 		return nil, nil
 	}
-	keystone := closestStructure(nearby, b.mapName, coords)
-	base := arkobject.BaseFromStructures(keystone, nearby)
+	structures, err := b.structures.ConnectedStructures(nearby)
+	if err != nil {
+		return nil, err
+	}
+	if owner != nil {
+		structures, err = b.structures.FilterByOwner(structures, owner, 0, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(structures) == 0 {
+		return nil, nil
+	}
+	keystone := closestStructure(structures, b.mapName, coords)
+	keystoneOwner := structures[keystone].Owner
+	filtered := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range structures {
+		if structure.Owner == keystoneOwner {
+			filtered[id] = structure
+		}
+	}
+	base := arkobject.BaseFromStructures(keystone, filtered)
 	return &base, nil
 }
 

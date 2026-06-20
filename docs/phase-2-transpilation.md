@@ -250,6 +250,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add equipment owner filtering/counting through owning structure
       inventories for upstream owner-of-items example flows.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
+- [x] Expand read-only Base API point lookups through linked structures for
+      upstream `get_base_at` parity.
 - [x] Add read-only Base API filtering by minimum grouped structure count.
 - [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
       Base, richer local cluster item/dino domain models, and remaining

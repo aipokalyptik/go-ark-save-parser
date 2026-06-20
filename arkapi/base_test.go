@@ -31,6 +31,36 @@ func TestBaseAPIAtGroupsNearbyOwnedStructures(t *testing.T) {
 	}
 }
 
+func TestBaseAPIAtExpandsNearbyStructureToConnectedBase(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	structures := NewStructure(save)
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	first, ok, err := structures.ByID(firstID)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+
+	api := NewBase(save, "Valguero")
+	base, err := api.At(first.Location.AsMapCoords("Valguero"), 0.000001, &arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("At() error = %v", err)
+	}
+	if base == nil {
+		t.Fatalf("At() = nil, want connected base")
+	}
+	if base.StructureCount != 2 {
+		t.Fatalf("At() StructureCount = %d, want connected structure count 2", base.StructureCount)
+	}
+	if _, ok := base.Structures[uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")]; !ok {
+		t.Fatalf("At() did not include linked structure outside radius: %#v", base.Structures)
+	}
+}
+
 func TestBaseAPIAtReturnsNilWhenNoStructuresMatch(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()
