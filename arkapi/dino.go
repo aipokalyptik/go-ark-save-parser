@@ -29,10 +29,23 @@ func (d *DinoAPI) IsApplicableBlueprint(blueprint string) bool {
 	if blueprint == "" {
 		return false
 	}
+	if d.IsCryopodBlueprint(blueprint) {
+		return true
+	}
 	hasDinoPath := strings.Contains(blueprint, "/Creatures/") ||
 		strings.Contains(blueprint, "/Dinos/") ||
 		strings.Contains(blueprint, "/SDinoVariants/")
 	return hasDinoPath && strings.Contains(blueprint, "_Character_")
+}
+
+func (d *DinoAPI) IsCryopodBlueprint(blueprint string) bool {
+	if blueprint == "" {
+		return false
+	}
+	return strings.Contains(blueprint, "PrimalItem_WeaponEmptyCryopod") ||
+		strings.Contains(blueprint, "PrimalItemCryopod") ||
+		strings.Contains(blueprint, "SCSCryopod") ||
+		strings.Contains(blueprint, "ItemDinoball")
 }
 
 func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
@@ -44,6 +57,9 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 	}
 	out := map[uuid.UUID]arkobject.Dino{}
 	for _, info := range objects {
+		if d.IsCryopodBlueprint(info.Object.Blueprint) {
+			continue
+		}
 		var location *arkobject.ActorTransform
 		if transform, ok := d.save.ActorTransform(info.UUID); ok {
 			location = &transform
@@ -68,6 +84,9 @@ func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fault
 	}
 	out := map[uuid.UUID]arkobject.Dino{}
 	for _, info := range objects {
+		if d.IsCryopodBlueprint(info.Object.Blueprint) {
+			continue
+		}
 		var location *arkobject.ActorTransform
 		if transform, ok := d.save.ActorTransform(info.UUID); ok {
 			location = &transform

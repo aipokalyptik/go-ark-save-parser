@@ -16,6 +16,8 @@ func TestDinoAPIRecognizesApplicableBlueprints(t *testing.T) {
 		"Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
 		"Blueprint'/Game/ASA/Creatures/Foo/Foo_Character_BP.Foo_Character_BP_C'",
 		"Blueprint'/Game/Mods/SDinoVariants/Bar/Bar_Character_BP.Bar_Character_BP_C'",
+		"Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
+		"Blueprint'/Game/Mods/DinoDepot/Items/DinoBalls/ItemDinoball.ItemDinoball_C'",
 	} {
 		if !api.IsApplicableBlueprint(blueprint) {
 			t.Fatalf("IsApplicableBlueprint(%q) = false, want true", blueprint)
@@ -23,6 +25,25 @@ func TestDinoAPIRecognizesApplicableBlueprints(t *testing.T) {
 	}
 	if api.IsApplicableBlueprint("Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'") {
 		t.Fatalf("IsApplicableBlueprint(weapon) = true, want false")
+	}
+}
+
+func TestDinoAPIAllIgnoresEmptyCryopodItems(t *testing.T) {
+	save := openSyntheticDinoSaveWithEmptyCryopod(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("All() length = %d, want 1 active dino and no empty cryopod placeholder", len(dinos))
+	}
+	for id, dino := range dinos {
+		if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || dino.IsCryopodded {
+			t.Fatalf("All() dino = %s %#v, want only active non-cryopodded dino", id, dino)
+		}
 	}
 }
 
@@ -485,6 +506,19 @@ func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	}, map[uuid.UUID][]byte{
 		dinoID:  syntheticDinoObjectBytes(),
 		otherID: syntheticObjectBytes(0x10000001),
+	})
+}
+
+func openSyntheticDinoSaveWithEmptyCryopod(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
+	}, map[uuid.UUID][]byte{
+		dinoID: syntheticDinoObjectBytes(),
+		podID:  syntheticObjectBytes(0x10000047),
 	})
 }
 

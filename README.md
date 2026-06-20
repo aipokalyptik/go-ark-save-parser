@@ -36,15 +36,17 @@ Implemented:
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering eleven aggregate read-only cases.
+  covering thirteen aggregate read-only cases.
 
 Still in progress:
 
 - Full dynamic property parity for dedicated struct readers and legacy embedded
   data.
-- Full domain models and APIs for dino stats/cryopods/pedigrees, save-contained
-  player/tribe data, richer local cluster item/dino domain models, and remaining
-  model-specific JSON export edges.
+- Full domain models and APIs for cryopodded dino extraction, pedigrees,
+  save-contained player/tribe data, richer local cluster item/dino domain
+  models, and remaining model-specific JSON export edges. Dino scans recognize
+  common cryopod item classes and ignore empty pod placeholders, but embedded
+  cryopodded dino parsing is not complete.
 - Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
   helpers remain experimental and live-server-unverified.
 

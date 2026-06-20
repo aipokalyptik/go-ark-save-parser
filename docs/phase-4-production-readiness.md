@@ -49,8 +49,10 @@ offline parser without Python or private chat context.
 
 ## Remaining Production Gaps
 
-- Full domain parity for dino stats, cryopods, pedigrees, richer equipment
-  stats, player/tribe details, and base import/export remains incomplete.
+- Full domain parity for cryopodded dino extraction, pedigrees, richer
+  equipment stats, player/tribe details, and base import/export remains
+  incomplete. Dino scans recognize common cryopod item classes and ignore empty
+  pod placeholders, but embedded cryopodded dino parsing is not complete.
 - Legacy archive object parsing remains unsupported outside modern archive and
   compact local tribute index formats.
 - Mutation helpers are structurally tested only and require live-server manual

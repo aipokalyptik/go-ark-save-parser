@@ -190,7 +190,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(71))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(72))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -333,6 +333,8 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "CurrentItemCount")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000046))
 	writeArkString(&buf, "MaxItemCount")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000047))
+	writeArkString(&buf, "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'")
 	return buf.Bytes()
 }
 
