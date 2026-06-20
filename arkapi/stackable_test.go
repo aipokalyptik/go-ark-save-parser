@@ -14,7 +14,6 @@ func TestStackableAPIRecognizesApplicableBlueprints(t *testing.T) {
 	api := StackableAPI{}
 	for _, blueprint := range []string{
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
-		"/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C",
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Consumables/PrimalItemConsumable_Berry.PrimalItemConsumable_Berry_C'",
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItemAmmo_ArrowStone.PrimalItemAmmo_ArrowStone_C'",
 	} {
@@ -24,6 +23,9 @@ func TestStackableAPIRecognizesApplicableBlueprints(t *testing.T) {
 	}
 	if api.IsApplicableBlueprint("Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'") {
 		t.Fatalf("IsApplicableBlueprint(structure) = true, want false")
+	}
+	if api.IsApplicableBlueprint("/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C") {
+		t.Fatalf("IsApplicableBlueprint(modded resource outside Resources directory) = true, want false")
 	}
 }
 
@@ -85,6 +87,29 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestStackableAPIByClassCanReadExactModdedResourceWithoutBroadeningDefaultScan(t *testing.T) {
+	save := openSyntheticMixedStackableSave(t)
+	defer save.Close()
+
+	api := NewStackable(save)
+	all, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(all) != 1 || api.Count(all) != 100 {
+		t.Fatalf("All() = len %d count %d, want only default-applicable vanilla stackable", len(all), api.Count(all))
+	}
+
+	moddedBlueprint := "/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C"
+	modded, err := api.ByClass([]string{moddedBlueprint})
+	if err != nil {
+		t.Fatalf("ByClass(modded) error = %v", err)
+	}
+	if len(modded) != 1 || api.Count(modded) != 100 {
+		t.Fatalf("ByClass(modded) = len %d count %d, want exact modded stackable", len(modded), api.Count(modded))
+	}
+}
+
 func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticStackableSaveWithFault(t)
 	defer save.Close()
@@ -100,6 +125,17 @@ func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'" || faults[0].Err == nil {
 		t.Fatalf("AllWithFaults() faults = %#v, want one stackable parse fault", faults)
 	}
+}
+
+func openSyntheticMixedStackableSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	vanillaID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	moddedID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
+		vanillaID: syntheticStackableObjectBytesWithClass(0x1000000b, false),
+		moddedID:  syntheticStackableObjectBytesWithClass(0x10000043, false),
+	})
 }
 
 func openSyntheticStackableSave(t *testing.T) *arksave.Save {
@@ -132,8 +168,12 @@ func truncatedStackableObjectBytes() []byte {
 }
 
 func syntheticStackableObjectBytes(isBlueprint bool) []byte {
+	return syntheticStackableObjectBytesWithClass(0x1000000b, isBlueprint)
+}
+
+func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) []byte {
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000b))
+	_ = binary.Write(&buf, binary.LittleEndian, className)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))

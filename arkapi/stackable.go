@@ -17,7 +17,7 @@ func NewStackable(save *arksave.Save) *StackableAPI {
 }
 
 func (s *StackableAPI) IsApplicableBlueprint(blueprint string) bool {
-	return strings.Contains(blueprint, "PrimalItemResource") ||
+	return strings.Contains(blueprint, "Resources/PrimalItemResource") ||
 		strings.Contains(blueprint, "/PrimalItemConsumable") ||
 		strings.Contains(blueprint, "PrimalItemAmmo")
 }
@@ -65,19 +65,23 @@ func (s *StackableAPI) AllWithFaults() (map[uuid.UUID]arkobject.InventoryItem, [
 }
 
 func (s *StackableAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.InventoryItem, error) {
-	all, err := s.All()
-	if err != nil {
-		return nil, err
-	}
 	allowed := map[string]struct{}{}
 	for _, blueprint := range blueprints {
 		allowed[blueprint] = struct{}{}
 	}
+	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		_, ok := allowed[info.ClassName]
+		return ok
+	})
+	if err != nil {
+		return nil, err
+	}
 	out := map[uuid.UUID]arkobject.InventoryItem{}
-	for id, item := range all {
-		if _, ok := allowed[item.Blueprint]; ok {
-			out[id] = item
+	for _, info := range objects {
+		if boolProperty(info.Object, "bIsBlueprint") || boolProperty(info.Object, "bIsEngram") {
+			continue
 		}
+		out[info.UUID] = arkobject.InventoryItemFromObject(info.Object)
 	}
 	return out, nil
 }
