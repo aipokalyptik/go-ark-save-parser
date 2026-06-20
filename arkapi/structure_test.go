@@ -99,6 +99,27 @@ func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	}
 }
 
+func TestStructureAPIAllWithFaultsKeepsValidStructuresAndReportsParseFaults(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	structures, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if len(structures) != 1 {
+		t.Fatalf("AllWithFaults() structures length = %d, want 1", len(structures))
+	}
+	if _, ok := structures[id]; !ok {
+		t.Fatalf("AllWithFaults() missing valid structure %s: %#v", id, structures)
+	}
+	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'" || faults[0].Err == nil {
+		t.Fatalf("AllWithFaults() faults = %#v, want one structure parse fault", faults)
+	}
+}
+
 func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -127,6 +148,34 @@ func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(structureID))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, structureID[:], syntheticStructureObjectBytes())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedStructureObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticStructureObjectBytes() []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
@@ -142,6 +191,13 @@ func syntheticStructureObjectBytes() []byte {
 	writeIntProperty(&buf, 0x10000009, 555)
 
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func truncatedStructureObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
 }

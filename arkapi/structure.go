@@ -37,6 +37,27 @@ func (s *StructureAPI) All() (map[uuid.UUID]arkobject.Structure, error) {
 	return out, nil
 }
 
+func (s *StructureAPI) AllWithFaults() (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := s.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for _, info := range objects {
+		if _, ok := info.Object.Value("StructureID"); !ok {
+			continue
+		}
+		var location *arkobject.ActorTransform
+		if transform, ok := s.save.ActorTransform(info.UUID); ok {
+			location = &transform
+		}
+		out[info.UUID] = arkobject.StructureFromObject(info.Object, location)
+	}
+	return out, faults, nil
+}
+
 func (s *StructureAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.Structure, error) {
 	all, err := s.All()
 	if err != nil {
