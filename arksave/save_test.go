@@ -150,6 +150,30 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	if len(filteredParsed) != 1 || filteredParsed[0].UUID != objectID {
 		t.Fatalf("ParsedObjectsByClassContains(/Game/Test) = %#v, want [%s]", filteredParsed, objectID)
 	}
+
+	byProperty, err := save.ParsedObjectsWithAnyProperty([]string{"TamerString", "Health"})
+	if err != nil {
+		t.Fatalf("ParsedObjectsWithAnyProperty() error = %v", err)
+	}
+	if len(byProperty) != 2 || byProperty[0].UUID != objectID || byProperty[1].UUID != secondObjectID {
+		t.Fatalf("ParsedObjectsWithAnyProperty(TamerString, Health) = %#v, want both synthetic objects", byProperty)
+	}
+
+	missingProperty, err := save.ParsedObjectsWithAnyProperty([]string{"TamerString"})
+	if err != nil {
+		t.Fatalf("ParsedObjectsWithAnyProperty(missing) error = %v", err)
+	}
+	if len(missingProperty) != 0 {
+		t.Fatalf("ParsedObjectsWithAnyProperty(missing) = %#v, want empty", missingProperty)
+	}
+
+	classInfosByProperty, err := save.ObjectClassInfosWithAnyProperty([]string{"Health"})
+	if err != nil {
+		t.Fatalf("ObjectClassInfosWithAnyProperty() error = %v", err)
+	}
+	if len(classInfosByProperty) != 2 || classInfosByProperty[0].UUID != objectID || classInfosByProperty[1].UUID != secondObjectID {
+		t.Fatalf("ObjectClassInfosWithAnyProperty(Health) = %#v, want both synthetic objects", classInfosByProperty)
+	}
 }
 
 func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
@@ -190,6 +214,45 @@ func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
 	}
 	if faults[0].ClassName != "Blueprint'/Game/Other.Other_C'" || faults[0].Err == nil {
 		t.Fatalf("fault = %#v, want class name and parse error", faults[0])
+	}
+}
+
+func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	header := syntheticHeader()
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], syntheticObjectBytes(0x10000001))
+	faultyBytes := syntheticObjectBytes(0x10000005)
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], faultyBytes[:len(faultyBytes)-2])
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	parsed, faults, err := save.ParsedObjectsWithAnyPropertyWithFaults([]string{"Health"})
+	if err != nil {
+		t.Fatalf("ParsedObjectsWithAnyPropertyWithFaults() error = %v", err)
+	}
+	if len(parsed) != 1 || parsed[0].UUID != objectID {
+		t.Fatalf("parsed = %#v, want valid object %s", parsed, objectID)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
+		t.Fatalf("faults = %#v, want parse fault for %s", faults, faultyID)
 	}
 }
 

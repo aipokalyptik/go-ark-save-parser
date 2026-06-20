@@ -36,6 +36,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
+	runExample(t, "property_filter", "objects=2 classes=2", savePath, "None")
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 classes=1", savePath)
 	runExample(t, "local_profiles", "clusters=1 tributes=1", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)

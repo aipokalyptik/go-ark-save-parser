@@ -1,7 +1,9 @@
 package arksave
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -296,6 +298,187 @@ func (s *Save) ParsedObjectsByClassContains(substr string) ([]ParsedObjectInfo, 
 	return s.ParsedObjects(func(info ObjectClassInfo) bool {
 		return strings.Contains(info.ClassName, substr)
 	})
+}
+
+func (s *Save) ParsedObjectsWithAnyProperty(names []string) ([]ParsedObjectInfo, error) {
+	patterns := s.propertyNamePatterns(names)
+	if len(patterns) == 0 {
+		return nil, nil
+	}
+	return s.parsedObjectsMatchingRaw(func(raw []byte) bool {
+		return containsAnyPattern(raw, patterns)
+	})
+}
+
+func (s *Save) ParsedObjectsWithAnyPropertyWithFaults(names []string) ([]ParsedObjectInfo, []FaultyObjectInfo, error) {
+	patterns := s.propertyNamePatterns(names)
+	if len(patterns) == 0 {
+		return nil, nil, nil
+	}
+	return s.parsedObjectsMatchingRawWithFaults(func(raw []byte) bool {
+		return containsAnyPattern(raw, patterns)
+	})
+}
+
+func (s *Save) ObjectClassInfosWithAnyProperty(names []string) ([]ObjectClassInfo, error) {
+	patterns := s.propertyNamePatterns(names)
+	if len(patterns) == 0 {
+		return nil, nil
+	}
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var infos []ObjectClassInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, err
+		}
+		if !containsAnyPattern(raw, patterns) {
+			continue
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, ObjectClassInfo{UUID: id, ClassName: className})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	sort.Slice(infos, func(i int, j int) bool {
+		return infos[i].UUID.String() < infos[j].UUID.String()
+	})
+	return infos, nil
+}
+
+func (s *Save) parsedObjectsMatchingRaw(matchRaw func([]byte) bool) ([]ParsedObjectInfo, error) {
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	sections := s.objectSections()
+	var infos []ParsedObjectInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, err
+		}
+		if matchRaw != nil && !matchRaw(raw) {
+			continue
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		object, err := arkobject.ParseGameObject(id, raw, s.names, sections)
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, ParsedObjectInfo{UUID: id, ClassName: className, Object: object})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	sortParsedObjects(infos)
+	return infos, nil
+}
+
+func (s *Save) parsedObjectsMatchingRawWithFaults(matchRaw func([]byte) bool) ([]ParsedObjectInfo, []FaultyObjectInfo, error) {
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	sections := s.objectSections()
+	var infos []ParsedObjectInfo
+	var faults []FaultyObjectInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, nil, err
+		}
+		if matchRaw != nil && !matchRaw(raw) {
+			continue
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, nil, err
+		}
+		r := arkbinary.NewReader(raw, s.names)
+		className, err := r.ReadName("")
+		if err != nil {
+			faults = append(faults, FaultyObjectInfo{UUID: id, Err: err})
+			continue
+		}
+		object, err := arkobject.ParseGameObject(id, raw, s.names, sections)
+		if err != nil {
+			faults = append(faults, FaultyObjectInfo{UUID: id, ClassName: className, Err: err})
+			continue
+		}
+		infos = append(infos, ParsedObjectInfo{UUID: id, ClassName: className, Object: object})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	sortParsedObjects(infos)
+	sort.Slice(faults, func(i int, j int) bool {
+		return faults[i].UUID.String() < faults[j].UUID.String()
+	})
+	return infos, faults, nil
+}
+
+func (s *Save) propertyNamePatterns(names []string) [][]byte {
+	if s == nil || s.Context == nil {
+		return nil
+	}
+	wanted := map[string]struct{}{}
+	for _, name := range names {
+		if name != "" {
+			wanted[name] = struct{}{}
+		}
+	}
+	if len(wanted) == 0 {
+		return nil
+	}
+	patterns := make([][]byte, 0, len(wanted))
+	for id, name := range s.Context.Names {
+		if _, ok := wanted[name]; !ok {
+			continue
+		}
+		pattern := make([]byte, 8)
+		binary.LittleEndian.PutUint32(pattern[:4], id)
+		patterns = append(patterns, pattern)
+	}
+	return patterns
+}
+
+func containsAnyPattern(raw []byte, patterns [][]byte) bool {
+	for _, pattern := range patterns {
+		if bytes.Contains(raw, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Save) ObjectIDsByClassContains(substr string) ([]uuid.UUID, error) {

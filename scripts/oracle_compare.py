@@ -142,6 +142,23 @@ def python_dino_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, 
         save.close()
 
 
+def python_property_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        config = GameObjectReaderConfiguration(property_names=["TamerString", "Health"])
+        objects = save.get_game_objects(config)
+        return {
+            "objects": len(objects),
+            "classes": len({obj.blueprint for obj in objects.values()}),
+        }
+    finally:
+        save.close()
+
+
 def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData  # type: ignore
@@ -202,6 +219,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py = python_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
+    py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
@@ -209,6 +227,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python": py,
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
+        "python_property_filter": py_property_filter,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
         "go": {},
@@ -296,6 +315,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["dino_filter"]["parsed"] = got
         want = {key: py_dino_filter[key] for key in ("dinos", "tamed", "wild", "classes")}
         cases.append(CaseResult("dino_filter", "pass" if {key: got.get(key) for key in want} == want else "fail", "dino aggregate counts compared"))
+
+    go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)
+    private["go"]["property_filter"] = {
+        "exit_code": go_property_filter.returncode,
+        "stdout": go_property_filter.stdout,
+        "stderr": go_property_filter.stderr,
+    }
+    if go_property_filter.returncode != 0:
+        cases.append(CaseResult("property_filter", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_property_filter.stdout)
+        private["go"]["property_filter"]["parsed"] = got
+        cases.append(CaseResult("property_filter", "pass" if {key: got.get(key) for key in py_property_filter} == py_property_filter else "fail", "property-name filtered object counts compared"))
 
     domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
     go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)

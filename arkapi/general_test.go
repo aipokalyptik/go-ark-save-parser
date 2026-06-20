@@ -72,6 +72,46 @@ func TestGeneralObjectsReturnsParsedSaveObjects(t *testing.T) {
 	}
 }
 
+func TestGeneralObjectsWithAnyPropertyFiltersByPropertyName(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	objects, err := NewGeneral(save).ObjectsWithAnyProperty([]string{"Health"})
+	if err != nil {
+		t.Fatalf("ObjectsWithAnyProperty() error = %v", err)
+	}
+	if len(objects) != 1 || objects[0].Properties[0].Name != "Health" {
+		t.Fatalf("ObjectsWithAnyProperty(Health) = %#v, want one Health object", objects)
+	}
+
+	missing, err := NewGeneral(save).ObjectsWithAnyProperty([]string{"TamerString"})
+	if err != nil {
+		t.Fatalf("ObjectsWithAnyProperty(missing) error = %v", err)
+	}
+	if len(missing) != 0 {
+		t.Fatalf("ObjectsWithAnyProperty(missing) = %#v, want empty", missing)
+	}
+}
+
+func TestGeneralObjectsWithAnyPropertyWithFaultsReportsParseFaults(t *testing.T) {
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	objects, faults, err := NewGeneral(save).ObjectsWithAnyPropertyWithFaults([]string{"Health"})
+	if err != nil {
+		t.Fatalf("ObjectsWithAnyPropertyWithFaults() error = %v", err)
+	}
+	if len(objects) != 1 {
+		t.Fatalf("objects length = %d, want 1", len(objects))
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("faults = %#v, want one parse fault", faults)
+	}
+}
+
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")

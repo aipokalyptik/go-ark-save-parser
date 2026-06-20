@@ -22,6 +22,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   counts. This covers the basic parsing and save-info JSON workflow.
 - `object_classes`: list unique object class names from a local `.ark`, matching
   the class lookup/filtering style of the upstream basic parsing examples.
+- `property_filter`: count objects and classes whose raw save object payloads
+  contain any requested property name, matching the upstream property-name
+  prefilter workflow without deep-parsing every object.
 - `dino_filter`: parse local dino objects, run basic tamed/wild filters, and
   print aggregate class counts.
 
@@ -32,6 +35,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   counts, aggregate tribe-player links, deaths, levels, and experience.
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
+- `local_tribute`: read local compact tribute index files and print aggregate
+  player-data and tribe-data ID counts.
 
 ## Mutation-Copy Example
 

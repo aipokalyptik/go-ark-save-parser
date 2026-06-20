@@ -38,3 +38,27 @@ func (g *GeneralAPI) Objects() ([]*arkobject.GameObject, error) {
 func (g *GeneralAPI) Object(id uuid.UUID) (*arkobject.GameObject, error) {
 	return g.save.Object(id)
 }
+
+func (g *GeneralAPI) ObjectsWithAnyProperty(names []string) ([]*arkobject.GameObject, error) {
+	infos, err := g.save.ParsedObjectsWithAnyProperty(names)
+	if err != nil {
+		return nil, err
+	}
+	return parsedObjects(infos), nil
+}
+
+func (g *GeneralAPI) ObjectsWithAnyPropertyWithFaults(names []string) ([]*arkobject.GameObject, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := g.save.ParsedObjectsWithAnyPropertyWithFaults(names)
+	if err != nil {
+		return nil, nil, err
+	}
+	return parsedObjects(infos), faults, nil
+}
+
+func parsedObjects(infos []arksave.ParsedObjectInfo) []*arkobject.GameObject {
+	objects := make([]*arkobject.GameObject, 0, len(infos))
+	for _, info := range infos {
+		objects = append(objects, info.Object)
+	}
+	return objects
+}

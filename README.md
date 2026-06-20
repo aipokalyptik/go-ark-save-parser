@@ -183,6 +183,7 @@ Run standalone Go examples:
 ```sh
 go run ./examples/map_summary /path/to/Valguero_WP.ark
 go run ./examples/object_classes /path/to/Valguero_WP.ark
+go run ./examples/property_filter /path/to/Valguero_WP.ark TamerString Health
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file
