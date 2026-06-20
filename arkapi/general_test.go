@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/binary"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,6 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestGeneralObjectIDsReturnsSaveObjectIDs(t *testing.T) {
@@ -96,13 +94,6 @@ func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, 
 		t.Fatalf("Open() error = %v", err)
 	}
 	return save
-}
-
-func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
-	t.Helper()
-	if _, err := db.Exec(query, args...); err != nil {
-		t.Fatalf("exec %q: %v", query, err)
-	}
 }
 
 func syntheticObjectBytes(classNameID uint32) []byte {
