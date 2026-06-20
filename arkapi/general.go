@@ -35,6 +35,14 @@ func (g *GeneralAPI) Objects() ([]*arkobject.GameObject, error) {
 	return objects, nil
 }
 
+func (g *GeneralAPI) ObjectsWithFaults() ([]*arkobject.GameObject, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := g.save.ParsedObjectsWithFaults(nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	return parsedObjects(infos), faults, nil
+}
+
 func (g *GeneralAPI) Object(id uuid.UUID) (*arkobject.GameObject, error) {
 	return g.save.Object(id)
 }

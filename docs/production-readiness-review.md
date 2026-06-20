@@ -39,9 +39,10 @@ Public verification reported by reviewers:
 - Legacy archive and embedded cryopod paths remain unsupported outside modern
   archive and compact tribute-index formats. This is documented, but it remains
   a blocker for broad upstream parity.
-- Broad save parsing does not yet expose an upstream-style faulty-object policy.
-  Current parsed-object paths can abort on the first object/property parse
-  error instead of collecting faulty objects for caller policy decisions.
+- Broad save parsing now exposes an initial upstream-style faulty-object policy
+  through `arksave.ParsedObjectsWithFaults` and `arkapi.GeneralAPI.ObjectsWithFaults`.
+  More domain APIs still need to adopt this pattern where full-object parsing
+  can encounter unsupported property encodings.
   Addressed after this review for save object parsing by adding
   `ParsedObjectsWithFaults`, which returns parsed objects plus per-object fault
   records while preserving the existing fail-fast `ParsedObjects` behavior.

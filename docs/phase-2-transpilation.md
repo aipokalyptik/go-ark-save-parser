@@ -90,6 +90,8 @@ enough that oracle-derived tests can run against translated packages.
 ### Offline APIs
 
 - [x] Port General API object queries.
+- [x] Add broad General API object parsing with fault collection so callers can
+      keep valid parsed objects while inspecting per-object parse failures.
 - [x] Add archive metadata parser and local `.arkprofile` / `.arktribe` file-open wrappers.
 - [x] Parse modern local archive object properties on a best-effort basis with a
       strict mode for debugging unsupported property encodings.

@@ -112,6 +112,25 @@ func TestGeneralObjectsWithAnyPropertyWithFaultsReportsParseFaults(t *testing.T)
 	}
 }
 
+func TestGeneralObjectsWithFaultsReportsParseFaults(t *testing.T) {
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	objects, faults, err := NewGeneral(save).ObjectsWithFaults()
+	if err != nil {
+		t.Fatalf("ObjectsWithFaults() error = %v", err)
+	}
+	if len(objects) != 1 || objects[0].UUID != uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff") {
+		t.Fatalf("objects = %#v, want one valid object", objects)
+	}
+	if len(faults) != 1 || faults[0].UUID != uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff") || faults[0].Err == nil {
+		t.Fatalf("faults = %#v, want one parse fault", faults)
+	}
+}
+
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
