@@ -15,8 +15,12 @@ func TestEquipmentAPIClassifiesBlueprints(t *testing.T) {
 	api := EquipmentAPI{}
 	for blueprint, want := range map[string]arkobject.EquipmentKind{
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'":                         arkobject.EquipmentWeapon,
+		"Blueprint'/Game/ScorchedEarth/WeaponChainsaw/PrimalItem_ChainSaw.PrimalItem_ChainSaw_C'":                                 arkobject.EquipmentWeapon,
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_Saddle.PrimalItemArmor_Saddle_C'":         arkobject.EquipmentSaddle,
+		"Blueprint'/Game/ASA/Dinos/YiLing/PrimalItemArmor_YiLingSaddle.PrimalItemArmor_YiLingSaddle_C'":                           arkobject.EquipmentSaddle,
+		"Blueprint'/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C'":       arkobject.EquipmentSaddle,
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'":   arkobject.EquipmentArmor,
+		"Blueprint'/Game/ScorchedEarth/Outfits/PrimalItemArmor_DesertClothShirt.PrimalItemArmor_DesertClothShirt_C'":              arkobject.EquipmentArmor,
 		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C'": arkobject.EquipmentShield,
 	} {
 		got := api.KindForBlueprint(blueprint)

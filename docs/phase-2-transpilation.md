@@ -172,6 +172,8 @@ enough that oracle-derived tests can run against translated packages.
       for owner/container correlation.
 - [x] Include equipment owner inventory UUIDs in equipment domain JSON export
       for owner/container correlation.
+- [x] Add upstream canonical equipment class-list coverage for blueprints that
+      do not match broad weapon, saddle, armor, or shield path heuristics.
 - [x] Include base keystone and averaged map coordinates in base domain JSON
       export for upstream base-location example parity.
 - [x] Route structure domain JSON export through the fault-tolerant structure
