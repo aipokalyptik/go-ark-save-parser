@@ -246,6 +246,10 @@ func Header(mapName string, names map[uint32]string) []byte {
 }
 
 func GenericObjectBytes(classNameID uint32, noneNameID uint32) []byte {
+	return ObjectBytesWithProperties(classNameID, noneNameID, nil)
+}
+
+func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties []byte) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -253,6 +257,7 @@ func GenericObjectBytes(classNameID uint32, noneNameID uint32) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	buf.Write(properties)
 	_ = binary.Write(&buf, binary.LittleEndian, noneNameID)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()

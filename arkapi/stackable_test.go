@@ -173,18 +173,10 @@ func syntheticStackableObjectBytes(isBlueprint bool) []byte {
 }
 
 func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, className)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x1000000c, 100)
+	var props bytes.Buffer
+	writeIntProperty(&props, 0x1000000c, 100)
 	if isBlueprint {
-		testfixtures.WriteBoolPropertyID(&buf, 0x1000000d, 0x1000000e, true)
+		testfixtures.WriteBoolPropertyID(&props, 0x1000000d, 0x1000000e, true)
 	}
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	return testfixtures.ObjectBytesWithProperties(className, 0x10000004, props.Bytes())
 }

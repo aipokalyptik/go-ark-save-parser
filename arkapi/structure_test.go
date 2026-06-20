@@ -145,22 +145,12 @@ func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 }
 
 func syntheticStructureObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-
-	testfixtures.WriteIntPropertyID(&buf, 0x10000006, 0x10000003, 123)
-	testfixtures.WriteFloatPropertyID(&buf, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteFloatPropertyID(&buf, 0x10000008, 0x1000000a, 9000)
-	testfixtures.WriteIntPropertyID(&buf, 0x10000009, 0x10000003, 555)
-
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
 
 func truncatedStructureObjectBytes() []byte {
