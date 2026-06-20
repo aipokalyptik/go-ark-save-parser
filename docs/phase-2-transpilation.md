@@ -255,6 +255,8 @@ enough that oracle-derived tests can run against translated packages.
       baby/juvenile/adolescent stage classification.
 - [x] Add typed dino stat ranking and mutation-count helpers for read-only
       equivalents of upstream best-stat and most-mutated-tamed example flows.
+- [x] Add optionized Dino API best-stat selection for upstream class, tame
+      state, stat-list, base/mutated-stat, and level-cap filters.
 - [x] Add structure container lookup by inventory UUID and stackable owner
       filtering/counting through owning structure inventories.
 - [x] Add read-only Structure API lookup by object UUID for upstream

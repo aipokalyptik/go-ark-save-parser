@@ -775,6 +775,53 @@ func TestDinoAPIBestDinoForStatUsesParsedStatusStats(t *testing.T) {
 	}
 }
 
+func TestDinoAPIBestDinoForStatFilteredAppliesUpstreamStyleOptions(t *testing.T) {
+	save := openSyntheticTamedDinoStatsSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	levelUpperBound := int32(12)
+	id, dino, stat, points, ok, err := api.BestDinoForStatFiltered(DinoBestStatOptions{
+		Blueprints:      []string{"Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"},
+		Stats:           []arkobject.DinoStat{arkobject.DinoStatHealth},
+		OnlyTamed:       true,
+		BaseStat:        true,
+		LevelUpperBound: &levelUpperBound,
+	})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFiltered() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("BestDinoForStatFiltered() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || !dino.IsTamed {
+		t.Fatalf("BestDinoForStatFiltered() dino = %s %#v", id, dino)
+	}
+	if stat != arkobject.DinoStatHealth || points != 5 {
+		t.Fatalf("BestDinoForStatFiltered() stat = %v points = %d, want health 5", stat, points)
+	}
+
+	tooLow := int32(11)
+	_, _, _, _, ok, err = api.BestDinoForStatFiltered(DinoBestStatOptions{
+		OnlyTamed:       true,
+		LevelUpperBound: &tooLow,
+	})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFiltered(level cap) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("BestDinoForStatFiltered(level cap) ok = true, want false")
+	}
+
+	_, _, _, _, ok, err = api.BestDinoForStatFiltered(DinoBestStatOptions{OnlyUntamed: true})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFiltered(untamed) error = %v", err)
+	}
+	if ok {
+		t.Fatalf("BestDinoForStatFiltered(untamed) ok = true, want false")
+	}
+}
+
 func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {
 	save := openSyntheticTamedDinoStatsSave(t)
 	defer save.Close()

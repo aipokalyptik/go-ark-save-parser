@@ -32,6 +32,16 @@ type BabyFilterOptions struct {
 	IncludeWild       bool
 }
 
+type DinoBestStatOptions struct {
+	Blueprints      []string
+	Stats           []arkobject.DinoStat
+	OnlyTamed       bool
+	OnlyUntamed     bool
+	BaseStat        bool
+	MutatedStat     bool
+	LevelUpperBound *int32
+}
+
 var nonTameableDinoBlueprints = map[string]struct{}{
 	"/Game/Aberration/Dinos/Basilisk/MegaBasilisk_Character_BP.MegaBasilisk_Character_BP_C":                                         {},
 	"/Game/Aberration/Dinos/ChupaCabra/ChupaCabra_Character_BP_Surface.ChupaCabra_Character_BP_Surface_C":                           {},
@@ -670,28 +680,79 @@ func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, ark
 	if err != nil {
 		return uuid.Nil, arkobject.Dino{}, 0, 0, false, err
 	}
+	id, dino, stat, points, ok := bestDinoForStat(all, nil, scopes...)
+	return id, dino, stat, points, ok, nil
+}
+
+func (d *DinoAPI) BestDinoForStatFiltered(opts DinoBestStatOptions) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
+	tamed := (*bool)(nil)
+	switch {
+	case opts.OnlyTamed && !opts.OnlyUntamed:
+		value := true
+		tamed = &value
+	case opts.OnlyUntamed && !opts.OnlyTamed:
+		value := false
+		tamed = &value
+	}
+	filtered, err := d.Filtered(DinoFilterOptions{
+		MaxLevel:   opts.LevelUpperBound,
+		Blueprints: opts.Blueprints,
+		Tamed:      tamed,
+	})
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, err
+	}
+	scopes := []arkobject.StatScope{arkobject.StatScopeCombined}
+	if opts.BaseStat {
+		scopes = []arkobject.StatScope{arkobject.StatScopeBase}
+	}
+	if opts.MutatedStat {
+		scopes = []arkobject.StatScope{arkobject.StatScopeMutated}
+	}
+	id, dino, stat, points, ok := bestDinoForStat(filtered, opts.Stats, scopes...)
+	return id, dino, stat, points, ok, nil
+}
+
+func bestDinoForStat(dinos map[uuid.UUID]arkobject.Dino, stats []arkobject.DinoStat, scopes ...arkobject.StatScope) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool) {
+	allowedStats := map[arkobject.DinoStat]struct{}{}
+	for _, stat := range stats {
+		allowedStats[stat] = struct{}{}
+	}
 	var bestID uuid.UUID
 	var bestDino arkobject.Dino
 	var bestStat arkobject.DinoStat
 	var bestPoints int32
 	found := false
-	for id, dino := range all {
+	for id, dino := range dinos {
 		if dino.Stats == nil {
 			continue
 		}
-		stat, points, ok := dino.Stats.BestStat(scopes...)
-		if !ok {
-			continue
-		}
-		if !found || points > bestPoints || (points == bestPoints && id.String() < bestID.String()) {
-			bestID = id
-			bestDino = dino
-			bestStat = stat
-			bestPoints = points
-			found = true
+		if len(allowedStats) > 0 {
+			for _, stat := range stats {
+				points := dino.Stats.Points(stat, scopes...)
+				if !found || points > bestPoints || (points == bestPoints && id.String() < bestID.String()) {
+					bestID = id
+					bestDino = dino
+					bestStat = stat
+					bestPoints = points
+					found = true
+				}
+			}
+		} else {
+			stat, points, ok := dino.Stats.BestStat(scopes...)
+			if !ok {
+				continue
+			}
+			if !found || points > bestPoints || (points == bestPoints && id.String() < bestID.String()) {
+				bestID = id
+				bestDino = dino
+				bestStat = stat
+				bestPoints = points
+				found = true
+			}
 		}
 	}
-	return bestID, bestDino, bestStat, bestPoints, found, nil
+	return bestID, bestDino, bestStat, bestPoints, found
 }
 
 func (d *DinoAPI) MostMutatedTamed() (uuid.UUID, arkobject.Dino, int32, bool, error) {

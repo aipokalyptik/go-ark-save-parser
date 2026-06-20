@@ -25,6 +25,8 @@ Go packages without losing oracle parity.
       IDs, parsed player summaries, and parsed tribe detail objects.
 - [x] Add typed dino stat and mutation selection helpers for best-stat and
       most-mutated-tamed read-only workflows.
+- [x] Expand typed dino best-stat selection with class, tame-state, stat-list,
+      scope, and level-cap options.
 - [x] Add typed structure inventory-container lookup and stackable owner filter
       helpers for upstream owner-count example flows.
 - [x] Add typed equipment owner filter helpers through structure inventory
