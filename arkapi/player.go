@@ -197,6 +197,23 @@ func (p *PlayerAPI) PlayerWithMostDeaths() (arkobject.Player, int32, bool, error
 	return best, best.NumDeaths, true, nil
 }
 
+func (p *PlayerAPI) PlayerWithFewestDeaths() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.NumDeaths < best.NumDeaths {
+			best = player
+		}
+	}
+	return best, best.NumDeaths, true, nil
+}
+
 func (p *PlayerAPI) LevelsByPlayerID() (map[uint64]int32, error) {
 	players, err := p.Players()
 	if err != nil {
@@ -304,6 +321,23 @@ func (p *PlayerAPI) PlayerWithHighestLevel() (arkobject.Player, int32, bool, err
 	return best, best.Level, true, nil
 }
 
+func (p *PlayerAPI) PlayerWithLowestLevel() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.Level < best.Level {
+			best = player
+		}
+	}
+	return best, best.Level, true, nil
+}
+
 func (p *PlayerAPI) PlayerWithHighestExperience() (arkobject.Player, float64, bool, error) {
 	players, err := p.Players()
 	if err != nil {
@@ -315,6 +349,23 @@ func (p *PlayerAPI) PlayerWithHighestExperience() (arkobject.Player, float64, bo
 	best := players[0]
 	for _, player := range players[1:] {
 		if player.Experience > best.Experience {
+			best = player
+		}
+	}
+	return best, best.Experience, true, nil
+}
+
+func (p *PlayerAPI) PlayerWithLowestExperience() (arkobject.Player, float64, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.Experience < best.Experience {
 			best = player
 		}
 	}

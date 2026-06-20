@@ -376,6 +376,13 @@ func TestPlayerAPILocalDeathStatistics(t *testing.T) {
 	if !ok || player.PlayerDataID != 43 || deathsValue != 7 {
 		t.Fatalf("PlayerWithMostDeaths() = %#v, %d, %v; want player 43, 7, true", player, deathsValue, ok)
 	}
+	player, deathsValue, ok, err = api.PlayerWithFewestDeaths()
+	if err != nil {
+		t.Fatalf("PlayerWithFewestDeaths() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 42 || deathsValue != 3 {
+		t.Fatalf("PlayerWithFewestDeaths() = %#v, %d, %v; want player 42, 3, true", player, deathsValue, ok)
+	}
 }
 
 func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
@@ -459,12 +466,26 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	if !ok || player.PlayerDataID != 43 || level != 10 {
 		t.Fatalf("PlayerWithHighestLevel() = %#v, %d, %v; want player 43, level 10, true", player, level, ok)
 	}
+	player, level, ok, err = api.PlayerWithLowestLevel()
+	if err != nil {
+		t.Fatalf("PlayerWithLowestLevel() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 42 || level != 5 {
+		t.Fatalf("PlayerWithLowestLevel() = %#v, %d, %v; want player 42, level 5, true", player, level, ok)
+	}
 	player, experience, ok, err := api.PlayerWithHighestExperience()
 	if err != nil {
 		t.Fatalf("PlayerWithHighestExperience() error = %v", err)
 	}
 	if !ok || player.PlayerDataID != 43 || experience != 456.25 {
 		t.Fatalf("PlayerWithHighestExperience() = %#v, %f, %v; want player 43, XP 456.25, true", player, experience, ok)
+	}
+	player, experience, ok, err = api.PlayerWithLowestExperience()
+	if err != nil {
+		t.Fatalf("PlayerWithLowestExperience() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 42 || experience != 123.5 {
+		t.Fatalf("PlayerWithLowestExperience() = %#v, %f, %v; want player 42, XP 123.5, true", player, experience, ok)
 	}
 	player, points, ok, err := api.PlayerWithMostEngramPoints()
 	if err != nil {
