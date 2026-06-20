@@ -258,6 +258,33 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         want = {key: py_dino_filter[key] for key in ("dinos", "tamed", "wild", "classes")}
         cases.append(CaseResult("dino_filter", "pass" if {key: got.get(key) for key in want} == want else "fail", "dino aggregate counts compared"))
 
+    domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
+    go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)
+    private["go"]["domain_json_dinos"] = {
+        "exit_code": go_domain_dinos.returncode,
+        "stdout": go_domain_dinos.stdout,
+        "stderr": go_domain_dinos.stderr,
+        "output": str(domain_dinos_path),
+    }
+    if go_domain_dinos.returncode != 0:
+        cases.append(CaseResult("domain_json_dinos", "fail", "Go CLI exited non-zero"))
+    else:
+        try:
+            got_export = json.loads(domain_dinos_path.read_text(encoding="utf-8"))
+            items = got_export.get("items", [])
+            got = {
+                "dinos": got_export.get("count"),
+                "tamed": sum(1 for item in items if item.get("is_tamed")),
+                "wild": sum(1 for item in items if not item.get("is_tamed")),
+                "classes": len({item.get("blueprint") for item in items}),
+            }
+            private["go"]["domain_json_dinos"]["parsed"] = got
+            want = {key: py_dino_filter[key] for key in ("dinos", "tamed", "wild", "classes")}
+            cases.append(CaseResult("domain_json_dinos", "pass" if got == want else "fail", "dino domain JSON aggregate counts compared"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["domain_json_dinos"]["parse_error"] = str(exc)
+            cases.append(CaseResult("domain_json_dinos", "fail", "Go dino domain JSON could not be parsed"))
+
     if py_cluster_data is None:
         cases.append(CaseResult("cluster_json", "skip", "no upstream local cluster fixture found"))
     else:
