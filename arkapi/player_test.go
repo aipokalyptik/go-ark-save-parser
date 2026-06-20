@@ -417,6 +417,27 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	if xp[42] != 123.5 || xp[43] != 456.25 {
 		t.Fatalf("ExperienceByPlayerID() = %#v, want profile XP values", xp)
 	}
+	totalExperience, err := api.TotalExperience()
+	if err != nil {
+		t.Fatalf("TotalExperience() error = %v", err)
+	}
+	if totalExperience != 579.75 {
+		t.Fatalf("TotalExperience() = %f, want 579.75", totalExperience)
+	}
+	averageExperience, ok, err := api.AverageExperience()
+	if err != nil {
+		t.Fatalf("AverageExperience() error = %v", err)
+	}
+	if !ok || averageExperience != 289.875 {
+		t.Fatalf("AverageExperience() = %f, %v; want 289.875, true", averageExperience, ok)
+	}
+	averageLevel, ok, err := api.AverageLevel()
+	if err != nil {
+		t.Fatalf("AverageLevel() error = %v", err)
+	}
+	if !ok || averageLevel != 7.5 {
+		t.Fatalf("AverageLevel() = %f, %v; want 7.5, true", averageLevel, ok)
+	}
 	engramPoints, err := api.EngramPointsByPlayerID()
 	if err != nil {
 		t.Fatalf("EngramPointsByPlayerID() error = %v", err)

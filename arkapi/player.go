@@ -221,6 +221,48 @@ func (p *PlayerAPI) ExperienceByPlayerID() (map[uint64]float64, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) TotalExperience() (float64, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, err
+	}
+	var total float64
+	for _, player := range players {
+		total += player.Experience
+	}
+	return total, nil
+}
+
+func (p *PlayerAPI) AverageExperience() (float64, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, false, err
+	}
+	if len(players) == 0 {
+		return 0, false, nil
+	}
+	var total float64
+	for _, player := range players {
+		total += player.Experience
+	}
+	return total / float64(len(players)), true, nil
+}
+
+func (p *PlayerAPI) AverageLevel() (float64, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, false, err
+	}
+	if len(players) == 0 {
+		return 0, false, nil
+	}
+	var total int32
+	for _, player := range players {
+		total += player.Level
+	}
+	return float64(total) / float64(len(players)), true, nil
+}
+
 func (p *PlayerAPI) EngramPointsByPlayerID() (map[uint64]int32, error) {
 	players, err := p.Players()
 	if err != nil {
