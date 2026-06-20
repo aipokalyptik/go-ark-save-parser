@@ -76,26 +76,11 @@ func TestOpenLoadsLocalTributeFile(t *testing.T) {
 
 func TestOpenRejectsLocalTributeFileAboveConfiguredLimit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
-	writeSparseFile(t, path, 1024)
+	testfixtures.WriteSparseFile(t, path, 1024)
 
 	_, err := OpenWithOptions(path, Options{MaxFileSize: 16})
 	if !errors.Is(err, safefile.ErrFileTooLarge) {
 		t.Fatalf("OpenWithOptions() error = %v, want ErrFileTooLarge", err)
-	}
-}
-
-func writeSparseFile(t *testing.T, path string, size int64) {
-	t.Helper()
-	file, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("create sparse file: %v", err)
-	}
-	if err := file.Truncate(size); err != nil {
-		_ = file.Close()
-		t.Fatalf("truncate sparse file: %v", err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatalf("close sparse file: %v", err)
 	}
 }
 

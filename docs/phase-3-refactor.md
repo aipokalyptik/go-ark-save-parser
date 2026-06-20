@@ -30,10 +30,10 @@ Go packages without losing oracle parity.
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive
       payloads, compact local tribute indexes, and shared
-      header/string/property encoding for examples, CLI tests, `arkprofile`,
-      `arkapi`, `arkarchive`, `arkcluster`, `arktribute`, and benchmarks;
-      lower-level domain-specific parser fixtures still need incremental
-      migration.
+      sparse-file/max-size fixtures plus header/string/property encoding for
+      examples, CLI tests, `arkprofile`, `arkapi`, `arkarchive`, `arkcluster`,
+      `arktribute`, and benchmarks; lower-level domain-specific parser fixtures
+      still need incremental migration.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
 - [x] Expand `cmd/arksave` commands beyond `inspect`/`parse` with local

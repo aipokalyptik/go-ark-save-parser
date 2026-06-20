@@ -183,6 +183,21 @@ func WriteTributeFile(tb testing.TB, path string, playerIDs []uint64, tribeIDs [
 	writeFile(tb, path, TributeBytes(tb, playerIDs, tribeIDs), "tribute fixture")
 }
 
+func WriteSparseFile(tb testing.TB, path string, size int64) {
+	tb.Helper()
+	file, err := os.Create(path)
+	if err != nil {
+		tb.Fatalf("create sparse file: %v", err)
+	}
+	if err := file.Truncate(size); err != nil {
+		_ = file.Close()
+		tb.Fatalf("truncate sparse file: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		tb.Fatalf("close sparse file: %v", err)
+	}
+}
+
 func TributeBytes(tb testing.TB, playerIDs []uint64, tribeIDs []uint64) []byte {
 	tb.Helper()
 	var buf bytes.Buffer

@@ -61,7 +61,7 @@ func TestOpenPlayerProfileExposesPropertyErrors(t *testing.T) {
 
 func TestOpenPlayerProfileRejectsArchiveAboveConfiguredLimit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
-	writeSparseFile(t, path, 1024)
+	testfixtures.WriteSparseFile(t, path, 1024)
 
 	_, err := OpenPlayerProfileWithOptions(path, Options{MaxFileSize: 16})
 	if !errors.Is(err, safefile.ErrFileTooLarge) {
@@ -97,7 +97,7 @@ func TestOpenTribeSaveExposesPropertyErrors(t *testing.T) {
 
 func TestOpenTribeSaveRejectsArchiveAboveConfiguredLimit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
-	writeSparseFile(t, path, 1024)
+	testfixtures.WriteSparseFile(t, path, 1024)
 
 	_, err := OpenTribeSaveWithOptions(path, Options{MaxFileSize: 16})
 	if !errors.Is(err, safefile.ErrFileTooLarge) {
@@ -161,21 +161,6 @@ func TestOpenTribeSaveTribeUsesParsedArchiveProperties(t *testing.T) {
 	}
 	if tribe.Name != "Porters" || tribe.TribeID != 12345 || tribe.OwnerID != 42 || tribe.NumDinos != 7 {
 		t.Fatalf("Tribe() = %#v, want parsed tribe details", tribe)
-	}
-}
-
-func writeSparseFile(t *testing.T, path string, size int64) {
-	t.Helper()
-	file, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("create sparse file: %v", err)
-	}
-	if err := file.Truncate(size); err != nil {
-		_ = file.Close()
-		t.Fatalf("truncate sparse file: %v", err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatalf("close sparse file: %v", err)
 	}
 }
 
