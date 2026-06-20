@@ -31,6 +31,69 @@ type BabyFilterOptions struct {
 	IncludeWild       bool
 }
 
+var nonTameableDinoBlueprints = map[string]struct{}{
+	"/Game/Aberration/Dinos/Basilisk/MegaBasilisk_Character_BP.MegaBasilisk_Character_BP_C":                                         {},
+	"/Game/Aberration/Dinos/ChupaCabra/ChupaCabra_Character_BP_Surface.ChupaCabra_Character_BP_Surface_C":                           {},
+	"/Game/Aberration/Dinos/Crab/MegaCrab_Character_BP.MegaCrab_Character_BP_C":                                                     {},
+	"/Game/Aberration/Dinos/Lamprey/Lamprey_Character.Lamprey_Character_C":                                                          {},
+	"/Game/Aberration/Dinos/Lightbug/Lightbug_Character_BaseBP.Lightbug_Character_BaseBP_C":                                         {},
+	"/Game/Aberration/Dinos/Nameless/MegaXenomorph_Character_BP_Male_Surface.MegaXenomorph_Character_BP_Male_Surface_C":             {},
+	"/Game/Aberration/Dinos/Nameless/Xenomorph_Character_BP_Male_Surface.Xenomorph_Character_BP_Male_Surface_C":                     {},
+	"/Game/ASA/Dinos/Iceworm/Iceworm_Character_Minion_BP_smaller.Iceworm_Character_Minion_BP_smaller_C":                             {},
+	"/Game/Extinction/Dinos/Corrupt/Arthropluera/Arthro_Character_BP_Corrupt.Arthro_Character_BP_Corrupt_C":                         {},
+	"/Game/Extinction/Dinos/Corrupt/Carno/Carno_Character_BP_Corrupt.Carno_Character_BP_Corrupt_C":                                  {},
+	"/Game/Extinction/Dinos/Corrupt/Chalicotherium/Chalico_Character_BP_Corrupt.Chalico_Character_BP_Corrupt_C":                     {},
+	"/Game/Extinction/Dinos/Corrupt/Dilo/Dilo_Character_BP_Corrupt.Dilo_Character_BP_Corrupt_C":                                     {},
+	"/Game/Extinction/Dinos/Corrupt/Giganotosaurus/Gigant_Character_BP_Corrupt.Gigant_Character_BP_Corrupt_C":                       {},
+	"/Game/Extinction/Dinos/Corrupt/Nameless/Xenomorph_Character_BP_Male_Tamed_Corrupt.Xenomorph_Character_BP_Male_Tamed_Corrupt_C": {},
+	"/Game/Extinction/Dinos/Corrupt/Paraceratherium/Paracer_Character_BP_Corrupt.Paracer_Character_BP_Corrupt_C":                    {},
+	"/Game/Extinction/Dinos/Corrupt/Ptero/Ptero_Character_BP_Corrupt.Ptero_Character_BP_Corrupt_C":                                  {},
+	"/Game/Extinction/Dinos/Corrupt/Raptor/Raptor_Character_BP_Corrupt.Raptor_Character_BP_Corrupt_C":                               {},
+	"/Game/Extinction/Dinos/Corrupt/Rex/MegaRex_Character_BP_Corrupt.MegaRex_Character_BP_Corrupt_C":                                {},
+	"/Game/Extinction/Dinos/Corrupt/Rex/Rex_Character_BP_Corrupt.Rex_Character_BP_Corrupt_C":                                        {},
+	"/Game/Extinction/Dinos/Corrupt/RockDrake/RockDrake_Character_BP_Corrupt.RockDrake_Character_BP_Corrupt_C":                      {},
+	"/Game/Extinction/Dinos/Corrupt/Spino/Spino_Character_BP_Corrupt.Spino_Character_BP_Corrupt_C":                                  {},
+	"/Game/Extinction/Dinos/Corrupt/Stego/Stego_Character_BP_Corrupt.Stego_Character_BP_Corrupt_C":                                  {},
+	"/Game/Extinction/Dinos/Corrupt/Trike/Trike_Character_BP_Corrupt.Trike_Character_BP_Corrupt_C":                                  {},
+	"/Game/Extinction/Dinos/Corrupt/Wyvern/Wyvern_Character_BP_Fire_Corrupt.Wyvern_Character_BP_Fire_Corrupt_C":                     {},
+	"/Game/Extinction/Dinos/Enforcer/Enforcer_Character_BP.Enforcer_Character_BP_C":                                                 {},
+	"/Game/Extinction/Dinos/Scout/Scout_Character_BP.Scout_Character_BP_C":                                                          {},
+	"/Game/Extinction/Dinos/Tank/Defender_Character_BP.Defender_Character_BP_C":                                                     {},
+	"/Game/LostColony/Dinos/Zombie/MegaZombie_Character_BP_Hulking.MegaZombie_Character_BP_Hulking_C":                               {},
+	"/Game/PrimalEarth/Dinos/Ant/Ant_Character_BP.Ant_Character_BP_C":                                                               {},
+	"/Game/PrimalEarth/Dinos/Ant/FlyingAnt_Character_BP.FlyingAnt_Character_BP_C":                                                   {},
+	"/Game/PrimalEarth/Dinos/Bigfoot/Yeti_Character_BP.Yeti_Character_BP_C":                                                         {},
+	"/Game/PrimalEarth/Dinos/Carno/MegaCarno_Character_BP.MegaCarno_Character_BP_C":                                                 {},
+	"/Game/PrimalEarth/Dinos/Cnidaria/Cnidaria_Character_BP.Cnidaria_Character_BP_C":                                                {},
+	"/Game/PrimalEarth/Dinos/Coelacanth/Coel_Character_BP.Coel_Character_BP_C":                                                      {},
+	"/Game/PrimalEarth/Dinos/Coelacanth/Coel_Character_BP_Ocean.Coel_Character_BP_Ocean_C":                                          {},
+	"/Game/PrimalEarth/Dinos/Direbear/Direbear_Character_Polar.Direbear_Character_Polar_C":                                          {},
+	"/Game/PrimalEarth/Dinos/DodoRex/DodoRex_Character_BP.DodoRex_Character_BP_C":                                                   {},
+	"/Game/PrimalEarth/Dinos/Dragonfly/Dragonfly_Character_BP.Dragonfly_Character_BP_C":                                             {},
+	"/Game/PrimalEarth/Dinos/Giganotosaurus/BionicGigant_Character_BP.BionicGigant_Character_BP_C":                                  {},
+	"/Game/PrimalEarth/Dinos/Leech/Leech_Character.Leech_Character_C":                                                               {},
+	"/Game/PrimalEarth/Dinos/Leech/Leech_Character_Diseased.Leech_Character_Diseased_C":                                             {},
+	"/Game/PrimalEarth/Dinos/Leedsichthys/Alpha_Leedsichthys_Character_BP.Alpha_Leedsichthys_Character_BP_C":                        {},
+	"/Game/PrimalEarth/Dinos/Leedsichthys/Leedsichthys_Character_BP.Leedsichthys_Character_BP_C":                                    {},
+	"/Game/PrimalEarth/Dinos/Megalodon/MEgaMegalodon_Character_BP.MegaMegalodon_Character_BP_C":                                     {},
+	"/Game/PrimalEarth/Dinos/Mosasaurus/Mosa_Character_BP_Mega.Mosa_Character_BP_Mega_C":                                            {},
+	"/Game/PrimalEarth/Dinos/Piranha/Piranha_Character_BP.Piranha_Character_BP_C":                                                   {},
+	"/Game/PrimalEarth/Dinos/Raptor/MegaRaptor_Character_BP.MegaRaptor_Character_BP_C":                                              {},
+	"/Game/PrimalEarth/Dinos/Rex/MegaRex_Character_BP.MegaRex_Character_BP_C":                                                       {},
+	"/Game/PrimalEarth/Dinos/Salmon/Salmon_Character_BP.Salmon_Character_BP_C":                                                      {},
+	"/Game/PrimalEarth/Dinos/Trilobite/Trilobite_Character.Trilobite_Character_C":                                                   {},
+	"/Game/PrimalEarth/Dinos/Tusoteuthis/Mega_Tusoteuthis_Character_BP.Mega_Tusoteuthis_Character_BP_C":                             {},
+	"/Game/ScorchedEarth/Dinos/DeathWorm/DeathWorm_Character_BP.Deathworm_Character_BP_C":                                           {},
+	"/Game/ScorchedEarth/Dinos/Deathworm/MegaDeathworm_Character_BP.MegaDeathworm_Character_BP_C":                                   {},
+	"/Game/ScorchedEarth/Dinos/DodoWyvern/DodoWyvern_Character_BP.DodoWyvern_Character_BP_C":                                        {},
+	"/Game/ScorchedEarth/Dinos/Jugbug/Jugbug_Oil_Character_BP.Jugbug_Oil_Character_BP_C":                                            {},
+	"/Game/ScorchedEarth/Dinos/Jugbug/Jugbug_Water_Character_BP.Jugbug_Water_Character_BP_C":                                        {},
+	"/Game/ScorchedEarth/Dinos/Wyvern/MegaWyvern_Character_BP_Fire.MegaWyvern_Character_BP_Fire_C":                                  {},
+	"/PA_Ascension/Dinos/PaleoRaptor/Alpha/Paleo_AlphaRaptor_Character_BP.Paleo_AlphaRaptor_Character_BP_C":                         {},
+	"/PA_EVO_Pack_01/Dinos/EVO_Rex/Alpha/EVO_Alpha_Rex_Character_BP.EVO_Alpha_Rex_Character_BP_C":                                   {},
+	"/PA_EVO_Pack_02/Dinos/EVO_Mosa/Alpha/EVO_Alpha_Mosa_Character_BP.EVO_Alpha_Mosa_Character_BP_C":                                {},
+}
+
 func NewDino(save *arksave.Save) *DinoAPI {
 	return &DinoAPI{save: save}
 }
@@ -216,6 +279,33 @@ func (d *DinoAPI) Wild() (map[uuid.UUID]arkobject.Dino, error) {
 		}
 	}
 	return out, nil
+}
+
+func (d *DinoAPI) WildTamable() (map[uuid.UUID]arkobject.Dino, error) {
+	wild, err := d.Wild()
+	if err != nil {
+		return nil, err
+	}
+	return d.FilterWildTamable(wild), nil
+}
+
+func (d *DinoAPI) FilterWildTamable(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range dinos {
+		if dino.IsTamed {
+			continue
+		}
+		if d.IsNonTameableDino(dino.Blueprint) {
+			continue
+		}
+		out[id] = dino
+	}
+	return out
+}
+
+func (d *DinoAPI) IsNonTameableDino(blueprint string) bool {
+	_, ok := nonTameableDinoBlueprints[canonicalBlueprintPath(blueprint)]
+	return ok
 }
 
 func (d *DinoAPI) Babies() (map[uuid.UUID]arkobject.Dino, error) {

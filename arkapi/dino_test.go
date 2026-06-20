@@ -417,6 +417,39 @@ func TestDinoAPIWildTamedFiltersTamedDinosWithoutAncestors(t *testing.T) {
 	}
 }
 
+func TestDinoAPIFilterWildTamableDropsKnownNonTameableClasses(t *testing.T) {
+	api := DinoAPI{}
+	raptorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	dragonflyID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	tamedID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	dinos := map[uuid.UUID]arkobject.Dino{
+		raptorID: {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+		},
+		dragonflyID: {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Dragonfly/Dragonfly_Character_BP.Dragonfly_Character_BP_C'",
+		},
+		tamedID: {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			IsTamed:   true,
+		},
+	}
+
+	tamables := api.FilterWildTamable(dinos)
+	if len(tamables) != 1 {
+		t.Fatalf("FilterWildTamable() length = %d, want 1", len(tamables))
+	}
+	if _, ok := tamables[raptorID]; !ok {
+		t.Fatalf("FilterWildTamable() missing wild tameable raptor: %#v", tamables)
+	}
+	if api.IsNonTameableDino("Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'") {
+		t.Fatalf("IsNonTameableDino(raptor) = true, want false")
+	}
+	if !api.IsNonTameableDino("Blueprint'/Game/PrimalEarth/Dinos/Dragonfly/Dragonfly_Character_BP.Dragonfly_Character_BP_C'") {
+		t.Fatalf("IsNonTameableDino(dragonfly) = false, want true")
+	}
+}
+
 func TestDinoAPIContainerOfInventoryFindsInventoryBearingDino(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()
