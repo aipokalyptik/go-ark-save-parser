@@ -20,19 +20,20 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	dinos, err := api.All()
+	dinos, _, err := api.AllWithFaults()
 	if err != nil {
 		log.Fatal(err)
 	}
-	tamed, err := api.Tamed()
-	if err != nil {
-		log.Fatal(err)
-	}
-	wild, err := api.Wild()
-	if err != nil {
-		log.Fatal(err)
+	tamed := 0
+	wild := 0
+	for _, dino := range dinos {
+		if dino.IsTamed {
+			tamed++
+		} else {
+			wild++
+		}
 	}
 	classes := api.CountByClass(dinos)
 
-	fmt.Printf("dinos=%d tamed=%d wild=%d classes=%d\n", len(dinos), len(tamed), len(wild), len(classes))
+	fmt.Printf("dinos=%d tamed=%d wild=%d classes=%d\n", len(dinos), tamed, wild, len(classes))
 }

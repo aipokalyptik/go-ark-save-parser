@@ -120,6 +120,27 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
         save.close()
 
 
+def python_dino_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.object_model.dinos.tamed_dino import TamedDino  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        dino_api = DinoApi(save)
+        dinos = dino_api.get_all(include_cryos=False, max_workers=1, bypass_inventory=True)
+        tamed = sum(isinstance(dino, TamedDino) for dino in dinos.values())
+        return {
+            "dinos": len(dinos),
+            "tamed": tamed,
+            "wild": len(dinos) - tamed,
+            "classes": len({dino.object.blueprint for dino in dinos.values()}),
+        }
+    finally:
+        save.close()
+
+
 def python_cluster_data_oracle(upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData  # type: ignore
@@ -143,11 +164,13 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     env.setdefault("PYTHONWARNINGS", "ignore")
     py = python_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
+    py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     private: dict[str, Any] = {
         "save_path": str(save_path),
         "python": py,
         "python_local_profiles": py_local_profiles,
+        "python_dino_filter": py_dino_filter,
         "python_cluster_data": py_cluster_data,
         "go": {},
     }
@@ -220,6 +243,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["local_profiles"]["parsed"] = got
         want = {key: py_local_profiles[key] for key in ("profiles", "tribes", "clusters", "tributes", "parsed_players", "parsed_tribes", "tribe_player_links")}
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
+
+    go_dino_filter = run(["go", "run", "./examples/dino_filter", str(save_path)], repo_root, env)
+    private["go"]["dino_filter"] = {
+        "exit_code": go_dino_filter.returncode,
+        "stdout": go_dino_filter.stdout,
+        "stderr": go_dino_filter.stderr,
+    }
+    if go_dino_filter.returncode != 0:
+        cases.append(CaseResult("dino_filter", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_dino_filter.stdout)
+        private["go"]["dino_filter"]["parsed"] = got
+        want = {key: py_dino_filter[key] for key in ("dinos", "tamed", "wild", "classes")}
+        cases.append(CaseResult("dino_filter", "pass" if {key: got.get(key) for key in want} == want else "fail", "dino aggregate counts compared"))
 
     if py_cluster_data is None:
         cases.append(CaseResult("cluster_json", "skip", "no upstream local cluster fixture found"))

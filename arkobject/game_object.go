@@ -56,7 +56,7 @@ func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections
 	}
 	names := make([]string, 0, nameCount)
 	for i := int32(0); i < nameCount; i++ {
-		name, err := r.ReadName("")
+		name, err := readObjectLocalName(r)
 		if err != nil {
 			return nil, err
 		}
@@ -90,4 +90,23 @@ func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections
 		Unknown:    unknown,
 		Properties: props,
 	}, nil
+}
+
+func readObjectLocalName(r *arkbinary.Reader) (string, error) {
+	pos := r.Position()
+	name, err := r.ReadName("")
+	if err == nil {
+		return name, nil
+	}
+	if setErr := r.SetPosition(pos); setErr != nil {
+		return "", err
+	}
+	value, stringErr := r.ReadString()
+	if stringErr != nil {
+		return "", err
+	}
+	if value == nil {
+		return "", nil
+	}
+	return *value, nil
 }
