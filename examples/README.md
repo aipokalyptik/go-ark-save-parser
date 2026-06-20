@@ -28,6 +28,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `dino_filter`: parse local dino objects, run basic tamed/wild/cryopodded
   filters, and print aggregate class counts. Pass `--no-cryos` before the save
   path when comparing against no-cryopod oracle data.
+- `dino_best_stat`: find the dino with the highest parsed stat points, or print
+  `no_match` when no stat-bearing dino status components are present.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
 - `equipment_summary`: parse local equipment items and print aggregate counts

@@ -83,6 +83,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "property_filter", "objects=7 classes=7", savePath, "None")
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", savePath)
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", "--no-cryos", savePath)
+	runExample(t, "dino_best_stat", "no_match", savePath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
 	runExample(t, "equipment_summary", "items=1 weapons=1 armor=0 saddles=0 cryopod_saddles=0 shields=0", savePath)
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
