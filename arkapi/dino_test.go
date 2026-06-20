@@ -469,6 +469,46 @@ func TestDinoAPIFiltersByLevelAndStats(t *testing.T) {
 	}
 }
 
+func TestDinoAPILevelHelpersFilterByTamedState(t *testing.T) {
+	wildSave := openSyntheticDinoStatsSave(t)
+	defer wildSave.Close()
+
+	wildAPI := NewDino(wildSave)
+	wild, err := wildAPI.WildLevelAtLeast(12)
+	if err != nil {
+		t.Fatalf("WildLevelAtLeast() error = %v", err)
+	}
+	if len(wild) != 1 {
+		t.Fatalf("WildLevelAtLeast() length = %d, want 1", len(wild))
+	}
+	tamedFromWildSave, err := wildAPI.TamedLevelAtLeast(12)
+	if err != nil {
+		t.Fatalf("TamedLevelAtLeast(wild save) error = %v", err)
+	}
+	if len(tamedFromWildSave) != 0 {
+		t.Fatalf("TamedLevelAtLeast(wild save) length = %d, want 0", len(tamedFromWildSave))
+	}
+
+	tamedSave := openSyntheticTamedDinoStatsSave(t)
+	defer tamedSave.Close()
+
+	tamedAPI := NewDino(tamedSave)
+	tamed, err := tamedAPI.TamedLevelAtLeast(12)
+	if err != nil {
+		t.Fatalf("TamedLevelAtLeast() error = %v", err)
+	}
+	if len(tamed) != 1 {
+		t.Fatalf("TamedLevelAtLeast() length = %d, want 1", len(tamed))
+	}
+	wildFromTamedSave, err := tamedAPI.WildLevelAtLeast(12)
+	if err != nil {
+		t.Fatalf("WildLevelAtLeast(tamed save) error = %v", err)
+	}
+	if len(wildFromTamedSave) != 0 {
+		t.Fatalf("WildLevelAtLeast(tamed save) length = %d, want 0", len(wildFromTamedSave))
+	}
+}
+
 func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()

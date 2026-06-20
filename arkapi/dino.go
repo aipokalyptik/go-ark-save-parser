@@ -266,6 +266,34 @@ func (d *DinoAPI) LevelAtLeast(level int32) (map[uuid.UUID]arkobject.Dino, error
 	})
 }
 
+func (d *DinoAPI) WildLevelAtLeast(level int32) (map[uuid.UUID]arkobject.Dino, error) {
+	byLevel, err := d.LevelAtLeast(level)
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range byLevel {
+		if !dino.IsTamed {
+			out[id] = dino
+		}
+	}
+	return out, nil
+}
+
+func (d *DinoAPI) TamedLevelAtLeast(level int32) (map[uuid.UUID]arkobject.Dino, error) {
+	byLevel, err := d.LevelAtLeast(level)
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range byLevel {
+		if dino.IsTamed {
+			out[id] = dino
+		}
+	}
+	return out, nil
+}
+
 func (d *DinoAPI) WithStatAtLeast(value int32, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
 	return d.withStatAtLeast(value, arkobject.StatScopeCombined, stats...)
 }
