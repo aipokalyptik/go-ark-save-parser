@@ -67,7 +67,9 @@ Public verification reported by reviewers:
   documenting that example output is unredacted and pointing users to
   `arksave --redact` for safer aggregate output.
 - Legacy/unsupported archive behavior is documented, but user-facing CLI/API
-  error behavior should be made more explicit and tested.
+  error behavior should be made more explicit and tested. Partially addressed
+  after this review by printing aggregate property parse-error counts in CLI
+  archive summaries.
 
 ## Next Actions
 

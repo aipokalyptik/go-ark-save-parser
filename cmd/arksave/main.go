@@ -414,7 +414,7 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 }
 
 func printArchiveSummary(out io.Writer, label string, path string, version int32, objects []arkarchive.Object, opts runOptions) error {
-	if _, err := fmt.Fprintf(out, "%s: %s\nArchive version: %d\nObjects: %d\n", label, displayString(path, opts), version, len(objects)); err != nil {
+	if _, err := fmt.Fprintf(out, "%s: %s\nArchive version: %d\nObjects: %d\nProperty parse errors: %d\n", label, displayString(path, opts), version, len(objects), archivePropertyErrorCount(objects)); err != nil {
 		return err
 	}
 	if len(objects) == 0 || opts.Redact {
@@ -429,6 +429,16 @@ func printArchiveSummary(out io.Writer, label string, path string, version int32
 		}
 	}
 	return nil
+}
+
+func archivePropertyErrorCount(objects []arkarchive.Object) int {
+	var count int
+	for _, object := range objects {
+		if object.PropertyError != nil {
+			count++
+		}
+	}
+	return count
 }
 
 func printTributeSummary(out io.Writer, data *arktribute.Data, opts runOptions) error {

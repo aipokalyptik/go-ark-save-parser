@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
@@ -55,6 +57,21 @@ func TestRunRejectsUnknownOption(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unknown option") {
 		t.Fatalf("run(unknown option) error = %v, want unknown option message", err)
+	}
+}
+
+func TestArchiveSummaryPrintsPropertyErrorCount(t *testing.T) {
+	var out bytes.Buffer
+	err := printArchiveSummary(&out, "Archive", "/tmp/profile.arkprofile", 7, []arkarchive.Object{
+		{ClassName: "/Game/Valid.Valid_C"},
+		{ClassName: "/Game/Broken.Broken_C", PropertyError: errors.New("bad property")},
+	}, runOptions{})
+	if err != nil {
+		t.Fatalf("printArchiveSummary() error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "Property parse errors: 1") {
+		t.Fatalf("archive summary %q does not contain property error count", got)
 	}
 }
 
