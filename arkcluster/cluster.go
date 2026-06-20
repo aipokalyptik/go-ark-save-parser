@@ -47,6 +47,7 @@ type Dino struct {
 	Version    float64
 	UploadTime float64
 	RawSize    int
+	ParseError string
 	Archive    *arkarchive.Archive
 	Properties arkproperty.Container
 }
@@ -226,6 +227,8 @@ func parseDinos(raw any) ([]Dino, error) {
 			archive, err := arkarchive.Parse(rawData, arkarchive.Options{FromStore: false, ClusterDino: true, Format: arkarchive.FormatClusterDino})
 			if err == nil {
 				dino.Archive = archive
+			} else {
+				dino.ParseError = err.Error()
 			}
 		}
 		dinos = append(dinos, dino)

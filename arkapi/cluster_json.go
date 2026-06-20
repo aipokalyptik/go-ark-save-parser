@@ -31,6 +31,7 @@ type ClusterDinoInfo struct {
 	UploadTime  float64 `json:"upload_time"`
 	RawSize     int     `json:"raw_size"`
 	ObjectCount int     `json:"object_count"`
+	ParseError  string  `json:"parse_error,omitempty"`
 }
 
 func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
@@ -66,6 +67,7 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			UploadTime:  dino.UploadTime,
 			RawSize:     dino.RawSize,
 			ObjectCount: objectCount,
+			ParseError:  dino.ParseError,
 		})
 	}
 	return info

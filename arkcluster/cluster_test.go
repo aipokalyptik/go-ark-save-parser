@@ -113,6 +113,43 @@ func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	}
 }
 
+func TestOpenRecordsLocalClusterDinoArchiveParseErrors(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	var dino bytes.Buffer
+	writeDoubleProperty(&dino, "Version", 7)
+	writeDoubleProperty(&dino, "UploadTime", 12345)
+	writeByteArrayProperty(&dino, "DinoData", []byte("not an archive"))
+	writeArkString(&dino, "None")
+
+	var payload bytes.Buffer
+	writeStructArrayProperty(&payload, "ArkTamedDinosData", "ArkTributeDinoData", [][]byte{dino.Bytes()})
+	writeArkString(&payload, "None")
+
+	var props bytes.Buffer
+	writeStructProperty(&props, "MyArkData", "ArkInventoryData", payload.Bytes())
+	writeArkString(&props, "None")
+
+	writeArchiveFileWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
+
+	data, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	if len(data.Dinos) != 1 {
+		t.Fatalf("Dinos length = %d, want 1", len(data.Dinos))
+	}
+	dinoData := data.Dinos[0]
+	if dinoData.RawSize != len("not an archive") {
+		t.Fatalf("Dino RawSize = %d, want %d", dinoData.RawSize, len("not an archive"))
+	}
+	if dinoData.Archive != nil {
+		t.Fatalf("Dino Archive = %#v, want nil for invalid archive", dinoData.Archive)
+	}
+	if dinoData.ParseError == "" {
+		t.Fatalf("Dino ParseError is empty, want invalid archive parse error")
+	}
+}
+
 func writeArchiveFile(t *testing.T, path string, className string) {
 	t.Helper()
 	writeArchiveFileWithProperties(t, path, className, nil)
@@ -205,6 +242,18 @@ func writeObjectPathProperty(buf *bytes.Buffer, name string, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	buf.Write(body.Bytes())
+}
+
+func writeByteArrayProperty(buf *bytes.Buffer, name string, values []byte) {
+	writeArkString(buf, name)
+	writeArkString(buf, "ArrayProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(4+len(values)))
+	writeArkString(buf, "ByteProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(4+len(values)))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	buf.Write(values)
 }
 
 func writeStructProperty(buf *bytes.Buffer, name string, structType string, body []byte) {

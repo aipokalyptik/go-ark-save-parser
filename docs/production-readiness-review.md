@@ -45,7 +45,8 @@ Public verification reported by reviewers:
   parse errors while preserving already-printed archive metadata.
 - Local cluster uploaded dino archive parse failures are not surfaced in the
   cluster JSON model. Unsupported embedded dino formats can appear as empty or
-  partially parsed uploads.
+  partially parsed uploads. Addressed after this review by recording
+  per-upload `ParseError` values and exporting them as `parse_error`.
 
 ## Medium-Priority Risks
 
@@ -63,9 +64,7 @@ Public verification reported by reviewers:
 
 ## Next Actions
 
-1. Add parse-status/error fields for local cluster uploaded dino summaries so
-   unsupported embedded dino archive payloads are visible in JSON.
-2. Expand oracle comparison coverage one runnable offline example at a time.
-3. Add a faulty-object reporting path for full-save object parsing.
-4. Continue filling domain/API gaps with synthetic tests and private oracle
+1. Expand oracle comparison coverage one runnable offline example at a time.
+2. Add a faulty-object reporting path for full-save object parsing.
+3. Continue filling domain/API gaps with synthetic tests and private oracle
    comparison where runnable upstream behavior exists.

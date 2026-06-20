@@ -25,6 +25,7 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 			Version:    7,
 			UploadTime: 67890,
 			RawSize:    128,
+			ParseError: "unsupported archive version",
 			Archive:    &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Game/Test/Dino.Dino_C"}}},
 		}},
 	}
@@ -38,6 +39,9 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	}
 	if info.DinoCount != 1 || len(info.Dinos) != 1 || info.Dinos[0].ObjectCount != 1 {
 		t.Fatalf("ClusterDataInfo dinos = %#v", info.Dinos)
+	}
+	if info.Dinos[0].ParseError != "unsupported archive version" {
+		t.Fatalf("ClusterDataInfo dino ParseError = %q", info.Dinos[0].ParseError)
 	}
 }
 
