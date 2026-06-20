@@ -32,7 +32,8 @@ Implemented:
   embedded data can be reported through the fault-tolerant path.
 - Modern cryopod saddle extraction through `DinoAPI.SaddlesFromCryopods`,
   keyed by containing cryopod item UUID when the embedded saddle has no
-  independent object UUID.
+  independent object UUID. Equipment domain JSON includes these modern cryopod
+  saddles and marks them with `in_cryopod`.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files. Uploaded item summaries
   include blueprint, quantity, rating, quality, and crafter metadata where

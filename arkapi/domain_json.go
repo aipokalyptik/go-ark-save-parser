@@ -71,6 +71,7 @@ type EquipmentInfo struct {
 	Kind               string              `json:"kind"`
 	Quantity           int32               `json:"quantity"`
 	OwnerInventoryUUID string              `json:"owner_inventory_uuid,omitempty"`
+	InCryopod          bool                `json:"in_cryopod,omitempty"`
 	IsEquipped         bool                `json:"is_equipped"`
 	IsBlueprint        bool                `json:"is_blueprint"`
 	Rating             float64             `json:"rating"`
@@ -309,28 +310,39 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 	}
 	out := make([]EquipmentInfo, 0, len(equipment))
 	for _, id := range sortedUUIDKeys(equipment) {
-		item := equipment[id]
-		info := EquipmentInfo{
-			UUID:               id.String(),
-			Blueprint:          item.Blueprint,
-			Kind:               string(item.Kind),
-			Quantity:           item.Quantity,
-			OwnerInventoryUUID: optionalUUIDString(item.OwnerInventory),
-			IsEquipped:         item.IsEquipped,
-			IsBlueprint:        item.IsBlueprint,
-			Rating:             item.Rating,
-			Quality:            item.Quality,
-			CurrentDurability:  item.CurrentDurability,
-			IsCrafted:          item.IsCrafted(),
-			AverageStat:        item.AverageStat(),
-			ImplementedStats:   equipmentStatNames(item.ImplementedStats()),
-			Stats:              equipmentStatsInfo(item.Stats),
-			Crafter:            crafterInfo(item.Crafter),
-		}
-		info.sanitize()
-		out = append(out, info)
+		out = append(out, equipmentInfo(id, equipment[id], false))
+	}
+	cryopodSaddles, _, err := NewDino(j.save).SaddlesFromCryopodsWithFaults()
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range sortedUUIDKeys(cryopodSaddles) {
+		out = append(out, equipmentInfo(id, cryopodSaddles[id], true))
 	}
 	return out, nil
+}
+
+func equipmentInfo(id uuid.UUID, item arkobject.EquipmentItem, inCryopod bool) EquipmentInfo {
+	info := EquipmentInfo{
+		UUID:               id.String(),
+		Blueprint:          item.Blueprint,
+		Kind:               string(item.Kind),
+		Quantity:           item.Quantity,
+		OwnerInventoryUUID: optionalUUIDString(item.OwnerInventory),
+		InCryopod:          inCryopod,
+		IsEquipped:         item.IsEquipped,
+		IsBlueprint:        item.IsBlueprint,
+		Rating:             item.Rating,
+		Quality:            item.Quality,
+		CurrentDurability:  item.CurrentDurability,
+		IsCrafted:          item.IsCrafted(),
+		AverageStat:        item.AverageStat(),
+		ImplementedStats:   equipmentStatNames(item.ImplementedStats()),
+		Stats:              equipmentStatsInfo(item.Stats),
+		Crafter:            crafterInfo(item.Crafter),
+	}
+	info.sanitize()
+	return info
 }
 
 func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {

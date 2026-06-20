@@ -245,6 +245,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only modern cryopod saddle extraction through the Dino API,
       keyed by containing cryopod item UUID for no-header embedded saddle
       payloads.
+- [x] Include modern cryopod saddles in equipment domain JSON exports with an
+      explicit `in_cryopod` marker.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
       baby/adult, sex, and alive/dead queries.
 - [x] Add read-first tamed dino details for tamed name, neuter state,

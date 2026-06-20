@@ -262,6 +262,32 @@ func TestJSONAPIExportEquipmentIncludesOwnerInventory(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportEquipmentIncludesModernCryopodSaddles(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSaveWithSaddle(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportEquipment()
+	if err != nil {
+		t.Fatalf("ExportEquipment() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ExportEquipment() length = %d, want 1 cryopod saddle: %#v", len(items), items)
+	}
+	if !items[0].InCryopod {
+		t.Fatalf("EquipmentInfo.InCryopod = false, want true")
+	}
+	if items[0].Kind != string(arkobject.EquipmentSaddle) {
+		t.Fatalf("EquipmentInfo.Kind = %q, want saddle", items[0].Kind)
+	}
+	if items[0].UUID != "dddddddd-eeee-ffff-0000-111111111111" {
+		t.Fatalf("EquipmentInfo.UUID = %q, want containing cryopod UUID", items[0].UUID)
+	}
+	wantBlueprint := "/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C"
+	if items[0].Blueprint != wantBlueprint {
+		t.Fatalf("EquipmentInfo.Blueprint = %q, want %q", items[0].Blueprint, wantBlueprint)
+	}
+}
+
 func TestEquipmentStatsInfoOmitsNonFiniteValues(t *testing.T) {
 	info := EquipmentInfo{
 		Rating:            math.NaN(),
