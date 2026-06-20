@@ -32,6 +32,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   more explicit blueprint paths and print aggregate item and quantity counts.
 - `equipment_summary`: parse local equipment items and print aggregate counts
   for weapons, armor, saddles, and shields.
+- `structure_owner_count`: count local structure objects owned by a specific
+  tribe ID.
 
 ## Profile, Tribe, And Cluster Examples
 

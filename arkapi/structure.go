@@ -133,6 +133,14 @@ func (s *StructureAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 	return out, nil
 }
 
+func (s *StructureAPI) CountOwnedByTribe(tribeID int32) (int, error) {
+	structures, err := s.OwnedBy(arkobject.ObjectOwner{TribeID: tribeID})
+	if err != nil {
+		return 0, err
+	}
+	return len(structures), nil
+}
+
 func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structure, owner *arkobject.ObjectOwner, tribeID int32, invert bool) (map[uuid.UUID]arkobject.Structure, error) {
 	if owner == nil && tribeID == 0 {
 		return nil, errors.New("either owner or tribeID must be provided")
@@ -148,6 +156,14 @@ func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structur
 		}
 	}
 	return out, nil
+}
+
+func (s *StructureAPI) ByClassOwnedBy(blueprints []string, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.Structure, error) {
+	structures, err := s.ByClass(blueprints)
+	if err != nil {
+		return nil, err
+	}
+	return s.FilterByOwner(structures, &owner, 0, false)
 }
 
 func (s *StructureAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Structure, error) {

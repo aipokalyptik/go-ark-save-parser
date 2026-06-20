@@ -72,6 +72,28 @@ func TestStructureAPIGetOwnedByFiltersByOwner(t *testing.T) {
 	}
 }
 
+func TestStructureAPICountOwnedByTribe(t *testing.T) {
+	save := openSyntheticMixedOwnedStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	count, err := api.CountOwnedByTribe(555)
+	if err != nil {
+		t.Fatalf("CountOwnedByTribe() error = %v", err)
+	}
+	if count != 2 {
+		t.Fatalf("CountOwnedByTribe(555) = %d, want 2", count)
+	}
+
+	count, err = api.CountOwnedByTribe(777)
+	if err != nil {
+		t.Fatalf("CountOwnedByTribe(777) error = %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("CountOwnedByTribe(777) = %d, want 1", count)
+	}
+}
+
 func TestStructureAPIFilterByOwnerFiltersProvidedStructures(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()
@@ -132,6 +154,26 @@ func TestStructureAPIFilterByOwnerPreservesUpstreamInvertAndValidation(t *testin
 
 	if _, err := api.FilterByOwner(structures, nil, 0, false); err == nil {
 		t.Fatalf("FilterByOwner(no filter) error = nil, want error")
+	}
+}
+
+func TestStructureAPIByClassOwnedByFiltersClassSubsetByOwner(t *testing.T) {
+	save := openSyntheticMixedOwnedStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	vaultBlueprint := "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'"
+	vaults, err := api.ByClassOwnedBy([]string{vaultBlueprint}, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("ByClassOwnedBy() error = %v", err)
+	}
+	if len(vaults) != 1 {
+		t.Fatalf("ByClassOwnedBy(vault, tribe 555) length = %d, want 1", len(vaults))
+	}
+	for _, structure := range vaults {
+		if structure.Blueprint != vaultBlueprint || structure.Owner.TribeID != 555 {
+			t.Fatalf("ByClassOwnedBy() structure = %#v", structure)
+		}
 	}
 }
 
@@ -421,6 +463,19 @@ func openSyntheticStructureDiscoverySave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticMixedOwnedStructureSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	firstVaultID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondVaultID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	wallID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", nil, map[uuid.UUID][]byte{
+		firstVaultID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
+		secondVaultID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 777),
+		wallID:        syntheticStructureObjectBytesWithClassAndOwner(0x10000005, 103, 555),
+	})
+}
+
 func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -452,6 +507,15 @@ func syntheticStructureObjectBytes() []byte {
 	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
 	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+}
+
+func syntheticStructureObjectBytesWithClassAndOwner(classID uint32, structureID int32, tribeID int32) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, structureID)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, tribeID)
+	return testfixtures.ObjectBytesWithProperties(classID, 0x10000004, props.Bytes())
 }
 
 func syntheticStructureWithInventoryObjectBytes(inventoryID uuid.UUID) []byte {

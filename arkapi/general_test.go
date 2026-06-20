@@ -190,7 +190,7 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Valguero_WP")
 	nameOffset := int32(buf.Len())
 	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(81))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(82))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
 	writeArkString(&buf, "None")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
@@ -353,6 +353,8 @@ func syntheticHeader() []byte {
 	writeArkString(&buf, "Bytes")
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000050))
 	writeArkString(&buf, "ByteProperty")
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000051))
+	writeArkString(&buf, "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'")
 	return buf.Bytes()
 }
 

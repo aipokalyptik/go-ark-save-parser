@@ -253,6 +253,8 @@ enough that oracle-derived tests can run against translated packages.
       `filter_by_location` parity.
 - [x] Add read-only Structure API subset owner filtering for upstream
       `filter_by_owner` parity, including its invert behavior.
+- [x] Add read-only Structure API owned-structure counting and class-plus-owner
+      filtering for upstream owned-structure and owned-vault example flows.
 - [x] Add read-only Structure API heatmap generation with class, owner, and
       minimum-cell filters for upstream `create_heatmap` parity.
 - [x] Add read-only Structure API discovery of missed inventory-bearing
