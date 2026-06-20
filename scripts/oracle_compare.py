@@ -159,6 +159,29 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["object_classes"]["classes"] = got_classes
         cases.append(CaseResult("object_classes", "pass" if got_classes == py["classes"] else "fail", "class list compared"))
 
+    export_json_path = repo_root / ".oracle" / "output" / "export-save-info.json"
+    go_export_json = run(["go", "run", "./cmd/arksave", "export-json", str(save_path), str(export_json_path)], repo_root, env)
+    private["go"]["export_json"] = {
+        "exit_code": go_export_json.returncode,
+        "stdout": go_export_json.stdout,
+        "stderr": go_export_json.stderr,
+        "output": str(export_json_path),
+    }
+    if go_export_json.returncode != 0:
+        cases.append(CaseResult("export_json", "fail", "Go CLI exited non-zero"))
+    else:
+        try:
+            got_export = json.loads(export_json_path.read_text(encoding="utf-8"))
+            private["go"]["export_json"]["parsed"] = got_export
+            got_classes = sorted({item["class_name"] for item in got_export.get("objects", [])})
+            want = {k: py[k] for k in ("map_name", "save_version", "object_count", "name_count")}
+            got = {k: got_export[k] for k in want}
+            status = "pass" if got == want and got_classes == py["classes"] else "fail"
+            cases.append(CaseResult("export_json", status, "save-info JSON metrics and class list compared"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["export_json"]["parse_error"] = str(exc)
+            cases.append(CaseResult("export_json", "fail", "Go JSON export could not be parsed"))
+
     go_local_profiles = run(["go", "run", "./examples/local_profiles", str(save_path.parent)], repo_root, env)
     private["go"]["local_profiles"] = {
         "exit_code": go_local_profiles.returncode,

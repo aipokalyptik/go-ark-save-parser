@@ -193,6 +193,8 @@ enough that oracle-derived tests can run against translated packages.
       `object_classes`.
 - [x] Compare normalized Go `local_profiles` aggregate counts with the private
       Python oracle using upstream `PlayerApi` over local profile/tribe files.
+- [x] Compare normalized Go CLI `export-json` save-info output with the private
+      Python oracle for save metrics and object class lists.
 - [ ] Compare normalized Go outputs with private Python oracle outputs where
       available for the remaining runnable upstream examples.
 - [x] Run subagent spec and quality reviews on parser parity and API coverage;
