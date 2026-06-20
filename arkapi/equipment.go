@@ -148,6 +148,27 @@ func (e *EquipmentAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Equ
 	return out, nil
 }
 
+func (e *EquipmentAPI) ByKindClass(kind arkobject.EquipmentKind, blueprints []string) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	all, err := e.All()
+	if err != nil {
+		return nil, err
+	}
+	allowed := map[string]struct{}{}
+	for _, blueprint := range blueprints {
+		allowed[blueprint] = struct{}{}
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range all {
+		if item.Kind != kind {
+			continue
+		}
+		if _, ok := allowed[item.Blueprint]; ok {
+			out[id] = item
+		}
+	}
+	return out, nil
+}
+
 func (e *EquipmentAPI) ByCrafter(crafter arkobject.ObjectCrafter) (map[uuid.UUID]arkobject.EquipmentItem, error) {
 	all, err := e.All()
 	if err != nil {

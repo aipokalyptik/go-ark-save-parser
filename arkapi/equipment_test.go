@@ -65,6 +65,40 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIByKindClassFiltersBlueprintsWithinKind(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	weaponBlueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"
+	armorBlueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'"
+	weapons, err := api.ByKindClass(arkobject.EquipmentWeapon, []string{weaponBlueprint, armorBlueprint})
+	if err != nil {
+		t.Fatalf("ByKindClass(weapon) error = %v", err)
+	}
+	if len(weapons) != 1 {
+		t.Fatalf("ByKindClass(weapon) length = %d, want 1", len(weapons))
+	}
+	for _, item := range weapons {
+		if item.Kind != arkobject.EquipmentWeapon || item.Blueprint != weaponBlueprint {
+			t.Fatalf("ByKindClass(weapon) item = %#v", item)
+		}
+	}
+
+	armor, err := api.ByKindClass(arkobject.EquipmentArmor, []string{weaponBlueprint, armorBlueprint})
+	if err != nil {
+		t.Fatalf("ByKindClass(armor) error = %v", err)
+	}
+	if len(armor) != 1 {
+		t.Fatalf("ByKindClass(armor) length = %d, want 1", len(armor))
+	}
+	for _, item := range armor {
+		if item.Kind != arkobject.EquipmentArmor || item.Blueprint != armorBlueprint {
+			t.Fatalf("ByKindClass(armor) item = %#v", item)
+		}
+	}
+}
+
 func TestEquipmentAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticEquipmentSaveWithFault(t)
 	defer save.Close()
@@ -380,6 +414,17 @@ func openSyntheticEquipmentFilterSave(t *testing.T) *arksave.Save {
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
 		equippedID:  syntheticEquipmentObjectBytesWithFlags(false, true, false, 7.5, 5, 0.75),
 		blueprintID: syntheticEquipmentObjectBytesWithFlags(false, false, true, 2.5, 1, 0.25),
+	})
+}
+
+func openSyntheticMixedEquipmentSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	weaponID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	armorID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		weaponID: syntheticEquipmentObjectBytes(false),
+		armorID:  syntheticArmorEquipmentObjectBytes(),
 	})
 }
 
