@@ -87,6 +87,23 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testing.T) {
+	save := openSyntheticStackableSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStackable(save)
+	items, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(items) != 1 || api.Count(items) != 100 {
+		t.Fatalf("AllWithFaults() items = %#v, want one valid stackable quantity 100", items)
+	}
+	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'" || faults[0].Err == nil {
+		t.Fatalf("AllWithFaults() faults = %#v, want one stackable parse fault", faults)
+	}
+}
+
 func openSyntheticStackableSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -112,6 +129,40 @@ func openSyntheticStackableSave(t *testing.T) *arksave.Save {
 		t.Fatalf("Open() error = %v", err)
 	}
 	return save
+}
+
+func openSyntheticStackableSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "stackables.ark")
+	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, itemID[:], syntheticStackableObjectBytes(false))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedStackableObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
+func truncatedStackableObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000b))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
 }
 
 func syntheticStackableObjectBytes(isBlueprint bool) []byte {

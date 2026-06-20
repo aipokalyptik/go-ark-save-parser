@@ -47,6 +47,23 @@ func (s *StackableAPI) All() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	return out, nil
 }
 
+func (s *StackableAPI) AllWithFaults() (map[uuid.UUID]arkobject.InventoryItem, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := s.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return s.IsApplicableBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.InventoryItem{}
+	for _, info := range objects {
+		if boolProperty(info.Object, "bIsBlueprint") || boolProperty(info.Object, "bIsEngram") {
+			continue
+		}
+		out[info.UUID] = arkobject.InventoryItemFromObject(info.Object)
+	}
+	return out, faults, nil
+}
+
 func (s *StackableAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.InventoryItem, error) {
 	all, err := s.All()
 	if err != nil {
