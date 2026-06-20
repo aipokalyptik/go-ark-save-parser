@@ -378,6 +378,61 @@ func TestPlayerAPILocalDeathStatistics(t *testing.T) {
 	}
 }
 
+func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             12345,
+		ExtraCharacterLevel: 4,
+		ExperiencePoints:    123.5,
+		TotalEngramPoints:   12,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        43,
+		CharacterName:       "Scout",
+		PlayerName:          "OtherPlatform",
+		TribeID:             12345,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    456.25,
+		TotalEngramPoints:   30,
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	levels, err := api.LevelsByPlayerID()
+	if err != nil {
+		t.Fatalf("LevelsByPlayerID() error = %v", err)
+	}
+	if levels[42] != 5 || levels[43] != 10 {
+		t.Fatalf("LevelsByPlayerID() = %#v, want levels 5 and 10", levels)
+	}
+	xp, err := api.ExperienceByPlayerID()
+	if err != nil {
+		t.Fatalf("ExperienceByPlayerID() error = %v", err)
+	}
+	if xp[42] != 123.5 || xp[43] != 456.25 {
+		t.Fatalf("ExperienceByPlayerID() = %#v, want profile XP values", xp)
+	}
+	player, level, ok, err := api.PlayerWithHighestLevel()
+	if err != nil {
+		t.Fatalf("PlayerWithHighestLevel() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 43 || level != 10 {
+		t.Fatalf("PlayerWithHighestLevel() = %#v, %d, %v; want player 43, level 10, true", player, level, ok)
+	}
+	player, experience, ok, err := api.PlayerWithHighestExperience()
+	if err != nil {
+		t.Fatalf("PlayerWithHighestExperience() error = %v", err)
+	}
+	if !ok || player.PlayerDataID != 43 || experience != 456.25 {
+		t.Fatalf("PlayerWithHighestExperience() = %#v, %f, %v; want player 43, XP 456.25, true", player, experience, ok)
+	}
+}
+
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")

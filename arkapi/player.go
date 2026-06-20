@@ -197,6 +197,64 @@ func (p *PlayerAPI) PlayerWithMostDeaths() (arkobject.Player, int32, bool, error
 	return best, best.NumDeaths, true, nil
 }
 
+func (p *PlayerAPI) LevelsByPlayerID() (map[uint64]int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uint64]int32{}
+	for _, player := range players {
+		out[player.PlayerDataID] = player.Level
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) ExperienceByPlayerID() (map[uint64]float64, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	out := map[uint64]float64{}
+	for _, player := range players {
+		out[player.PlayerDataID] = player.Experience
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) PlayerWithHighestLevel() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.Level > best.Level {
+			best = player
+		}
+	}
+	return best, best.Level, true, nil
+}
+
+func (p *PlayerAPI) PlayerWithHighestExperience() (arkobject.Player, float64, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.Experience > best.Experience {
+			best = player
+		}
+	}
+	return best, best.Experience, true, nil
+}
+
 func (p *PlayerAPI) filterPlayers(match func(arkobject.Player) bool) ([]arkobject.Player, error) {
 	players, err := p.Players()
 	if err != nil {

@@ -100,6 +100,8 @@ enough that oracle-derived tests can run against translated packages.
       maps, tribe-of-player lookup, and profile-derived object/dino owners.
 - [x] Add typed local Player API death-stat helpers for per-player death
       counts, total deaths, and highest-death player lookup.
+- [x] Add typed local Player API level, experience, and engram point parsing
+      plus level/experience lookup helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless

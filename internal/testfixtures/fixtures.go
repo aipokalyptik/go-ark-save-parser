@@ -77,12 +77,15 @@ func WritePlayerArchive(tb testing.TB, path string) {
 }
 
 type PlayerArchiveOptions struct {
-	PlayerDataID  int32
-	CharacterName string
-	PlayerName    string
-	UniqueID      string
-	TribeID       int32
-	NumDeaths     int32
+	PlayerDataID        int32
+	CharacterName       string
+	PlayerName          string
+	UniqueID            string
+	TribeID             int32
+	NumDeaths           int32
+	ExtraCharacterLevel int32
+	ExperiencePoints    float32
+	TotalEngramPoints   int32
 }
 
 func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiveOptions) {
@@ -109,6 +112,15 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 	propertiesOffset := int32(buf.Len() - 1)
 	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
 	WriteNameIntProperty(&buf, "SavedPlayerDataVersion", 17)
+	if opts.ExtraCharacterLevel != 0 {
+		WriteNameIntProperty(&buf, "CharacterStatusComponent_ExtraCharacterLevel", opts.ExtraCharacterLevel)
+	}
+	if opts.ExperiencePoints != 0 {
+		WriteNameFloatProperty(&buf, "CharacterStatusComponent_ExperiencePoints", opts.ExperiencePoints)
+	}
+	if opts.TotalEngramPoints != 0 {
+		WriteNameIntProperty(&buf, "PlayerState_TotalEngramPoints", opts.TotalEngramPoints)
+	}
 	WriteNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
 	WriteArkString(&buf, "None")
 	writeFile(tb, path, buf.Bytes(), "player archive fixture")
@@ -234,6 +246,15 @@ func WriteNameStringProperty(buf *bytes.Buffer, name string, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	WriteArkString(buf, value)
+}
+
+func WriteNameFloatProperty(buf *bytes.Buffer, name string, value float32) {
+	WriteArkString(buf, name)
+	WriteArkString(buf, "FloatProperty")
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
 func WriteNameStringArrayProperty(buf *bytes.Buffer, name string, values []string) {

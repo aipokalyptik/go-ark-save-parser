@@ -18,11 +18,17 @@ type Player struct {
 	NumDeaths         int32
 	LastTimeDied      float64
 	LoginTime         float64
+	Level             int32
+	Experience        float64
+	EngramPoints      int32
 }
 
 func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	var player Player
 	player.PlayerDataVersion = int32Value(properties, "SavedPlayerDataVersion")
+	player.Level = 1 + int32Value(properties, "CharacterStatusComponent_ExtraCharacterLevel")
+	player.Experience = float64Value(properties, "CharacterStatusComponent_ExperiencePoints")
+	player.EngramPoints = int32Value(properties, "PlayerState_TotalEngramPoints")
 
 	raw, ok := properties.Value("MyData")
 	if !ok {

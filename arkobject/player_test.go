@@ -24,6 +24,9 @@ func TestPlayerFromContainerReadsMyDataFields(t *testing.T) {
 	}}
 	props := arkproperty.Container{Properties: []arkproperty.Property{
 		{Name: "SavedPlayerDataVersion", Type: arkproperty.TypeInt, Value: int32(17)},
+		{Name: "CharacterStatusComponent_ExtraCharacterLevel", Type: arkproperty.TypeInt, Value: int32(4)},
+		{Name: "CharacterStatusComponent_ExperiencePoints", Type: arkproperty.TypeFloat, Value: float32(123.5)},
+		{Name: "PlayerState_TotalEngramPoints", Type: arkproperty.TypeInt, Value: int32(12)},
 		{Name: "MyData", Type: arkproperty.TypeStruct, Value: myData},
 	}}
 
@@ -39,6 +42,9 @@ func TestPlayerFromContainerReadsMyDataFields(t *testing.T) {
 	}
 	if player.LastTimeDied != 12.5 || player.LoginTime != 99.25 || player.PlayerDataVersion != 17 {
 		t.Fatalf("Player time/version fields = %#v", player)
+	}
+	if player.Level != 5 || player.Experience != 123.5 || player.EngramPoints != 12 {
+		t.Fatalf("Player stat fields = %#v", player)
 	}
 }
 
