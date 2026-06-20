@@ -195,6 +195,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add upstream-compatible tamed dino generation and ancestor ID extraction
       from female/male ancestor arrays; full pedigree graph reconstruction
       remains pending.
+- [x] Add upstream-style baby dino filtering flags for tamed, wild, and
+      cryopodded inclusion.
 - [x] Add read-only local cluster JSON export API and CLI command for single
       cluster files and directories.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.

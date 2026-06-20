@@ -196,6 +196,58 @@ func TestDinoAPIFiltersBySexDeathAndBabyState(t *testing.T) {
 	}
 }
 
+func TestDinoAPIBabiesFilteredMatchesUpstreamInclusionFlags(t *testing.T) {
+	save := openSyntheticDinoBabyFilterSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	tamedOnly, err := api.BabiesFiltered(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       false,
+	})
+	if err != nil {
+		t.Fatalf("BabiesFiltered(tamed) error = %v", err)
+	}
+	if len(tamedOnly) != 1 {
+		t.Fatalf("BabiesFiltered(tamed) length = %d, want 1", len(tamedOnly))
+	}
+	for _, dino := range tamedOnly {
+		if !dino.IsTamed || !dino.IsBaby {
+			t.Fatalf("BabiesFiltered(tamed) dino = %#v", dino)
+		}
+	}
+
+	all, err := api.BabiesFiltered(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
+	})
+	if err != nil {
+		t.Fatalf("BabiesFiltered(all) error = %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("BabiesFiltered(all) length = %d, want 2", len(all))
+	}
+
+	wildOnly, err := api.BabiesFiltered(BabyFilterOptions{
+		IncludeTamed:      false,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
+	})
+	if err != nil {
+		t.Fatalf("BabiesFiltered(wild) error = %v", err)
+	}
+	if len(wildOnly) != 1 {
+		t.Fatalf("BabiesFiltered(wild) length = %d, want 1", len(wildOnly))
+	}
+	for _, dino := range wildOnly {
+		if dino.IsTamed || !dino.IsBaby {
+			t.Fatalf("BabiesFiltered(wild) dino = %#v", dino)
+		}
+	}
+}
+
 func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()
@@ -675,6 +727,19 @@ func openSyntheticDinoBabyStageSave(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		dinoID: syntheticDinoBabyObjectBytes(0.75),
+	})
+}
+
+func openSyntheticDinoBabyFilterSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	tamedBabyID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	wildBabyID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	adultID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		tamedBabyID: syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, true, true),
+		wildBabyID:  syntheticDinoObjectBytesWithFlags(3003, 4004, false, false, true, false),
+		adultID:     syntheticDinoObjectBytesWithFlags(5005, 6006, true, false, false, true),
 	})
 }
 

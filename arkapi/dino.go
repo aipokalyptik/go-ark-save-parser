@@ -24,6 +24,12 @@ type DinoFilterOptions struct {
 	Stats       []arkobject.DinoStat
 }
 
+type BabyFilterOptions struct {
+	IncludeTamed      bool
+	IncludeCryopodded bool
+	IncludeWild       bool
+}
+
 func NewDino(save *arksave.Save) *DinoAPI {
 	return &DinoAPI{save: save}
 }
@@ -168,17 +174,26 @@ func (d *DinoAPI) Wild() (map[uuid.UUID]arkobject.Dino, error) {
 }
 
 func (d *DinoAPI) Babies() (map[uuid.UUID]arkobject.Dino, error) {
-	all, err := d.All()
-	if err != nil {
-		return nil, err
-	}
-	out := map[uuid.UUID]arkobject.Dino{}
-	for id, dino := range all {
-		if dino.IsBaby {
-			out[id] = dino
+	return d.BabiesFiltered(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
+	})
+}
+
+func (d *DinoAPI) BabiesFiltered(opts BabyFilterOptions) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		if !dino.IsBaby {
+			return false
 		}
-	}
-	return out, nil
+		if dino.IsCryopodded && !opts.IncludeCryopodded {
+			return false
+		}
+		if dino.IsTamed {
+			return opts.IncludeTamed
+		}
+		return opts.IncludeWild
+	})
 }
 
 func (d *DinoAPI) InCryopods() (map[uuid.UUID]arkobject.Dino, error) {
