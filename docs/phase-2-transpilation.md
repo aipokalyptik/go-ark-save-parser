@@ -57,6 +57,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and parsing for nested map/set property-list edge cases seen in
       structure wireless exchange references.
 - [x] Add raw fallback preservation for packed unknown structs.
+- [x] Add packed `Vector` struct parsing for pawn/world-location properties.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [x] Add declared-size realignment and overread detection for compound array,
       map, set, and struct payloads covered by generic readers.
@@ -119,6 +120,8 @@ enough that oracle-derived tests can run against translated packages.
       first read-only player inventory/location prerequisite.
 - [x] Add save-contained Player API inventory lookup by linked player data ID,
       resolving pawn inventory components to inventory item UUID lists.
+- [x] Add save-contained Player API location lookup by linked player data ID,
+      resolving pawn `SavedBaseWorldLocation` vectors.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.

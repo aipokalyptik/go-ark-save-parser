@@ -735,6 +735,47 @@ func TestParseArrayPropertyReadsGenericStructValues(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyReadsPackedVector(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "SavedBaseWorldLocation",
+		2: "StructProperty",
+		3: "Vector",
+		4: "/Script/CoreUObject",
+		5: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 4)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, 24)
+	stream.WriteByte(8)
+	writeFloat64(stream, 11)
+	writeFloat64(stream, 22)
+	writeFloat64(stream, 33)
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeStruct {
+		t.Fatalf("ParseAll() = %#v, want one struct property", props)
+	}
+	got, ok := props[0].Value.(Vector)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Vector", props[0].Value)
+	}
+	if got.X != 11 || got.Y != 22 || got.Z != 33 {
+		t.Fatalf("Vector = %#v, want 11/22/33", got)
+	}
+}
+
 func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -1235,6 +1276,10 @@ func writeInt32(buf *bytes.Buffer, value int32) {
 }
 
 func writeUInt32(buf *bytes.Buffer, value uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeFloat64(buf *bytes.Buffer, value float64) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 

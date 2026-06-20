@@ -212,6 +212,30 @@ func (p *PlayerAPI) PlayerInventoryByDataID(id uint64) (*arkobject.Inventory, bo
 	return &inventory, true, nil
 }
 
+func (p *PlayerAPI) PlayerLocationByDataID(id uint64) (*arkobject.ActorTransform, bool, error) {
+	pawn, ok, err := p.PlayerPawnByDataID(id)
+	if err != nil || !ok {
+		return nil, ok, err
+	}
+	value, ok := pawn.Value("SavedBaseWorldLocation")
+	if !ok {
+		return nil, false, nil
+	}
+	switch v := value.(type) {
+	case arkproperty.Vector:
+		return &arkobject.ActorTransform{X: v.X, Y: v.Y, Z: v.Z}, true, nil
+	case arkobject.ActorTransform:
+		return &v, true, nil
+	case *arkobject.ActorTransform:
+		if v == nil {
+			return nil, false, nil
+		}
+		return v, true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
 func (p *PlayerAPI) PlayersByTribeID(tribeID int32) ([]arkobject.Player, error) {
 	return p.filterPlayers(func(player arkobject.Player) bool {
 		return player.TribeID == tribeID

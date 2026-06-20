@@ -81,6 +81,12 @@ type EnumValue struct {
 	Name string
 }
 
+type Vector struct {
+	X float64
+	Y float64
+	Z float64
+}
+
 func (c Container) Value(name string) (any, bool) {
 	for _, prop := range c.Properties {
 		if prop.Name == name {
@@ -770,6 +776,21 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	}
 	bodyStart := r.Position()
 	bodyEnd := bodyStart + int(dataSize)
+	if structType == "Vector" && dataSize == 24 {
+		x, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		y, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		z, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		return Vector{X: x, Y: y, Z: z}, structType, dataSize, nil
+	}
 	props, err := ParseAllPartial(r, bodyEnd)
 	if err != nil {
 		if len(props) > 0 {

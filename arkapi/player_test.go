@@ -210,6 +210,23 @@ func TestPlayerAPIPlayerInventoryByDataID(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerLocationByDataID(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewPlayer(save)
+	location, ok, err := api.PlayerLocationByDataID(42)
+	if err != nil {
+		t.Fatalf("PlayerLocationByDataID() error = %v", err)
+	}
+	if !ok || location.X != 11 || location.Y != 22 || location.Z != 33 {
+		t.Fatalf("PlayerLocationByDataID() = %#v, %v; want 11/22/33", location, ok)
+	}
+	if _, ok, err := api.PlayerLocationByDataID(999); err != nil || ok {
+		t.Fatalf("PlayerLocationByDataID(missing) = ok %v err %v, want false nil", ok, err)
+	}
+}
+
 func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
@@ -314,8 +331,24 @@ func savePlayerPawnObjectBytes(playerDataID int32, inventoryID uuid.UUID) []byte
 	var props bytes.Buffer
 	testfixtures.WriteNameIntProperty(&props, "LinkedPlayerDataID", playerDataID)
 	testfixtures.WriteNameObjectPathProperty(&props, "MyInventoryComponent", inventoryID.String())
+	writeNameVectorProperty(&props, "SavedBaseWorldLocation", 11, 22, 33)
 	testfixtures.WriteArkString(&props, "None")
 	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'", []string{"PlayerPawn_0"}, props.Bytes())
+}
+
+func writeNameVectorProperty(buf *bytes.Buffer, name string, x float64, y float64, z float64) {
+	testfixtures.WriteArkString(buf, name)
+	testfixtures.WriteArkString(buf, "StructProperty")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	testfixtures.WriteArkString(buf, "Vector")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	testfixtures.WriteArkString(buf, "/Script/CoreUObject")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
+	buf.WriteByte(8)
+	_ = binary.Write(buf, binary.LittleEndian, x)
+	_ = binary.Write(buf, binary.LittleEndian, y)
+	_ = binary.Write(buf, binary.LittleEndian, z)
 }
 
 func saveInventoryObjectBytes(inventoryID uuid.UUID, itemIDs ...uuid.UUID) []byte {
