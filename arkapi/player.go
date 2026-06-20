@@ -180,6 +180,21 @@ func (p *PlayerAPI) TotalDeaths() (int32, error) {
 	return total, nil
 }
 
+func (p *PlayerAPI) AverageDeaths() (float64, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, false, err
+	}
+	if len(players) == 0 {
+		return 0, false, nil
+	}
+	var total int32
+	for _, player := range players {
+		total += player.NumDeaths
+	}
+	return float64(total) / float64(len(players)), true, nil
+}
+
 func (p *PlayerAPI) PlayerWithMostDeaths() (arkobject.Player, int32, bool, error) {
 	players, err := p.Players()
 	if err != nil {
@@ -224,6 +239,18 @@ func (p *PlayerAPI) LevelsByPlayerID() (map[uint64]int32, error) {
 		out[player.PlayerDataID] = player.Level
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) TotalLevel() (int32, error) {
+	players, err := p.Players()
+	if err != nil {
+		return 0, err
+	}
+	var total int32
+	for _, player := range players {
+		total += player.Level
+	}
+	return total, nil
 }
 
 func (p *PlayerAPI) ExperienceByPlayerID() (map[uint64]float64, error) {
@@ -383,6 +410,23 @@ func (p *PlayerAPI) PlayerWithMostEngramPoints() (arkobject.Player, int32, bool,
 	best := players[0]
 	for _, player := range players[1:] {
 		if player.EngramPoints > best.EngramPoints {
+			best = player
+		}
+	}
+	return best, best.EngramPoints, true, nil
+}
+
+func (p *PlayerAPI) PlayerWithFewestEngramPoints() (arkobject.Player, int32, bool, error) {
+	players, err := p.Players()
+	if err != nil {
+		return arkobject.Player{}, 0, false, err
+	}
+	if len(players) == 0 {
+		return arkobject.Player{}, 0, false, nil
+	}
+	best := players[0]
+	for _, player := range players[1:] {
+		if player.EngramPoints < best.EngramPoints {
 			best = player
 		}
 	}

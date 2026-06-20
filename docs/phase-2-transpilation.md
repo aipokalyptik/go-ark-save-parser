@@ -106,6 +106,8 @@ enough that oracle-derived tests can run against translated packages.
       average level and experience.
 - [x] Add typed local Player API lowest-stat lookups for deaths, level, and
       experience.
+- [x] Add typed local Player API aggregate helpers for average deaths, total
+      level, and lowest engram-point lookup.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
