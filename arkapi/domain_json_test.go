@@ -321,6 +321,22 @@ func TestJSONAPIExportBasesSummarizesBaseAPI(t *testing.T) {
 	if items[0].StructureCount != 2 || items[0].Owner.TribeID != 555 || items[0].AverageLocation == nil {
 		t.Fatalf("BaseInfo = %#v", items[0])
 	}
+	api := NewBase(save, "")
+	bases, err := api.All()
+	if err != nil {
+		t.Fatalf("BaseAPI.All() error = %v", err)
+	}
+	wantLocation := bases[0].Location.AsMapCoords(api.mapName)
+	wantAverageLocation := bases[0].AverageLocation.AsMapCoords(api.mapName)
+	if items[0].MapLocation == nil || items[0].AverageMapLocation == nil {
+		t.Fatalf("BaseInfo map locations = %#v", items[0])
+	}
+	if items[0].MapLocation.Lat != wantLocation.Lat || items[0].MapLocation.Lon != wantLocation.Long {
+		t.Fatalf("MapLocation = %#v, want lat=%f lon=%f", items[0].MapLocation, wantLocation.Lat, wantLocation.Long)
+	}
+	if items[0].AverageMapLocation.Lat != wantAverageLocation.Lat || items[0].AverageMapLocation.Lon != wantAverageLocation.Long {
+		t.Fatalf("AverageMapLocation = %#v, want lat=%f lon=%f", items[0].AverageMapLocation, wantAverageLocation.Lat, wantAverageLocation.Long)
+	}
 	if len(items[0].StructureUUIDs) != 2 || items[0].StructureUUIDs[0] != "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff" {
 		t.Fatalf("StructureUUIDs = %#v", items[0].StructureUUIDs)
 	}

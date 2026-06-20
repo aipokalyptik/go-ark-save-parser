@@ -89,13 +89,15 @@ type StackableInfo struct {
 }
 
 type BaseInfo struct {
-	KeystoneUUID    string        `json:"keystone_uuid"`
-	StructureUUIDs  []string      `json:"structure_uuids"`
-	StructureCount  int           `json:"structure_count"`
-	Owner           OwnerInfo     `json:"owner"`
-	Location        *LocationInfo `json:"location,omitempty"`
-	AverageLocation *LocationInfo `json:"average_location,omitempty"`
-	TurretCount     float64       `json:"turret_count"`
+	KeystoneUUID       string         `json:"keystone_uuid"`
+	StructureUUIDs     []string       `json:"structure_uuids"`
+	StructureCount     int            `json:"structure_count"`
+	Owner              OwnerInfo      `json:"owner"`
+	Location           *LocationInfo  `json:"location,omitempty"`
+	AverageLocation    *LocationInfo  `json:"average_location,omitempty"`
+	MapLocation        *MapCoordsInfo `json:"map_location,omitempty"`
+	AverageMapLocation *MapCoordsInfo `json:"average_map_location,omitempty"`
+	TurretCount        float64        `json:"turret_count"`
 }
 
 type LocationInfo struct {
@@ -106,6 +108,11 @@ type LocationInfo struct {
 	Roll       float64 `json:"roll"`
 	Yaw        float64 `json:"yaw"`
 	Quaternion float64 `json:"quaternion"`
+}
+
+type MapCoordsInfo struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 type OwnerInfo struct {
@@ -336,20 +343,23 @@ func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {
 }
 
 func (j *JSONAPI) ExportBases() ([]BaseInfo, error) {
-	bases, err := NewBase(j.save, "").All()
+	baseAPI := NewBase(j.save, "")
+	bases, err := baseAPI.All()
 	if err != nil {
 		return nil, err
 	}
 	out := make([]BaseInfo, 0, len(bases))
 	for _, base := range bases {
 		out = append(out, BaseInfo{
-			KeystoneUUID:    base.KeystoneUUID.String(),
-			StructureUUIDs:  sortedBaseStructureUUIDs(base),
-			StructureCount:  base.StructureCount,
-			Owner:           ownerInfo(base.Owner),
-			Location:        locationInfo(base.Location),
-			AverageLocation: locationInfo(base.AverageLocation),
-			TurretCount:     base.TurretCount,
+			KeystoneUUID:       base.KeystoneUUID.String(),
+			StructureUUIDs:     sortedBaseStructureUUIDs(base),
+			StructureCount:     base.StructureCount,
+			Owner:              ownerInfo(base.Owner),
+			Location:           locationInfo(base.Location),
+			AverageLocation:    locationInfo(base.AverageLocation),
+			MapLocation:        mapCoordsInfo(base.Location, baseAPI.mapName),
+			AverageMapLocation: mapCoordsInfo(base.AverageLocation, baseAPI.mapName),
+			TurretCount:        base.TurretCount,
 		})
 	}
 	return out, nil
@@ -397,6 +407,14 @@ func locationInfo(value *arkobject.ActorTransform) *LocationInfo {
 		Yaw:        value.Yaw,
 		Quaternion: value.Quaternion,
 	}
+}
+
+func mapCoordsInfo(value *arkobject.ActorTransform, mapName string) *MapCoordsInfo {
+	if value == nil || mapName == "" {
+		return nil
+	}
+	coords := value.AsMapCoords(mapName)
+	return &MapCoordsInfo{Lat: coords.Lat, Lon: coords.Long}
 }
 
 func ownerInfo(value arkobject.ObjectOwner) OwnerInfo {

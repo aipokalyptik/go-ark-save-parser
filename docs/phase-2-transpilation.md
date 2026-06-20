@@ -153,6 +153,8 @@ enough that oracle-derived tests can run against translated packages.
       for owner/container correlation.
 - [x] Include equipment owner inventory UUIDs in equipment domain JSON export
       for owner/container correlation.
+- [x] Include base keystone and averaged map coordinates in base domain JSON
+      export for upstream base-location example parity.
 - [x] Route structure domain JSON export through the fault-tolerant structure
       scan so malformed matching rows do not abort valid exports.
 - [x] Include parsed tamed dino owner/detail and baby maturation fields in
