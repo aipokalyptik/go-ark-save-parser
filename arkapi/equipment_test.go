@@ -3,6 +3,7 @@ package arkapi
 import (
 	"bytes"
 	"encoding/binary"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -99,6 +100,42 @@ func TestEquipmentAPIByKindClassFiltersBlueprintsWithinKind(t *testing.T) {
 	for _, item := range armor {
 		if item.Kind != arkobject.EquipmentArmor || item.Blueprint != armorBlueprint {
 			t.Fatalf("ByKindClass(armor) item = %#v", item)
+		}
+	}
+}
+
+func TestEquipmentAPIAllMatchingBlueprintsComposesClassFilterBeforeParsing(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	weapons, err := api.AllMatchingBlueprints(func(blueprint string) bool {
+		return strings.Contains(blueprint, "/Weapons/")
+	})
+	if err != nil {
+		t.Fatalf("AllMatchingBlueprints(weapons) error = %v", err)
+	}
+	if len(weapons) != 1 {
+		t.Fatalf("AllMatchingBlueprints(weapons) length = %d, want 1", len(weapons))
+	}
+	for _, item := range weapons {
+		if item.Kind != arkobject.EquipmentWeapon {
+			t.Fatalf("AllMatchingBlueprints(weapons) item = %#v", item)
+		}
+	}
+
+	armor, err := api.AllMatchingBlueprints(func(blueprint string) bool {
+		return strings.Contains(blueprint, "/Armor/Cloth/")
+	})
+	if err != nil {
+		t.Fatalf("AllMatchingBlueprints(armor) error = %v", err)
+	}
+	if len(armor) != 1 {
+		t.Fatalf("AllMatchingBlueprints(armor) length = %d, want 1", len(armor))
+	}
+	for _, item := range armor {
+		if item.Kind != arkobject.EquipmentArmor {
+			t.Fatalf("AllMatchingBlueprints(armor) item = %#v", item)
 		}
 	}
 }

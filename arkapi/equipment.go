@@ -116,9 +116,11 @@ func canonicalBlueprintPath(blueprint string) string {
 }
 
 func (e *EquipmentAPI) All() (map[uuid.UUID]arkobject.EquipmentItem, error) {
-	objects, err := e.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
-		return e.IsApplicableBlueprint(info.ClassName)
-	})
+	return e.AllMatchingBlueprints(nil)
+}
+
+func (e *EquipmentAPI) AllMatchingBlueprints(match func(string) bool) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	objects, err := e.save.ParsedObjects(e.equipmentBlueprintFilter(match))
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +139,11 @@ func (e *EquipmentAPI) All() (map[uuid.UUID]arkobject.EquipmentItem, error) {
 }
 
 func (e *EquipmentAPI) AllWithFaults() (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
-	objects, faults, err := e.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
-		return e.IsApplicableBlueprint(info.ClassName)
-	})
+	return e.AllMatchingBlueprintsWithFaults(nil)
+}
+
+func (e *EquipmentAPI) AllMatchingBlueprintsWithFaults(match func(string) bool) (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := e.save.ParsedObjectsWithFaults(e.equipmentBlueprintFilter(match))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -155,6 +159,15 @@ func (e *EquipmentAPI) AllWithFaults() (map[uuid.UUID]arkobject.EquipmentItem, [
 		out[info.UUID] = arkobject.EquipmentItemFromObject(info.Object, kind)
 	}
 	return out, faults, nil
+}
+
+func (e *EquipmentAPI) equipmentBlueprintFilter(match func(string) bool) func(arksave.ObjectClassInfo) bool {
+	return func(info arksave.ObjectClassInfo) bool {
+		if match != nil && !match(info.ClassName) {
+			return false
+		}
+		return e.IsApplicableBlueprint(info.ClassName)
+	}
 }
 
 func (e *EquipmentAPI) ByKind(kind arkobject.EquipmentKind) (map[uuid.UUID]arkobject.EquipmentItem, error) {

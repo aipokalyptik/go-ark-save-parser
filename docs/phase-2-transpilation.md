@@ -174,6 +174,8 @@ enough that oracle-derived tests can run against translated packages.
       for owner/container correlation.
 - [x] Add upstream canonical equipment class-list coverage for blueprints that
       do not match broad weapon, saddle, armor, or shield path heuristics.
+- [x] Add pre-parse Equipment API blueprint predicate composition for callers
+      that need upstream-style filtered equipment scans.
 - [x] Include base keystone and averaged map coordinates in base domain JSON
       export for upstream base-location example parity.
 - [x] Route structure domain JSON export through the fault-tolerant structure
