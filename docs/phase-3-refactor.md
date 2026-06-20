@@ -29,8 +29,8 @@ Go packages without losing oracle parity.
 - [ ] Replace duplicated synthetic fixture builders in tests with internal test
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive
-      payloads, compact local tribute indexes, and shared
-      sparse-file/max-size fixtures plus header/string/property encoding for
+      payloads, compact local tribute indexes, shared name-table-ID property
+      writers, and shared sparse-file/max-size fixtures plus header/string/property encoding for
       examples, CLI tests, `arkprofile`, `arkapi`, `arkarchive`, `arkcluster`,
       `arktribute`, and benchmarks; lower-level domain-specific parser fixtures
       still need incremental migration.

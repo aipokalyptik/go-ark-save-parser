@@ -7,6 +7,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
 
@@ -181,23 +182,9 @@ func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) 
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	writeIntProperty(&buf, 0x1000000c, 100)
 	if isBlueprint {
-		writeBoolProperty(&buf, 0x1000000d, true)
+		testfixtures.WriteBoolPropertyID(&buf, 0x1000000d, 0x1000000e, true)
 	}
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
-}
-
-func writeBoolProperty(buf *bytes.Buffer, name uint32, value bool) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000000e))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(1))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	if value {
-		buf.WriteByte(1)
-	} else {
-		buf.WriteByte(0)
-	}
 }

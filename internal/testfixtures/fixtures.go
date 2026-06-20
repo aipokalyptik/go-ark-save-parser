@@ -288,6 +288,79 @@ func WriteNameIntProperty(buf *bytes.Buffer, name string, value int32) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
+func WriteIntPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value int32) {
+	writePropertyIDHeader(buf, name, propertyType, 4, 0, false)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteFloatPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value float32) {
+	writePropertyIDHeader(buf, name, propertyType, 4, 0, false)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteDoublePropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value float64) {
+	writePropertyIDHeader(buf, name, propertyType, 8, 0, false)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteBoolPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value bool) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, propertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(1))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	if value {
+		buf.WriteByte(1)
+	} else {
+		buf.WriteByte(0)
+	}
+}
+
+func WriteObjectReferencePropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, id uuid.UUID) {
+	writePropertyIDHeader(buf, name, propertyType, 18, 0, false)
+	_ = binary.Write(buf, binary.LittleEndian, int16(0))
+	buf.Write(id[:])
+}
+
+func WritePositionedIntPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value int32) {
+	writePropertyIDHeader(buf, name, propertyType, 4, position, false)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WritePositionedFloatPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value float32) {
+	writePropertyIDHeader(buf, name, propertyType, 4, position, true)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WritePositionedInt8PropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value int8) {
+	writePropertyIDHeader(buf, name, propertyType, 1, position, true)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	buf.WriteByte(byte(value))
+}
+
+func WritePositionedNamePropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, valueName uint32) {
+	writePropertyIDHeader(buf, name, propertyType, 8, position, true)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, valueName)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+}
+
+func writePropertyIDHeader(buf *bytes.Buffer, name uint32, propertyType uint32, size int32, position int32, positioned bool) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, propertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, size)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	if positioned {
+		buf.WriteByte(1)
+	} else {
+		buf.WriteByte(0)
+	}
+}
+
 func WriteNameStringProperty(buf *bytes.Buffer, name string, value string) {
 	WriteArkString(buf, name)
 	WriteArkString(buf, "StrProperty")

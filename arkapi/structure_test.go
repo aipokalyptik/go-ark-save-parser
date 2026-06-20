@@ -7,6 +7,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
 
@@ -152,10 +153,10 @@ func syntheticStructureObjectBytes() []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 
-	writeIntProperty(&buf, 0x10000006, 123)
-	writeFloatProperty(&buf, 0x10000007, 10000)
-	writeFloatProperty(&buf, 0x10000008, 9000)
-	writeIntProperty(&buf, 0x10000009, 555)
+	testfixtures.WriteIntPropertyID(&buf, 0x10000006, 0x10000003, 123)
+	testfixtures.WriteFloatPropertyID(&buf, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteFloatPropertyID(&buf, 0x10000008, 0x1000000a, 9000)
+	testfixtures.WriteIntPropertyID(&buf, 0x10000009, 0x10000003, 555)
 
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -177,26 +178,4 @@ func syntheticStructureActorTransforms(id uuid.UUID) []byte {
 	}
 	buf.Write(uuid.Nil[:])
 	return buf.Bytes()
-}
-
-func writeIntProperty(buf *bytes.Buffer, name uint32, value int32) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000003))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeFloatProperty(buf *bytes.Buffer, name uint32, value float32) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000000a))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, value)
 }
