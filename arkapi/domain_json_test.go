@@ -269,6 +269,25 @@ func TestJSONAPIExportStackablesSummarizesStackableAPI(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportStackablesIncludesOwnerInventory(t *testing.T) {
+	save := openSyntheticStackableOwnedByStructureSave(t)
+	defer save.Close()
+
+	items, err := NewJSON(save).ExportStackables()
+	if err != nil {
+		t.Fatalf("ExportStackables() error = %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("ExportStackables() length = %d, want 2", len(items))
+	}
+	if items[0].OwnerInventoryUUID != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
+		t.Fatalf("StackableInfo owner inventory = %q", items[0].OwnerInventoryUUID)
+	}
+	if items[1].OwnerInventoryUUID != "11111111-2222-3333-4444-555555555555" {
+		t.Fatalf("StackableInfo second owner inventory = %q", items[1].OwnerInventoryUUID)
+	}
+}
+
 func TestJSONAPIExportBasesSummarizesBaseAPI(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()

@@ -81,9 +81,10 @@ type EquipmentInfo struct {
 }
 
 type StackableInfo struct {
-	UUID      string `json:"uuid"`
-	Blueprint string `json:"blueprint"`
-	Quantity  int32  `json:"quantity"`
+	UUID               string `json:"uuid"`
+	Blueprint          string `json:"blueprint"`
+	Quantity           int32  `json:"quantity"`
+	OwnerInventoryUUID string `json:"owner_inventory_uuid,omitempty"`
 }
 
 type BaseInfo struct {
@@ -323,9 +324,10 @@ func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {
 	for _, id := range sortedUUIDKeys(stackables) {
 		item := stackables[id]
 		out = append(out, StackableInfo{
-			UUID:      id.String(),
-			Blueprint: item.Blueprint,
-			Quantity:  item.Quantity,
+			UUID:               id.String(),
+			Blueprint:          item.Blueprint,
+			Quantity:           item.Quantity,
+			OwnerInventoryUUID: optionalUUIDString(item.OwnerInventory),
 		})
 	}
 	return out, nil
