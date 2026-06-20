@@ -1,6 +1,8 @@
 package arkprofile
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"os"
 	"path/filepath"
@@ -44,6 +46,19 @@ func TestOpenPlayerProfilePlayerUsesParsedArchiveProperties(t *testing.T) {
 	}
 }
 
+func TestOpenPlayerProfileExposesPropertyErrors(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	writeBrokenArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+
+	profile, err := OpenPlayerProfile(path)
+	if err != nil {
+		t.Fatalf("OpenPlayerProfile() error = %v", err)
+	}
+	if !profile.HasPropertyErrors() || profile.PropertyError() == nil {
+		t.Fatalf("profile property error state = %v, %v; want recorded error", profile.HasPropertyErrors(), profile.PropertyError())
+	}
+}
+
 func TestOpenPlayerProfileRejectsArchiveAboveConfiguredLimit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
 	writeSparseFile(t, path, 1024)
@@ -64,6 +79,19 @@ func TestOpenTribeSaveLoadsLocalArchiveFile(t *testing.T) {
 	}
 	if len(tribe.Archive.Objects) != 1 || tribe.Archive.Objects[0].ClassName != "/Script/ShooterGame.PrimalTribeData" {
 		t.Fatalf("Tribe archive objects = %#v", tribe.Archive.Objects)
+	}
+}
+
+func TestOpenTribeSaveExposesPropertyErrors(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	writeBrokenArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
+
+	tribe, err := OpenTribeSave(path)
+	if err != nil {
+		t.Fatalf("OpenTribeSave() error = %v", err)
+	}
+	if !tribe.HasPropertyErrors() || tribe.PropertyError() == nil {
+		t.Fatalf("tribe property error state = %v, %v; want recorded error", tribe.HasPropertyErrors(), tribe.PropertyError())
 	}
 }
 
@@ -149,4 +177,55 @@ func writeSparseFile(t *testing.T, path string, size int64) {
 	if err := file.Close(); err != nil {
 		t.Fatalf("close sparse file: %v", err)
 	}
+}
+
+func writeBrokenArchive(t *testing.T, path string, className string) {
+	t.Helper()
+	var props bytes.Buffer
+	writeProfileStringProperty(&props, "ValidName", "value")
+	writeProfileArkString(&props, "Broken")
+	writeProfileArkString(&props, "ObjectProperty")
+	_ = binary.Write(&props, binary.LittleEndian, int32(2))
+	_ = binary.Write(&props, binary.LittleEndian, int32(0))
+	props.WriteByte(0)
+	_ = binary.Write(&props, binary.LittleEndian, int16(5))
+	writeProfileArkString(&props, "None")
+
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
+	buf.Write(make([]byte, 16))
+	writeProfileArkString(&buf, className)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	offsetPos := buf.Len()
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	buf.Write(props.Bytes())
+	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+		t.Fatalf("write broken archive: %v", err)
+	}
+}
+
+func writeProfileStringProperty(buf *bytes.Buffer, name string, value string) {
+	writeProfileArkString(buf, name)
+	writeProfileArkString(buf, "StrProperty")
+	bodySize := 4 + len(value) + 1
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	writeProfileArkString(buf, value)
+}
+
+func writeProfileArkString(buf *bytes.Buffer, value string) {
+	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
+	buf.WriteString(value)
+	buf.WriteByte(0)
 }

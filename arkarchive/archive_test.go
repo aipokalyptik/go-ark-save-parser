@@ -164,6 +164,13 @@ func TestParseArchiveRecordsPropertyErrorsByDefault(t *testing.T) {
 	if archive.Objects[0].PropertyError == nil {
 		t.Fatalf("PropertyError = nil, want recorded parse error")
 	}
+	if !archive.HasPropertyErrors() {
+		t.Fatalf("HasPropertyErrors() = false, want true")
+	}
+	errors := archive.PropertyErrors()
+	if len(errors) != 1 || errors[0].UUID != archive.Objects[0].UUID || errors[0].ClassName != archive.Objects[0].ClassName || errors[0].Err == nil {
+		t.Fatalf("PropertyErrors() = %#v, want one object property error", errors)
+	}
 }
 
 func TestParseArchiveKeepsPartialPropertiesWhenPropertyErrorIsRecorded(t *testing.T) {

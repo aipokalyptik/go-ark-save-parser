@@ -55,7 +55,9 @@ Public verification reported by reviewers:
 
 - Best-effort archive parsing records per-object property errors, but some
   higher-level callers can still treat partial data as authoritative unless
-  strict modes or explicit parse-status fields are used.
+  strict modes or explicit parse-status fields are used. Addressed after this
+  review for archive/profile/tribe readers by adding archive property-error
+  summaries and profile/tribe convenience status accessors.
 - Mutation helpers are structurally tested only. This is correctly documented as
   live-server-unverified, but upstream behavioral parity is not proven.
 - Example privacy guidance is weaker than CLI privacy guidance. Example outputs

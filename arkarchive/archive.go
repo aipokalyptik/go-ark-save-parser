@@ -46,6 +46,42 @@ type Object struct {
 	PropertyError    error
 }
 
+type ObjectPropertyError struct {
+	UUID      uuid.UUID
+	ClassName string
+	Err       error
+}
+
+func (a *Archive) HasPropertyErrors() bool {
+	if a == nil {
+		return false
+	}
+	for _, object := range a.Objects {
+		if object.PropertyError != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *Archive) PropertyErrors() []ObjectPropertyError {
+	if a == nil {
+		return nil
+	}
+	out := make([]ObjectPropertyError, 0)
+	for _, object := range a.Objects {
+		if object.PropertyError == nil {
+			continue
+		}
+		out = append(out, ObjectPropertyError{
+			UUID:      object.UUID,
+			ClassName: object.ClassName,
+			Err:       object.PropertyError,
+		})
+	}
+	return out
+}
+
 func Parse(data []byte, opts Options) (*Archive, error) {
 	format := opts.Format
 	if opts.ClusterDino {

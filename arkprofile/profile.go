@@ -55,6 +55,17 @@ func (p *PlayerProfile) Player() (arkobject.Player, error) {
 	return arkobject.PlayerFromContainer(p.Properties)
 }
 
+func (p *PlayerProfile) HasPropertyErrors() bool {
+	return p.PropertyError() != nil
+}
+
+func (p *PlayerProfile) PropertyError() error {
+	if p == nil || p.Archive == nil || len(p.Archive.Objects) == 0 {
+		return nil
+	}
+	return p.Archive.Objects[0].PropertyError
+}
+
 func OpenTribeSave(path string) (*TribeSave, error) {
 	return OpenTribeSaveWithOptions(path, Options{})
 }
@@ -111,6 +122,17 @@ func (t *TribeSave) Summary() (TribeSummary, error) {
 
 func (t *TribeSave) Tribe() (arkobject.Tribe, error) {
 	return arkobject.TribeFromContainer(t.Properties)
+}
+
+func (t *TribeSave) HasPropertyErrors() bool {
+	return t.PropertyError() != nil
+}
+
+func (t *TribeSave) PropertyError() error {
+	if t == nil || t.Archive == nil || len(t.Archive.Objects) == 0 {
+		return nil
+	}
+	return t.Archive.Objects[0].PropertyError
 }
 
 func stringArrayValues(value any) []string {
