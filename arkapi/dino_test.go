@@ -820,6 +820,15 @@ func TestDinoAPIBestDinoForStatFilteredAppliesUpstreamStyleOptions(t *testing.T)
 	if ok {
 		t.Fatalf("BestDinoForStatFiltered(untamed) ok = true, want false")
 	}
+
+	_, _, _, _, _, err = api.BestDinoForStatFiltered(DinoBestStatOptions{OnlyTamed: true, OnlyUntamed: true})
+	if err == nil {
+		t.Fatalf("BestDinoForStatFiltered(conflicting tame filters) error = nil, want error")
+	}
+	_, _, _, _, _, err = api.BestDinoForStatFiltered(DinoBestStatOptions{BaseStat: true, MutatedStat: true})
+	if err == nil {
+		t.Fatalf("BestDinoForStatFiltered(conflicting stat scopes) error = nil, want error")
+	}
 }
 
 func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {

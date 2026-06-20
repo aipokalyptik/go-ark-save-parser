@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"errors"
 	"sort"
 	"strings"
 
@@ -685,12 +686,18 @@ func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, ark
 }
 
 func (d *DinoAPI) BestDinoForStatFiltered(opts DinoBestStatOptions) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
+	if opts.OnlyTamed && opts.OnlyUntamed {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, errors.New("cannot specify both OnlyTamed and OnlyUntamed")
+	}
+	if opts.BaseStat && opts.MutatedStat {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, errors.New("cannot specify both BaseStat and MutatedStat")
+	}
 	tamed := (*bool)(nil)
 	switch {
-	case opts.OnlyTamed && !opts.OnlyUntamed:
+	case opts.OnlyTamed:
 		value := true
 		tamed = &value
-	case opts.OnlyUntamed && !opts.OnlyTamed:
+	case opts.OnlyUntamed:
 		value := false
 		tamed = &value
 	}
