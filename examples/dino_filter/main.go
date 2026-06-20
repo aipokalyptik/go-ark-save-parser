@@ -26,14 +26,18 @@ func main() {
 	}
 	tamed := 0
 	wild := 0
+	cryopodded := 0
 	for _, dino := range dinos {
 		if dino.IsTamed {
 			tamed++
 		} else {
 			wild++
 		}
+		if dino.IsCryopodded {
+			cryopodded++
+		}
 	}
 	classes := api.CountByClass(dinos)
 
-	fmt.Printf("dinos=%d tamed=%d wild=%d classes=%d\n", len(dinos), tamed, wild, len(classes))
+	fmt.Printf("dinos=%d tamed=%d wild=%d cryopodded=%d classes=%d\n", len(dinos), tamed, wild, cryopodded, len(classes))
 }

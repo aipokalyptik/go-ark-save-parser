@@ -25,8 +25,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `property_filter`: count objects and classes whose raw save object payloads
   contain any requested property name, matching the upstream property-name
   prefilter workflow without deep-parsing every object.
-- `dino_filter`: parse local dino objects, run basic tamed/wild filters, and
-  print aggregate class counts.
+- `dino_filter`: parse local dino objects, run basic tamed/wild/cryopodded
+  filters, and print aggregate class counts.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
 
