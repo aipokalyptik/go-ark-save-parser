@@ -4,6 +4,12 @@ These examples are offline-only Go counterparts for runnable upstream example
 categories. They require local files and do not use FTP, RCON, or live server
 access.
 
+Example output is not redacted. It can include local paths, class names,
+profile/tribe IDs, upload IDs, locations, and other save-derived details. Treat
+captured example output as private unless you have reviewed and sanitized it.
+Use the `arksave --redact ...` CLI commands when you need safer aggregate output
+for logs, issues, or reports.
+
 Run an example with `go run`:
 
 ```sh

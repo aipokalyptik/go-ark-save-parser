@@ -58,7 +58,9 @@ Public verification reported by reviewers:
 - Example privacy guidance is weaker than CLI privacy guidance. Example outputs
   can contain paths, IDs, class names, player/tribe details, locations, and
   upload identifiers, but the examples README does not repeat the privacy
-  warning or provide redaction-mode equivalents.
+  warning or provide redaction-mode equivalents. Addressed after this review by
+  documenting that example output is unredacted and pointing users to
+  `arksave --redact` for safer aggregate output.
 - Legacy/unsupported archive behavior is documented, but user-facing CLI/API
   error behavior should be made more explicit and tested.
 
