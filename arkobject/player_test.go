@@ -58,6 +58,48 @@ func TestPlayerFromContainerReadsMyDataFields(t *testing.T) {
 	}
 }
 
+func TestPlayerFromContainerReadsNestedLocalProfileStats(t *testing.T) {
+	characterConfig := arkproperty.Container{Properties: []arkproperty.Property{
+		{Name: "PlayerCharacterName", Type: arkproperty.TypeString, Value: "NestedSurvivor"},
+	}}
+	persistentStats := arkproperty.Container{Properties: []arkproperty.Property{
+		{Name: "CharacterStatusComponent_ExtraCharacterLevel", Type: arkproperty.TypeUInt16, Value: uint16(9)},
+		{Name: "CharacterStatusComponent_ExperiencePoints", Type: arkproperty.TypeFloat, Value: float32(456.25)},
+		{Name: "PlayerState_TotalEngramPoints", Type: arkproperty.TypeInt, Value: int32(22)},
+		{Name: "PlayerState_EngramBlueprints", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+			ElementType: arkproperty.TypeObject,
+			Values: []any{
+				arkproperty.ObjectReference{Type: arkproperty.ObjectReferencePath, Value: "Blueprint'/Game/Engrams/EngramA.EngramA_C'"},
+			},
+		}},
+	}}
+	myData := arkproperty.Container{Properties: []arkproperty.Property{
+		{Name: "PlayerDataID", Type: arkproperty.TypeUInt64, Value: uint64(42)},
+		{Name: "PlayerName", Type: arkproperty.TypeString, Value: "PlatformName"},
+		{Name: "MyPlayerCharacterConfig", Type: arkproperty.TypeStruct, Value: characterConfig},
+		{Name: "MyPersistentCharacterStats", Type: arkproperty.TypeStruct, Value: persistentStats},
+		{Name: "NumOfDeaths", Type: arkproperty.TypeFloat, Value: float32(7)},
+	}}
+	props := arkproperty.Container{Properties: []arkproperty.Property{
+		{Name: "SavedPlayerDataVersion", Type: arkproperty.TypeInt, Value: int32(17)},
+		{Name: "MyData", Type: arkproperty.TypeStruct, Value: myData},
+	}}
+
+	player, err := PlayerFromContainer(props)
+	if err != nil {
+		t.Fatalf("PlayerFromContainer() error = %v", err)
+	}
+	if player.CharacterName != "NestedSurvivor" || player.NumDeaths != 7 {
+		t.Fatalf("nested profile identity fields = %#v", player)
+	}
+	if player.Level != 10 || player.Experience != 456.25 || player.EngramPoints != 22 {
+		t.Fatalf("nested profile stat fields = %#v", player)
+	}
+	if len(player.UnlockedEngrams) != 1 || player.UnlockedEngrams[0] != "Blueprint'/Game/Engrams/EngramA.EngramA_C'" {
+		t.Fatalf("nested profile engrams = %#v", player.UnlockedEngrams)
+	}
+}
+
 func TestTribeFromContainerReadsTribeDataFields(t *testing.T) {
 	tribeData := arkproperty.Container{Properties: []arkproperty.Property{
 		{Name: "TribeName", Type: arkproperty.TypeString, Value: "Builders"},

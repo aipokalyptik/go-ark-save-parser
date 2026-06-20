@@ -1,6 +1,7 @@
 package arkproperty
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
@@ -87,6 +88,29 @@ type Vector struct {
 	Z float64
 }
 
+type UniqueNetID struct {
+	Unknown   byte
+	ValueType string
+	Value     string
+}
+
+type recoverableCompoundError struct {
+	err error
+}
+
+func (e recoverableCompoundError) Error() string {
+	return e.err.Error()
+}
+
+func (e recoverableCompoundError) Unwrap() error {
+	return e.err
+}
+
+func isRecoverableCompoundError(err error) bool {
+	_, ok := err.(recoverableCompoundError)
+	return ok
+}
+
 func (c Container) Value(name string) (any, bool) {
 	for _, prop := range c.Properties {
 		if prop.Name == name {
@@ -132,6 +156,9 @@ func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error
 		if err != nil {
 			if keepPartial && prop != nil {
 				props = append(props, *prop)
+			}
+			if keepPartial && isRecoverableCompoundError(err) {
+				continue
 			}
 			if keepPartial {
 				return props, err
@@ -776,6 +803,16 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	}
 	bodyStart := r.Position()
 	bodyEnd := bodyStart + int(dataSize)
+	if structType == "UniqueNetIdRepl" {
+		value, err := readUniqueNetID(r, dataSize)
+		if err != nil {
+			return nil, "", 0, err
+		}
+		if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+			return nil, "", 0, err
+		}
+		return value, structType, dataSize, nil
+	}
 	if structType == "Vector" && dataSize == 24 {
 		x, err := r.ReadFloat64()
 		if err != nil {
@@ -795,6 +832,12 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 	if err != nil {
 		if len(props) > 0 {
 			if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+				if r.Position() > bodyEnd {
+					if seekErr := r.SetPosition(bodyEnd); seekErr != nil {
+						return nil, "", 0, seekErr
+					}
+					return Container{Properties: props}, structType, dataSize, recoverableCompoundError{err: err}
+				}
 				return nil, "", 0, err
 			}
 			return Container{Properties: props}, structType, dataSize, err
@@ -812,6 +855,34 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 		return nil, "", 0, err
 	}
 	return Container{Properties: props}, structType, dataSize, nil
+}
+
+func readUniqueNetID(r *arkbinary.Reader, dataSize uint32) (UniqueNetID, error) {
+	bodyStart := r.Position()
+	unknown, err := r.ReadByte()
+	if err != nil {
+		return UniqueNetID{}, err
+	}
+	valueType, err := r.ReadString()
+	if err != nil {
+		return UniqueNetID{}, err
+	}
+	valueTypeText := ""
+	if valueType != nil {
+		valueTypeText = *valueType
+	}
+	length, err := r.ReadByte()
+	if err != nil {
+		return UniqueNetID{}, err
+	}
+	if int(length) > int(dataSize)-(r.Position()-bodyStart) {
+		return UniqueNetID{}, fmt.Errorf("unique net id length %d exceeds payload size %d", length, dataSize)
+	}
+	raw, err := r.ReadBytes(int(length))
+	if err != nil {
+		return UniqueNetID{}, err
+	}
+	return UniqueNetID{Unknown: unknown, ValueType: valueTypeText, Value: hex.EncodeToString(raw)}, nil
 }
 
 func readInlineStructHeader(r *arkbinary.Reader, nrNames uint32) (uint32, error) {

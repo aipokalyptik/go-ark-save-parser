@@ -102,6 +102,20 @@ func int32Value(properties arkproperty.Container, name string) int32 {
 		return v
 	case uint32:
 		return int32(v)
+	case int16:
+		return int32(v)
+	case uint16:
+		return int32(v)
+	case int8:
+		return int32(v)
+	case uint8:
+		return int32(v)
+	case int:
+		return int32(v)
+	case float32:
+		return int32(v)
+	case float64:
+		return int32(v)
 	default:
 		return 0
 	}

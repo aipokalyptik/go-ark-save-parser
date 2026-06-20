@@ -155,6 +155,8 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             "parsed_players": len(player_api.players),
             "parsed_tribes": len(player_api.tribes),
             "tribe_player_links": sum(len(players) for players in player_api.tribe_to_player_map.values()),
+            "total_deaths": sum(player.nr_of_deaths for player in player_api.players),
+            "unlocked_engrams": len({engram.value for player in player_api.players for engram in player.stats.engrams}),
         }
     finally:
         save.close()
@@ -399,6 +401,8 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["local_profiles"]["parsed"] = got
         want = {key: py_local_profiles[key] for key in ("profiles", "tribes", "clusters", "tributes", "parsed_players", "parsed_tribes", "tribe_player_links")}
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
+        want = {key: py_local_profiles[key] for key in ("total_deaths", "unlocked_engrams")}
+        cases.append(CaseResult("local_profile_player_aggregates", "pass" if {key: got.get(key) for key in want} == want else "fail", "local player death and unlocked engram aggregates compared"))
 
     if py_player_inventory is None:
         cases.append(CaseResult("player_inventory", "skip", "oracle save has no player inventory candidate"))

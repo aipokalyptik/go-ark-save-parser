@@ -776,6 +776,62 @@ func TestParseStructPropertyReadsPackedVector(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyReadsUniqueNetIDAndContinues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "UniqueID",
+		2: "StructProperty",
+		3: "UniqueNetIdRepl",
+		4: "PlayerName",
+		5: "StrProperty",
+		6: "None",
+	})
+	var payload bytes.Buffer
+	payload.WriteByte(0xf9)
+	writeArkString(&payload, "RedpointEOS")
+	payload.WriteByte(16)
+	payload.Write([]byte{0x00, 0x02, 0x38, 0xca, 0xa8, 0xe4, 0x4e, 0xf7, 0x9b, 0x67, 0x9a, 0x07, 0x24, 0x32, 0x08, 0x28})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 1)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, uint32(payload.Len()))
+	stream.WriteByte(8)
+	stream.Write(payload.Bytes())
+	writeName(stream, 4)
+	writeName(stream, 5)
+	var stringPayload bytes.Buffer
+	writeArkString(&stringPayload, "PlatformName")
+	writeInt32(stream, int32(stringPayload.Len()))
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	stream.Write(stringPayload.Bytes())
+	writeName(stream, 6)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() length = %d, want 2: %#v", len(props), props)
+	}
+	got, ok := props[0].Value.(UniqueNetID)
+	if !ok {
+		t.Fatalf("UniqueID value type = %T, want UniqueNetID", props[0].Value)
+	}
+	if got.Unknown != 0xf9 || got.ValueType != "RedpointEOS" || got.Value != "000238caa8e44ef79b679a0724320828" {
+		t.Fatalf("UniqueNetID = %#v", got)
+	}
+	if props[1].Name != "PlayerName" || props[1].Value != "PlatformName" {
+		t.Fatalf("following property = %#v", props[1])
+	}
+}
+
 func TestParseStructPropertyReadsNestedPropertyContainer(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

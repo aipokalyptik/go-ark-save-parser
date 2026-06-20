@@ -27,10 +27,6 @@ type Player struct {
 func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	var player Player
 	player.PlayerDataVersion = int32Value(properties, "SavedPlayerDataVersion")
-	player.Level = 1 + int32Value(properties, "CharacterStatusComponent_ExtraCharacterLevel")
-	player.Experience = float64Value(properties, "CharacterStatusComponent_ExperiencePoints")
-	player.EngramPoints = int32Value(properties, "PlayerState_TotalEngramPoints")
-	player.UnlockedEngrams = objectReferenceStringArrayValue(properties, "PlayerState_EngramBlueprints")
 
 	raw, ok := properties.Value("MyData")
 	if !ok {
@@ -41,8 +37,22 @@ func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 		return Player{}, fmt.Errorf("MyData has type %T, want arkproperty.Container", raw)
 	}
 
+	stats := properties
+	if nestedStats, ok := containerValue(myData, "MyPersistentCharacterStats"); ok {
+		stats = nestedStats
+	}
+	player.Level = 1 + int32Value(stats, "CharacterStatusComponent_ExtraCharacterLevel")
+	player.Experience = float64Value(stats, "CharacterStatusComponent_ExperiencePoints")
+	player.EngramPoints = int32Value(stats, "PlayerState_TotalEngramPoints")
+	player.UnlockedEngrams = objectReferenceStringArrayValue(stats, "PlayerState_EngramBlueprints")
+
 	player.PlayerDataID = uint64Value(myData, "PlayerDataID")
 	player.CharacterName = stringValue(myData, "PlayerCharacterName")
+	if player.CharacterName == "" {
+		if characterConfig, ok := containerValue(myData, "MyPlayerCharacterConfig"); ok {
+			player.CharacterName = stringValue(characterConfig, "PlayerCharacterName")
+		}
+	}
 	player.PlayerName = stringValue(myData, "PlayerName")
 	player.IPAddress = stringValue(myData, "SavedNetworkAddress")
 	player.FirstSpawned = boolValue(myData, "bFirstSpawned")
@@ -52,6 +62,15 @@ func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	player.LoginTime = float64Value(myData, "LoginTime")
 	player.UniqueID = uniqueIDValue(myData)
 	return player, nil
+}
+
+func containerValue(properties arkproperty.Container, name string) (arkproperty.Container, bool) {
+	value, ok := properties.Value(name)
+	if !ok {
+		return arkproperty.Container{}, false
+	}
+	container, ok := value.(arkproperty.Container)
+	return container, ok
 }
 
 func uint64Value(properties arkproperty.Container, name string) uint64 {

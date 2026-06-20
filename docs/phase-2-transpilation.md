@@ -158,6 +158,9 @@ enough that oracle-derived tests can run against translated packages.
       scans over `.ark` player-data and tribe-data objects.
 - [x] Narrow save-contained player pawn lookup to pawn classes so inventory and
       location helpers are not blocked by unrelated unsupported objects.
+- [x] Parse `UniqueNetIdRepl` structs and recover partial nested profile structs
+      so local `.arkprofile` player deaths, character names, stats, and unlocked
+      engrams match the Python oracle aggregate behavior.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.
