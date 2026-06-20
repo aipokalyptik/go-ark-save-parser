@@ -61,4 +61,11 @@ func main() {
 	} else if ok {
 		fmt.Printf("highest_experience=%.2f\n", experience)
 	}
+
+	unlockedEngrams, err := api.UnlockedEngrams()
+	if err != nil {
+		log.Printf("unlocked engrams: %v", err)
+	} else {
+		fmt.Printf("unlocked_engrams=%d\n", len(unlockedEngrams))
+	}
 }

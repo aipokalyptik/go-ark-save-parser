@@ -34,7 +34,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 
 - `local_profiles`: scan a directory for local `.arkprofile`, `.arktribe`, and
   extensionless local cluster files, then print discovered counts, parsed
-  counts, aggregate tribe-player links, deaths, levels, and experience.
+  counts, aggregate tribe-player links, deaths, levels, experience, and
+  unlocked engram blueprint counts.
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
 - `local_tribute`: read local compact tribute index files and print aggregate

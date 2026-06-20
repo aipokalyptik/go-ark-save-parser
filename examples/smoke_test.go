@@ -19,6 +19,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	copyPath := filepath.Join(dir, "copy.ark")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
+	profilePath := filepath.Join(dir, "123.arkprofile")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	dinoID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	stackableID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
@@ -41,13 +42,23 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
+	testfixtures.WritePlayerArchiveWithOptions(t, profilePath, testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		TribeID:       777,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+		},
+	})
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
 	runExample(t, "property_filter", "objects=3 classes=3", savePath, "None")
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 classes=1", savePath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
-	runExample(t, "local_profiles", "clusters=1 tributes=1", dir)
+	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
 	runExample(t, "mutation_copy", "wrote copy:", savePath, copyPath)
