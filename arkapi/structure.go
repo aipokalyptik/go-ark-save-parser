@@ -69,6 +69,35 @@ func (s *StructureAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Str
 	return out, nil
 }
 
+func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (map[uuid.UUID]arkobject.Structure, error) {
+	all, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+	if mapName == "" && s.save.Context != nil {
+		mapName = s.save.Context.MapName
+	}
+	allowed := map[string]struct{}{}
+	for _, blueprint := range blueprints {
+		allowed[blueprint] = struct{}{}
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range all {
+		if structure.Location == nil {
+			continue
+		}
+		if len(allowed) > 0 {
+			if _, ok := allowed[structure.Blueprint]; !ok {
+				continue
+			}
+		}
+		if structure.Location.IsAtMapCoordinate(mapName, coords, radius) {
+			out[id] = structure
+		}
+	}
+	return out, nil
+}
+
 func isStructureBlueprint(name string) bool {
 	if name == "" {
 		return false

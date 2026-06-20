@@ -61,6 +61,44 @@ func TestStructureAPIGetByClassFiltersBlueprints(t *testing.T) {
 	}
 }
 
+func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	all, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structure := all[id]
+	coords := structure.Location.AsMapCoords("Valguero")
+
+	nearby, err := api.AtLocation("Valguero", coords, 0.01, nil)
+	if err != nil {
+		t.Fatalf("AtLocation() error = %v", err)
+	}
+	if len(nearby) != 1 {
+		t.Fatalf("AtLocation() length = %d, want 1", len(nearby))
+	}
+
+	filtered, err := api.AtLocation("Valguero", coords, 0.01, []string{structure.Blueprint})
+	if err != nil {
+		t.Fatalf("AtLocation(class) error = %v", err)
+	}
+	if len(filtered) != 1 {
+		t.Fatalf("AtLocation(class) length = %d, want 1", len(filtered))
+	}
+
+	missed, err := api.AtLocation("Valguero", arkobject.MapCoords{Lat: 1, Long: 1}, 0.01, nil)
+	if err != nil {
+		t.Fatalf("AtLocation(miss) error = %v", err)
+	}
+	if len(missed) != 0 {
+		t.Fatalf("AtLocation(miss) length = %d, want 0", len(missed))
+	}
+}
+
 func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
