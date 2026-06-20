@@ -44,12 +44,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'",
 			0x1000000c: "InventoryItems",
 			0x1000000d: "ArrayProperty",
+			0x1000000e: "SavedBaseWorldLocation",
+			0x1000000f: "StructProperty",
+			0x10000010: "Vector",
+			0x10000011: "/Script/CoreUObject",
 		}),
 		Objects: map[uuid.UUID][]byte{
 			objectID:    testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
 			dinoID:      testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
 			stackableID: stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
-			pawnID:      playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, inventoryID),
+			pawnID:      playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, 0x1000000e, 0x1000000f, 0x10000010, 0x10000011, inventoryID),
 			inventoryID: inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
 		},
 	})
@@ -71,7 +75,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "property_filter", "objects=5 classes=5", savePath, "None")
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 classes=1", savePath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
-	runExample(t, "player_inventory", "items=2", savePath, "42")
+	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
@@ -94,11 +98,31 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	}
 }
 
-func playerPawnObjectBytes(classNameID uint32, noneNameID uint32, linkedPlayerDataIDName uint32, intPropertyID uint32, inventoryNameID uint32, objectPropertyID uint32, inventoryID uuid.UUID) []byte {
+func playerPawnObjectBytes(classNameID uint32, noneNameID uint32, linkedPlayerDataIDName uint32, intPropertyID uint32, inventoryNameID uint32, objectPropertyID uint32, locationNameID uint32, structPropertyID uint32, vectorNameID uint32, coreObjectNameID uint32, inventoryID uuid.UUID) []byte {
 	var props bytes.Buffer
 	testfixtures.WriteIntPropertyID(&props, linkedPlayerDataIDName, intPropertyID, 42)
 	testfixtures.WriteObjectReferencePropertyID(&props, inventoryNameID, objectPropertyID, inventoryID)
+	writeVectorPropertyID(&props, locationNameID, structPropertyID, vectorNameID, coreObjectNameID, 11, 22, 33)
 	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
+}
+
+func writeVectorPropertyID(buf *bytes.Buffer, name uint32, structProperty uint32, vectorName uint32, coreObjectName uint32, x float64, y float64, z float64) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, structProperty)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, vectorName)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, coreObjectName)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
+	buf.WriteByte(8)
+	_ = binary.Write(buf, binary.LittleEndian, x)
+	_ = binary.Write(buf, binary.LittleEndian, y)
+	_ = binary.Write(buf, binary.LittleEndian, z)
 }
 
 func inventoryObjectBytes(classNameID uint32, noneNameID uint32, itemsNameID uint32, arrayPropertyID uint32, objectPropertyID uint32, itemIDs ...uuid.UUID) []byte {

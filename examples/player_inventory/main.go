@@ -24,7 +24,8 @@ func main() {
 	}
 	defer save.Close()
 
-	inventory, ok, err := arkapi.NewPlayer(save).PlayerInventoryByDataID(playerDataID)
+	api := arkapi.NewPlayer(save)
+	inventory, ok, err := api.PlayerInventoryByDataID(playerDataID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,5 +33,13 @@ func main() {
 		fmt.Printf("player=%d inventory=missing items=0\n", playerDataID)
 		return
 	}
-	fmt.Printf("player=%d inventory=%s items=%d\n", playerDataID, inventory.UUID, inventory.NumberOfItems())
+	location, hasLocation, err := api.PlayerLocationByDataID(playerDataID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if hasLocation {
+		fmt.Printf("player=%d inventory=%s items=%d location=(%.2f,%.2f,%.2f)\n", playerDataID, inventory.UUID, inventory.NumberOfItems(), location.X, location.Y, location.Z)
+		return
+	}
+	fmt.Printf("player=%d inventory=%s items=%d location=missing\n", playerDataID, inventory.UUID, inventory.NumberOfItems())
 }

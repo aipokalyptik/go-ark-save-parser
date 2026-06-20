@@ -37,7 +37,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   counts, aggregate tribe-player links, deaths, levels, experience, and
   unlocked engram blueprint counts.
 - `player_inventory`: open a local `.ark`, resolve a player data ID through its
-  pawn, and print the linked inventory item count.
+  pawn, and print the linked inventory item count plus pawn location when
+  present.
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
 - `local_tribute`: read local compact tribute index files and print aggregate
