@@ -133,6 +133,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
 - [x] Add read-only Equipment API filtering by equipped/blueprint state,
       quality index, minimum rating, and minimum durability.
+- [x] Add read-first equipment `ItemStatValues` parsing for internal stat values
+      plus upstream-compatible weapon damage and durability JSON export.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
       baby/adult, sex, and alive/dead queries.
 - [x] Add read-first tamed dino details for tamed name, neuter state,

@@ -58,16 +58,17 @@ type StructureInfo struct {
 }
 
 type EquipmentInfo struct {
-	UUID              string       `json:"uuid"`
-	Blueprint         string       `json:"blueprint"`
-	Kind              string       `json:"kind"`
-	Quantity          int32        `json:"quantity"`
-	IsEquipped        bool         `json:"is_equipped"`
-	IsBlueprint       bool         `json:"is_blueprint"`
-	Rating            float64      `json:"rating"`
-	Quality           int32        `json:"quality"`
-	CurrentDurability float64      `json:"current_durability"`
-	Crafter           *CrafterInfo `json:"crafter,omitempty"`
+	UUID              string              `json:"uuid"`
+	Blueprint         string              `json:"blueprint"`
+	Kind              string              `json:"kind"`
+	Quantity          int32               `json:"quantity"`
+	IsEquipped        bool                `json:"is_equipped"`
+	IsBlueprint       bool                `json:"is_blueprint"`
+	Rating            float64             `json:"rating"`
+	Quality           int32               `json:"quality"`
+	CurrentDurability float64             `json:"current_durability"`
+	Stats             *EquipmentStatsInfo `json:"stats,omitempty"`
+	Crafter           *CrafterInfo        `json:"crafter,omitempty"`
 }
 
 type StackableInfo struct {
@@ -134,6 +135,12 @@ type GeneTraitInfo struct {
 	Raw   string `json:"raw"`
 	Name  string `json:"name"`
 	Level int    `json:"level,omitempty"`
+}
+
+type EquipmentStatsInfo struct {
+	Internal   map[string]uint16 `json:"internal,omitempty"`
+	Damage     float64           `json:"damage,omitempty"`
+	Durability float64           `json:"durability,omitempty"`
 }
 
 type DinoStatPointsInfo struct {
@@ -278,6 +285,7 @@ func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
 			Rating:            item.Rating,
 			Quality:           item.Quality,
 			CurrentDurability: item.CurrentDurability,
+			Stats:             equipmentStatsInfo(item.Stats),
 			Crafter:           crafterInfo(item.Crafter),
 		})
 	}
@@ -476,4 +484,32 @@ func crafterInfo(value *arkobject.ObjectCrafter) *CrafterInfo {
 		return nil
 	}
 	return &CrafterInfo{CharacterName: value.CharacterName, TribeName: value.TribeName}
+}
+
+func equipmentStatsInfo(value arkobject.EquipmentStats) *EquipmentStatsInfo {
+	if len(value.Internal) == 0 && value.Damage == 0 && value.Durability == 0 {
+		return nil
+	}
+	internal := map[string]uint16{}
+	for stat, raw := range value.Internal {
+		internal[equipmentStatName(stat)] = raw
+	}
+	return &EquipmentStatsInfo{Internal: internal, Damage: value.Damage, Durability: value.Durability}
+}
+
+func equipmentStatName(stat arkobject.EquipmentStat) string {
+	switch stat {
+	case arkobject.EquipmentStatArmor:
+		return "armor"
+	case arkobject.EquipmentStatDurability:
+		return "durability"
+	case arkobject.EquipmentStatDamage:
+		return "damage"
+	case arkobject.EquipmentStatHypothermalResistance:
+		return "hypothermal_resistance"
+	case arkobject.EquipmentStatHyperthermalResistance:
+		return "hyperthermal_resistance"
+	default:
+		return "unknown"
+	}
 }

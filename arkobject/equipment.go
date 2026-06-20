@@ -12,6 +12,16 @@ const (
 	EquipmentShield  EquipmentKind = "shield"
 )
 
+type EquipmentStat int32
+
+const (
+	EquipmentStatArmor                  EquipmentStat = 1
+	EquipmentStatDurability             EquipmentStat = 2
+	EquipmentStatDamage                 EquipmentStat = 3
+	EquipmentStatHypothermalResistance  EquipmentStat = 5
+	EquipmentStatHyperthermalResistance EquipmentStat = 7
+)
+
 type EquipmentItem struct {
 	InventoryItem
 	Kind              EquipmentKind
@@ -20,6 +30,13 @@ type EquipmentItem struct {
 	Rating            float64
 	Quality           int32
 	CurrentDurability float64
+	Stats             EquipmentStats
+}
+
+type EquipmentStats struct {
+	Internal   map[EquipmentStat]uint16
+	Damage     float64
+	Durability float64
 }
 
 func EquipmentItemFromObject(object *GameObject, kind EquipmentKind) EquipmentItem {
@@ -45,7 +62,57 @@ func EquipmentItemFromObject(object *GameObject, kind EquipmentKind) EquipmentIt
 	if value, ok := numericFloat64(properties, "SavedDurability"); ok {
 		item.CurrentDurability = value
 	}
+	item.Stats = equipmentStats(properties, kind, object.Blueprint)
 	return item
+}
+
+func equipmentStats(properties arkproperty.Container, kind EquipmentKind, blueprint string) EquipmentStats {
+	stats := EquipmentStats{Internal: map[EquipmentStat]uint16{}}
+	for _, stat := range []EquipmentStat{
+		EquipmentStatArmor,
+		EquipmentStatDurability,
+		EquipmentStatDamage,
+		EquipmentStatHypothermalResistance,
+		EquipmentStatHyperthermalResistance,
+	} {
+		if value, ok := uint16PositionedValue(properties, "ItemStatValues", int32(stat)); ok {
+			stats.Internal[stat] = value
+		}
+	}
+	if value, ok := stats.Internal[EquipmentStatDamage]; ok && kind == EquipmentWeapon {
+		stats.Damage = float64(int(value))
+		stats.Damage = float64(int((100.0+stats.Damage/100)*10+0.5)) / 10
+	}
+	if value, ok := stats.Internal[EquipmentStatDurability]; ok {
+		stats.Durability = defaultEquipmentDurability(blueprint) * (0.00025*float64(value) + 1)
+	}
+	return stats
+}
+
+func defaultEquipmentDurability(blueprint string) float64 {
+	if blueprint == "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'" {
+		return 50
+	}
+	return 1
+}
+
+func uint16PositionedValue(properties arkproperty.Container, name string, position int32) (uint16, bool) {
+	value, ok := properties.PositionedValue(name, position)
+	if !ok {
+		return 0, false
+	}
+	switch v := value.(type) {
+	case uint16:
+		return v, true
+	case uint32:
+		return uint16(v), true
+	case int32:
+		return uint16(v), true
+	case int:
+		return uint16(v), true
+	default:
+		return 0, false
+	}
 }
 
 func numericInt32(properties arkproperty.Container, name string) (int32, bool) {

@@ -146,6 +146,9 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	if items[0].Kind != "weapon" || items[0].Rating != 7.5 || items[0].Crafter == nil || items[0].Crafter.TribeName != "Porters" {
 		t.Fatalf("EquipmentInfo = %#v", items[0])
 	}
+	if items[0].Stats == nil || items[0].Stats.Damage != 112.3 || items[0].Stats.Durability != 62.5 {
+		t.Fatalf("EquipmentInfo stats = %#v", items[0].Stats)
+	}
 }
 
 func TestJSONAPIExportStackablesSummarizesStackableAPI(t *testing.T) {

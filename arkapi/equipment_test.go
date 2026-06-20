@@ -47,6 +47,9 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 		if item.Kind != arkobject.EquipmentWeapon || item.Rating != 7.5 || item.Quality != 3 {
 			t.Fatalf("Equipment item = %#v", item)
 		}
+		if item.Stats.Internal[arkobject.EquipmentStatDamage] != 1234 || item.Stats.Damage != 112.3 {
+			t.Fatalf("Equipment stats = %#v", item.Stats)
+		}
 	}
 	weapons, err := api.ByKind(arkobject.EquipmentWeapon)
 	if err != nil {
@@ -190,6 +193,8 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 	writeFloatProperty(&buf, 0x10000010, rating)
 	writeIntProperty(&buf, 0x10000011, quality)
 	writeFloatProperty(&buf, 0x10000012, durability)
+	writePositionedUInt16Property(&buf, 0x10000040, 2, 1000)
+	writePositionedUInt16Property(&buf, 0x10000040, 3, 1234)
 	writeStringProperty(&buf, 0x1000001b, "Survivor")
 	writeStringProperty(&buf, 0x1000001c, "Porters")
 	if isEngram {
@@ -215,4 +220,16 @@ func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
 	writeArkString(buf, value)
+}
+
+func writePositionedUInt16Property(buf *bytes.Buffer, name uint32, position int32, value uint16) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000041))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(2))
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	buf.WriteByte(1)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, value)
 }

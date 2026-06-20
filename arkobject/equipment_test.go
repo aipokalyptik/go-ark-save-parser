@@ -18,6 +18,8 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 			{Name: "ItemRating", Type: arkproperty.TypeFloat, Value: float32(7.5)},
 			{Name: "ItemQualityIndex", Type: arkproperty.TypeByte, Value: byte(3)},
 			{Name: "SavedDurability", Type: arkproperty.TypeFloat, Value: float32(0.75)},
+			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDurability), Value: uint16(1000)},
+			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDamage), Value: uint16(1234)},
 			{Name: "CrafterCharacterName", Type: arkproperty.TypeString, Value: "Survivor"},
 			{Name: "CrafterTribeName", Type: arkproperty.TypeString, Value: "Porters"},
 		},
@@ -33,6 +35,12 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	}
 	if item.Rating != 7.5 || item.Quality != 3 || item.CurrentDurability != 0.75 {
 		t.Fatalf("EquipmentItem equipment fields = %#v", item)
+	}
+	if item.Stats.Internal[EquipmentStatDamage] != 1234 || item.Stats.Internal[EquipmentStatDurability] != 1000 {
+		t.Fatalf("EquipmentItem internal stats = %#v", item.Stats.Internal)
+	}
+	if item.Stats.Damage != 112.3 || item.Stats.Durability != 62.5 {
+		t.Fatalf("EquipmentItem actual stats = %#v", item.Stats)
 	}
 	if item.Crafter == nil || item.Crafter.CharacterName != "Survivor" || item.Crafter.TribeName != "Porters" {
 		t.Fatalf("EquipmentItem.Crafter = %#v", item.Crafter)
