@@ -153,6 +153,98 @@ func TestDinoAPIReadsBabyMaturationStage(t *testing.T) {
 	}
 }
 
+func TestDinoAPIReadsLinkedStatusComponentStats(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("All() length = %d, want 1", len(dinos))
+	}
+	for _, dino := range dinos {
+		if dino.Stats == nil {
+			t.Fatalf("Stats = nil, want parsed status component")
+		}
+		if dino.Stats.BaseLevel != 12 || dino.Stats.CurrentLevel != 12 {
+			t.Fatalf("Dino stats levels = %#v", dino.Stats)
+		}
+		if dino.Stats.BaseStatPoints.Health != 5 || dino.Stats.AddedStatPoints.MeleeDamage != 2 {
+			t.Fatalf("Dino stat points = %#v", dino.Stats)
+		}
+		if dino.Stats.ImprintingPercent != 87.5 {
+			t.Fatalf("Dino imprinting = %f", dino.Stats.ImprintingPercent)
+		}
+	}
+}
+
+func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoStatsObjectBytes(statusID))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, statusID[:], syntheticDinoStatusObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
+func syntheticDinoStatsObjectBytes(statusID uuid.UUID) []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeIntProperty(&buf, 0x10000015, 1001)
+	writeIntProperty(&buf, 0x10000016, 2002)
+	writeObjectReferenceProperty(&buf, 0x10000035, statusID)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func syntheticDinoStatusObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000036))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeIntProperty(&buf, 0x10000037, 12)
+	writePositionedIntProperty(&buf, 0x10000038, 0, 5)
+	writePositionedIntProperty(&buf, 0x10000038, 7, 3)
+	writePositionedIntProperty(&buf, 0x10000039, 8, 2)
+	writePositionedIntProperty(&buf, 0x1000003a, 0, 1)
+	writePositionedFloatProperty(&buf, 0x1000003b, 0, 1234.5)
+	writePositionedFloatProperty(&buf, 0x1000003b, 7, 321.25)
+	writeFloatProperty(&buf, 0x1000003c, 0.875)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -380,4 +472,27 @@ func writePositionedNameProperty(buf *bytes.Buffer, name uint32, position int32,
 	_ = binary.Write(buf, binary.LittleEndian, position)
 	_ = binary.Write(buf, binary.LittleEndian, valueName)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+}
+
+func writePositionedIntProperty(buf *bytes.Buffer, name uint32, position int32, value int32) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000003))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writePositionedFloatProperty(buf *bytes.Buffer, name uint32, position int32, value float32) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000000a))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	buf.WriteByte(1)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, value)
 }

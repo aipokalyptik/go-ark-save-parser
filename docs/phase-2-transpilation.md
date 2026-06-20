@@ -120,6 +120,9 @@ enough that oracle-derived tests can run against translated packages.
       dino domain JSON export.
 - [x] Add read-first dino color-set indices/names and uploaded-server origin
       fields using upstream positioned-property semantics.
+- [x] Add read-first linked dino status-component stats for base/current level,
+      base/tamed/mutated stat points, current stat values, imprinting percent,
+      and dino JSON export.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.

@@ -33,6 +33,7 @@ type DinoInfo struct {
 	ColorSetIndices        []int               `json:"color_set_indices,omitempty"`
 	ColorSetNames          []string            `json:"color_set_names,omitempty"`
 	UploadedFromServerName string              `json:"uploaded_from_server_name,omitempty"`
+	Stats                  *DinoStatsInfo      `json:"stats,omitempty"`
 	Owner                  DinoOwnerInfo       `json:"owner,omitempty"`
 	GeneTraits             []string            `json:"gene_traits,omitempty"`
 	Location               *LocationInfo       `json:"location,omitempty"`
@@ -118,6 +119,46 @@ type DinoOwnerInfo struct {
 	TargetTeam        int32  `json:"target_team,omitempty"`
 }
 
+type DinoStatsInfo struct {
+	BaseLevel         int32              `json:"base_level"`
+	CurrentLevel      int32              `json:"current_level"`
+	BaseStatPoints    DinoStatPointsInfo `json:"base_stat_points"`
+	AddedStatPoints   DinoStatPointsInfo `json:"added_stat_points"`
+	MutatedStatPoints DinoStatPointsInfo `json:"mutated_stat_points"`
+	StatValues        DinoStatValuesInfo `json:"stat_values"`
+	ImprintingPercent float64            `json:"imprinting_percent,omitempty"`
+}
+
+type DinoStatPointsInfo struct {
+	Health        int32 `json:"health,omitempty"`
+	Stamina       int32 `json:"stamina,omitempty"`
+	Torpidity     int32 `json:"torpidity,omitempty"`
+	Oxygen        int32 `json:"oxygen,omitempty"`
+	Food          int32 `json:"food,omitempty"`
+	Water         int32 `json:"water,omitempty"`
+	Temperature   int32 `json:"temperature,omitempty"`
+	Weight        int32 `json:"weight,omitempty"`
+	MeleeDamage   int32 `json:"melee_damage,omitempty"`
+	MovementSpeed int32 `json:"movement_speed,omitempty"`
+	Fortitude     int32 `json:"fortitude,omitempty"`
+	CraftingSpeed int32 `json:"crafting_speed,omitempty"`
+}
+
+type DinoStatValuesInfo struct {
+	Health        float64 `json:"health,omitempty"`
+	Stamina       float64 `json:"stamina,omitempty"`
+	Torpidity     float64 `json:"torpidity,omitempty"`
+	Oxygen        float64 `json:"oxygen,omitempty"`
+	Food          float64 `json:"food,omitempty"`
+	Water         float64 `json:"water,omitempty"`
+	Temperature   float64 `json:"temperature,omitempty"`
+	Weight        float64 `json:"weight,omitempty"`
+	MeleeDamage   float64 `json:"melee_damage,omitempty"`
+	MovementSpeed float64 `json:"movement_speed,omitempty"`
+	Fortitude     float64 `json:"fortitude,omitempty"`
+	CraftingSpeed float64 `json:"crafting_speed,omitempty"`
+}
+
 func (j *JSONAPI) ExportDomain(domain string) (DomainExport, error) {
 	switch domain {
 	case "dinos":
@@ -174,6 +215,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			ColorSetIndices:        intArrayFromFixed6(dino.ColorSetIndices),
 			ColorSetNames:          stringArrayFromFixed6(dino.ColorSetNames),
 			UploadedFromServerName: dino.UploadedFromServerName,
+			Stats:                  dinoStatsInfo(dino.Stats),
 			Owner:                  dinoOwnerInfo(dino.Owner),
 			GeneTraits:             dino.GeneTraits,
 			Location:               locationInfo(dino.Location),
@@ -335,6 +377,55 @@ func dinoOwnerInfo(value arkobject.DinoOwner) DinoOwnerInfo {
 		ImprinterName:     value.ImprinterName,
 		ImprinterUniqueID: value.ImprinterUniqueID,
 		TargetTeam:        value.TargetTeam,
+	}
+}
+
+func dinoStatsInfo(value *arkobject.DinoStats) *DinoStatsInfo {
+	if value == nil {
+		return nil
+	}
+	return &DinoStatsInfo{
+		BaseLevel:         value.BaseLevel,
+		CurrentLevel:      value.CurrentLevel,
+		BaseStatPoints:    dinoStatPointsInfo(value.BaseStatPoints),
+		AddedStatPoints:   dinoStatPointsInfo(value.AddedStatPoints),
+		MutatedStatPoints: dinoStatPointsInfo(value.MutatedStatPoints),
+		StatValues:        dinoStatValuesInfo(value.StatValues),
+		ImprintingPercent: value.ImprintingPercent,
+	}
+}
+
+func dinoStatPointsInfo(value arkobject.DinoStatPoints) DinoStatPointsInfo {
+	return DinoStatPointsInfo{
+		Health:        value.Health,
+		Stamina:       value.Stamina,
+		Torpidity:     value.Torpidity,
+		Oxygen:        value.Oxygen,
+		Food:          value.Food,
+		Water:         value.Water,
+		Temperature:   value.Temperature,
+		Weight:        value.Weight,
+		MeleeDamage:   value.MeleeDamage,
+		MovementSpeed: value.MovementSpeed,
+		Fortitude:     value.Fortitude,
+		CraftingSpeed: value.CraftingSpeed,
+	}
+}
+
+func dinoStatValuesInfo(value arkobject.DinoStatValues) DinoStatValuesInfo {
+	return DinoStatValuesInfo{
+		Health:        value.Health,
+		Stamina:       value.Stamina,
+		Torpidity:     value.Torpidity,
+		Oxygen:        value.Oxygen,
+		Food:          value.Food,
+		Water:         value.Water,
+		Temperature:   value.Temperature,
+		Weight:        value.Weight,
+		MeleeDamage:   value.MeleeDamage,
+		MovementSpeed: value.MovementSpeed,
+		Fortitude:     value.Fortitude,
+		CraftingSpeed: value.CraftingSpeed,
 	}
 }
 

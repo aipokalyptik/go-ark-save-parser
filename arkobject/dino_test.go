@@ -108,3 +108,37 @@ func TestDinoFromObjectPrefersSaveContextLocation(t *testing.T) {
 		t.Fatalf("Location = %#v, want save context location", dino.Location)
 	}
 }
+
+func TestDinoStatsFromObjectReadsPositionedStatusFields(t *testing.T) {
+	object := &GameObject{
+		UUID: uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff"),
+		Properties: []arkproperty.Property{
+			{Name: "BaseCharacterLevel", Type: arkproperty.TypeInt, Value: int32(12)},
+			{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 0, Value: int32(5)},
+			{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 7, Value: int32(3)},
+			{Name: "NumberOfLevelUpPointsAppliedTamed", Type: arkproperty.TypeInt, Position: 8, Value: int32(2)},
+			{Name: "NumberOfMutationsAppliedTamed", Type: arkproperty.TypeInt, Position: 0, Value: int32(1)},
+			{Name: "CurrentStatusValues", Type: arkproperty.TypeFloat, Position: 0, Value: float32(1234.5)},
+			{Name: "CurrentStatusValues", Type: arkproperty.TypeFloat, Position: 7, Value: float32(321.25)},
+			{Name: "DinoImprintingQuality", Type: arkproperty.TypeFloat, Value: float32(0.875)},
+		},
+	}
+
+	stats := DinoStatsFromObject(object)
+
+	if stats.BaseLevel != 12 || stats.CurrentLevel != 12 {
+		t.Fatalf("levels = base %d current %d, want 12 and 12", stats.BaseLevel, stats.CurrentLevel)
+	}
+	if stats.BaseStatPoints.Health != 5 || stats.BaseStatPoints.Weight != 3 {
+		t.Fatalf("base points = %#v", stats.BaseStatPoints)
+	}
+	if stats.AddedStatPoints.MeleeDamage != 2 || stats.MutatedStatPoints.Health != 1 {
+		t.Fatalf("tamed/mutated points = %#v / %#v", stats.AddedStatPoints, stats.MutatedStatPoints)
+	}
+	if math.Abs(stats.StatValues.Health-1234.5) > 0.0001 || math.Abs(stats.StatValues.Weight-321.25) > 0.0001 {
+		t.Fatalf("stat values = %#v", stats.StatValues)
+	}
+	if math.Abs(stats.ImprintingPercent-87.5) > 0.0001 {
+		t.Fatalf("imprinting = %f, want 87.5", stats.ImprintingPercent)
+	}
+}

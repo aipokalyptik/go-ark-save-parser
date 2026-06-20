@@ -39,7 +39,13 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 		if transform, ok := d.save.ActorTransform(info.UUID); ok {
 			location = &transform
 		}
-		out[info.UUID] = arkobject.DinoFromObject(info.Object, location)
+		dino := arkobject.DinoFromObject(info.Object, location)
+		if dino.StatusComponentUUID != nil {
+			if statusObject, err := d.save.ParsedObject(*dino.StatusComponentUUID); err == nil {
+				dino = arkobject.DinoFromObjectWithStatus(info.Object, statusObject, location)
+			}
+		}
+		out[info.UUID] = dino
 	}
 	return out, nil
 }

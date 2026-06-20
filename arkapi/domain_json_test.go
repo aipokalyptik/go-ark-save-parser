@@ -53,6 +53,25 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 		t.Fatalf("DinoInfo color names = %#v", items[0].ColorSetNames)
 	}
 
+	statsSave := openSyntheticDinoStatsSave(t)
+	defer statsSave.Close()
+	statsItems, err := NewJSON(statsSave).ExportDinos()
+	if err != nil {
+		t.Fatalf("ExportDinos(stats) error = %v", err)
+	}
+	if len(statsItems) != 1 || statsItems[0].Stats == nil {
+		t.Fatalf("DinoInfo stats = %#v", statsItems)
+	}
+	if statsItems[0].Stats.BaseLevel != 12 || statsItems[0].Stats.CurrentLevel != 12 {
+		t.Fatalf("DinoInfo stats levels = %#v", statsItems[0].Stats)
+	}
+	if statsItems[0].Stats.BaseStatPoints.Health != 5 || statsItems[0].Stats.AddedStatPoints.MeleeDamage != 2 {
+		t.Fatalf("DinoInfo stats points = %#v", statsItems[0].Stats)
+	}
+	if statsItems[0].Stats.ImprintingPercent != 87.5 {
+		t.Fatalf("DinoInfo imprinting = %f", statsItems[0].Stats.ImprintingPercent)
+	}
+
 	babySave := openSyntheticDinoBabyStageSave(t)
 	defer babySave.Close()
 	babies, err := NewJSON(babySave).ExportDinos()

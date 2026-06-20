@@ -36,6 +36,7 @@ type Dino struct {
 	ColorSetIndices        [6]int
 	ColorSetNames          [6]string
 	UploadedFromServerName string
+	Stats                  *DinoStats
 	Owner                  DinoOwner
 	GeneTraits             []string
 	Location               *ActorTransform
@@ -70,6 +71,15 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	dino.GeneTraits = stringArrayValue(properties, "GeneTraits")
 	if dino.Location == nil {
 		dino.Location = actorTransformValue(properties, "SavedBaseWorldLocation")
+	}
+	return dino
+}
+
+func DinoFromObjectWithStatus(object *GameObject, statusObject *GameObject, location *ActorTransform) Dino {
+	dino := DinoFromObject(object, location)
+	if statusObject != nil {
+		stats := DinoStatsFromObject(statusObject)
+		dino.Stats = &stats
 	}
 	return dino
 }

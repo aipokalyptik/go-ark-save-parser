@@ -236,6 +236,18 @@ func (s *Save) ParsedObjects(match func(ObjectClassInfo) bool) ([]ParsedObjectIn
 	return infos, nil
 }
 
+func (s *Save) ParsedObject(id uuid.UUID) (*arkobject.GameObject, error) {
+	raw, err := s.ObjectBinary(id)
+	if err != nil {
+		return nil, err
+	}
+	sections := make([]string, len(s.Context.Sections))
+	for i, section := range s.Context.Sections {
+		sections[i] = section.Raw
+	}
+	return arkobject.ParseGameObject(id, raw, s.names, sections)
+}
+
 func (s *Save) ParsedObjectsByClassContains(substr string) ([]ParsedObjectInfo, error) {
 	return s.ParsedObjects(func(info ObjectClassInfo) bool {
 		return strings.Contains(info.ClassName, substr)
