@@ -26,6 +26,7 @@ type DinoInfo struct {
 	IsBaby                 bool                `json:"is_baby"`
 	IsDead                 bool                `json:"is_dead"`
 	IsCryopodded           bool                `json:"is_cryopodded"`
+	Generation             int                 `json:"generation,omitempty"`
 	MaturationPercent      float64             `json:"maturation_percent,omitempty"`
 	BabyStage              arkobject.BabyStage `json:"baby_stage,omitempty"`
 	InventoryUUID          string              `json:"inventory_uuid,omitempty"`
@@ -242,6 +243,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			IsBaby:                 dino.IsBaby,
 			IsDead:                 dino.IsDead,
 			IsCryopodded:           dino.IsCryopodded,
+			Generation:             dino.Generation,
 			MaturationPercent:      dino.MaturationPercent,
 			BabyStage:              dino.BabyStage,
 			InventoryUUID:          optionalUUIDString(dino.InventoryUUID),

@@ -28,6 +28,7 @@ type Dino struct {
 	IsBaby                 bool
 	IsDead                 bool
 	IsCryopodded           bool
+	Generation             int
 	MaturationPercent      float64
 	BabyStage              BabyStage
 	StatusComponentUUID    *uuid.UUID
@@ -68,6 +69,9 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 		dino.BabyStage = babyStageForPercent(dino.MaturationPercent)
 	}
 	_, dino.IsTamed = properties.Value("TamedTimeStamp")
+	if dino.IsTamed {
+		dino.Generation = max(arrayLength(properties, "DinoAncestors"), arrayLength(properties, "DinoAncestorsMale")) + 1
+	}
 	dino.StatusComponentUUID = objectReferenceUUID(properties, "MyCharacterStatusComponent")
 	dino.InventoryUUID = objectReferenceUUID(properties, "MyInventoryComponent")
 	dino.TamedName = stringValue(properties, "TamedName")
@@ -181,6 +185,18 @@ func uint32Value(properties arkproperty.Container, name string) uint32 {
 	default:
 		return 0
 	}
+}
+
+func arrayLength(properties arkproperty.Container, name string) int {
+	value, ok := properties.Value(name)
+	if !ok {
+		return 0
+	}
+	array, ok := value.(arkproperty.Array)
+	if !ok {
+		return 0
+	}
+	return len(array.Values)
 }
 
 func objectReferenceUUID(properties arkproperty.Container, name string) *uuid.UUID {

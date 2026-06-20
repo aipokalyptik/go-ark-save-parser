@@ -51,6 +51,9 @@ func TestJSONAPIExportDinosIncludesTamedAndBabyDetails(t *testing.T) {
 	if items[0].TamedName != "Blue" || !items[0].IsNeutered {
 		t.Fatalf("DinoInfo tamed fields = %#v", items[0])
 	}
+	if items[0].Generation != 1 {
+		t.Fatalf("DinoInfo generation = %d, want 1", items[0].Generation)
+	}
 	if items[0].InventoryUUID != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
 		t.Fatalf("DinoInfo inventory UUID = %q", items[0].InventoryUUID)
 	}

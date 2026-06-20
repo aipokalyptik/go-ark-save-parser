@@ -115,6 +115,54 @@ func TestDinoFromObjectPrefersSaveContextLocation(t *testing.T) {
 	}
 }
 
+func TestDinoFromObjectCalculatesTamedGenerationFromAncestorArrays(t *testing.T) {
+	object := &GameObject{
+		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),
+		Properties: []arkproperty.Property{
+			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+			{Name: "DinoAncestors", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+				ElementType: arkproperty.TypeStruct,
+				Values:      []any{arkproperty.Container{}, arkproperty.Container{}},
+			}},
+			{Name: "DinoAncestorsMale", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+				ElementType: arkproperty.TypeStruct,
+				Values:      []any{arkproperty.Container{}},
+			}},
+		},
+	}
+
+	dino := DinoFromObject(object, nil)
+
+	if dino.Generation != 3 {
+		t.Fatalf("Generation = %d, want 3", dino.Generation)
+	}
+}
+
+func TestDinoFromObjectSetsFirstGenerationForTamedDinosWithoutAncestors(t *testing.T) {
+	object := &GameObject{
+		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),
+		Properties: []arkproperty.Property{
+			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+		},
+	}
+
+	dino := DinoFromObject(object, nil)
+
+	if dino.Generation != 1 {
+		t.Fatalf("Generation = %d, want 1", dino.Generation)
+	}
+}
+
+func TestDinoFromObjectLeavesWildGenerationUnset(t *testing.T) {
+	object := &GameObject{UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888")}
+
+	dino := DinoFromObject(object, nil)
+
+	if dino.Generation != 0 {
+		t.Fatalf("Generation = %d, want 0", dino.Generation)
+	}
+}
+
 func TestDinoStatsFromObjectReadsPositionedStatusFields(t *testing.T) {
 	object := &GameObject{
 		UUID: uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff"),
