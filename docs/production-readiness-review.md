@@ -49,7 +49,8 @@ Public verification reported by reviewers:
 - Local cluster uploaded dino archive parse failures are not surfaced in the
   cluster JSON model. Unsupported embedded dino formats can appear as empty or
   partially parsed uploads. Addressed after this review by recording
-  per-upload `ParseError` values and exporting them as `parse_error`.
+  per-upload `ParseError` values, exporting them as `parse_error`, and showing
+  them in cluster CLI summaries.
 
 ## Medium-Priority Risks
 

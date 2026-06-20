@@ -406,8 +406,14 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 		if dino.Archive != nil {
 			objectCount = len(dino.Archive.Objects)
 		}
-		if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime); err != nil {
-			return err
+		if dino.ParseError != "" {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f parse_error=%s\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime, dino.ParseError); err != nil {
+				return err
+			}
+		} else {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

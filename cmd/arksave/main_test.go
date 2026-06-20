@@ -12,6 +12,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
@@ -251,6 +252,27 @@ func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Fatalf("cluster output %q does not contain %q", got, want)
 		}
+	}
+}
+
+func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
+	var out bytes.Buffer
+	err := printClusterSummary(&out, &arkcluster.Data{
+		Path:    "/tmp/EOS_abc123",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+		Dinos: []arkcluster.Dino{{
+			Index:      0,
+			UploadTime: 12345,
+			RawSize:    32,
+			ParseError: "unsupported embedded dino archive",
+		}},
+	}, runOptions{})
+	if err != nil {
+		t.Fatalf("printClusterSummary() error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "parse_error=unsupported embedded dino archive") {
+		t.Fatalf("cluster summary %q does not contain dino parse error", got)
 	}
 }
 
