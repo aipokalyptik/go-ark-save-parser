@@ -297,8 +297,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Port first copy-based modification helpers where upstream behavior can be
       translated safely: copy save, remove object row, upsert object bytes, and
       upsert custom values on copied SQLite saves.
-- [x] Expose experimental CLI mutation commands for copy, object removal, and
-      custom-table hex-byte upserts against explicit output copies.
+- [x] Expose experimental CLI mutation commands for copy, object removal,
+      object hex-byte upserts, and custom-table hex-byte upserts against
+      explicit output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.

@@ -120,6 +120,7 @@ func usage(out io.Writer) error {
   arksave [--redact] export-cluster-json <cluster-file> <out.json>
   arksave [--redact] mutate copy <save.ark> <out.ark>
   arksave [--redact] mutate remove-object <save.ark> <out.ark> <uuid>
+  arksave [--redact] mutate put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
   arksave [--redact] mutate put-custom <save.ark> <out.ark> <key> <hex-value>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.
@@ -362,6 +363,23 @@ func mutate(args []string, out io.Writer, opts runOptions) error {
 			return err
 		}
 		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy without object %s: %s\n", displayString(id.String(), opts), displayString(args[2], opts))
+		return err
+	case "put-object-hex":
+		if len(args) != 5 {
+			return fmt.Errorf("mutate put-object-hex requires a local .ark path, explicit output path, object UUID, and hex value")
+		}
+		id, err := uuid.Parse(args[3])
+		if err != nil {
+			return err
+		}
+		value, err := hex.DecodeString(args[4])
+		if err != nil {
+			return fmt.Errorf("decode object hex value: %w", err)
+		}
+		if err := arkmutation.PutObjectBinary(args[1], args[2], id, value); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with object %s: %s\n", displayString(id.String(), opts), displayString(args[2], opts))
 		return err
 	case "put-custom":
 		if len(args) != 5 {

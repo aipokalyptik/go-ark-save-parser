@@ -683,6 +683,7 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
 	removedPath := filepath.Join(dir, "removed.ark")
+	objectPath := filepath.Join(dir, "object.ark")
 	createSyntheticSave(t, savePath)
 	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
 
@@ -701,6 +702,15 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	got := removeOut.String()
 	if strings.Contains(got, removedPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
 		t.Fatalf("redacted mutate remove-object output = %q", got)
+	}
+
+	var objectOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "put-object-hex", savePath, objectPath, objectID, "090807"}, &objectOut); err != nil {
+		t.Fatalf("run(--redact mutate put-object-hex) error = %v", err)
+	}
+	got = objectOut.String()
+	if strings.Contains(got, objectPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate put-object-hex output = %q", got)
 	}
 }
 
@@ -758,6 +768,35 @@ func TestMutatePutCustomCommandWritesReopenableCopy(t *testing.T) {
 	_ = save.Close()
 	if !bytes.Equal(got, []byte{9, 8, 7}) {
 		t.Fatalf("CustomValue(Extra) = % x, want 09 08 07", got)
+	}
+}
+
+func TestMutatePutObjectHexCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "object.ark")
+	createSyntheticSave(t, savePath)
+	objectID := uuid.MustParse("00010203-0405-0607-0809-0a0b0c0d0e0f")
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "put-object-hex", savePath, outPath, objectID.String(), "090807"}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate put-object-hex) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), objectID.String()) {
+		t.Fatalf("mutate put-object-hex output %q missing path or uuid", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	got, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", objectID, err)
+	}
+	_ = save.Close()
+	if !bytes.Equal(got, []byte{9, 8, 7}) {
+		t.Fatalf("ObjectBinary(%s) = % x, want 09 08 07", objectID, got)
 	}
 }
 
