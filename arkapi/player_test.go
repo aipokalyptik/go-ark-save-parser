@@ -271,6 +271,66 @@ func TestPlayerAPIFiltersLocalTribesByNameOwnerAndMembers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPITribeDinoStatistics(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Ada", "Grace"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Builders",
+		TribeID:   67890,
+		OwnerID:   99,
+		NumDinos:  3,
+		Members:   []string{"Linus"},
+		MemberIDs: []int32{99},
+	})
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	counts, err := api.TribeDinoCountsByID()
+	if err != nil {
+		t.Fatalf("TribeDinoCountsByID() error = %v", err)
+	}
+	if counts[12345] != 7 || counts[67890] != 3 {
+		t.Fatalf("TribeDinoCountsByID() = %#v, want dino counts for tribes 12345 and 67890", counts)
+	}
+	total, err := api.TotalTribeDinos()
+	if err != nil {
+		t.Fatalf("TotalTribeDinos() error = %v", err)
+	}
+	if total != 10 {
+		t.Fatalf("TotalTribeDinos() = %d, want 10", total)
+	}
+	average, ok, err := api.AverageTribeDinos()
+	if err != nil {
+		t.Fatalf("AverageTribeDinos() error = %v", err)
+	}
+	if !ok || average != 5 {
+		t.Fatalf("AverageTribeDinos() = %f, %v; want 5, true", average, ok)
+	}
+	tribe, count, ok, err := api.TribeWithMostDinos()
+	if err != nil {
+		t.Fatalf("TribeWithMostDinos() error = %v", err)
+	}
+	if !ok || tribe.TribeID != 12345 || count != 7 {
+		t.Fatalf("TribeWithMostDinos() = %#v, %d, %v; want tribe 12345, 7, true", tribe, count, ok)
+	}
+	tribe, count, ok, err = api.TribeWithFewestDinos()
+	if err != nil {
+		t.Fatalf("TribeWithFewestDinos() error = %v", err)
+	}
+	if !ok || tribe.TribeID != 67890 || count != 3 {
+		t.Fatalf("TribeWithFewestDinos() = %#v, %d, %v; want tribe 67890, 3, true", tribe, count, ok)
+	}
+}
+
 func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{

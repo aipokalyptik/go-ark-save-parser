@@ -471,6 +471,79 @@ func (p *PlayerAPI) TribeDetails() ([]arkobject.Tribe, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) TribeDinoCountsByID() (map[int32]int32, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return nil, err
+	}
+	out := map[int32]int32{}
+	for _, tribe := range tribes {
+		out[tribe.TribeID] = tribe.NumDinos
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TotalTribeDinos() (int32, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return 0, err
+	}
+	var total int32
+	for _, tribe := range tribes {
+		total += tribe.NumDinos
+	}
+	return total, nil
+}
+
+func (p *PlayerAPI) AverageTribeDinos() (float64, bool, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return 0, false, err
+	}
+	if len(tribes) == 0 {
+		return 0, false, nil
+	}
+	var total int32
+	for _, tribe := range tribes {
+		total += tribe.NumDinos
+	}
+	return float64(total) / float64(len(tribes)), true, nil
+}
+
+func (p *PlayerAPI) TribeWithMostDinos() (arkobject.Tribe, int32, bool, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return arkobject.Tribe{}, 0, false, err
+	}
+	if len(tribes) == 0 {
+		return arkobject.Tribe{}, 0, false, nil
+	}
+	best := tribes[0]
+	for _, tribe := range tribes[1:] {
+		if tribe.NumDinos > best.NumDinos {
+			best = tribe
+		}
+	}
+	return best, best.NumDinos, true, nil
+}
+
+func (p *PlayerAPI) TribeWithFewestDinos() (arkobject.Tribe, int32, bool, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return arkobject.Tribe{}, 0, false, err
+	}
+	if len(tribes) == 0 {
+		return arkobject.Tribe{}, 0, false, nil
+	}
+	best := tribes[0]
+	for _, tribe := range tribes[1:] {
+		if tribe.NumDinos < best.NumDinos {
+			best = tribe
+		}
+	}
+	return best, best.NumDinos, true, nil
+}
+
 func (p *PlayerAPI) TribeByID(id int32) (arkobject.Tribe, bool, error) {
 	tribes, err := p.TribeDetails()
 	if err != nil {
