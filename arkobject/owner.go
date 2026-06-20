@@ -38,6 +38,26 @@ func ObjectOwnerFromObject(object *GameObject) ObjectOwner {
 	return ObjectOwnerFromContainer(arkproperty.Container{Properties: object.Properties})
 }
 
+func DinoOwnerFromContainer(properties arkproperty.Container) DinoOwner {
+	return DinoOwner{
+		TribeName:         stringValue(properties, "TribeName"),
+		TamerTribeID:      int32Value(properties, "TamingTeamID"),
+		TamerString:       stringValue(properties, "TamerString"),
+		PlayerName:        stringValue(properties, "OwningPlayerName"),
+		ImprinterName:     stringValue(properties, "ImprinterName"),
+		ImprinterUniqueID: stringValue(properties, "ImprinterPlayerUniqueNetId"),
+		PlayerID:          int32Value(properties, "OwningPlayerID"),
+		TargetTeam:        int32Value(properties, "TargetingTeam"),
+	}
+}
+
+func DinoOwnerFromObject(object *GameObject) DinoOwner {
+	if object == nil {
+		return DinoOwner{}
+	}
+	return DinoOwnerFromContainer(arkproperty.Container{Properties: object.Properties})
+}
+
 func ObjectOwnerFromProfile(player Player, tribe Tribe) ObjectOwner {
 	playerID := int32(player.PlayerDataID)
 	return ObjectOwner{

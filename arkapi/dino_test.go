@@ -96,6 +96,34 @@ func TestDinoAPIFiltersBySexDeathAndBabyState(t *testing.T) {
 	}
 }
 
+func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
+	save := openSyntheticDinoDetailSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("All() length = %d, want 1", len(dinos))
+	}
+	for _, dino := range dinos {
+		if dino.TamedName != "Blue" || !dino.IsNeutered {
+			t.Fatalf("dino tamed details = %#v", dino)
+		}
+		if dino.InventoryUUID == nil || dino.InventoryUUID.String() != "99999999-aaaa-bbbb-cccc-ddddeeeeffff" {
+			t.Fatalf("InventoryUUID = %v", dino.InventoryUUID)
+		}
+		if dino.Owner.TribeName != "Porters" || dino.Owner.TamerTribeID != 555 || dino.Owner.TargetTeam != 555 {
+			t.Fatalf("dino owner tribe fields = %#v", dino.Owner)
+		}
+		if dino.Owner.PlayerName != "Survivor" || dino.Owner.PlayerID != 42 || dino.Owner.ImprinterUniqueID != "eos-survivor" {
+			t.Fatalf("dino owner player fields = %#v", dino.Owner)
+		}
+	}
+}
+
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -151,8 +179,62 @@ func openSyntheticDinoFilterSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticDinoDetailSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoDetailObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticDinoObjectBytes() []byte {
 	return syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true)
+}
+
+func syntheticDinoDetailObjectBytes() []byte {
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeIntProperty(&buf, 0x10000015, 1001)
+	writeIntProperty(&buf, 0x10000016, 2002)
+	writeBoolProperty(&buf, 0x10000017, true)
+	writeDoubleProperty(&buf, 0x10000018, 42)
+	writeObjectReferenceProperty(&buf, 0x10000023, inventoryID)
+	writeStringProperty(&buf, 0x10000024, "Blue")
+	writeBoolProperty(&buf, 0x10000025, true)
+	writeStringProperty(&buf, 0x10000026, "Porters")
+	writeIntProperty(&buf, 0x10000027, 555)
+	writeStringProperty(&buf, 0x10000028, "Porters")
+	writeStringProperty(&buf, 0x10000029, "Survivor")
+	writeStringProperty(&buf, 0x1000002a, "Survivor")
+	writeStringProperty(&buf, 0x1000002b, "eos-survivor")
+	writeIntProperty(&buf, 0x1000002c, 42)
+	writeIntProperty(&buf, 0x10000009, 555)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
 }
 
 func syntheticDinoObjectBytesWithFlags(id1 int32, id2 int32, isFemale bool, isDead bool, isBaby bool, isTamed bool) []byte {
@@ -174,6 +256,18 @@ func syntheticDinoObjectBytesWithFlags(id1 int32, id2 int32, isFemale bool, isDe
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
+}
+
+func writeObjectReferenceProperty(buf *bytes.Buffer, name uint32, id uuid.UUID) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001f))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(18))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, int16(0))
+	buf.Write(id[:])
 }
 
 func writeDoubleProperty(buf *bytes.Buffer, name uint32, value float64) {

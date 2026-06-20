@@ -17,6 +17,10 @@ type Dino struct {
 	IsDead              bool
 	IsCryopodded        bool
 	StatusComponentUUID *uuid.UUID
+	InventoryUUID       *uuid.UUID
+	TamedName           string
+	IsNeutered          bool
+	Owner               DinoOwner
 	GeneTraits          []string
 	Location            *ActorTransform
 }
@@ -36,6 +40,10 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	dino.IsBaby = boolValue(properties, "bIsBaby")
 	_, dino.IsTamed = properties.Value("TamedTimeStamp")
 	dino.StatusComponentUUID = objectReferenceUUID(properties, "MyCharacterStatusComponent")
+	dino.InventoryUUID = objectReferenceUUID(properties, "MyInventoryComponent")
+	dino.TamedName = stringValue(properties, "TamedName")
+	dino.IsNeutered = boolValue(properties, "bNeutered")
+	dino.Owner = DinoOwnerFromContainer(properties)
 	dino.GeneTraits = stringArrayValue(properties, "GeneTraits")
 	if dino.Location == nil {
 		dino.Location = actorTransformValue(properties, "SavedBaseWorldLocation")

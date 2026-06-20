@@ -123,6 +123,8 @@ enough that oracle-derived tests can run against translated packages.
       quality index, minimum rating, and minimum durability.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
       baby/adult, sex, and alive/dead queries.
+- [x] Add read-first tamed dino details for tamed name, neuter state,
+      inventory UUID, and owner/tamer/imprinter fields.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
 - [ ] Port full Dino, full Structure, full Equipment, full Stackable, full Base,
       richer local cluster item/dino domain models, and complete model-specific

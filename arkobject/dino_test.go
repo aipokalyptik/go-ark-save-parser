@@ -9,6 +9,7 @@ import (
 
 func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	statusID := "00112233-4455-6677-8899-aabbccddeeff"
+	inventoryID := "aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"
 	object := &GameObject{
 		UUID:      uuid.MustParse("11112222-3333-4444-5555-666677778888"),
 		Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
@@ -23,6 +24,20 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 				Type:  arkproperty.ObjectReferenceUUID,
 				Value: statusID,
 			}},
+			{Name: "MyInventoryComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{
+				Type:  arkproperty.ObjectReferenceUUID,
+				Value: inventoryID,
+			}},
+			{Name: "TamedName", Type: arkproperty.TypeString, Value: "Blue"},
+			{Name: "bNeutered", Type: arkproperty.TypeBool, Value: true},
+			{Name: "TribeName", Type: arkproperty.TypeString, Value: "Porters"},
+			{Name: "TamingTeamID", Type: arkproperty.TypeInt, Value: int32(555)},
+			{Name: "TamerString", Type: arkproperty.TypeString, Value: "Porters"},
+			{Name: "OwningPlayerName", Type: arkproperty.TypeString, Value: "Survivor"},
+			{Name: "ImprinterName", Type: arkproperty.TypeString, Value: "Survivor"},
+			{Name: "ImprinterPlayerUniqueNetId", Type: arkproperty.TypeString, Value: "eos-survivor"},
+			{Name: "OwningPlayerID", Type: arkproperty.TypeInt, Value: int32(42)},
+			{Name: "TargetingTeam", Type: arkproperty.TypeInt, Value: int32(555)},
 			{Name: "GeneTraits", Type: arkproperty.TypeArray, Value: arkproperty.Array{
 				ElementType: arkproperty.TypeString,
 				Values:      []any{"MutableMelee[2]", "Robust"},
@@ -41,6 +56,18 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	}
 	if dino.StatusComponentUUID == nil || dino.StatusComponentUUID.String() != statusID {
 		t.Fatalf("StatusComponentUUID = %v, want %s", dino.StatusComponentUUID, statusID)
+	}
+	if dino.InventoryUUID == nil || dino.InventoryUUID.String() != inventoryID {
+		t.Fatalf("InventoryUUID = %v, want %s", dino.InventoryUUID, inventoryID)
+	}
+	if dino.TamedName != "Blue" || !dino.IsNeutered {
+		t.Fatalf("Tamed detail fields = %#v", dino)
+	}
+	if dino.Owner.TribeName != "Porters" || dino.Owner.TamerTribeID != 555 || dino.Owner.TamerString != "Porters" {
+		t.Fatalf("Dino owner tribe fields = %#v", dino.Owner)
+	}
+	if dino.Owner.PlayerName != "Survivor" || dino.Owner.PlayerID != 42 || dino.Owner.ImprinterUniqueID != "eos-survivor" {
+		t.Fatalf("Dino owner player fields = %#v", dino.Owner)
 	}
 	if len(dino.GeneTraits) != 2 || dino.GeneTraits[0] != "MutableMelee[2]" {
 		t.Fatalf("GeneTraits = %#v", dino.GeneTraits)
