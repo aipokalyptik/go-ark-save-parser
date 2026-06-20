@@ -134,8 +134,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only Stackable API category filters for resources, ammo, and
       consumables.
 - [x] Add first fault-tolerant domain API paths with `StackableAPI.AllWithFaults`,
-      `StructureAPI.AllWithFaults`, and `EquipmentAPI.AllWithFaults`, preserving
-      valid parsed objects while reporting matching object parse faults.
+      `StructureAPI.AllWithFaults`, `EquipmentAPI.AllWithFaults`, and
+      `DinoAPI.AllWithFaults`, preserving valid parsed objects while reporting
+      matching object parse faults.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.

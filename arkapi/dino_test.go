@@ -55,6 +55,28 @@ func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {
 	}
 }
 
+func TestDinoAPIAllWithFaultsKeepsValidDinosAndReportsParseFaults(t *testing.T) {
+	save := openSyntheticDinoSaveWithFault(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("AllWithFaults() dinos length = %d, want 1", len(dinos))
+	}
+	for _, dino := range dinos {
+		if dino.ID1 != 1001 || !dino.IsTamed || !dino.IsFemale || dino.Location == nil || dino.Location.X != 11 {
+			t.Fatalf("Dino = %#v", dino)
+		}
+	}
+	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'" || faults[0].Err == nil {
+		t.Fatalf("AllWithFaults() faults = %#v, want one dino parse fault", faults)
+	}
+}
+
 func TestDinoAPIFiltersBySexDeathAndBabyState(t *testing.T) {
 	save := openSyntheticDinoFilterSave(t)
 	defer save.Close()
@@ -298,18 +320,18 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	dinos := map[uuid.UUID]arkobject.Dino{
 		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
 			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
-			IsTamed:  true,
-			Stats:    &arkobject.DinoStats{CurrentLevel: 12},
+			IsTamed:   true,
+			Stats:     &arkobject.DinoStats{CurrentLevel: 12},
 		},
 		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
 			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
-			IsTamed:  false,
-			Stats:    &arkobject.DinoStats{CurrentLevel: 12},
+			IsTamed:   false,
+			Stats:     &arkobject.DinoStats{CurrentLevel: 12},
 		},
 		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
 			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'",
-			IsTamed:  true,
-			Stats:    &arkobject.DinoStats{CurrentLevel: 8},
+			IsTamed:   true,
+			Stats:     &arkobject.DinoStats{CurrentLevel: 8},
 		},
 	}
 
@@ -420,6 +442,34 @@ func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticDinoSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", syntheticStructureActorTransforms(dinoID))
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoObjectBytes())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedDinoObjectBytes())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func openSyntheticDinoFilterSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -499,6 +549,13 @@ func openSyntheticDinoBabyStageSave(t *testing.T) *arksave.Save {
 
 func syntheticDinoObjectBytes() []byte {
 	return syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true)
+}
+
+func truncatedDinoObjectBytes() []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
 }
 
 func syntheticDinoDetailObjectBytes() []byte {

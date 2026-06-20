@@ -59,6 +59,30 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 	return out, nil
 }
 
+func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := d.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return d.IsApplicableBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for _, info := range objects {
+		var location *arkobject.ActorTransform
+		if transform, ok := d.save.ActorTransform(info.UUID); ok {
+			location = &transform
+		}
+		dino := arkobject.DinoFromObject(info.Object, location)
+		if dino.StatusComponentUUID != nil {
+			if statusObject, err := d.save.ParsedObject(*dino.StatusComponentUUID); err == nil {
+				dino = arkobject.DinoFromObjectWithStatus(info.Object, statusObject, location)
+			}
+		}
+		out[info.UUID] = dino
+	}
+	return out, faults, nil
+}
+
 func (d *DinoAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Dino, error) {
 	all, err := d.All()
 	if err != nil {
