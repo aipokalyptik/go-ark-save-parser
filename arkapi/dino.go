@@ -385,6 +385,18 @@ func (d *DinoAPI) CountByCryopodded(dinos map[uuid.UUID]arkobject.Dino) map[bool
 	return counts
 }
 
+func (d *DinoAPI) CountCryopoddedByClass(dinos map[uuid.UUID]arkobject.Dino) map[string]int {
+	counts := map[string]int{"all": 0}
+	for _, dino := range dinos {
+		if !dino.IsCryopodded {
+			continue
+		}
+		counts["all"]++
+		counts[dino.Blueprint]++
+	}
+	return counts
+}
+
 func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
 	all, err := d.All()
 	if err != nil {

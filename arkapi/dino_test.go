@@ -715,10 +715,22 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	if byTamed[true] != 2 || byTamed[false] != 1 {
 		t.Fatalf("CountByTamed() = %#v", byTamed)
 	}
-	dinos[uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")] = arkobject.Dino{IsCryopodded: true}
+	dinos[uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")] = arkobject.Dino{
+		Blueprint:    "Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'",
+		IsCryopodded: true,
+		Stats:        &arkobject.DinoStats{CurrentLevel: 8},
+	}
 	byCryopodded := api.CountByCryopodded(dinos)
 	if byCryopodded[true] != 1 || byCryopodded[false] != 2 {
 		t.Fatalf("CountByCryopodded() = %#v", byCryopodded)
+	}
+	byCryopoddedClass := api.CountCryopoddedByClass(dinos)
+	if byCryopoddedClass["all"] != 1 ||
+		byCryopoddedClass["Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'"] != 1 {
+		t.Fatalf("CountCryopoddedByClass() = %#v", byCryopoddedClass)
+	}
+	if _, ok := byCryopoddedClass["Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"]; ok {
+		t.Fatalf("CountCryopoddedByClass() counted non-cryopodded raptor: %#v", byCryopoddedClass)
 	}
 }
 
