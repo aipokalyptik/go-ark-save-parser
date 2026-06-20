@@ -173,6 +173,33 @@ func (d *DinoAPI) WithGeneTrait(name string, levels ...int) (map[uuid.UUID]arkob
 	})
 }
 
+func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {
+	counts := map[int32]int{}
+	for _, dino := range dinos {
+		if dino.Stats == nil {
+			continue
+		}
+		counts[dino.Stats.CurrentLevel]++
+	}
+	return counts
+}
+
+func (d *DinoAPI) CountByClass(dinos map[uuid.UUID]arkobject.Dino) map[string]int {
+	counts := map[string]int{}
+	for _, dino := range dinos {
+		counts[dino.Blueprint]++
+	}
+	return counts
+}
+
+func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int {
+	counts := map[bool]int{}
+	for _, dino := range dinos {
+		counts[dino.IsTamed]++
+	}
+	return counts
+}
+
 func (d *DinoAPI) withStatAtLeast(value int32, scope arkobject.StatScope, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
 	allowed := map[arkobject.DinoStat]struct{}{}
 	for _, stat := range stats {

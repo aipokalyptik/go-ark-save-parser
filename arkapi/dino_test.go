@@ -268,6 +268,41 @@ func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
 	}
 }
 
+func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
+	api := NewDino(nil)
+	dinos := map[uuid.UUID]arkobject.Dino{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			IsTamed:  true,
+			Stats:    &arkobject.DinoStats{CurrentLevel: 12},
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			IsTamed:  false,
+			Stats:    &arkobject.DinoStats{CurrentLevel: 12},
+		},
+		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'",
+			IsTamed:  true,
+			Stats:    &arkobject.DinoStats{CurrentLevel: 8},
+		},
+	}
+
+	byLevel := api.CountByLevel(dinos)
+	if byLevel[12] != 2 || byLevel[8] != 1 {
+		t.Fatalf("CountByLevel() = %#v", byLevel)
+	}
+	byClass := api.CountByClass(dinos)
+	if byClass["Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"] != 2 ||
+		byClass["Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'"] != 1 {
+		t.Fatalf("CountByClass() = %#v", byClass)
+	}
+	byTamed := api.CountByTamed(dinos)
+	if byTamed[true] != 2 || byTamed[false] != 1 {
+		t.Fatalf("CountByTamed() = %#v", byTamed)
+	}
+}
+
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
