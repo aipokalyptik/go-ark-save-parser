@@ -142,7 +142,7 @@ func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error
 
 func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 	nameOffset := r.Position()
-	key, err := r.ReadName("")
+	key, err := r.ReadNameGeneratedUnknown("")
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		}
 		prop.Value = value
 	default:
-		return nil, fmt.Errorf("unsupported property type %q for %q", typeName, key)
+		return nil, fmt.Errorf("unsupported property type %q for %q at position %d", typeName, key, nameOffset)
 	}
 
 	if err := realignPrimitiveProperty(r, prop); err != nil {
@@ -637,7 +637,7 @@ func readMapValue(t Type, r *arkbinary.Reader, bodyEnd int) (any, error) {
 	props, err := ParseAllPartial(r, bodyEnd)
 	if err != nil {
 		if len(props) > 0 {
-			return Container{Properties: props}, err
+			return Container{Properties: props}, nil
 		}
 		return nil, err
 	}
@@ -664,6 +664,9 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 	if err != nil {
 		return Set{}, err
 	}
+	if dataSize < 0 {
+		return Set{}, fmt.Errorf("negative set payload size %d", dataSize)
+	}
 	endByte, err := r.ReadByte()
 	if err != nil {
 		return Set{}, err
@@ -671,30 +674,55 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 	if endByte != 0 {
 		return Set{}, fmt.Errorf("invalid set end byte %#x", endByte)
 	}
-	bodyStart := r.Position()
 	if _, err := r.ReadUInt32(); err != nil {
 		return Set{}, err
 	}
-	bodyStart = r.Position()
+	if dataSize == 5 {
+		if _, err := r.ReadByte(); err != nil {
+			return Set{}, err
+		}
+	}
 	count, err := r.ReadInt32()
 	if err != nil {
 		return Set{}, err
 	}
-	if count < 0 {
-		return Set{}, fmt.Errorf("negative set count %d", count)
-	}
-	values := make([]any, 0, count)
-	for i := int32(0); i < count; i++ {
-		value, err := readValue(elementType, r)
+	if dataSize > 8 {
+		count, err = r.ReadInt32()
 		if err != nil {
 			return Set{}, err
 		}
-		values = append(values, value)
 	}
-	if err := alignDeclaredBody(r, bodyStart, uint32(dataSize)); err != nil {
+	values, err := readSetValues(elementType, count, r)
+	if err != nil {
 		return Set{}, err
 	}
 	return Set{ElementType: elementType, Values: values}, nil
+}
+
+func readSetValues(elementType Type, count int32, r *arkbinary.Reader) ([]any, error) {
+	if count < 0 {
+		return nil, fmt.Errorf("negative set count %d", count)
+	}
+	values := make([]any, 0, count)
+	for i := int32(0); i < count; i++ {
+		value, err := readSetValue(elementType, r)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+	return values, nil
+}
+
+func readSetValue(elementType Type, r *arkbinary.Reader) (any, error) {
+	if elementType == TypeObject {
+		id, err := r.ReadUUID()
+		if err != nil {
+			return nil, err
+		}
+		return id.String(), nil
+	}
+	return readValue(elementType, r)
 }
 
 func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
@@ -860,6 +888,7 @@ func readObjectReference(r *arkbinary.Reader, dataSize int32) (ObjectReference, 
 	if err != nil {
 		return ObjectReference{}, err
 	}
+	typePos := r.Position() - 2
 	switch refType {
 	case 0:
 		id, err := r.ReadUUID()
@@ -880,7 +909,7 @@ func readObjectReference(r *arkbinary.Reader, dataSize int32) (ObjectReference, 
 		}
 		return ObjectReference{Type: ObjectReferenceID, Value: id}, nil
 	default:
-		return ObjectReference{}, fmt.Errorf("unknown object reference type %d", refType)
+		return ObjectReference{}, fmt.Errorf("unknown object reference type %d at position %d", refType, typePos)
 	}
 }
 

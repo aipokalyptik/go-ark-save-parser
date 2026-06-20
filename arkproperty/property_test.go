@@ -109,6 +109,36 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	}
 }
 
+func TestParsePropertiesGeneratesUnknownNamesForUnknownPropertyKeys(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		2: "IntProperty",
+		7: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 0)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 42)
+	writeName(stream, 7)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("ParseAll() returned %d properties, want 1", len(props))
+	}
+	if props[0].Name != "Unknown_0" || props[0].Value != int32(42) {
+		t.Fatalf("property = %#v, want generated unknown key with int32 value 42", props[0])
+	}
+	if name, ok := ctx.Name(0); ok {
+		t.Fatalf("generated property key leaked into context as %q", name)
+	}
+}
+
 func TestParsePropertyReturnsNilForNoneMarkerWithoutTrailingZeros(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{7: "None"})
@@ -1040,9 +1070,10 @@ func TestParseSetPropertyReadsSimpleValues(t *testing.T) {
 	writeInt32(stream, 3)
 	writeName(stream, 3)
 	writeUInt32(stream, 0)
-	writeInt32(stream, 16)
+	writeInt32(stream, 20)
 	stream.WriteByte(0)
 	writeUInt32(stream, 0)
+	writeInt32(stream, 0)
 	writeInt32(stream, 3)
 	writeInt32(stream, 10)
 	writeInt32(stream, 20)
@@ -1067,6 +1098,130 @@ func TestParseSetPropertyReadsSimpleValues(t *testing.T) {
 		if got.Values[i] != want {
 			t.Fatalf("set value %d = %#v, want %#v", i, got.Values[i], want)
 		}
+	}
+}
+
+func TestParseSetPropertyUsesSecondSerializedCount(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Unlocked",
+		2: "SetProperty",
+		3: "IntProperty",
+		4: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 20)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 99)
+	writeInt32(stream, 3)
+	writeInt32(stream, 10)
+	writeInt32(stream, 20)
+	writeInt32(stream, 30)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 1 || props[0].Type != TypeSet {
+		t.Fatalf("ParseAll() = %#v, want one set property", props)
+	}
+	got, ok := props[0].Value.(Set)
+	if !ok {
+		t.Fatalf("SetProperty value type = %T, want Set", props[0].Value)
+	}
+	if got.ElementType != TypeInt || len(got.Values) != 3 {
+		t.Fatalf("Set = %#v, want Int set length 3", got)
+	}
+	for i, want := range []any{int32(10), int32(20), int32(30)} {
+		if got.Values[i] != want {
+			t.Fatalf("set value %d = %#v, want %#v", i, got.Values[i], want)
+		}
+	}
+}
+
+func TestParseSetPropertyReadsObjectValuesAsUUIDs(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "LinkedObjects",
+		2: "SetProperty",
+		3: "ObjectProperty",
+		4: "None",
+	})
+	first := []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	second := []byte{0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00}
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 40)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 0)
+	writeInt32(stream, 2)
+	stream.Write(first)
+	stream.Write(second)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(Set)
+	if !ok || len(got.Values) != 2 {
+		t.Fatalf("Set value = %#v, want two object references", props[0].Value)
+	}
+	if got.Values[0] != "00112233-4455-6677-8899-aabbccddeeff" || got.Values[1] != "ffeeddcc-bbaa-9988-7766-554433221100" {
+		t.Fatalf("Set object values = %#v", got.Values)
+	}
+}
+
+func TestParseSetPropertyReadsCompactObjectValues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "LinkedObjects",
+		2: "SetProperty",
+		3: "ObjectProperty",
+		4: "None",
+	})
+	first := []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	second := []byte{0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00}
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 5)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 2)
+	stream.Write(first)
+	stream.Write(second)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(Set)
+	if !ok || len(got.Values) != 2 {
+		t.Fatalf("Set value = %#v, want two object references", props[0].Value)
+	}
+	if got.Values[0] != "00112233-4455-6677-8899-aabbccddeeff" || got.Values[1] != "ffeeddcc-bbaa-9988-7766-554433221100" {
+		t.Fatalf("Set object values = %#v", got.Values)
 	}
 }
 

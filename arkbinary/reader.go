@@ -264,6 +264,38 @@ func (r *Reader) ReadName(defaultValue string) (string, error) {
 	return name, nil
 }
 
+func (r *Reader) ReadNameGeneratedUnknown(defaultValue string) (string, error) {
+	if !r.ctx.HasNameTable() {
+		return r.ReadName(defaultValue)
+	}
+
+	start := r.pos
+	nameID, err := r.ReadUInt32()
+	if err != nil {
+		return "", err
+	}
+	name, ok := r.ctx.Name(nameID)
+	if !ok {
+		name = fmt.Sprintf("Unknown_%d", nameID)
+	}
+	if name == "" && defaultValue != "" {
+		name = defaultValue
+	}
+
+	if isSuffixedVolumeName(name) {
+		suffix, err := r.ReadInt32()
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s_%#x", name, suffix), nil
+	}
+
+	if _, err := r.ReadInt32(); err != nil {
+		return "", fmt.Errorf("read generated name suffix at position %d: %w", start, err)
+	}
+	return name, nil
+}
+
 func isSuffixedVolumeName(name string) bool {
 	if strings.Contains(name, "/") || strings.Contains(name, "'") {
 		return false

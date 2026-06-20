@@ -54,6 +54,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
 - [x] Add tests and parsing for map entries with generic struct values.
+- [x] Add tests and parsing for nested map/set property-list edge cases seen in
+      structure wireless exchange references.
 - [x] Add raw fallback preservation for packed unknown structs.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [x] Add declared-size realignment and overread detection for compound array,
