@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -67,6 +68,23 @@ func (s *StructureAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 	out := map[uuid.UUID]arkobject.Structure{}
 	for id, structure := range all {
 		if structure.IsOwnedBy(owner) {
+			out[id] = structure
+		}
+	}
+	return out, nil
+}
+
+func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structure, owner *arkobject.ObjectOwner, tribeID int32, invert bool) (map[uuid.UUID]arkobject.Structure, error) {
+	if owner == nil && tribeID == 0 {
+		return nil, errors.New("either owner or tribeID must be provided")
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range structures {
+		if owner != nil && structure.IsOwnedBy(*owner) && !invert {
+			out[id] = structure
+		} else if tribeID != 0 && structure.Owner.TribeID == tribeID && !invert {
+			out[id] = structure
+		} else if invert {
 			out[id] = structure
 		}
 	}

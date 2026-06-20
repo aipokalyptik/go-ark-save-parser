@@ -45,6 +45,69 @@ func TestStructureAPIGetOwnedByFiltersByOwner(t *testing.T) {
 	}
 }
 
+func TestStructureAPIFilterByOwnerFiltersProvidedStructures(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	otherID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	first, ok, err := api.ByID(firstID)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+	structures := map[uuid.UUID]arkobject.Structure{
+		firstID: first,
+		otherID: {
+			ID:    999,
+			Owner: arkobject.ObjectOwner{TribeID: 777},
+		},
+	}
+	owner := arkobject.ObjectOwner{TribeID: 555}
+
+	filtered, err := api.FilterByOwner(structures, &owner, 0, false)
+	if err != nil {
+		t.Fatalf("FilterByOwner() error = %v", err)
+	}
+	if len(filtered) != 1 || filtered[firstID].ID != 101 {
+		t.Fatalf("FilterByOwner() = %#v, want first structure only", filtered)
+	}
+
+	byTribeID, err := api.FilterByOwner(structures, nil, 777, false)
+	if err != nil {
+		t.Fatalf("FilterByOwner(tribeID) error = %v", err)
+	}
+	if len(byTribeID) != 1 || byTribeID[otherID].ID != 999 {
+		t.Fatalf("FilterByOwner(tribeID) = %#v, want other structure only", byTribeID)
+	}
+}
+
+func TestStructureAPIFilterByOwnerPreservesUpstreamInvertAndValidation(t *testing.T) {
+	api := StructureAPI{}
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	structures := map[uuid.UUID]arkobject.Structure{
+		firstID:  {ID: 101, Owner: arkobject.ObjectOwner{TribeID: 555}},
+		secondID: {ID: 102, Owner: arkobject.ObjectOwner{TribeID: 777}},
+	}
+	owner := arkobject.ObjectOwner{TribeID: 555}
+
+	inverted, err := api.FilterByOwner(structures, &owner, 0, true)
+	if err != nil {
+		t.Fatalf("FilterByOwner(invert) error = %v", err)
+	}
+	if len(inverted) != 2 {
+		t.Fatalf("FilterByOwner(invert) length = %d, want upstream-compatible all structures", len(inverted))
+	}
+
+	if _, err := api.FilterByOwner(structures, nil, 0, false); err == nil {
+		t.Fatalf("FilterByOwner(no filter) error = nil, want error")
+	}
+}
+
 func TestStructureAPIGetByClassFiltersBlueprints(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()

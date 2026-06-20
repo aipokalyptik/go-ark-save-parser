@@ -245,6 +245,8 @@ enough that oracle-derived tests can run against translated packages.
       `LinkedStructures` UUID references.
 - [x] Add read-only Structure API subset location filtering for upstream
       `filter_by_location` parity.
+- [x] Add read-only Structure API subset owner filtering for upstream
+      `filter_by_owner` parity, including its invert behavior.
 - [x] Add equipment owner filtering/counting through owning structure
       inventories for upstream owner-of-items example flows.
 - [x] Add first read-only Base API surface for nearby owned structure grouping.
