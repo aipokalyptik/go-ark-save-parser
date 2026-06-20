@@ -338,6 +338,47 @@ func (d *DinoAPI) InCryopods() (map[uuid.UUID]arkobject.Dino, error) {
 	})
 }
 
+func (d *DinoAPI) SaddlesFromCryopods() (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	objects, err := d.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
+		return d.IsCryopodBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for _, info := range objects {
+		saddle, ok, err := arkobject.SaddleFromCryopodObject(info.Object)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			out[info.UUID] = saddle
+		}
+	}
+	return out, nil
+}
+
+func (d *DinoAPI) SaddlesFromCryopodsWithFaults() (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := d.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return d.IsCryopodBlueprint(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for _, info := range objects {
+		saddle, ok, parseErr := arkobject.SaddleFromCryopodObject(info.Object)
+		if parseErr != nil {
+			faults = append(faults, arksave.FaultyObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Err: parseErr})
+			continue
+		}
+		if ok {
+			out[info.UUID] = saddle
+		}
+	}
+	return out, faults, nil
+}
+
 func (d *DinoAPI) NotInCryopods() (map[uuid.UUID]arkobject.Dino, error) {
 	return d.filter(func(dino arkobject.Dino) bool {
 		return !dino.IsCryopodded

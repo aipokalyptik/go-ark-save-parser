@@ -1,7 +1,11 @@
 package arkobject
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
+	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
@@ -55,6 +59,75 @@ func DinoFromCryopodObject(object *GameObject, maxInflatedBytes int64) (Dino, bo
 		dino.Location.InCryopod = true
 	}
 	return dino, true, nil
+}
+
+func SaddleFromCryopodObject(object *GameObject) (EquipmentItem, bool, error) {
+	payloads := CryopodPayloadsFromObject(object)
+	if len(payloads) < 2 {
+		return EquipmentItem{}, false, nil
+	}
+	saddleObject, ok, err := saddleObjectFromCryopodPayload(payloads[1], object)
+	if err != nil || !ok {
+		return EquipmentItem{}, ok, err
+	}
+	return EquipmentItemFromObject(saddleObject, EquipmentSaddle), true, nil
+}
+
+func saddleObjectFromCryopodPayload(payload []byte, cryopod *GameObject) (*GameObject, bool, error) {
+	if len(payload) <= 10 {
+		return nil, false, nil
+	}
+	r := arkbinary.NewReader(payload, nil)
+	first, err := r.ReadUInt32()
+	if err != nil {
+		return nil, false, err
+	}
+	if first <= 6 {
+		return nil, false, nil
+	}
+	second, err := r.ReadUInt32()
+	if err != nil {
+		return nil, false, err
+	}
+	if second != 7 {
+		return nil, false, fmt.Errorf("unsupported embedded cryopod saddle data version %d", second)
+	}
+	if err := r.Skip(8); err != nil {
+		return nil, false, err
+	}
+	properties, err := arkproperty.ParseAllPartial(r, r.Size())
+	if err != nil {
+		return nil, false, err
+	}
+	blueprint := blueprintFromNoHeaderProperties(properties)
+	if blueprint == "" {
+		return nil, false, nil
+	}
+	id := cryopod.UUID
+	return &GameObject{
+		UUID:       id,
+		Blueprint:  blueprint,
+		Properties: properties,
+	}, true, nil
+}
+
+func blueprintFromNoHeaderProperties(properties []arkproperty.Property) string {
+	container := arkproperty.Container{Properties: properties}
+	value, ok := container.Value("ItemArchetype")
+	if !ok {
+		return ""
+	}
+	reference, ok := value.(arkproperty.ObjectReference)
+	if !ok {
+		return ""
+	}
+	blueprint, ok := reference.Value.(string)
+	if !ok {
+		return ""
+	}
+	blueprint = strings.TrimPrefix(blueprint, "BlueprintGeneratedClass ")
+	blueprint = strings.TrimPrefix(blueprint, "Blueprint ")
+	return blueprint
 }
 
 func embeddedDinoAndStatusObjects(objects []arkarchive.Object) (arkarchive.Object, arkarchive.Object, bool) {

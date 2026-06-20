@@ -197,6 +197,42 @@ func TestDinoFromCryopodObjectFindsReversedEmbeddedDinoAndStatus(t *testing.T) {
 	}
 }
 
+func TestSaddleFromCryopodObjectParsesModernEmbeddedSaddle(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	cryopodID := uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122")
+	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	saddlePayload := syntheticCryopodSaddlePayload()
+	cryopod := &GameObject{
+		UUID:      cryopodID,
+		Blueprint: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
+		Properties: []arkproperty.Property{
+			customItemDatasProperty(dinoPayload, saddlePayload),
+		},
+	}
+
+	saddle, ok, err := SaddleFromCryopodObject(cryopod)
+	if err != nil {
+		t.Fatalf("SaddleFromCryopodObject() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("SaddleFromCryopodObject() ok = false, want true")
+	}
+	if saddle.UUID != cryopodID {
+		t.Fatalf("saddle UUID = %s, want containing cryopod UUID %s", saddle.UUID, cryopodID)
+	}
+	if saddle.Kind != EquipmentSaddle {
+		t.Fatalf("saddle kind = %q, want saddle", saddle.Kind)
+	}
+	wantBlueprint := "/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C"
+	if saddle.Blueprint != wantBlueprint {
+		t.Fatalf("saddle blueprint = %q, want %q", saddle.Blueprint, wantBlueprint)
+	}
+	if saddle.Quantity != 1 {
+		t.Fatalf("saddle quantity = %d, want default 1", saddle.Quantity)
+	}
+}
+
 func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	dino, ok, err := DinoFromCryopodObject(&GameObject{}, 1<<20)
 	if err != nil {
@@ -207,10 +243,21 @@ func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	}
 }
 
-func customItemDatasProperty(payload []byte) arkproperty.Property {
-	values := make([]any, 0, len(payload))
-	for _, value := range payload {
-		values = append(values, value)
+func customItemDatasProperty(payloads ...[]byte) arkproperty.Property {
+	byteArrayValues := make([]any, 0, len(payloads))
+	for _, payload := range payloads {
+		values := make([]any, 0, len(payload))
+		for _, value := range payload {
+			values = append(values, value)
+		}
+		byteArrayValues = append(byteArrayValues, arkproperty.Container{Properties: []arkproperty.Property{{
+			Name: "Bytes",
+			Type: arkproperty.TypeArray,
+			Value: arkproperty.Array{
+				ElementType: arkproperty.TypeByte,
+				Values:      values,
+			},
+		}}})
 	}
 	return arkproperty.Property{
 		Name: "CustomItemDatas",
@@ -228,22 +275,36 @@ func customItemDatasProperty(payload []byte) arkproperty.Property {
 						Value: arkproperty.Array{
 							ElementType: arkproperty.TypeStruct,
 							StructType:  "CustomItemByteArray",
-							Values: []any{
-								arkproperty.Container{Properties: []arkproperty.Property{{
-									Name: "Bytes",
-									Type: arkproperty.TypeArray,
-									Value: arkproperty.Array{
-										ElementType: arkproperty.TypeByte,
-										Values:      values,
-									},
-								}}},
-							},
+							Values:      byteArrayValues,
 						},
 					}}},
 				}}},
 			},
 		},
 	}
+}
+
+func syntheticCryopodSaddlePayload() []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteUInt32(&buf, 8)
+	testfixtures.WriteUInt32(&buf, 7)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteUInt32(&buf, 0)
+	writeCryopodSaddlePathObjectProperty(&buf, "ItemArchetype", "BlueprintGeneratedClass /Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C")
+	testfixtures.WriteArkString(&buf, "None")
+	return buf.Bytes()
+}
+
+func writeCryopodSaddlePathObjectProperty(buf *bytes.Buffer, name string, path string) {
+	testfixtures.WriteArkString(buf, name)
+	testfixtures.WriteArkString(buf, "ObjectProperty")
+	var body bytes.Buffer
+	testfixtures.WriteInt32(&body, 1)
+	testfixtures.WriteArkString(&body, path)
+	testfixtures.WriteInt32(buf, int32(body.Len()))
+	testfixtures.WriteInt32(buf, 0)
+	buf.WriteByte(0)
+	buf.Write(body.Bytes())
 }
 
 func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {

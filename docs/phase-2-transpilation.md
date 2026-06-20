@@ -242,6 +242,9 @@ enough that oracle-derived tests can run against translated packages.
       weapon-blueprint helper flows for upstream equipment examples.
 - [x] Add equipment model helpers for crafted detection, implemented stat lists,
       and upstream-compatible internal average-stat ranking.
+- [x] Add read-only modern cryopod saddle extraction through the Dino API,
+      keyed by containing cryopod item UUID for no-header embedded saddle
+      payloads.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
       baby/adult, sex, and alive/dead queries.
 - [x] Add read-first tamed dino details for tamed name, neuter state,

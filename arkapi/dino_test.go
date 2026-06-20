@@ -78,6 +78,35 @@ func TestDinoAPIAllIncludesModernCryopoddedDinos(t *testing.T) {
 	}
 }
 
+func TestDinoAPISaddlesFromCryopodsParsesModernEmbeddedSaddles(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSaveWithSaddle(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	saddles, err := api.SaddlesFromCryopods()
+	if err != nil {
+		t.Fatalf("SaddlesFromCryopods() error = %v", err)
+	}
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	if len(saddles) != 1 {
+		t.Fatalf("SaddlesFromCryopods() length = %d, want 1: %#v", len(saddles), saddles)
+	}
+	saddle, ok := saddles[podID]
+	if !ok {
+		t.Fatalf("SaddlesFromCryopods() missing saddle keyed by cryopod UUID %s: %#v", podID, saddles)
+	}
+	if saddle.UUID != podID {
+		t.Fatalf("saddle UUID = %s, want containing cryopod UUID %s", saddle.UUID, podID)
+	}
+	if saddle.Kind != arkobject.EquipmentSaddle {
+		t.Fatalf("saddle kind = %q, want saddle", saddle.Kind)
+	}
+	wantBlueprint := "/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C"
+	if saddle.Blueprint != wantBlueprint {
+		t.Fatalf("saddle blueprint = %q, want %q", saddle.Blueprint, wantBlueprint)
+	}
+}
+
 func TestDinoAPIAllReturnsMalformedCryopodError(t *testing.T) {
 	save := openSyntheticMalformedCryopodSave(t)
 	defer save.Close()
@@ -1084,6 +1113,19 @@ func openSyntheticCryopoddedDinoSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticCryopoddedDinoSaveWithSaddle(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	saddlePayload := syntheticCryopodSaddlePayload()
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		podID: syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, saddlePayload),
+	})
+}
+
 func openSyntheticMalformedCryopodSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -1153,6 +1195,10 @@ func syntheticDinoObjectBytes() []byte {
 }
 
 func syntheticCryopodItemObjectBytes(payload []byte) []byte {
+	return syntheticCryopodItemObjectBytesWithPayloads(payload)
+}
+
+func syntheticCryopodItemObjectBytesWithPayloads(payloads ...[]byte) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000047))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -1160,7 +1206,7 @@ func syntheticCryopodItemObjectBytes(payload []byte) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeCustomItemDatasProperty(&buf, payload)
+	writeCustomItemDatasProperty(&buf, payloads...)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
@@ -1229,6 +1275,17 @@ func syntheticLegacyCryopodPayload() []byte {
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0406))
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	return payload.Bytes()
+}
+
+func syntheticCryopodSaddlePayload() []byte {
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(8))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(7))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	writePathObjectProperty(&payload, "ItemArchetype", "BlueprintGeneratedClass /Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C")
+	writeArkString(&payload, "None")
 	return payload.Bytes()
 }
 
@@ -1317,17 +1374,21 @@ func writeObjectReferenceProperty(buf *bytes.Buffer, name uint32, id uuid.UUID) 
 	buf.Write(id[:])
 }
 
-func writeCustomItemDatasProperty(buf *bytes.Buffer, payload []byte) {
-	byteValues := make([]byte, len(payload))
-	copy(byteValues, payload)
+func writeCustomItemDatasProperty(buf *bytes.Buffer, payloads ...[]byte) {
+	elements := make([][]byte, 0, len(payloads))
+	for _, payload := range payloads {
+		byteValues := make([]byte, len(payload))
+		copy(byteValues, payload)
 
-	var bytesElement bytes.Buffer
-	writeByteArrayProperty(&bytesElement, 0x1000004f, 0x10000050, byteValues)
-	_ = binary.Write(&bytesElement, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&bytesElement, binary.LittleEndian, int32(0))
+		var bytesElement bytes.Buffer
+		writeByteArrayProperty(&bytesElement, 0x1000004f, 0x10000050, byteValues)
+		_ = binary.Write(&bytesElement, binary.LittleEndian, uint32(0x10000004))
+		_ = binary.Write(&bytesElement, binary.LittleEndian, int32(0))
+		elements = append(elements, bytesElement.Bytes())
+	}
 
 	var customDataBytes bytes.Buffer
-	writeStructArrayProperty(&customDataBytes, 0x1000004d, 0x10000049, 0x1000004e, [][]byte{bytesElement.Bytes()})
+	writeStructArrayProperty(&customDataBytes, 0x1000004d, 0x10000049, 0x1000004e, elements)
 	_ = binary.Write(&customDataBytes, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&customDataBytes, binary.LittleEndian, int32(0))
 
@@ -1337,6 +1398,18 @@ func writeCustomItemDatasProperty(buf *bytes.Buffer, payload []byte) {
 	_ = binary.Write(&customItemData, binary.LittleEndian, int32(0))
 
 	writeStructArrayProperty(buf, 0x10000048, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
+}
+
+func writePathObjectProperty(buf *bytes.Buffer, name string, path string) {
+	writeArkString(buf, name)
+	writeArkString(buf, "ObjectProperty")
+	var body bytes.Buffer
+	_ = binary.Write(&body, binary.LittleEndian, int32(1))
+	writeArkString(&body, path)
+	_ = binary.Write(buf, binary.LittleEndian, int32(body.Len()))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	buf.Write(body.Bytes())
 }
 
 func writeStructProperty(buf *bytes.Buffer, name uint32, structProperty uint32, structType uint32, body []byte) {
