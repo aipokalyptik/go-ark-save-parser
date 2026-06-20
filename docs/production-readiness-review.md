@@ -21,11 +21,12 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers seven implemented aggregate
+  oracle comparison summary currently covers eleven implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `export_json`,
-  `local_profiles`, `dino_filter`, `domain_json_dinos`, and `cluster_json`.
-  Phase 4 still requires comparison coverage for every runnable offline Python
-  example where a Go counterpart exists or is feasible.
+  `local_profiles`, `dino_filter`, `property_filter`, `stackable_count`,
+  `equipment_longneck_blueprint_damage`, `domain_json_dinos`, `cluster_json`,
+  and `local_tribute`. Phase 4 still requires comparison coverage for every
+  runnable offline Python example where a Go counterpart exists or is feasible.
 - Full offline API/domain compatibility remains incomplete. Phase 2 still has
   open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
   richer local cluster models, remaining read-first object wrappers, and
@@ -55,6 +56,13 @@ Public verification reported by reviewers:
   partially parsed uploads. Addressed after this review by recording
   per-upload `ParseError` values, exporting them as `parse_error`, and showing
   them in cluster CLI summaries.
+- Save-contained player/tribe parity is blocked on embedded
+  `GameModeCustomBytes` support. Upstream `PlayerApi(save)` reads embedded
+  player/tribe stores when present; current Go save-contained player/tribe
+  APIs scan game rows for `PrimalPlayerDataBP` and `PrimalTribeData`. The
+  private oracle save has embedded game-mode player/tribe data but no matching
+  game-row player/tribe objects, so adding that oracle comparison now would be
+  a false failure.
 
 ## Medium-Priority Risks
 
@@ -75,6 +83,12 @@ Public verification reported by reviewers:
   error behavior should be made more explicit and tested. Partially addressed
   after this review by printing aggregate property parse-error counts in CLI
   archive summaries.
+- Some upstream read-only examples are not stable oracle candidates on the
+  private save yet. In particular, `DinoApi.get_all_babies(include_wild=True)`
+  produced high-volume parser debug output and failed in an embedded cryopod
+  path before returning a stable aggregate; defer that comparison until
+  embedded cryopod/legacy archive handling is improved or a quieter upstream
+  invocation is available.
 
 ## Next Actions
 
