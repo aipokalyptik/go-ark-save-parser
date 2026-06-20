@@ -131,6 +131,9 @@ func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
 		if dino.Owner.PlayerName != "Survivor" || dino.Owner.PlayerID != 42 || dino.Owner.ImprinterUniqueID != "eos-survivor" {
 			t.Fatalf("dino owner player fields = %#v", dino.Owner)
 		}
+		if len(dino.ParsedGeneTraits) != 2 || dino.ParsedGeneTraits[0].Name != "MutableMelee" || dino.ParsedGeneTraits[0].Level != 2 {
+			t.Fatalf("dino parsed gene traits = %#v", dino.ParsedGeneTraits)
+		}
 	}
 }
 
@@ -227,6 +230,41 @@ func TestDinoAPIFiltersByLevelAndStats(t *testing.T) {
 	}
 	if len(mutatedHealth) != 1 {
 		t.Fatalf("WithMutatedStatAtLeast() length = %d, want 1", len(mutatedHealth))
+	}
+}
+
+func TestDinoAPIFiltersByGeneTrait(t *testing.T) {
+	save := openSyntheticDinoDetailSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	byName, err := api.WithGeneTrait("MutableMelee")
+	if err != nil {
+		t.Fatalf("WithGeneTrait(name) error = %v", err)
+	}
+	if len(byName) != 1 {
+		t.Fatalf("WithGeneTrait(name) length = %d, want 1", len(byName))
+	}
+	byLevel, err := api.WithGeneTrait("MutableMelee", 2)
+	if err != nil {
+		t.Fatalf("WithGeneTrait(name, level) error = %v", err)
+	}
+	if len(byLevel) != 1 {
+		t.Fatalf("WithGeneTrait(name, level) length = %d, want 1", len(byLevel))
+	}
+	wrongLevel, err := api.WithGeneTrait("MutableMelee", 3)
+	if err != nil {
+		t.Fatalf("WithGeneTrait(wrong level) error = %v", err)
+	}
+	if len(wrongLevel) != 0 {
+		t.Fatalf("WithGeneTrait(wrong level) length = %d, want 0", len(wrongLevel))
+	}
+	fallback, err := api.WithGeneTrait("Robust")
+	if err != nil {
+		t.Fatalf("WithGeneTrait(fallback) error = %v", err)
+	}
+	if len(fallback) != 1 {
+		t.Fatalf("WithGeneTrait(fallback) length = %d, want 1", len(fallback))
 	}
 }
 
@@ -424,6 +462,7 @@ func syntheticDinoDetailObjectBytes() []byte {
 	writePositionedNameProperty(&buf, 0x1000002f, 1, 0x10000034)
 	writePositionedNameProperty(&buf, 0x1000002f, 4, 0x10000031)
 	writeStringProperty(&buf, 0x10000030, "\nTheIsland")
+	writeNameArrayProperty(&buf, 0x1000003d, []uint32{0x1000003e, 0x1000003f})
 	writeStringProperty(&buf, 0x10000026, "Porters")
 	writeIntProperty(&buf, 0x10000027, 555)
 	writeStringProperty(&buf, 0x10000028, "Porters")
@@ -544,4 +583,23 @@ func writePositionedFloatProperty(buf *bytes.Buffer, name uint32, position int32
 	buf.WriteByte(1)
 	_ = binary.Write(buf, binary.LittleEndian, position)
 	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeNameArrayProperty(buf *bytes.Buffer, name uint32, values []uint32) {
+	dataSize := uint32(4 + len(values)*8)
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(dataSize))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000033))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, dataSize)
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	for _, value := range values {
+		_ = binary.Write(buf, binary.LittleEndian, value)
+		_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	}
 }

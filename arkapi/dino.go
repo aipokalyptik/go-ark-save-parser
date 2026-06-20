@@ -152,6 +152,27 @@ func (d *DinoAPI) WithMutatedStatAtLeast(value int32, stats ...arkobject.DinoSta
 	return d.withStatAtLeast(value, arkobject.StatScopeMutated, stats...)
 }
 
+func (d *DinoAPI) WithGeneTrait(name string, levels ...int) (map[uuid.UUID]arkobject.Dino, error) {
+	allowedLevels := map[int]struct{}{}
+	for _, level := range levels {
+		allowedLevels[level] = struct{}{}
+	}
+	return d.filter(func(dino arkobject.Dino) bool {
+		for _, trait := range dino.ParsedGeneTraits {
+			if trait.Name != name {
+				continue
+			}
+			if len(allowedLevels) == 0 {
+				return true
+			}
+			if _, ok := allowedLevels[trait.Level]; ok {
+				return true
+			}
+		}
+		return false
+	})
+}
+
 func (d *DinoAPI) withStatAtLeast(value int32, scope arkobject.StatScope, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
 	allowed := map[arkobject.DinoStat]struct{}{}
 	for _, stat := range stats {

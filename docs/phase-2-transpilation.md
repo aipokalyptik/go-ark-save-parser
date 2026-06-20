@@ -127,6 +127,7 @@ enough that oracle-derived tests can run against translated packages.
       strings for compatibility.
 - [x] Add typed Dino API filters for current level and combined/base/mutated
       stat point thresholds.
+- [x] Add typed Dino API gene trait filters by trait name and optional level.
 - [x] Add read-only local cluster JSON export API and CLI command.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API filtering by crafted item crafter metadata.
