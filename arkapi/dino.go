@@ -134,6 +134,45 @@ func (d *DinoAPI) Alive() (map[uuid.UUID]arkobject.Dino, error) {
 	})
 }
 
+func (d *DinoAPI) LevelAtLeast(level int32) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.filter(func(dino arkobject.Dino) bool {
+		return dino.Stats != nil && dino.Stats.CurrentLevel >= level
+	})
+}
+
+func (d *DinoAPI) WithStatAtLeast(value int32, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.withStatAtLeast(value, arkobject.StatScopeCombined, stats...)
+}
+
+func (d *DinoAPI) WithBaseStatAtLeast(value int32, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.withStatAtLeast(value, arkobject.StatScopeBase, stats...)
+}
+
+func (d *DinoAPI) WithMutatedStatAtLeast(value int32, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
+	return d.withStatAtLeast(value, arkobject.StatScopeMutated, stats...)
+}
+
+func (d *DinoAPI) withStatAtLeast(value int32, scope arkobject.StatScope, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
+	allowed := map[arkobject.DinoStat]struct{}{}
+	for _, stat := range stats {
+		allowed[stat] = struct{}{}
+	}
+	return d.filter(func(dino arkobject.Dino) bool {
+		if dino.Stats == nil {
+			return false
+		}
+		for _, stat := range dino.Stats.StatsAtLeast(value, scope) {
+			if len(allowed) == 0 {
+				return true
+			}
+			if _, ok := allowed[stat]; ok {
+				return true
+			}
+		}
+		return false
+	})
+}
+
 func (d *DinoAPI) filter(match func(arkobject.Dino) bool) (map[uuid.UUID]arkobject.Dino, error) {
 	all, err := d.All()
 	if err != nil {

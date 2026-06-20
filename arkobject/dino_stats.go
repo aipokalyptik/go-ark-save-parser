@@ -2,6 +2,31 @@ package arkobject
 
 import "github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 
+type DinoStat int
+
+const (
+	DinoStatHealth DinoStat = iota
+	DinoStatStamina
+	DinoStatTorpidity
+	DinoStatOxygen
+	DinoStatFood
+	DinoStatWater
+	DinoStatTemperature
+	DinoStatWeight
+	DinoStatMeleeDamage
+	DinoStatMovementSpeed
+	DinoStatFortitude
+	DinoStatCraftingSpeed
+)
+
+type StatScope int
+
+const (
+	StatScopeCombined StatScope = iota
+	StatScopeBase
+	StatScopeMutated
+)
+
 type DinoStatPoints struct {
 	Health        int32
 	Stamina       int32
@@ -61,6 +86,46 @@ func DinoStatsFromObject(object *GameObject) DinoStats {
 	return stats
 }
 
+func (s DinoStats) Points(stat DinoStat, scopes ...StatScope) int32 {
+	scope := StatScopeCombined
+	if len(scopes) > 0 {
+		scope = scopes[0]
+	}
+	base := s.BaseStatPoints.point(stat)
+	switch scope {
+	case StatScopeBase:
+		return base
+	case StatScopeMutated:
+		return s.MutatedStatPoints.point(stat)
+	default:
+		return base + s.AddedStatPoints.point(stat) + s.MutatedStatPoints.point(stat)
+	}
+}
+
+func (s DinoStats) StatsAtLeast(value int32, scopes ...StatScope) []DinoStat {
+	stats := []DinoStat{
+		DinoStatHealth,
+		DinoStatStamina,
+		DinoStatTorpidity,
+		DinoStatOxygen,
+		DinoStatFood,
+		DinoStatWater,
+		DinoStatTemperature,
+		DinoStatWeight,
+		DinoStatMeleeDamage,
+		DinoStatMovementSpeed,
+		DinoStatFortitude,
+		DinoStatCraftingSpeed,
+	}
+	out := make([]DinoStat, 0, len(stats))
+	for _, stat := range stats {
+		if s.Points(stat, scopes...) >= value {
+			out = append(out, stat)
+		}
+	}
+	return out
+}
+
 func statPoints(properties arkproperty.Container, name string) DinoStatPoints {
 	return DinoStatPoints{
 		Health:        int32PositionedValue(properties, name, 0),
@@ -103,6 +168,37 @@ func (p DinoStatPoints) level(includeInitial bool) int32 {
 		level++
 	}
 	return level
+}
+
+func (p DinoStatPoints) point(stat DinoStat) int32 {
+	switch stat {
+	case DinoStatHealth:
+		return p.Health
+	case DinoStatStamina:
+		return p.Stamina
+	case DinoStatTorpidity:
+		return p.Torpidity
+	case DinoStatOxygen:
+		return p.Oxygen
+	case DinoStatFood:
+		return p.Food
+	case DinoStatWater:
+		return p.Water
+	case DinoStatTemperature:
+		return p.Temperature
+	case DinoStatWeight:
+		return p.Weight
+	case DinoStatMeleeDamage:
+		return p.MeleeDamage
+	case DinoStatMovementSpeed:
+		return p.MovementSpeed
+	case DinoStatFortitude:
+		return p.Fortitude
+	case DinoStatCraftingSpeed:
+		return p.CraftingSpeed
+	default:
+		return 0
+	}
 }
 
 func int32PositionedValue(properties arkproperty.Container, name string, position int32) int32 {

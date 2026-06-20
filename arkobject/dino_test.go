@@ -147,4 +147,20 @@ func TestDinoStatsFromObjectReadsPositionedStatusFields(t *testing.T) {
 	if math.Abs(stats.ImprintingPercent-87.5) > 0.0001 {
 		t.Fatalf("imprinting = %f, want 87.5", stats.ImprintingPercent)
 	}
+	if got := stats.Points(DinoStatHealth); got != 6 {
+		t.Fatalf("Points(Health) = %d, want 6", got)
+	}
+	if got := stats.Points(DinoStatWeight); got != 3 {
+		t.Fatalf("Points(Weight) = %d, want 3", got)
+	}
+	if got := stats.Points(DinoStatHealth, StatScopeBase); got != 5 {
+		t.Fatalf("Points(Health, base) = %d, want 5", got)
+	}
+	if got := stats.Points(DinoStatHealth, StatScopeMutated); got != 1 {
+		t.Fatalf("Points(Health, mutated) = %d, want 1", got)
+	}
+	statsAtLeast := stats.StatsAtLeast(6)
+	if len(statsAtLeast) != 1 || statsAtLeast[0] != DinoStatHealth {
+		t.Fatalf("StatsAtLeast(6) = %#v, want health only", statsAtLeast)
+	}
 }

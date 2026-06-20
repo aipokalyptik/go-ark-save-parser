@@ -181,6 +181,55 @@ func TestDinoAPIReadsLinkedStatusComponentStats(t *testing.T) {
 	}
 }
 
+func TestDinoAPIFiltersByLevelAndStats(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	highLevel, err := api.LevelAtLeast(12)
+	if err != nil {
+		t.Fatalf("LevelAtLeast() error = %v", err)
+	}
+	if len(highLevel) != 1 {
+		t.Fatalf("LevelAtLeast(12) length = %d, want 1", len(highLevel))
+	}
+	tooHigh, err := api.LevelAtLeast(13)
+	if err != nil {
+		t.Fatalf("LevelAtLeast(13) error = %v", err)
+	}
+	if len(tooHigh) != 0 {
+		t.Fatalf("LevelAtLeast(13) length = %d, want 0", len(tooHigh))
+	}
+	health, err := api.WithStatAtLeast(6, arkobject.DinoStatHealth)
+	if err != nil {
+		t.Fatalf("WithStatAtLeast(health) error = %v", err)
+	}
+	if len(health) != 1 {
+		t.Fatalf("WithStatAtLeast(health) length = %d, want 1", len(health))
+	}
+	weight, err := api.WithStatAtLeast(8, arkobject.DinoStatWeight)
+	if err != nil {
+		t.Fatalf("WithStatAtLeast(weight) error = %v", err)
+	}
+	if len(weight) != 0 {
+		t.Fatalf("WithStatAtLeast(weight) length = %d, want 0", len(weight))
+	}
+	baseHealth, err := api.WithBaseStatAtLeast(5, arkobject.DinoStatHealth)
+	if err != nil {
+		t.Fatalf("WithBaseStatAtLeast() error = %v", err)
+	}
+	if len(baseHealth) != 1 {
+		t.Fatalf("WithBaseStatAtLeast() length = %d, want 1", len(baseHealth))
+	}
+	mutatedHealth, err := api.WithMutatedStatAtLeast(1, arkobject.DinoStatHealth)
+	if err != nil {
+		t.Fatalf("WithMutatedStatAtLeast() error = %v", err)
+	}
+	if len(mutatedHealth) != 1 {
+		t.Fatalf("WithMutatedStatAtLeast() length = %d, want 1", len(mutatedHealth))
+	}
+}
+
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
