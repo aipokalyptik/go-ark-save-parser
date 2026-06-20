@@ -153,6 +153,8 @@ enough that oracle-derived tests can run against translated packages.
       `StructureAPI.AllWithFaults`, `EquipmentAPI.AllWithFaults`, and
       `DinoAPI.AllWithFaults`, plus structure-derived `BaseAPI.AllWithFaults`,
       preserving valid parsed objects while reporting matching object parse faults.
+- [x] Add save-contained `PlayerAPI.PlayersWithFaults` for partial-success
+      player scans over `.ark` player-data objects.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, and base summaries.

@@ -41,8 +41,10 @@ Public verification reported by reviewers:
   a blocker for broad upstream parity.
 - Broad save parsing now exposes an initial upstream-style faulty-object policy
   through `arksave.ParsedObjectsWithFaults` and `arkapi.GeneralAPI.ObjectsWithFaults`.
-  More domain APIs still need to adopt this pattern where full-object parsing
-  can encounter unsupported property encodings.
+  Several domain APIs also expose partial-success scans, including dino,
+  structure, equipment, stackable, base, and save-contained player parsing.
+  Remaining domain surfaces still need to adopt this pattern where full-object
+  parsing can encounter unsupported property encodings.
   Addressed after this review for save object parsing by adding
   `ParsedObjectsWithFaults`, which returns parsed objects plus per-object fault
   records while preserving the existing fail-fast `ParsedObjects` behavior.

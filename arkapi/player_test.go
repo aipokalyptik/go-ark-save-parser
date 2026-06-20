@@ -165,6 +165,46 @@ func TestPlayerAPISaveContainedLookupAndOwnerHelpers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayersWithFaultsKeepsValidSavePlayersAndReportsFaults(t *testing.T) {
+	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	path := filepath.Join(t.TempDir(), "players.ark")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			validID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{
+				PlayerDataID:  42,
+				CharacterName: "Survivor",
+				PlayerName:    "PlatformName",
+				UniqueID:      "eos-survivor",
+				TribeID:       12345,
+			}),
+			faultyID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{
+				PlayerDataID:  43,
+				CharacterName: "Broken",
+				PlayerName:    "BrokenPlatform",
+				TribeID:       12345,
+			})[:40],
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	players, faults, err := NewPlayer(save).PlayersWithFaults()
+	if err != nil {
+		t.Fatalf("PlayersWithFaults() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("PlayersWithFaults() players = %#v, want player 42", players)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
+		t.Fatalf("PlayersWithFaults() faults = %#v, want one player parse fault", faults)
+	}
+}
+
 func TestPlayerAPIPlayerPawnByDataID(t *testing.T) {
 	save := openSyntheticPlayerTribeSave(t)
 	defer save.Close()

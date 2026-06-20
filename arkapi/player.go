@@ -124,6 +124,17 @@ func (p *PlayerAPI) Players() ([]arkobject.Player, error) {
 	return out, nil
 }
 
+func (p *PlayerAPI) PlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObjectInfo, error) {
+	if p.save != nil {
+		return p.savePlayersWithFaults()
+	}
+	players, err := p.Players()
+	if err != nil {
+		return nil, nil, err
+	}
+	return players, nil, nil
+}
+
 func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {
 	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
 		return isPlayerDataClass(info.ClassName)
@@ -140,6 +151,25 @@ func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {
 		out = append(out, player)
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) savePlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := p.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isPlayerDataClass(info.ClassName)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := make([]arkobject.Player, 0, len(objects))
+	for _, info := range objects {
+		player, err := arkobject.PlayerFromContainer(info.Object.Container())
+		if err != nil {
+			faults = append(faults, arksave.FaultyObjectInfo{UUID: info.UUID, ClassName: info.ClassName, Err: fmt.Errorf("parse player object %s: %w", info.UUID, err)})
+			continue
+		}
+		out = append(out, player)
+	}
+	return out, faults, nil
 }
 
 func (p *PlayerAPI) PlayerByDataID(id uint64) (arkobject.Player, bool, error) {
