@@ -112,6 +112,44 @@ func (s *StructureAPI) ByID(id uuid.UUID) (arkobject.Structure, bool, error) {
 	return arkobject.StructureFromObject(obj, location), true, nil
 }
 
+func (s *StructureAPI) ConnectedStructures(structures map[uuid.UUID]arkobject.Structure) (map[uuid.UUID]arkobject.Structure, error) {
+	out := make(map[uuid.UUID]arkobject.Structure, len(structures))
+	queue := make([]uuid.UUID, 0, len(structures))
+	queued := map[uuid.UUID]bool{}
+	for _, id := range sortedUUIDKeys(structures) {
+		out[id] = structures[id]
+		queue = append(queue, id)
+		queued[id] = true
+	}
+	for len(queue) > 0 {
+		id := queue[0]
+		queue = queue[1:]
+		structure, ok := out[id]
+		if !ok {
+			continue
+		}
+		for _, linkedID := range structure.LinkedStructureUUIDs {
+			if _, exists := out[linkedID]; exists {
+				continue
+			}
+			if queued[linkedID] {
+				continue
+			}
+			linked, ok, err := s.ByID(linkedID)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				continue
+			}
+			out[linkedID] = linked
+			queue = append(queue, linkedID)
+			queued[linkedID] = true
+		}
+	}
+	return out, nil
+}
+
 func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (map[uuid.UUID]arkobject.Structure, error) {
 	all, err := s.All()
 	if err != nil {

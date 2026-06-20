@@ -85,6 +85,38 @@ func TestStructureAPIGetByIDReturnsSingleStructure(t *testing.T) {
 	}
 }
 
+func TestStructureAPIConnectedStructuresFollowsLinkedStructureUUIDs(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	first, ok, err := api.ByID(firstID)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+
+	connected, err := api.ConnectedStructures(map[uuid.UUID]arkobject.Structure{
+		firstID: first,
+	})
+	if err != nil {
+		t.Fatalf("ConnectedStructures() error = %v", err)
+	}
+	if len(connected) != 2 {
+		t.Fatalf("ConnectedStructures() length = %d, want 2: %#v", len(connected), connected)
+	}
+	if _, ok := connected[firstID]; !ok {
+		t.Fatalf("ConnectedStructures() missing seed structure %s", firstID)
+	}
+	if got, ok := connected[secondID]; !ok || got.ID != 102 {
+		t.Fatalf("ConnectedStructures() linked structure = %#v, %v; want ID 102", got, ok)
+	}
+}
+
 func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()
