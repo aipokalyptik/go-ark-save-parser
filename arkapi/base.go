@@ -14,6 +14,12 @@ type BaseAPI struct {
 	mapName    string
 }
 
+type BaseQueryOptions struct {
+	OnlyConnected bool
+	Radius        float64
+	MinStructures int
+}
+
 func NewBase(save *arksave.Save, mapName string) *BaseAPI {
 	if mapName == "" && save.Context != nil {
 		mapName = save.Context.MapName
@@ -126,6 +132,52 @@ func (b *BaseAPI) AllWithMinStructures(minStructures int) ([]arkobject.Base, err
 		}
 	}
 	return out, nil
+}
+
+func (b *BaseAPI) AllBases(opts BaseQueryOptions) ([]arkobject.Base, error) {
+	radius := opts.Radius
+	if radius == 0 {
+		radius = 0.3
+	}
+	minStructures := opts.MinStructures
+	if minStructures == 0 {
+		minStructures = 10
+	}
+	if opts.OnlyConnected {
+		return b.AllWithMinStructures(minStructures)
+	}
+	all, err := b.structures.All()
+	if err != nil {
+		return nil, err
+	}
+	visited := map[uuid.UUID]bool{}
+	bases := make([]arkobject.Base, 0)
+	for _, id := range sortedUUIDKeys(all) {
+		if visited[id] {
+			continue
+		}
+		structure := all[id]
+		if structure.Location == nil {
+			continue
+		}
+		base, err := b.At(structure.Location.AsMapCoords(b.mapName), radius, &structure.Owner)
+		if err != nil {
+			return nil, err
+		}
+		if base == nil {
+			continue
+		}
+		for structureID := range base.Structures {
+			visited[structureID] = true
+		}
+		if base.StructureCount >= minStructures {
+			bases = append(bases, *base)
+		}
+	}
+	sort.Slice(bases, func(i int, j int) bool {
+		return bases[i].KeystoneUUID.String() < bases[j].KeystoneUUID.String()
+	})
+	return bases, nil
 }
 
 func closestStructure(structures map[uuid.UUID]arkobject.Structure, mapName string, coords arkobject.MapCoords) uuid.UUID {

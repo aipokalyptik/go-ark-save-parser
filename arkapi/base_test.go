@@ -113,6 +113,42 @@ func TestBaseAPIAllGroupsLinkedStructures(t *testing.T) {
 	}
 }
 
+func TestBaseAPIAllBasesAppliesUpstreamStyleOptions(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewBase(save, "Valguero")
+	defaults, err := api.AllBases(BaseQueryOptions{})
+	if err != nil {
+		t.Fatalf("AllBases(defaults) error = %v", err)
+	}
+	if len(defaults) != 0 {
+		t.Fatalf("AllBases(defaults) length = %d, want upstream default min_structures 10 filter", len(defaults))
+	}
+
+	minTwo, err := api.AllBases(BaseQueryOptions{MinStructures: 2})
+	if err != nil {
+		t.Fatalf("AllBases(min two) error = %v", err)
+	}
+	if len(minTwo) != 1 || minTwo[0].StructureCount != 2 {
+		t.Fatalf("AllBases(min two) = %#v, want one two-structure base", minTwo)
+	}
+}
+
+func TestBaseAPIAllBasesSupportsConnectedOnlyMode(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewBase(save, "Valguero")
+	bases, err := api.AllBases(BaseQueryOptions{OnlyConnected: true, MinStructures: 2})
+	if err != nil {
+		t.Fatalf("AllBases(connected) error = %v", err)
+	}
+	if len(bases) != 1 || bases[0].KeystoneUUID != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") {
+		t.Fatalf("AllBases(connected) = %#v, want connected component base", bases)
+	}
+}
+
 func TestBaseAPIAllWithFaultsKeepsValidBasesAndReportsStructureParseFaults(t *testing.T) {
 	save := openSyntheticBaseSaveWithFault(t)
 	defer save.Close()

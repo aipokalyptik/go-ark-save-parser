@@ -258,6 +258,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Expand read-only Base API point lookups through linked structures for
       upstream `get_base_at` parity.
 - [x] Add read-only Base API filtering by minimum grouped structure count.
+- [x] Add optionized read-only Base API all-base discovery for upstream
+      `get_all_bases` parity, including connected-only and default minimum
+      structure filtering.
 - [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
       Base, richer local cluster item/dino domain models, and remaining
       model-specific JSON API edge behavior.
