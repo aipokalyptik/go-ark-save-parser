@@ -231,6 +231,31 @@ func TestDinoAPIFiltersByLevelAndStats(t *testing.T) {
 	if len(mutatedHealth) != 1 {
 		t.Fatalf("WithMutatedStatAtLeast() length = %d, want 1", len(mutatedHealth))
 	}
+	minLevel := int32(12)
+	maxLevel := int32(12)
+	tamed := false
+	filtered, err := api.Filtered(DinoFilterOptions{
+		MinLevel:    &minLevel,
+		MaxLevel:    &maxLevel,
+		Tamed:       &tamed,
+		StatMinimum: 6,
+		Stats:       []arkobject.DinoStat{arkobject.DinoStatHealth},
+		Blueprints:  []string{"Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"},
+	})
+	if err != nil {
+		t.Fatalf("Filtered() error = %v", err)
+	}
+	if len(filtered) != 1 {
+		t.Fatalf("Filtered() length = %d, want 1", len(filtered))
+	}
+	maxLevel = 11
+	filtered, err = api.Filtered(DinoFilterOptions{MaxLevel: &maxLevel})
+	if err != nil {
+		t.Fatalf("Filtered(max) error = %v", err)
+	}
+	if len(filtered) != 0 {
+		t.Fatalf("Filtered(max) length = %d, want 0", len(filtered))
+	}
 }
 
 func TestDinoAPIFiltersByGeneTrait(t *testing.T) {

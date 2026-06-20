@@ -12,6 +12,15 @@ type DinoAPI struct {
 	save *arksave.Save
 }
 
+type DinoFilterOptions struct {
+	MinLevel    *int32
+	MaxLevel    *int32
+	Blueprints  []string
+	Tamed       *bool
+	StatMinimum int32
+	Stats       []arkobject.DinoStat
+}
+
 func NewDino(save *arksave.Save) *DinoAPI {
 	return &DinoAPI{save: save}
 }
@@ -198,6 +207,53 @@ func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int 
 		counts[dino.IsTamed]++
 	}
 	return counts
+}
+
+func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino, error) {
+	allowedBlueprints := map[string]struct{}{}
+	for _, blueprint := range opts.Blueprints {
+		allowedBlueprints[blueprint] = struct{}{}
+	}
+	allowedStats := map[arkobject.DinoStat]struct{}{}
+	for _, stat := range opts.Stats {
+		allowedStats[stat] = struct{}{}
+	}
+	return d.filter(func(dino arkobject.Dino) bool {
+		if len(allowedBlueprints) > 0 {
+			if _, ok := allowedBlueprints[dino.Blueprint]; !ok {
+				return false
+			}
+		}
+		if opts.Tamed != nil && dino.IsTamed != *opts.Tamed {
+			return false
+		}
+		if opts.MinLevel != nil || opts.MaxLevel != nil || opts.StatMinimum != 0 {
+			if dino.Stats == nil {
+				return false
+			}
+		}
+		if opts.MinLevel != nil && dino.Stats.CurrentLevel < *opts.MinLevel {
+			return false
+		}
+		if opts.MaxLevel != nil && dino.Stats.CurrentLevel > *opts.MaxLevel {
+			return false
+		}
+		if opts.StatMinimum != 0 {
+			statsAbove := dino.Stats.StatsAtLeast(opts.StatMinimum, arkobject.StatScopeCombined)
+			if len(statsAbove) == 0 {
+				return false
+			}
+			if len(allowedStats) > 0 {
+				for _, stat := range statsAbove {
+					if _, ok := allowedStats[stat]; ok {
+						return true
+					}
+				}
+				return false
+			}
+		}
+		return true
+	})
 }
 
 func (d *DinoAPI) withStatAtLeast(value int32, scope arkobject.StatScope, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {
