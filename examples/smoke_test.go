@@ -20,14 +20,17 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	dinoID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
 			0x10000000: "None",
 			0x10000001: "Blueprint'/Game/Test.Test_C'",
 			0x10000002: "None",
+			0x10000003: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
 		}),
 		Objects: map[uuid.UUID][]byte{
 			objectID: testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
+			dinoID:   testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
 		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
@@ -35,6 +38,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
+	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 classes=1", savePath)
 	runExample(t, "local_profiles", "clusters=1 tributes=1", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)

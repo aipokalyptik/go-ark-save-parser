@@ -16,6 +16,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   counts. This covers the basic parsing and save-info JSON workflow.
 - `object_classes`: list unique object class names from a local `.ark`, matching
   the class lookup/filtering style of the upstream basic parsing examples.
+- `dino_filter`: parse local dino objects, run basic tamed/wild filters, and
+  print aggregate class counts.
 
 ## Profile, Tribe, And Cluster Examples
 
