@@ -1,6 +1,7 @@
 package arkobject
 
 import (
+	"math"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -19,6 +20,7 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 			{Name: "bIsFemale", Type: arkproperty.TypeBool, Value: true},
 			{Name: "bIsDead", Type: arkproperty.TypeBool, Value: false},
 			{Name: "bIsBaby", Type: arkproperty.TypeBool, Value: true},
+			{Name: "BabyAge", Type: arkproperty.TypeFloat, Value: float32(0.42)},
 			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
 			{Name: "MyCharacterStatusComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{
 				Type:  arkproperty.ObjectReferenceUUID,
@@ -53,6 +55,9 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	}
 	if dino.ID1 != 1001 || dino.ID2 != 2002 || !dino.IsFemale || dino.IsDead || !dino.IsBaby || !dino.IsTamed {
 		t.Fatalf("Dino flags/id = %#v", dino)
+	}
+	if math.Abs(dino.MaturationPercent-42) > 0.0001 || dino.BabyStage != BabyStageJuvenile {
+		t.Fatalf("Baby maturation fields = %#v", dino)
 	}
 	if dino.StatusComponentUUID == nil || dino.StatusComponentUUID.String() != statusID {
 		t.Fatalf("StatusComponentUUID = %v, want %s", dino.StatusComponentUUID, statusID)

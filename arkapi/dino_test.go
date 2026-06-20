@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
@@ -124,6 +125,25 @@ func TestDinoAPIReadsTamedDetailsAndOwner(t *testing.T) {
 	}
 }
 
+func TestDinoAPIReadsBabyMaturationStage(t *testing.T) {
+	save := openSyntheticDinoBabyStageSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	babies, err := api.Babies()
+	if err != nil {
+		t.Fatalf("Babies() error = %v", err)
+	}
+	if len(babies) != 1 {
+		t.Fatalf("Babies() length = %d, want 1", len(babies))
+	}
+	for _, dino := range babies {
+		if dino.MaturationPercent != 75 || dino.BabyStage != arkobject.BabyStageAdolescent {
+			t.Fatalf("baby maturation = %#v", dino)
+		}
+	}
+}
+
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -204,6 +224,31 @@ func openSyntheticDinoDetailSave(t *testing.T) *arksave.Save {
 	return save
 }
 
+func openSyntheticDinoBabyStageSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	mustExec(t, db, `create table custom (key text primary key, value blob)`)
+	mustExec(t, db, `create table game (key blob primary key, value blob)`)
+	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	mustExec(t, db, `insert into game (key, value) values (?, ?)`, dinoID[:], syntheticDinoBabyObjectBytes(0.75))
+	if err := db.Close(); err != nil {
+		t.Fatalf("close fixture db: %v", err)
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	return save
+}
+
 func syntheticDinoObjectBytes() []byte {
 	return syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true)
 }
@@ -232,6 +277,23 @@ func syntheticDinoDetailObjectBytes() []byte {
 	writeStringProperty(&buf, 0x1000002b, "eos-survivor")
 	writeIntProperty(&buf, 0x1000002c, 42)
 	writeIntProperty(&buf, 0x10000009, 555)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func syntheticDinoBabyObjectBytes(age float32) []byte {
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	writeIntProperty(&buf, 0x10000015, 1001)
+	writeIntProperty(&buf, 0x10000016, 2002)
+	writeBoolProperty(&buf, 0x10000021, true)
+	writeFloatProperty(&buf, 0x1000002d, age)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()

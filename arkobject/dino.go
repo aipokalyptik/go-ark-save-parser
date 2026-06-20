@@ -5,6 +5,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type BabyStage string
+
+const (
+	BabyStageUnknown    BabyStage = ""
+	BabyStageBaby       BabyStage = "Baby"
+	BabyStageJuvenile   BabyStage = "Juvenile"
+	BabyStageAdolescent BabyStage = "Adolescent"
+)
+
 type Dino struct {
 	UUID                uuid.UUID
 	Blueprint           string
@@ -16,6 +25,8 @@ type Dino struct {
 	IsBaby              bool
 	IsDead              bool
 	IsCryopodded        bool
+	MaturationPercent   float64
+	BabyStage           BabyStage
 	StatusComponentUUID *uuid.UUID
 	InventoryUUID       *uuid.UUID
 	TamedName           string
@@ -38,6 +49,10 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	dino.IsFemale = boolValue(properties, "bIsFemale")
 	dino.IsDead = boolValue(properties, "bIsDead")
 	dino.IsBaby = boolValue(properties, "bIsBaby")
+	if dino.IsBaby {
+		dino.MaturationPercent = float64Value(properties, "BabyAge") * 100
+		dino.BabyStage = babyStageForPercent(dino.MaturationPercent)
+	}
 	_, dino.IsTamed = properties.Value("TamedTimeStamp")
 	dino.StatusComponentUUID = objectReferenceUUID(properties, "MyCharacterStatusComponent")
 	dino.InventoryUUID = objectReferenceUUID(properties, "MyInventoryComponent")
@@ -49,6 +64,16 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 		dino.Location = actorTransformValue(properties, "SavedBaseWorldLocation")
 	}
 	return dino
+}
+
+func babyStageForPercent(percent float64) BabyStage {
+	if percent < 10 {
+		return BabyStageBaby
+	}
+	if percent < 50 {
+		return BabyStageJuvenile
+	}
+	return BabyStageAdolescent
 }
 
 func uint32Value(properties arkproperty.Container, name string) uint32 {
