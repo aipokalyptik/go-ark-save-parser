@@ -34,6 +34,43 @@ func TestEquipmentAPIClassifiesBlueprints(t *testing.T) {
 	}
 }
 
+func sortedStrings(values []string) bool {
+	for i := 1; i < len(values); i++ {
+		if values[i-1] > values[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func stringSet(values []string) map[string]struct{} {
+	out := map[string]struct{}{}
+	for _, value := range values {
+		out[value] = struct{}{}
+	}
+	return out
+}
+
+func TestUpstreamEquipmentBlueprintListsExposeCanonicalClasses(t *testing.T) {
+	weapons := UpstreamWeaponBlueprints()
+	armor := UpstreamArmorBlueprints()
+	if len(weapons) != 45 {
+		t.Fatalf("UpstreamWeaponBlueprints() length = %d, want 45", len(weapons))
+	}
+	if len(armor) != 77 {
+		t.Fatalf("UpstreamArmorBlueprints() length = %d, want 77", len(armor))
+	}
+	if !sortedStrings(weapons) || !sortedStrings(armor) {
+		t.Fatalf("upstream equipment blueprint lists must be sorted")
+	}
+	if _, ok := stringSet(weapons)["/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponShotgun.PrimalItem_WeaponShotgun_C"]; !ok {
+		t.Fatalf("UpstreamWeaponBlueprints() missing shotgun")
+	}
+	if _, ok := stringSet(armor)["/Game/PrimalEarth/CoreBlueprints/Items/Armor/Metal/PrimalItemArmor_MetalShirt.PrimalItemArmor_MetalShirt_C"]; !ok {
+		t.Fatalf("UpstreamArmorBlueprints() missing metal shirt")
+	}
+}
+
 func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()
@@ -159,6 +196,36 @@ func TestEquipmentAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	}
 	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'" || faults[0].Err == nil {
 		t.Fatalf("AllWithFaults() faults = %#v, want one equipment parse fault", faults)
+	}
+}
+
+func TestEquipmentAPIFilteredWithFaultsKeepsValidFilteredItemsAndReportsParseFaults(t *testing.T) {
+	save := openSyntheticEquipmentSaveWithFault(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	items, faults, err := api.FilteredWithFaults(EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		NoBlueprints: true,
+	})
+	if err != nil {
+		t.Fatalf("FilteredWithFaults() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("FilteredWithFaults() items length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Kind != arkobject.EquipmentWeapon || item.IsBlueprint {
+			t.Fatalf("FilteredWithFaults() item = %#v, want non-blueprint weapon", item)
+		}
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("FilteredWithFaults() faults = %#v, want one parse fault", faults)
+	}
+
+	_, _, err = api.FilteredWithFaults(EquipmentFilterOptions{NoBlueprints: true, OnlyBlueprints: true})
+	if err == nil {
+		t.Fatalf("FilteredWithFaults(conflicting blueprint filters) error = nil, want error")
 	}
 }
 

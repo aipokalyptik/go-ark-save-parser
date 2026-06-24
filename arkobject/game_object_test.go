@@ -102,6 +102,53 @@ func TestParseGameObjectReadsStringEncodedObjectNames(t *testing.T) {
 	}
 }
 
+func TestParseGameObjectPartialKeepsPropertiesBeforePropertyError(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Blueprint'/Game/Test.Test_C'",
+		2: "InstanceName_123",
+		3: "Health",
+		4: "IntProperty",
+		5: "Owner",
+		6: "ObjectProperty",
+	})
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 0)
+	_ = binary.Write(stream, binary.LittleEndian, int16(9))
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 250)
+	writeName(stream, 5)
+	writeName(stream, 6)
+	writeInt32(stream, 2)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, int16(5))
+
+	obj, err := ParseGameObjectPartial(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
+	if err == nil {
+		t.Fatalf("ParseGameObjectPartial() error = nil, want recorded property error")
+	}
+	if obj == nil {
+		t.Fatalf("ParseGameObjectPartial() object = nil, want partial object")
+	}
+	if len(obj.Properties) != 1 {
+		t.Fatalf("Properties length = %d, want 1", len(obj.Properties))
+	}
+	if obj.Properties[0].Name != "Health" || obj.Properties[0].Value != int32(250) {
+		t.Fatalf("partial property = %#v, want Health 250", obj.Properties[0])
+	}
+}
+
 func TestGameObjectShortNameFollowsUpstreamBlueprintRules(t *testing.T) {
 	tests := []struct {
 		name      string

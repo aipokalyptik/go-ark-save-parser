@@ -141,6 +141,15 @@ type Property struct {
 	EncodedBytes []byte
 }
 
+func isCompactPositionedIntProperty(key string) bool {
+	switch key {
+	case "NumberOfLevelUpPointsApplied", "NumberOfLevelUpPointsAppliedTamed", "NumberOfMutationsAppliedTamed":
+		return true
+	default:
+		return false
+	}
+}
+
 func ParseAll(r *arkbinary.Reader, end int) ([]Property, error) {
 	return parseAll(r, end, false)
 }
@@ -229,6 +238,15 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "IntProperty":
 		prop.Type = TypeInt
+		if dataSize == 0 && isCompactPositionedIntProperty(key) {
+			prop.ValueOffset = r.Position()
+			value, err := r.ReadInt32()
+			if err != nil {
+				return nil, err
+			}
+			prop.Value = value
+			break
+		}
 		unknown, err := r.ReadByte()
 		if err != nil {
 			return nil, err
@@ -306,6 +324,15 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "FloatProperty":
 		prop.Type = TypeFloat
+		if dataSize == 0 && key == "CurrentStatusValues" {
+			prop.ValueOffset = r.Position()
+			value, err := r.ReadFloat32()
+			if err != nil {
+				return nil, err
+			}
+			prop.Value = value
+			break
+		}
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err

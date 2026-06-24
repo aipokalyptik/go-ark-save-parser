@@ -268,6 +268,29 @@ func TestDinoStatsFromObjectReadsPositionedStatusFields(t *testing.T) {
 	}
 }
 
+func TestDinoStatsFromObjectReadsByteEncodedStatusPoints(t *testing.T) {
+	object := &GameObject{
+		UUID: uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff"),
+		Properties: []arkproperty.Property{
+			{Name: "BaseCharacterLevel", Type: arkproperty.TypeInt, Value: int32(509)},
+			{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeByte, Position: 0, Value: byte(254)},
+			{Name: "NumberOfMutationsAppliedTamed", Type: arkproperty.TypeByte, Position: 0, Value: byte(254)},
+		},
+	}
+
+	stats := DinoStatsFromObject(object)
+
+	if stats.BaseStatPoints.Health != 254 || stats.MutatedStatPoints.Health != 254 {
+		t.Fatalf("byte encoded stat points = %#v / %#v, want 254 / 254", stats.BaseStatPoints, stats.MutatedStatPoints)
+	}
+	if got := stats.Points(DinoStatHealth); got != 508 {
+		t.Fatalf("Points(Health) = %d, want 508", got)
+	}
+	if stat, points, ok := stats.BestStat(); !ok || stat != DinoStatHealth || points != 508 {
+		t.Fatalf("BestStat() = %v, %d, %v; want health, 508, true", stat, points, ok)
+	}
+}
+
 func TestDinoStatsBestStatBreaksTiesByStableStatOrder(t *testing.T) {
 	stats := DinoStats{
 		BaseStatPoints: DinoStatPoints{

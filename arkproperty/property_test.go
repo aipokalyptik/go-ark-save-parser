@@ -592,6 +592,44 @@ func TestParseArrayPropertyReadsIntValues(t *testing.T) {
 	}
 }
 
+func TestParseCompactPositionedNumericProperties(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "NumberOfLevelUpPointsApplied",
+		2: "IntProperty",
+		3: "CurrentStatusValues",
+		4: "FloatProperty",
+		5: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 0)
+	writeInt32(stream, 8)
+	writeInt32(stream, 508)
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 0)
+	writeInt32(stream, 7)
+	writeFloat32(stream, 321.25)
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() length = %d, want 2: %#v", len(props), props)
+	}
+	if props[0].Position != 8 || props[0].Value != int32(508) {
+		t.Fatalf("compact int property = %#v, want position 8 value 508", props[0])
+	}
+	if props[1].Position != 7 || props[1].Value != float32(321.25) {
+		t.Fatalf("compact float property = %#v, want position 7 value 321.25", props[1])
+	}
+}
+
 func TestParseArrayPropertyReadsUInt64Values(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{
@@ -1459,6 +1497,10 @@ func writeUInt32(buf *bytes.Buffer, value uint32) {
 }
 
 func writeFloat64(buf *bytes.Buffer, value float64) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeFloat32(buf *bytes.Buffer, value float32) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 

@@ -1,6 +1,10 @@
 package arkobject
 
-import "github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+import (
+	"strings"
+
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+)
 
 type EquipmentKind string
 
@@ -140,6 +144,9 @@ func equipmentStats(properties arkproperty.Container, kind EquipmentKind, bluepr
 func defaultEquipmentDurability(blueprint string) float64 {
 	if blueprint == "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'" {
 		return 50
+	}
+	if strings.Contains(blueprint, "/Armor/") || strings.Contains(blueprint, "/Outfits/") || strings.Contains(blueprint, "/CursedArmor/") {
+		return 125
 	}
 	return 1
 }

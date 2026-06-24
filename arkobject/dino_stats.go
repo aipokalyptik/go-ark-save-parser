@@ -235,7 +235,13 @@ func int32PositionedValue(properties arkproperty.Container, name string, positio
 		return v
 	case int8:
 		return int32(v)
+	case byte:
+		return int32(v)
 	case uint32:
+		return int32(v)
+	case uint16:
+		return int32(v)
+	case uint64:
 		return int32(v)
 	case int:
 		return int32(v)

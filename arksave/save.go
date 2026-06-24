@@ -294,6 +294,14 @@ func (s *Save) ParsedObject(id uuid.UUID) (*arkobject.GameObject, error) {
 	return arkobject.ParseGameObject(id, raw, s.names, s.objectSections())
 }
 
+func (s *Save) ParsedObjectPartial(id uuid.UUID) (*arkobject.GameObject, error) {
+	raw, err := s.ObjectBinary(id)
+	if err != nil {
+		return nil, err
+	}
+	return arkobject.ParseGameObjectPartial(id, raw, s.names, s.objectSections())
+}
+
 func (s *Save) ParsedObjectsByClassContains(substr string) ([]ParsedObjectInfo, error) {
 	return s.ParsedObjects(func(info ObjectClassInfo) bool {
 		return strings.Contains(info.ClassName, substr)

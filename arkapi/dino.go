@@ -38,6 +38,7 @@ type DinoBestStatOptions struct {
 	Stats           []arkobject.DinoStat
 	OnlyTamed       bool
 	OnlyUntamed     bool
+	ExcludeCryopods bool
 	BaseStat        bool
 	MutatedStat     bool
 	LevelUpperBound *int32
@@ -159,7 +160,7 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 		}
 		dino := arkobject.DinoFromObject(info.Object, location)
 		if dino.StatusComponentUUID != nil {
-			if statusObject, err := d.save.ParsedObject(*dino.StatusComponentUUID); err == nil {
+			if statusObject, err := d.statusObject(*dino.StatusComponentUUID); err == nil {
 				dino = arkobject.DinoFromObjectWithStatus(info.Object, statusObject, location)
 			}
 		}
@@ -194,13 +195,25 @@ func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fault
 		}
 		dino := arkobject.DinoFromObject(info.Object, location)
 		if dino.StatusComponentUUID != nil {
-			if statusObject, err := d.save.ParsedObject(*dino.StatusComponentUUID); err == nil {
+			if statusObject, err := d.statusObject(*dino.StatusComponentUUID); err == nil {
 				dino = arkobject.DinoFromObjectWithStatus(info.Object, statusObject, location)
 			}
 		}
 		out[info.UUID] = dino
 	}
 	return out, faults, nil
+}
+
+func (d *DinoAPI) statusObject(id uuid.UUID) (*arkobject.GameObject, error) {
+	statusObject, err := d.save.ParsedObject(id)
+	if err == nil {
+		return statusObject, nil
+	}
+	partial, partialErr := d.save.ParsedObjectPartial(id)
+	if partial != nil {
+		return partial, nil
+	}
+	return nil, partialErr
 }
 
 func (d *DinoAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Dino, error) {
@@ -686,11 +699,29 @@ func (d *DinoAPI) BestDinoForStat(scopes ...arkobject.StatScope) (uuid.UUID, ark
 }
 
 func (d *DinoAPI) BestDinoForStatFiltered(opts DinoBestStatOptions) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, error) {
+	filtered, err := d.filteredForBestStat(opts)
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, err
+	}
+	id, dino, stat, points, ok := bestDinoForStat(filtered, opts.Stats, bestStatScopes(opts)...)
+	return id, dino, stat, points, ok, nil
+}
+
+func (d *DinoAPI) BestDinoForStatFilteredWithFaults(opts DinoBestStatOptions) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool, []arksave.FaultyObjectInfo, error) {
+	filtered, faults, err := d.filteredForBestStatWithFaults(opts)
+	if err != nil {
+		return uuid.Nil, arkobject.Dino{}, 0, 0, false, nil, err
+	}
+	id, dino, stat, points, ok := bestDinoForStat(filtered, opts.Stats, bestStatScopes(opts)...)
+	return id, dino, stat, points, ok, faults, nil
+}
+
+func (d *DinoAPI) filteredForBestStat(opts DinoBestStatOptions) (map[uuid.UUID]arkobject.Dino, error) {
 	if opts.OnlyTamed && opts.OnlyUntamed {
-		return uuid.Nil, arkobject.Dino{}, 0, 0, false, errors.New("cannot specify both OnlyTamed and OnlyUntamed")
+		return nil, errors.New("cannot specify both OnlyTamed and OnlyUntamed")
 	}
 	if opts.BaseStat && opts.MutatedStat {
-		return uuid.Nil, arkobject.Dino{}, 0, 0, false, errors.New("cannot specify both BaseStat and MutatedStat")
+		return nil, errors.New("cannot specify both BaseStat and MutatedStat")
 	}
 	tamed := (*bool)(nil)
 	switch {
@@ -701,23 +732,65 @@ func (d *DinoAPI) BestDinoForStatFiltered(opts DinoBestStatOptions) (uuid.UUID, 
 		value := false
 		tamed = &value
 	}
+	cryopodded := (*bool)(nil)
+	if opts.ExcludeCryopods {
+		value := false
+		cryopodded = &value
+	}
 	filtered, err := d.Filtered(DinoFilterOptions{
 		MaxLevel:   opts.LevelUpperBound,
 		Blueprints: opts.Blueprints,
 		Tamed:      tamed,
+		Cryopodded: cryopodded,
 	})
 	if err != nil {
-		return uuid.Nil, arkobject.Dino{}, 0, 0, false, err
+		return nil, err
 	}
-	scopes := []arkobject.StatScope{arkobject.StatScopeCombined}
+	return filtered, nil
+}
+
+func (d *DinoAPI) filteredForBestStatWithFaults(opts DinoBestStatOptions) (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	if opts.OnlyTamed && opts.OnlyUntamed {
+		return nil, nil, errors.New("cannot specify both OnlyTamed and OnlyUntamed")
+	}
+	if opts.BaseStat && opts.MutatedStat {
+		return nil, nil, errors.New("cannot specify both BaseStat and MutatedStat")
+	}
+	tamed := (*bool)(nil)
+	switch {
+	case opts.OnlyTamed:
+		value := true
+		tamed = &value
+	case opts.OnlyUntamed:
+		value := false
+		tamed = &value
+	}
+	cryopodded := (*bool)(nil)
+	if opts.ExcludeCryopods {
+		value := false
+		cryopodded = &value
+	}
+	all, faults, err := d.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	filtered := filterDinos(all, DinoFilterOptions{
+		MaxLevel:   opts.LevelUpperBound,
+		Blueprints: opts.Blueprints,
+		Tamed:      tamed,
+		Cryopodded: cryopodded,
+	})
+	return filtered, faults, nil
+}
+
+func bestStatScopes(opts DinoBestStatOptions) []arkobject.StatScope {
 	if opts.BaseStat {
-		scopes = []arkobject.StatScope{arkobject.StatScopeBase}
+		return []arkobject.StatScope{arkobject.StatScopeBase}
 	}
 	if opts.MutatedStat {
-		scopes = []arkobject.StatScope{arkobject.StatScopeMutated}
+		return []arkobject.StatScope{arkobject.StatScopeMutated}
 	}
-	id, dino, stat, points, ok := bestDinoForStat(filtered, opts.Stats, scopes...)
-	return id, dino, stat, points, ok, nil
+	return []arkobject.StatScope{arkobject.StatScopeCombined}
 }
 
 func bestDinoForStat(dinos map[uuid.UUID]arkobject.Dino, stats []arkobject.DinoStat, scopes ...arkobject.StatScope) (uuid.UUID, arkobject.Dino, arkobject.DinoStat, int32, bool) {
@@ -787,6 +860,14 @@ func (d *DinoAPI) MostMutatedTamed() (uuid.UUID, arkobject.Dino, int32, bool, er
 }
 
 func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino, error) {
+	all, err := d.All()
+	if err != nil {
+		return nil, err
+	}
+	return filterDinos(all, opts), nil
+}
+
+func filterDinos(dinos map[uuid.UUID]arkobject.Dino, opts DinoFilterOptions) map[uuid.UUID]arkobject.Dino {
 	allowedBlueprints := map[string]struct{}{}
 	for _, blueprint := range opts.Blueprints {
 		allowedBlueprints[blueprint] = struct{}{}
@@ -799,10 +880,11 @@ func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino
 	for _, trait := range opts.GeneTraits {
 		allowedTraits[trait] = struct{}{}
 	}
-	return d.filter(func(dino arkobject.Dino) bool {
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range dinos {
 		if len(allowedBlueprints) > 0 {
 			if _, ok := allowedBlueprints[dino.Blueprint]; !ok {
-				return false
+				continue
 			}
 		}
 		if len(allowedTraits) > 0 {
@@ -814,42 +896,47 @@ func (d *DinoAPI) Filtered(opts DinoFilterOptions) (map[uuid.UUID]arkobject.Dino
 				}
 			}
 			if !matched {
-				return false
+				continue
 			}
 		}
 		if opts.Tamed != nil && dino.IsTamed != *opts.Tamed {
-			return false
+			continue
 		}
 		if opts.Cryopodded != nil && dino.IsCryopodded != *opts.Cryopodded {
-			return false
+			continue
 		}
 		if opts.MinLevel != nil || opts.MaxLevel != nil || opts.StatMinimum != 0 {
 			if dino.Stats == nil {
-				return false
+				continue
 			}
 		}
 		if opts.MinLevel != nil && dino.Stats.CurrentLevel < *opts.MinLevel {
-			return false
+			continue
 		}
 		if opts.MaxLevel != nil && dino.Stats.CurrentLevel > *opts.MaxLevel {
-			return false
+			continue
 		}
 		if opts.StatMinimum != 0 {
 			statsAbove := dino.Stats.StatsAtLeast(opts.StatMinimum, arkobject.StatScopeCombined)
 			if len(statsAbove) == 0 {
-				return false
+				continue
 			}
 			if len(allowedStats) > 0 {
+				matched := false
 				for _, stat := range statsAbove {
 					if _, ok := allowedStats[stat]; ok {
-						return true
+						matched = true
+						break
 					}
 				}
-				return false
+				if !matched {
+					continue
+				}
 			}
 		}
-		return true
-	})
+		out[id] = dino
+	}
+	return out
 }
 
 func (d *DinoAPI) withStatAtLeast(value int32, scope arkobject.StatScope, stats ...arkobject.DinoStat) (map[uuid.UUID]arkobject.Dino, error) {

@@ -29,11 +29,15 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   filters, and print aggregate class counts. Pass `--no-cryos` before the save
   path when comparing against no-cryopod oracle data.
 - `dino_best_stat`: find the dino with the highest parsed stat points, or print
-  `no_match` when no stat-bearing dino status components are present.
+  `no_match` when no stat-bearing dino status components are present. Pass
+  `--no-cryos` before the save path to skip cryopod payloads.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
 - `equipment_summary`: parse local equipment items and print aggregate counts
   for weapons, armor, direct saddles, modern cryopod saddles, and shields.
+- `equipment_best`: mirror upstream read-only equipment examples by printing
+  highest weapon damage and highest armor durability values over upstream
+  canonical weapon and armor class lists.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
 

@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -85,6 +86,23 @@ var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
 
 func NewEquipment(save *arksave.Save) *EquipmentAPI {
 	return &EquipmentAPI{save: save}
+}
+
+func UpstreamWeaponBlueprints() []string {
+	return sortedBlueprintKeys(upstreamWeaponBlueprints)
+}
+
+func UpstreamArmorBlueprints() []string {
+	return sortedBlueprintKeys(upstreamArmorBlueprints)
+}
+
+func sortedBlueprintKeys(values map[string]struct{}) []string {
+	out := make([]string, 0, len(values))
+	for value := range values {
+		out = append(out, value)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func (e *EquipmentAPI) IsApplicableBlueprint(blueprint string) bool {
@@ -404,6 +422,32 @@ func (e *EquipmentAPI) best(items map[uuid.UUID]arkobject.EquipmentItem, value f
 }
 
 func (e *EquipmentAPI) Filtered(opts EquipmentFilterOptions) (map[uuid.UUID]arkobject.EquipmentItem, error) {
+	match, err := equipmentFilterPredicate(opts)
+	if err != nil {
+		return nil, err
+	}
+	return e.filter(match)
+}
+
+func (e *EquipmentAPI) FilteredWithFaults(opts EquipmentFilterOptions) (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	match, err := equipmentFilterPredicate(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	all, faults, err := e.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range all {
+		if match(item) {
+			out[id] = item
+		}
+	}
+	return out, faults, nil
+}
+
+func equipmentFilterPredicate(opts EquipmentFilterOptions) (func(arkobject.EquipmentItem) bool, error) {
 	if opts.NoBlueprints && opts.OnlyBlueprints {
 		return nil, fmt.Errorf("cannot filter by both no blueprints and only blueprints")
 	}
@@ -415,14 +459,16 @@ func (e *EquipmentAPI) Filtered(opts EquipmentFilterOptions) (map[uuid.UUID]arko
 	for _, blueprint := range opts.Blueprints {
 		allowedBlueprints[blueprint] = struct{}{}
 	}
-	return e.filter(func(item arkobject.EquipmentItem) bool {
+	return func(item arkobject.EquipmentItem) bool {
 		if len(allowedKinds) > 0 {
 			if _, ok := allowedKinds[item.Kind]; !ok {
 				return false
 			}
 		}
 		if len(allowedBlueprints) > 0 {
-			if _, ok := allowedBlueprints[item.Blueprint]; !ok {
+			_, exact := allowedBlueprints[item.Blueprint]
+			_, canonical := allowedBlueprints[canonicalBlueprintPath(item.Blueprint)]
+			if !exact && !canonical {
 				return false
 			}
 		}
@@ -450,7 +496,7 @@ func (e *EquipmentAPI) Filtered(opts EquipmentFilterOptions) (map[uuid.UUID]arko
 			}
 		}
 		return true
-	})
+	}, nil
 }
 
 func (e *EquipmentAPI) filter(match func(arkobject.EquipmentItem) bool) (map[uuid.UUID]arkobject.EquipmentItem, error) {

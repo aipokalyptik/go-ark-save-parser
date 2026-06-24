@@ -74,6 +74,14 @@ func ShortNameFromBlueprint(blueprint string) string {
 }
 
 func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string) (*GameObject, error) {
+	return parseGameObject(id, data, ctx, sections, false)
+}
+
+func ParseGameObjectPartial(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string) (*GameObject, error) {
+	return parseGameObject(id, data, ctx, sections, true)
+}
+
+func parseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections []string, keepPartial bool) (*GameObject, error) {
 	r := arkbinary.NewReader(data, ctx)
 	blueprint, err := r.ReadName("")
 	if err != nil {
@@ -117,19 +125,25 @@ func ParseGameObject(id uuid.UUID, data []byte, ctx *arkbinary.Context, sections
 		return nil, err
 	}
 
-	props, err := arkproperty.ParseAll(r, r.Size())
-	if err != nil {
+	var props []arkproperty.Property
+	if keepPartial {
+		props, err = arkproperty.ParseAllPartial(r, r.Size())
+	} else {
+		props, err = arkproperty.ParseAll(r, r.Size())
+	}
+	if err != nil && !keepPartial {
 		return nil, err
 	}
 
-	return &GameObject{
+	object := &GameObject{
 		UUID:       id,
 		Blueprint:  blueprint,
 		Names:      names,
 		Section:    section,
 		Unknown:    unknown,
 		Properties: props,
-	}, nil
+	}
+	return object, err
 }
 
 func readObjectLocalName(r *arkbinary.Reader) (string, error) {

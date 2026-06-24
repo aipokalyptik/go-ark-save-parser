@@ -21,13 +21,14 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers thirteen implemented aggregate
+  oracle comparison summary currently covers fifteen implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `export_json`,
   `local_profiles`, `local_profile_player_aggregates`, `player_inventory`,
-  `dino_filter`, `property_filter`, `stackable_count`,
-  `equipment_longneck_blueprint_damage`, `domain_json_dinos`, `cluster_json`,
-  and `local_tribute`. Phase 4 still requires comparison coverage for every
-  runnable offline Python example where a Go counterpart exists or is feasible.
+  `dino_filter`, `dino_best_stat_no_cryos`, `property_filter`, `stackable_count`,
+  `equipment_longneck_blueprint_damage`, `equipment_best`, `domain_json_dinos`,
+  `cluster_json`, and `local_tribute`. Phase 4 still requires comparison
+  coverage for every runnable offline Python example where a Go counterpart
+  exists or is feasible.
 - Full offline API/domain compatibility remains incomplete. Phase 2 still has
   open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
   richer local cluster models, remaining read-first object wrappers, and

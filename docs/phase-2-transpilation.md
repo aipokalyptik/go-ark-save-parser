@@ -324,6 +324,10 @@ enough that oracle-derived tests can run against translated packages.
       upstream `StackableApi.get_by_class` and `get_count` workflow.
 - [x] Compare normalized Go equipment domain JSON aggregates with the upstream
       longneck blueprint max-damage workflow.
+- [x] Compare normalized Go `equipment_best` aggregate output with upstream
+      highest weapon-damage and armor-durability workflows.
+- [x] Compare normalized Go `dino_best_stat --no-cryos` output with the
+      upstream `DinoApi.get_all(include_cryos=False)` best-stat workflow.
 - [x] Compare normalized Go `cluster_json` aggregate counts with the upstream
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local

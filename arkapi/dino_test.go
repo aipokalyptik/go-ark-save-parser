@@ -831,6 +831,48 @@ func TestDinoAPIBestDinoForStatFilteredAppliesUpstreamStyleOptions(t *testing.T)
 	}
 }
 
+func TestDinoAPIBestDinoForStatFilteredWithFaultsSkipsMalformedCryopods(t *testing.T) {
+	save := openSyntheticDinoStatsSaveWithMalformedCryopod(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, _, stat, points, ok, faults, err := api.BestDinoForStatFilteredWithFaults(DinoBestStatOptions{})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFilteredWithFaults() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("BestDinoForStatFilteredWithFaults() ok = false, want true")
+	}
+	if id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || stat != arkobject.DinoStatHealth || points != 6 {
+		t.Fatalf("BestDinoForStatFilteredWithFaults() = %s %v %d, want health 6 dino", id, stat, points)
+	}
+	if len(faults) != 1 || faults[0].UUID != uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111") {
+		t.Fatalf("BestDinoForStatFilteredWithFaults() faults = %#v, want malformed cryopod fault", faults)
+	}
+}
+
+func TestDinoAPIBestDinoForStatFilteredCanExcludeCryopods(t *testing.T) {
+	save := openSyntheticBestStatCryopodSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, _, _, points, ok, _, err := api.BestDinoForStatFilteredWithFaults(DinoBestStatOptions{})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFilteredWithFaults() error = %v", err)
+	}
+	if !ok || id != uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111") || points != 6 {
+		t.Fatalf("BestDinoForStatFilteredWithFaults(default) = %s %d %v, want cryopod dino", id, points, ok)
+	}
+
+	id, _, _, points, ok, _, err = api.BestDinoForStatFilteredWithFaults(DinoBestStatOptions{ExcludeCryopods: true})
+	if err != nil {
+		t.Fatalf("BestDinoForStatFilteredWithFaults(no cryos) error = %v", err)
+	}
+	if !ok || id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || points != 5 {
+		t.Fatalf("BestDinoForStatFilteredWithFaults(no cryos) = %s %d %v, want direct dino", id, points, ok)
+	}
+}
+
 func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {
 	save := openSyntheticTamedDinoStatsSave(t)
 	defer save.Close()
@@ -1080,6 +1122,34 @@ func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticDinoStatsSaveWithMalformedCryopod(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
+		statusID: syntheticDinoStatusObjectBytes(),
+		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
+	})
+}
+
+func openSyntheticBestStatCryopodSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	cryopodDinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	cryopodStatusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
+		statusID: syntheticDinoStatusObjectBytesWithHealth(4),
+		podID:    syntheticCryopodItemObjectBytes(syntheticCryopodDinoPayloadWithHealth(t, cryopodDinoID, cryopodStatusID, 6)),
+	})
+}
+
 func openSyntheticTamedDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -1111,6 +1181,10 @@ func syntheticDinoStatsObjectBytesWithTamed(statusID uuid.UUID, tamed bool) []by
 }
 
 func syntheticDinoStatusObjectBytes() []byte {
+	return syntheticDinoStatusObjectBytesWithHealth(5)
+}
+
+func syntheticDinoStatusObjectBytesWithHealth(health int32) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000036))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
@@ -1119,7 +1193,7 @@ func syntheticDinoStatusObjectBytes() []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	writeIntProperty(&buf, 0x10000037, 12)
-	writePositionedIntProperty(&buf, 0x10000038, 0, 5)
+	writePositionedIntProperty(&buf, 0x10000038, 0, health)
 	writePositionedIntProperty(&buf, 0x10000038, 7, 3)
 	writePositionedIntProperty(&buf, 0x10000039, 8, 2)
 	writePositionedIntProperty(&buf, 0x1000003a, 0, 1)
@@ -1276,6 +1350,10 @@ func truncatedDinoObjectBytes() []byte {
 }
 
 func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
+	return syntheticCryopodDinoPayloadWithHealth(t, dinoID, statusID, 0)
+}
+
+func syntheticCryopodDinoPayloadWithHealth(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID, health int32) []byte {
 	t.Helper()
 
 	var decoded bytes.Buffer
@@ -1294,13 +1372,16 @@ func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.U
 	statusPropsOffset := decoded.Len()
 	decoded.WriteByte(0)
 	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000005, 12)
+	if health > 0 {
+		writeCryopodEmbeddedNamePositionedIntProperty(&decoded, 0x10000007, 0, health)
+	}
 	writeCryopodEmbeddedNone(&decoded)
 
 	binary.LittleEndian.PutUint32(decoded.Bytes()[dinoOffsetPos:dinoOffsetPos+4], uint32(dinoPropsOffset))
 	binary.LittleEndian.PutUint32(decoded.Bytes()[statusOffsetPos:statusOffsetPos+4], uint32(statusPropsOffset))
 
 	namesOffset := decoded.Len()
-	_ = binary.Write(&decoded, binary.LittleEndian, uint32(7))
+	_ = binary.Write(&decoded, binary.LittleEndian, uint32(8))
 	writeArkString(&decoded, "None")
 	writeArkString(&decoded, "DinoID1")
 	writeArkString(&decoded, "DinoID2")
@@ -1308,6 +1389,7 @@ func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.U
 	writeArkString(&decoded, "IntProperty")
 	writeArkString(&decoded, "BaseCharacterLevel")
 	writeArkString(&decoded, "DoubleProperty")
+	writeArkString(&decoded, "NumberOfLevelUpPointsApplied")
 
 	var compressed bytes.Buffer
 	writer := zlib.NewWriter(&compressed)
@@ -1561,6 +1643,15 @@ func writeCryopodEmbeddedNameIntProperty(buf *bytes.Buffer, nameID uint32, value
 	writeCryopodEmbeddedName(buf, 0x10000004)
 	_ = binary.Write(buf, binary.LittleEndian, int32(4))
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func writeCryopodEmbeddedNamePositionedIntProperty(buf *bytes.Buffer, nameID uint32, position int32, value int32) {
+	writeCryopodEmbeddedName(buf, nameID)
+	writeCryopodEmbeddedName(buf, 0x10000004)
+	_ = binary.Write(buf, binary.LittleEndian, int32(4))
+	_ = binary.Write(buf, binary.LittleEndian, position)
 	buf.WriteByte(0)
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }

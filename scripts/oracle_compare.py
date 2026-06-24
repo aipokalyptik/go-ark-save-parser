@@ -9,6 +9,7 @@ statuses so it can be reviewed without leaking save-derived identifiers.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -39,6 +40,17 @@ def run(cmd: list[str], cwd: Path, env: dict[str, str]) -> subprocess.CompletedP
     )
 
 
+def oracle_env(repo_root: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    env.setdefault("PYTHONWARNINGS", "ignore")
+    env.setdefault("GOCACHE", str(repo_root / ".cache" / "go-build"))
+    env.setdefault("XDG_CACHE_HOME", str(repo_root / ".cache" / "xdg"))
+    os.environ.setdefault("PYTHONWARNINGS", env["PYTHONWARNINGS"])
+    os.environ.setdefault("GOCACHE", env["GOCACHE"])
+    os.environ.setdefault("XDG_CACHE_HOME", env["XDG_CACHE_HOME"])
+    return env
+
+
 def parse_go_map_summary(output: str) -> dict[str, Any]:
     match = re.fullmatch(
         r"map=(?P<map>.*?) save_version=(?P<save_version>\d+) objects=(?P<objects>\d+) names=(?P<names>\d+)\n?",
@@ -62,7 +74,11 @@ def parse_key_value_lines(output: str) -> dict[str, Any]:
                 continue
             key, value = part.split("=", 1)
             try:
-                if "." in value:
+                if value == "true":
+                    values[key] = True
+                elif value == "false":
+                    values[key] = False
+                elif "." in value:
                     values[key] = float(value)
                 else:
                     values[key] = int(value)
@@ -77,6 +93,24 @@ def parse_go_player_inventory(output: str) -> dict[str, Any]:
         raise ValueError("unexpected player_inventory output")
     values["has_location"] = "location=(" in output
     return values
+
+
+def parse_go_dino_best_stat(output: str) -> dict[str, Any] | None:
+    if output.strip() == "no_match":
+        return None
+    match = re.fullmatch(
+        r"uuid=(?P<uuid>\S+) blueprint=\"(?P<blueprint>.*?)\" stat=(?P<stat>\S+) points=(?P<points>-?\d+) level=(?P<level>-?\d+)\n?",
+        output,
+    )
+    if not match:
+        raise ValueError("unexpected dino_best_stat output")
+    return {
+        "uuid": match.group("uuid"),
+        "blueprint": match.group("blueprint"),
+        "stat": match.group("stat"),
+        "points": int(match.group("points")),
+        "level": int(match.group("level")),
+    }
 
 
 def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
@@ -183,6 +217,41 @@ def python_dino_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, 
         save.close()
 
 
+def python_dino_best_stat_no_cryos_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dino_api = DinoApi(save)
+                dinos = dino_api.get_all(include_cryos=False, max_workers=1, bypass_inventory=True)
+                best_uuid = None
+                best_dino = None
+                best_stat = None
+                best_value = None
+                for uuid, dino in dinos.items():
+                    stat, value = dino.stats.get_highest_stat()
+                    if best_value is None or value > best_value:
+                        best_uuid = uuid
+                        best_dino = dino
+                        best_stat = stat
+                        best_value = value
+                if best_dino is None:
+                    return None
+                return {
+                    "uuid": str(best_uuid),
+                    "blueprint": best_dino.object.blueprint,
+                    "stat": best_stat.name.lower() if best_stat is not None else "unknown",
+                    "points": int(best_value),
+                    "level": int(best_dino.stats.current_level),
+                }
+            finally:
+                save.close()
+
+
 def python_property_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
@@ -243,6 +312,44 @@ def python_equipment_longneck_blueprint_oracle(save_path: Path, upstream_src: Pa
             "longneck_bp_count": len(weapons),
             "max_damage": max((weapon.damage for weapon in weapons.values()), default=None),
         }
+    finally:
+        save.close()
+
+
+def python_equipment_best_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        api = EquipmentApi(save)
+        weapons = api.get_filtered(EquipmentApi.Classes.WEAPON, no_bluepints=True)
+        armor = api.get_filtered(EquipmentApi.Classes.ARMOR, no_bluepints=True)
+        result: dict[str, Any] = {}
+        if weapons:
+            best_weapon = max(weapons.values(), key=lambda item: item.damage)
+            result.update(
+                {
+                    "weapon_damage": float(f"{best_weapon.damage:.1f}"),
+                    "weapon": best_weapon.get_short_name(),
+                    "weapon_crafted": bool(best_weapon.crafter),
+                }
+            )
+        else:
+            result["weapon"] = "no_match"
+        if armor:
+            best_armor = max(armor.values(), key=lambda item: item.durability)
+            result.update(
+                {
+                    "armor_durability": float(f"{best_armor.durability:.1f}"),
+                    "armor": best_armor.get_short_name(),
+                    "armor_crafted": bool(best_armor.crafter),
+                }
+            )
+        else:
+            result["armor"] = "no_match"
+        return result
     finally:
         save.close()
 
@@ -308,14 +415,15 @@ def normalize_blueprint(value: str) -> str:
 
 
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
-    env = os.environ.copy()
-    env.setdefault("PYTHONWARNINGS", "ignore")
+    env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
+    py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
+    py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
@@ -324,9 +432,11 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python": py,
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
+        "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
+        "python_equipment_best": py_equipment_best,
         "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
@@ -440,6 +550,26 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         want["cryopodded"] = 0
         cases.append(CaseResult("dino_filter", "pass" if {key: got.get(key) for key in want} == want else "fail", "dino aggregate counts compared"))
 
+    if py_dino_best_stat_no_cryos is None:
+        cases.append(CaseResult("dino_best_stat_no_cryos", "skip", "oracle save has no non-cryopod stat-bearing dino candidate"))
+    else:
+        go_dino_best_stat = run(["go", "run", "./examples/dino_best_stat", "--no-cryos", str(save_path)], repo_root, env)
+        private["go"]["dino_best_stat_no_cryos"] = {
+            "exit_code": go_dino_best_stat.returncode,
+            "stdout": go_dino_best_stat.stdout,
+            "stderr": go_dino_best_stat.stderr,
+        }
+        if go_dino_best_stat.returncode != 0:
+            cases.append(CaseResult("dino_best_stat_no_cryos", "fail", "Go example exited non-zero"))
+        else:
+            try:
+                got = parse_go_dino_best_stat(go_dino_best_stat.stdout)
+                private["go"]["dino_best_stat_no_cryos"]["parsed"] = got
+                cases.append(CaseResult("dino_best_stat_no_cryos", "pass" if got == py_dino_best_stat_no_cryos else "fail", "best stat dino without cryopods compared"))
+            except Exception as exc:  # noqa: BLE001 - private report captures details
+                private["go"]["dino_best_stat_no_cryos"]["parse_error"] = str(exc)
+                cases.append(CaseResult("dino_best_stat_no_cryos", "fail", "Go dino_best_stat output could not be parsed"))
+
     go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)
     private["go"]["property_filter"] = {
         "exit_code": go_property_filter.returncode,
@@ -500,6 +630,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["equipment_longneck_blueprint_damage"]["parse_error"] = str(exc)
             cases.append(CaseResult("equipment_longneck_blueprint_damage", "fail", "Go equipment domain JSON could not be parsed"))
+
+    go_equipment_best = run(["go", "run", "./examples/equipment_best", str(save_path)], repo_root, env)
+    private["go"]["equipment_best"] = {
+        "exit_code": go_equipment_best.returncode,
+        "stdout": go_equipment_best.stdout,
+        "stderr": go_equipment_best.stderr,
+    }
+    if go_equipment_best.returncode != 0:
+        cases.append(CaseResult("equipment_best", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_equipment_best.stdout)
+        private["go"]["equipment_best"]["parsed"] = got
+        stable_keys = [key for key in py_equipment_best if key not in {"weapon", "armor"}]
+        cases.append(CaseResult("equipment_best", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_best[key] for key in stable_keys} else "fail", "highest weapon damage and armor durability values compared"))
 
     domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
     go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)

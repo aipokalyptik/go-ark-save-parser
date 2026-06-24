@@ -10,12 +10,18 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: dino_best_stat <save.ark>")
+	args := os.Args[1:]
+	opts := arkapi.DinoBestStatOptions{}
+	if len(args) > 0 && args[0] == "--no-cryos" {
+		opts.ExcludeCryopods = true
+		args = args[1:]
+	}
+	if len(args) != 1 {
+		fmt.Fprintln(os.Stderr, "usage: dino_best_stat [--no-cryos] <save.ark>")
 		os.Exit(2)
 	}
 
-	save, err := arksave.Open(os.Args[1])
+	save, err := arksave.Open(args[0])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
 		os.Exit(1)
@@ -23,7 +29,7 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	id, dino, stat, points, ok, err := api.BestDinoForStatFiltered(arkapi.DinoBestStatOptions{})
+	id, dino, stat, points, ok, _, err := api.BestDinoForStatFilteredWithFaults(opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read dinos: %v\n", err)
 		os.Exit(1)
