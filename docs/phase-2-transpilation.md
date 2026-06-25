@@ -342,6 +342,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go `stackable_owned_by` aggregate counts with an
       upstream `StackableApi` plus `StructureApi.get_container_of_inventory`
       owner-filter workflow.
+- [x] Compare normalized Go stackable domain JSON aggregates with upstream
+      `StackableApi` all-resource/all-ammo counts, quantities, classes, and
+      owner-inventory coverage.
 - [x] Compare normalized Go equipment domain JSON aggregates with the upstream
       longneck blueprint max-damage workflow.
 - [x] Compare normalized Go `equipment_best` aggregate output with upstream

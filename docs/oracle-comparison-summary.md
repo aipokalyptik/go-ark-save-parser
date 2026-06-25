@@ -27,6 +27,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `property_filter`: `pass` (property-name filtered object counts compared)
 - `stackable_count`: `pass` (stackable item count and total quantity compared)
 - `stackable_owned_by`: `pass` (owned advanced rifle bullet count and total compared)
+- `domain_json_stackables`: `pass` (stackable domain JSON aggregate counts compared)
 - `equipment_longneck_blueprint_damage`: `pass` (longneck blueprint count and max damage compared)
 - `equipment_best`: `pass` (highest weapon damage and armor durability values compared)
 - `equipment_ascendant_weapon_bps`: `pass` (ascendant weapon blueprint count and max damage compared)
@@ -40,4 +41,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 31
+- `pass`: 32

@@ -631,6 +631,27 @@ def python_stackable_owned_by_oracle(save_path: Path, upstream_src: Path) -> dic
         save.close()
 
 
+def python_domain_stackables_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.stackable_api import StackableApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        api = StackableApi(save)
+        resources = api.get_all(StackableApi.Classes.RESOURCE, max_workers=1)
+        ammo = api.get_all(StackableApi.Classes.AMMO, max_workers=1)
+        items = {**resources, **ammo}
+        return {
+            "stackables": len(items),
+            "total_quantity": sum(int(item.quantity) for item in items.values()),
+            "classes": len({item.object.blueprint for item in items.values()}),
+            "owned": sum(1 for item in items.values() if getattr(item, "owner_inv_uuid", None) is not None),
+        }
+    finally:
+        save.close()
+
+
 def python_equipment_longneck_blueprint_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.equipment_api import EquipmentApi  # type: ignore
@@ -815,8 +836,9 @@ def python_base_components_oracle(save_path: Path, upstream_src: Path) -> dict[s
         structures = StructureApi(save).get_all(max_workers=1)
         remaining = set(structures.keys())
         sizes: list[int] = []
-        while remaining:
-            start = min(remaining, key=str)
+        for start in sorted(structures.keys(), key=str):
+            if start not in remaining:
+                continue
             remaining.remove(start)
             stack = [start]
             size = 0
@@ -916,6 +938,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_stackable_owned_by = python_stackable_owned_by_oracle(save_path, upstream_src)
+    py_domain_stackables = python_domain_stackables_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
     py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
     py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
@@ -944,6 +967,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
         "python_stackable_owned_by": py_stackable_owned_by,
+        "python_domain_stackables": py_domain_stackables,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
         "python_equipment_best": py_equipment_best,
         "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
@@ -1307,6 +1331,32 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             private["go"]["stackable_owned_by"]["parsed"] = got
             want = {key: py_stackable_owned_by[key] for key in ("tribe_id", "items", "total")}
             cases.append(CaseResult("stackable_owned_by", "pass" if {key: got.get(key) for key in want} == want else "fail", "owned advanced rifle bullet count and total compared"))
+
+    domain_stackables_path = repo_root / ".oracle" / "output" / "export-domain-stackables.json"
+    go_domain_stackables = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "stackables", str(domain_stackables_path)], repo_root, env)
+    private["go"]["domain_json_stackables"] = {
+        "exit_code": go_domain_stackables.returncode,
+        "stdout": go_domain_stackables.stdout,
+        "stderr": go_domain_stackables.stderr,
+        "output": str(domain_stackables_path),
+    }
+    if go_domain_stackables.returncode != 0:
+        cases.append(CaseResult("domain_json_stackables", "fail", "Go CLI exited non-zero"))
+    else:
+        try:
+            got_export = json.loads(domain_stackables_path.read_text(encoding="utf-8"))
+            items = got_export.get("items", [])
+            got = {
+                "stackables": got_export.get("count"),
+                "total_quantity": sum(int(item.get("quantity") or 0) for item in items),
+                "classes": len({item.get("blueprint") for item in items}),
+                "owned": sum(1 for item in items if item.get("owner_inventory_uuid")),
+            }
+            private["go"]["domain_json_stackables"]["parsed"] = got
+            cases.append(CaseResult("domain_json_stackables", "pass" if got == py_domain_stackables else "fail", "stackable domain JSON aggregate counts compared"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["domain_json_stackables"]["parse_error"] = str(exc)
+            cases.append(CaseResult("domain_json_stackables", "fail", "Go stackable domain JSON could not be parsed"))
 
     equipment_json_path = repo_root / ".oracle" / "output" / "export-domain-equipment.json"
     go_equipment_json = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "equipment", str(equipment_json_path)], repo_root, env)
