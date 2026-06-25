@@ -1510,6 +1510,52 @@ func TestParseMapPropertyReadsEnumKeyedStructValues(t *testing.T) {
 	}
 }
 
+func TestParseMapPropertySkipsStructKeyedMapAndContinues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "EntriesByStruct",
+		2: "MapProperty",
+		3: "StructProperty",
+		4: "IntProperty",
+		5: "AfterMap",
+		6: "None",
+	})
+	body := []byte{1, 2, 3, 4, 5, 6, 7, 8}
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 2)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeName(stream, 4)
+	writeUInt32(stream, uint32(len(body)))
+	stream.WriteByte(0)
+	stream.Write(body)
+	writeName(stream, 5)
+	writeName(stream, 4)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 42)
+	writeName(stream, 6)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() returned %d properties, want skipped map placeholder plus trailing int: %#v", len(props), props)
+	}
+	got, ok := props[0].Value.(Map)
+	if !ok || got.KeyType != TypeStruct || got.ValueType != TypeInt || len(got.Entries) != 0 {
+		t.Fatalf("struct-keyed map = %#v, want empty Struct->Int placeholder", props[0].Value)
+	}
+	if props[1].Name != "AfterMap" || props[1].Type != TypeInt || props[1].Value != int32(42) {
+		t.Fatalf("trailing property = %#v, want AfterMap int 42", props[1])
+	}
+}
+
 func TestParseSetPropertyReadsSimpleValues(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

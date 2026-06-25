@@ -670,6 +670,25 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		return Map{}, err
 	}
 	enumKeyed := false
+	if keyType == TypeStruct {
+		valueTypeName, err := r.ReadName("")
+		if err != nil {
+			return Map{}, err
+		}
+		valueType, err := typeFromPropertyName(valueTypeName)
+		if err != nil {
+			return Map{}, err
+		}
+		dataSize, err := readInlineStructHeader(r, 0)
+		if err != nil {
+			return Map{}, err
+		}
+		bodyEnd := r.Position() + int(dataSize)
+		if err := r.SetPosition(bodyEnd); err != nil {
+			return Map{}, err
+		}
+		return Map{KeyType: keyType, ValueType: valueType}, nil
+	}
 	if keyType == TypeByte {
 		enumKeyed = true
 		if _, err := r.ReadName(""); err != nil {
