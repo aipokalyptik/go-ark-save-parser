@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
@@ -137,9 +138,11 @@ func usage(out io.Writer) error {
   arksave [--redact] mutate import-dino-binary <save.ark> <out.ark> <dino-export-dir>
   arksave [--redact] mutate import-equipment-binary <save.ark> <out.ark> <equipment-export-dir>
   arksave [--redact] mutate put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
+  arksave [--redact] mutate replace-object-property-hex <save.ark> <out.ark> <uuid> <property-name> <position> <hex-encoded-property>
   arksave [--redact] mutate put-custom <save.ark> <out.ark> <key> <hex-value>
 
 Offline-only scope: FTP and RCON are intentionally unsupported.
+replace-object-property-hex requires a full encoded property record, not only scalar payload bytes.
 Use --redact to hide local paths and identifier/detail fields in command output and JSON exports.`)
 	return err
 }
@@ -437,6 +440,27 @@ func mutate(args []string, out io.Writer, opts runOptions) error {
 			return err
 		}
 		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with object %s: %s\n", displayString(id.String(), opts), displayString(args[2], opts))
+		return err
+	case "replace-object-property-hex":
+		if len(args) != 7 {
+			return fmt.Errorf("mutate replace-object-property-hex requires a local .ark path, explicit output path, object UUID, property name, property position, and hex-encoded property")
+		}
+		id, err := uuid.Parse(args[3])
+		if err != nil {
+			return err
+		}
+		rawPosition, err := strconv.ParseInt(args[5], 10, 32)
+		if err != nil {
+			return fmt.Errorf("parse property position: %w", err)
+		}
+		value, err := hex.DecodeString(args[6])
+		if err != nil {
+			return fmt.Errorf("decode property hex value: %w", err)
+		}
+		if err := arkmutation.ReplaceObjectPropertyBinary(args[1], args[2], id, args[4], int32(rawPosition), value); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with replaced property %s[%d] on object %s: %s\n", displayString(args[4], opts), rawPosition, displayString(id.String(), opts), displayString(args[2], opts))
 		return err
 	case "import-base-binary":
 		if len(args) != 4 {

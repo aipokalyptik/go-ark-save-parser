@@ -184,7 +184,11 @@ correctness.
 - `examples/base_api/ex_02b_import_and_customize_base.py` has partial
   structural coverage through copied row reinsert only. Customization,
   generated fuel/ammo contents, and live-server acceptance remain unverified.
-- `examples/dino_api/ex_06_change_dino_traits.py`
+- `examples/dino_api/ex_06_change_dino_traits.py` is partially structurally
+  represented by `arkmutation.ReplaceObjectPropertyBinary`, which can replace
+  a copied dino object's full encoded `GeneTraits` property record by name and
+  position. Trait-record authoring and live-server acceptance remain
+  unverified.
 - `examples/dino_api/ex_12_remove_tamed_dino_from_save.py`
 - `examples/dino_api/ex_13_extract_and_reinsert_dino.py` is partially
   structurally represented by `examples/dino_export_from_save` plus
@@ -192,8 +196,15 @@ correctness.
   status, and inventory rows into an explicit output save copy. Cryopod
   insertion into target inventories, generated location changes, and
   live-server acceptance remain unverified.
-- `examples/dino_api/ex_14_boost_dino_stats.py`
-- `examples/dino_api/ex_15_force_grow_up_babies.py`
+- `examples/dino_api/ex_14_boost_dino_stats.py` is partially structurally
+  represented by `arkmutation.ReplaceObjectPropertyBinary`, which can replace
+  copied status-component stat property records by name and position and
+  reparse the changed copy. Stat semantics and live-server acceptance remain
+  unverified.
+- `examples/dino_api/ex_15_force_grow_up_babies.py` is partially structurally
+  represented by `arkmutation.ReplaceObjectPropertyBinary`, which can replace
+  copied dino baby-state property records by name and position and reparse the
+  changed copy. Growth semantics and live-server acceptance remain unverified.
 - `examples/equipment_api/ex_07_generate_blueprint_and_insert_in_save.py` is
   partially structurally represented by `examples/equipment_export_from_save`
   plus `arkmutation.ImportEquipmentBinary`, which can reinsert copied equipment

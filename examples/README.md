@@ -152,8 +152,11 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   import raw structure rows from `base_export_from_save` or
   `structure_export_from_save`, import direct-save dino/status/inventory rows
   from `dino_export_from_save`, import equipment item rows from
-  `equipment_export_from_save`, upsert object bytes from hex, or upsert a
+  `equipment_export_from_save`, upsert object bytes from hex, replace a parsed
+  object's full encoded property record by name and position, or upsert a
   custom-table value from hex. Mutation helpers never modify inputs in place
   and are structurally tested only; live Ark server behavior remains
   unverified. The standalone structure import command expects the
   `manifest.json` written by `structure_export_from_save` at the export root.
+  Property replacement expects a full encoded property record, not only the
+  scalar payload bytes.

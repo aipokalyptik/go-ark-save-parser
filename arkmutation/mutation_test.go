@@ -125,6 +125,87 @@ func TestPutCustomValueWritesCopyAndReopens(t *testing.T) {
 	}
 }
 
+func TestReplaceObjectPropertyBinaryWritesCopyAndReparses(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var props bytes.Buffer
+	testfixtures.WritePositionedIntPropertyID(&props, 0x10000002, 0x10000003, 8, 2)
+	createSyntheticSaveWithObjects(t, input, map[uuid.UUID][]byte{
+		objectID: testfixtures.ObjectBytesWithProperties(0x10000001, 0x10000000, props.Bytes()),
+	}, map[uint32]string{
+		0x10000000: "None",
+		0x10000001: "Blueprint'/Game/PrimalEarth/Dinos/Test/Test_Character_BP.Test_Character_BP_C'",
+		0x10000002: "NumberOfLevelUpPointsAppliedTamed",
+		0x10000003: "IntProperty",
+	})
+	var replacement bytes.Buffer
+	testfixtures.WritePositionedIntPropertyID(&replacement, 0x10000002, 0x10000003, 8, 255)
+
+	if err := ReplaceObjectPropertyBinary(input, output, objectID, "NumberOfLevelUpPointsAppliedTamed", 8, replacement.Bytes()); err != nil {
+		t.Fatalf("ReplaceObjectPropertyBinary() error = %v", err)
+	}
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	object, err := mutated.ParsedObject(objectID)
+	if err != nil {
+		t.Fatalf("ParsedObject(output) error = %v", err)
+	}
+	_ = mutated.Close()
+	got, ok := object.Container().PositionedValue("NumberOfLevelUpPointsAppliedTamed", 8)
+	if !ok || got != int32(255) {
+		t.Fatalf("patched stat property = %#v, %v; want int32(255)", got, ok)
+	}
+
+	original, err := arksave.Open(input)
+	if err != nil {
+		t.Fatalf("Open(input) error = %v", err)
+	}
+	originalObject, err := original.ParsedObject(objectID)
+	if err != nil {
+		t.Fatalf("ParsedObject(input) error = %v", err)
+	}
+	_ = original.Close()
+	got, ok = originalObject.Container().PositionedValue("NumberOfLevelUpPointsAppliedTamed", 8)
+	if !ok || got != int32(2) {
+		t.Fatalf("original stat property = %#v, %v; want unchanged int32(2)", got, ok)
+	}
+}
+
+func TestReplaceObjectPropertyBinaryRejectsMissingAndInvalidReplacement(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	missingOutput := filepath.Join(dir, "missing.ark")
+	invalidOutput := filepath.Join(dir, "invalid.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000002, 0x10000003, 1001)
+	createSyntheticSaveWithObjects(t, input, map[uuid.UUID][]byte{
+		objectID: testfixtures.ObjectBytesWithProperties(0x10000001, 0x10000000, props.Bytes()),
+	}, map[uint32]string{
+		0x10000000: "None",
+		0x10000001: "Blueprint'/Game/Test.Test_C'",
+		0x10000002: "DinoID1",
+		0x10000003: "IntProperty",
+	})
+
+	if err := ReplaceObjectPropertyBinary(input, missingOutput, objectID, "DinoID2", 0, []byte{1}); err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("ReplaceObjectPropertyBinary(missing property) error = %v, want not found", err)
+	}
+	if _, err := os.Stat(missingOutput); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("missing output stat error = %v, want os.ErrNotExist", err)
+	}
+	if err := ReplaceObjectPropertyBinary(input, invalidOutput, objectID, "DinoID1", 0, []byte{1, 2, 3}); err == nil || !strings.Contains(err.Error(), "reparse property replacement object") {
+		t.Fatalf("ReplaceObjectPropertyBinary(invalid replacement) error = %v, want reparse error", err)
+	}
+	if _, err := os.Stat(invalidOutput); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("invalid output stat error = %v, want os.ErrNotExist", err)
+	}
+}
+
 func TestImportBaseBinaryWritesCopyAndReopens(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.ark")

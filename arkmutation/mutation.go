@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
@@ -106,6 +108,41 @@ func PutCustomValue(inputPath string, outputPath string, key string, value []byt
 			on conflict(key) do update set value = excluded.value`, key, value)
 		return err
 	})
+}
+
+func ReplaceObjectPropertyBinary(inputPath string, outputPath string, id uuid.UUID, propertyName string, position int32, encodedProperty []byte) error {
+	if propertyName == "" {
+		return errors.New("property name is required")
+	}
+	if len(encodedProperty) == 0 {
+		return errors.New("encoded property bytes are required")
+	}
+	raw, object, err := readObjectForPropertyReplacement(inputPath, id)
+	if err != nil {
+		return err
+	}
+	updated, err := replacePropertyRecord(raw, object.Properties, propertyName, position, encodedProperty)
+	if err != nil {
+		return err
+	}
+	if err := mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
+		_, err := db.Exec(`insert into game (key, value) values (?, ?)
+			on conflict(key) do update set value = excluded.value`, id[:], updated)
+		return err
+	}); err != nil {
+		return err
+	}
+	output, err := arksave.Open(outputPath)
+	if err != nil {
+		_ = os.Remove(outputPath)
+		return fmt.Errorf("reopen property replacement copy: %w", err)
+	}
+	defer output.Close()
+	if _, err := output.ParsedObject(id); err != nil {
+		_ = os.Remove(outputPath)
+		return fmt.Errorf("reparse property replacement object %s: %w", id, err)
+	}
+	return nil
 }
 
 func ImportBaseBinary(inputPath string, outputPath string, baseExportDir string) (int, error) {
@@ -210,6 +247,54 @@ func matchingExportPrefix(name string, prefixes []string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func readObjectForPropertyReplacement(inputPath string, id uuid.UUID) ([]byte, *arkobject.GameObject, error) {
+	save, err := arksave.Open(inputPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer save.Close()
+	raw, err := save.ObjectBinary(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	object, err := save.ParsedObject(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	return raw, object, nil
+}
+
+func replacePropertyRecord(raw []byte, properties []arkproperty.Property, propertyName string, position int32, encodedProperty []byte) ([]byte, error) {
+	var start int
+	var end int
+	matches := 0
+	for _, prop := range properties {
+		if prop.Name != propertyName || prop.Position != position {
+			continue
+		}
+		if len(prop.EncodedBytes) == 0 {
+			return nil, fmt.Errorf("property %s[%d] has no encoded byte span", propertyName, position)
+		}
+		if prop.NameOffset < 0 || prop.NameOffset+len(prop.EncodedBytes) > len(raw) {
+			return nil, fmt.Errorf("property %s[%d] encoded byte span is outside object row", propertyName, position)
+		}
+		start = prop.NameOffset
+		end = prop.NameOffset + len(prop.EncodedBytes)
+		matches++
+	}
+	if matches == 0 {
+		return nil, fmt.Errorf("property %s[%d] not found", propertyName, position)
+	}
+	if matches > 1 {
+		return nil, fmt.Errorf("property %s[%d] matched %d records", propertyName, position, matches)
+	}
+	updated := make([]byte, 0, len(raw)-end+start+len(encodedProperty))
+	updated = append(updated, raw[:start]...)
+	updated = append(updated, encodedProperty...)
+	updated = append(updated, raw[end:]...)
+	return updated, nil
 }
 
 func matchingObjectIDsByClassContains(inputPath string, substring string) ([]uuid.UUID, error) {

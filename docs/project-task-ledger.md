@@ -227,14 +227,20 @@ documented.
 - [~] Upstream dino extract/reinsert examples have partial structural coverage
       through exported direct-save dino, status, and inventory rows plus
       `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
-      into target inventories, generated location changes, stat mutation, and
-      live-server acceptance remain unverified.
+      into target inventories and generated location changes remain
+      unverified.
+- [~] Upstream dino trait/stat/growth mutation examples have partial
+      structural coverage through `ReplaceObjectPropertyBinary`, which can
+      replace a parsed object's full encoded property record by name and
+      position in an explicit copied save, then reopen and reparse it.
+      Semantic trait/stat/growth authoring and live-server acceptance remain
+      unverified.
 - [~] Upstream generated-blueprint/equipment insertion example has partial
       structural coverage through exported equipment rows and
       `ImportEquipmentBinary` reinsert into explicit copied saves. Generated
       blueprint construction, insertion into target inventories, and
       live-server acceptance remain unverified.
-- [ ] Add more structural mutation tests for upstream dino trait/stat/growth
+- [x] Add structural mutation tests for upstream dino trait/stat/growth
       examples where local-copy behavior can be represented without claiming
       live-server safety.
 

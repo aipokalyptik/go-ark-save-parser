@@ -72,8 +72,10 @@ Still in progress:
   saddle payloads and cosmetics inside cryopods, full pedigree rendering/tree
   exports, richer local cluster item/dino domain models, and remaining
   model-specific JSON export edges.
-- Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
-  helpers remain experimental and live-server-unverified.
+- High-level semantic mutation APIs for trait/stat/growth authoring, generated
+  inventory contents, and live-server-validated edits. Existing mutation
+  helpers are structural copied-save workflows and remain experimental and
+  live-server-unverified.
 
 ## Scope
 
@@ -208,6 +210,7 @@ object bytes, or upsert a custom-table value from hex bytes:
 ./bin/arksave mutate import-dino-binary /path/to/Valguero_WP.ark /tmp/Valguero_dino_import.ark /tmp/dino-export
 ./bin/arksave mutate import-equipment-binary /path/to/Valguero_WP.ark /tmp/Valguero_equipment_import.ark /tmp/equipment-export
 ./bin/arksave mutate put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
+./bin/arksave mutate replace-object-property-hex /path/to/Valguero_WP.ark /tmp/Valguero_property.ark 00112233-4455-6677-8899-aabbccddeeff DinoID1 0 010203
 ./bin/arksave mutate put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```
 
@@ -266,6 +269,7 @@ go run ./examples/mutation_copy import-structure-binary /path/to/Valguero_WP.ark
 go run ./examples/mutation_copy import-dino-binary /path/to/Valguero_WP.ark /tmp/Valguero_dino_import.ark /tmp/dino-export
 go run ./examples/mutation_copy import-equipment-binary /path/to/Valguero_WP.ark /tmp/Valguero_equipment_import.ark /tmp/equipment-export
 go run ./examples/mutation_copy put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
+go run ./examples/mutation_copy replace-object-property-hex /path/to/Valguero_WP.ark /tmp/Valguero_property.ark 00112233-4455-6677-8899-aabbccddeeff DinoID1 0 010203
 go run ./examples/mutation_copy put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```
 
@@ -275,7 +279,10 @@ Mutation helpers never modify the input file in place and always require a new
 output path. Generated mutation copies are written with `0600` permissions.
 They are structurally tested by reopening and reparsing the copied SQLite save,
 but live Ark server behavior is unverified; command output labels these files as
-experimental and live-server-unverified.
+experimental and live-server-unverified. Raw property replacement expects the
+full encoded property record for the target save's name table; it is a
+structural escape hatch for copied-save workflows, not a high-level semantic
+trait/stat/growth authoring API.
 
 ## Library Sketch
 

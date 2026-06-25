@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
@@ -921,6 +922,7 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	importStructurePath := filepath.Join(dir, "import-structure.ark")
 	importDinoPath := filepath.Join(dir, "import-dino.ark")
 	importEquipmentPath := filepath.Join(dir, "import-equipment.ark")
+	propertyPath := filepath.Join(dir, "property.ark")
 	baseExportDir := filepath.Join(dir, "base-export", "base_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	structureExportDir := filepath.Join(dir, "structure-export")
 	dinoExportDir := filepath.Join(dir, "dino-export", "dino_bbbbbbbb-bbbb-cccc-dddd-eeeeffffffff")
@@ -988,6 +990,17 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	got = objectOut.String()
 	if strings.Contains(got, objectPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
 		t.Fatalf("redacted mutate put-object-hex output = %q", got)
+	}
+
+	var replacement bytes.Buffer
+	testfixtures.WriteIntPropertyID(&replacement, 0x10000004, 0x10000003, 2002)
+	var propertyOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "replace-object-property-hex", savePath, propertyPath, objectID, "DinoID1", "0", hex.EncodeToString(replacement.Bytes())}, &propertyOut); err != nil {
+		t.Fatalf("run(--redact mutate replace-object-property-hex) error = %v", err)
+	}
+	got = propertyOut.String()
+	if strings.Contains(got, propertyPath) || strings.Contains(got, objectID) || strings.Contains(got, "DinoID1") || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate replace-object-property-hex output = %q", got)
 	}
 
 	var importBaseOut bytes.Buffer
@@ -1138,6 +1151,38 @@ func TestMutatePutObjectHexCommandWritesReopenableCopy(t *testing.T) {
 	_ = save.Close()
 	if !bytes.Equal(got, []byte{9, 8, 7}) {
 		t.Fatalf("ObjectBinary(%s) = % x, want 09 08 07", objectID, got)
+	}
+}
+
+func TestMutateReplaceObjectPropertyHexCommandWritesReparseableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "property.ark")
+	createSyntheticSave(t, savePath)
+	objectID := uuid.MustParse("00010203-0405-0607-0809-0a0b0c0d0e0f")
+	var replacement bytes.Buffer
+	testfixtures.WriteIntPropertyID(&replacement, 0x10000004, 0x10000003, 2002)
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "replace-object-property-hex", savePath, outPath, objectID.String(), "DinoID1", "0", hex.EncodeToString(replacement.Bytes())}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate replace-object-property-hex) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), objectID.String()) || !strings.Contains(out.String(), "DinoID1") {
+		t.Fatalf("mutate replace-object-property-hex output %q missing path, uuid, or property", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	object, err := save.ParsedObject(objectID)
+	if err != nil {
+		t.Fatalf("ParsedObject(%s) error = %v", objectID, err)
+	}
+	_ = save.Close()
+	got, ok := object.Container().Value("DinoID1")
+	if !ok || got != int32(2002) {
+		t.Fatalf("DinoID1 = %#v, %v; want int32(2002)", got, ok)
 	}
 }
 
@@ -1298,13 +1343,17 @@ func TestMutateImportEquipmentBinaryCommandWritesReopenableCopy(t *testing.T) {
 func createSyntheticSave(t *testing.T, path string) {
 	t.Helper()
 	objectID := uuid.MustParse("00010203-0405-0607-0809-0a0b0c0d0e0f")
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000004, 0x10000003, 1001)
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
-			1: "Blueprint'/Game/Test.Test_C'",
-			2: "None",
+			0x10000001: "Blueprint'/Game/Test.Test_C'",
+			0x10000002: "None",
+			0x10000003: "IntProperty",
+			0x10000004: "DinoID1",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			objectID: testfixtures.GenericObjectBytes(1, 2),
+			objectID: testfixtures.ObjectBytesWithProperties(0x10000001, 0x10000002, props.Bytes()),
 		},
 	})
 }

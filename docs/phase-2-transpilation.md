@@ -359,16 +359,21 @@ For the cross-phase monitorable checklist, see
       remain unverified.
 - [x] Add partial structural dino extract/reinsert coverage by exporting
       direct-save dino rows plus linked status/inventory rows and reinserting
-      them into an explicit copied save. Cryopod insertion, generated location
-      changes, stat mutation, and live-server acceptance remain unverified.
+      them into an explicit copied save. Cryopod insertion and generated
+      location changes remain unverified.
+- [x] Add partial structural dino trait/stat/growth mutation coverage by
+      replacing a parsed object's full encoded property record by name and
+      position in an explicit copied save, then reopening and reparsing the
+      changed object. Semantic trait/stat/growth authoring and live-server
+      acceptance remain unverified.
 - [x] Add partial structural equipment insertion coverage by exporting
       equipment item rows and reinserting them into an explicit copied save.
       Generated blueprint construction, insertion into target inventories, and
       live-server acceptance remain unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal by
       UUID or class substring, base/structure/dino/equipment binary row
-      import, object hex-byte upserts, and custom-table hex-byte upserts
-      against explicit output copies.
+      import, object hex-byte upserts, encoded object-property replacement,
+      and custom-table hex-byte upserts against explicit output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.

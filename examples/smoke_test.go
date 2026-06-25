@@ -3,6 +3,7 @@ package examples_test
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
@@ -22,6 +23,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	classRemoveCopyPath := filepath.Join(dir, "class-remove-copy.ark")
 	baseImportCopyPath := filepath.Join(dir, "base-import-copy.ark")
 	objectCopyPath := filepath.Join(dir, "object-copy.ark")
+	propertyCopyPath := filepath.Join(dir, "property-copy.ark")
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
 	dinoExportPath := filepath.Join(dir, "dino-export")
@@ -71,9 +73,10 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			0x10000014: "StructureID",
 			0x10000015: "TargetingTeam",
 			0x10000016: "Blueprint'/Game/Test/InventoryItem.InventoryItem_C'",
+			0x10000017: "DinoID1",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			objectID:     testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
+			objectID:     smokePatchableObjectBytes(0x10000001, 0x10000002, 0x10000017, 0x10000006, 1001),
 			dinoID:       testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
 			stackableID:  stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
 			equipmentID:  testfixtures.GenericObjectBytes(0x10000012, 0x10000002),
@@ -256,6 +259,22 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	if !bytes.Equal(raw, []byte{9, 8, 7}) {
 		t.Fatalf("ObjectBinary(%s) = % x, want 09 08 07", objectID, raw)
 	}
+	var replacement bytes.Buffer
+	testfixtures.WriteIntPropertyID(&replacement, 0x10000017, 0x10000006, 2002)
+	runExample(t, "mutation_copy", "replaced object property: DinoID1[0]", "replace-object-property-hex", savePath, propertyCopyPath, objectID.String(), "DinoID1", "0", hex.EncodeToString(replacement.Bytes()))
+	propertyCopy, err := arksave.Open(propertyCopyPath)
+	if err != nil {
+		t.Fatalf("Open(property mutation copy) error = %v", err)
+	}
+	propertyObject, err := propertyCopy.ParsedObject(objectID)
+	if err != nil {
+		t.Fatalf("ParsedObject(property mutation copy) error = %v", err)
+	}
+	_ = propertyCopy.Close()
+	gotProperty, ok := propertyObject.Container().Value("DinoID1")
+	if !ok || gotProperty != int32(2002) {
+		t.Fatalf("DinoID1 = %#v, %v; want int32(2002)", gotProperty, ok)
+	}
 	runExample(t, "mutation_copy", "wrote custom value:", "put-custom", savePath, customCopyPath, "Extra", "090807")
 	customCopy, err := arksave.Open(customCopyPath)
 	if err != nil {
@@ -282,6 +301,12 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("go run ./%s output %q does not contain %q", name, out, want)
 	}
+}
+
+func smokePatchableObjectBytes(classNameID uint32, noneNameID uint32, propertyNameID uint32, intPropertyID uint32, value int32) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, propertyNameID, intPropertyID, value)
+	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
 }
 
 func playerPawnObjectBytes(classNameID uint32, noneNameID uint32, linkedPlayerDataIDName uint32, intPropertyID uint32, inventoryNameID uint32, objectPropertyID uint32, locationNameID uint32, structPropertyID uint32, vectorNameID uint32, coreObjectNameID uint32, inventoryID uuid.UUID) []byte {

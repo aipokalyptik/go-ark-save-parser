@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
 	"github.com/google/uuid"
@@ -52,6 +53,20 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Printf("wrote object bytes: %s bytes=%d copy=%s\n", id, len(value), os.Args[3])
+	case "replace-object-property-hex":
+		if len(os.Args) != 8 {
+			usage()
+		}
+		id := mustUUID(os.Args[4])
+		position, err := strconv.ParseInt(os.Args[6], 10, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+		value := mustHex(os.Args[7])
+		if err := arkmutation.ReplaceObjectPropertyBinary(os.Args[2], os.Args[3], id, os.Args[5], int32(position), value); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("replaced object property: %s[%d] object=%s bytes=%d copy=%s\n", os.Args[5], position, id, len(value), os.Args[3])
 	case "import-base-binary":
 		if len(os.Args) != 5 {
 			usage()
@@ -136,5 +151,6 @@ func usage() {
   %s import-dino-binary <save.ark> <out.ark> <dino-export-dir>
   %s import-equipment-binary <save.ark> <out.ark> <equipment-export-dir>
   %s put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
-  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+  %s replace-object-property-hex <save.ark> <out.ark> <uuid> <property-name> <position> <hex-encoded-property>
+  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
