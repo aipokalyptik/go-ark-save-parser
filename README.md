@@ -39,9 +39,9 @@ Implemented:
   saddles and marks them with `in_cryopod`.
 - Local cluster archive discovery plus read-only item/dino upload payload
   summaries for extensionless local cluster files. Uploaded item summaries
-  include blueprint, quantity, rating, quality, and crafter metadata where
-  present. Uploaded dino summaries include a `parse_error` field when embedded
-  dino archive bytes cannot yet be parsed.
+  include type classification, blueprint, quantity, rating, quality, and
+  crafter metadata where present. Uploaded dino summaries include a
+  `parse_error` field when embedded dino archive bytes cannot yet be parsed.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.

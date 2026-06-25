@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
 type ClusterDataInfo struct {
@@ -24,6 +25,7 @@ type ClusterDirectoryInfo struct {
 
 type ClusterItemInfo struct {
 	Index                int     `json:"index"`
+	Type                 string  `json:"type"`
 	Version              float64 `json:"version"`
 	UploadTime           float64 `json:"upload_time"`
 	Blueprint            string  `json:"blueprint,omitempty"`
@@ -59,6 +61,7 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 	for _, item := range data.Items {
 		info.Items = append(info.Items, ClusterItemInfo{
 			Index:                item.Index,
+			Type:                 clusterItemType(item),
 			Version:              item.Version,
 			UploadTime:           item.UploadTime,
 			Blueprint:            item.Blueprint,
@@ -84,6 +87,32 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 		})
 	}
 	return info
+}
+
+func clusterItemType(item arkcluster.Item) string {
+	switch {
+	case NewDino(nil).IsApplicableBlueprint(item.Blueprint) && hasCustomItemDatas(item.Properties):
+		return "dino"
+	case NewEquipment(nil).IsApplicableBlueprint(item.Blueprint):
+		return "equipment"
+	default:
+		return "other"
+	}
+}
+
+func hasCustomItemDatas(container arkproperty.Container) bool {
+	raw, ok := container.Value("CustomItemDatas")
+	if !ok {
+		return false
+	}
+	switch value := raw.(type) {
+	case arkproperty.Array:
+		return len(value.Values) > 0
+	case []any:
+		return len(value) > 0
+	default:
+		return false
+	}
 }
 
 func ExportClusterDataJSON(data *arkcluster.Data) ([]byte, error) {

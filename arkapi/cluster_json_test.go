@@ -6,6 +6,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
 func TestExportClusterDataSummarizesUploads(t *testing.T) {
@@ -44,11 +45,59 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	if info.Items[0].Rating != 7.5 || info.Items[0].Quality != 2 || info.Items[0].CrafterCharacterName != "Survivor" || info.Items[0].CrafterTribeName != "Porters" {
 		t.Fatalf("ClusterDataInfo item metadata = %#v", info.Items[0])
 	}
+	if info.Items[0].Type != "other" {
+		t.Fatalf("ClusterDataInfo item type = %q, want other", info.Items[0].Type)
+	}
 	if info.DinoCount != 1 || len(info.Dinos) != 1 || info.Dinos[0].ObjectCount != 1 {
 		t.Fatalf("ClusterDataInfo dinos = %#v", info.Dinos)
 	}
 	if info.Dinos[0].ParseError != "unsupported archive version" {
 		t.Fatalf("ClusterDataInfo dino ParseError = %q", info.Dinos[0].ParseError)
+	}
+}
+
+func TestExportClusterDataClassifiesUploadedItems(t *testing.T) {
+	data := &arkcluster.Data{
+		ID:   "EOS_abc123",
+		Path: "/tmp/EOS_abc123",
+		Items: []arkcluster.Item{
+			{
+				Index:     0,
+				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
+					Name: "CustomItemDatas",
+					Type: arkproperty.TypeArray,
+					Value: arkproperty.Array{
+						ElementType: arkproperty.TypeStruct,
+						StructType:  "CustomItemData",
+						Values:      []any{arkproperty.Container{}},
+					},
+				}}},
+			},
+			{
+				Index:     1,
+				Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+			},
+			{
+				Index:     2,
+				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			},
+			{
+				Index:     3,
+				Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C",
+			},
+		},
+	}
+
+	info := ExportClusterData(data)
+	if len(info.Items) != 4 {
+		t.Fatalf("Items length = %d, want 4", len(info.Items))
+	}
+	want := []string{"dino", "equipment", "other", "other"}
+	for i, wantType := range want {
+		if info.Items[i].Type != wantType {
+			t.Fatalf("item %d type = %q, want %q", i, info.Items[i].Type, wantType)
+		}
 	}
 }
 
