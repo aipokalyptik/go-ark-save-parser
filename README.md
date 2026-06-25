@@ -42,9 +42,11 @@ Implemented:
   include type classification, blueprint, quantity, rating, quality, and
   crafter metadata where present. Uploaded dino summaries include a
   `parse_error` field when embedded dino archive bytes cannot yet be parsed.
-- Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing.
+- Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
+  plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
-  `export-json`, `export-domain-json`, and `export-cluster-json` commands.
+  `export-json`, `export-domain-json`, `export-cluster-json`, and
+  `export-tribute-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
   covering thirty-two aggregate read-only cases.
@@ -109,6 +111,13 @@ directory of local cluster files:
 ```sh
 ./bin/arksave export-cluster-json /path/to/EOS_abc123 /tmp/cluster.json
 ./bin/arksave export-cluster-json /path/to/cluster-directory /tmp/clusters.json
+```
+
+Export local tribute indexes to JSON from a single tribute file or directory:
+
+```sh
+./bin/arksave export-tribute-json /path/to/abc.arktributetribe /tmp/tribute.json
+./bin/arksave export-tribute-json /path/to/tribute-directory /tmp/tributes.json
 ```
 
 Export implemented domain summaries to JSON:

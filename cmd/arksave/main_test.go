@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -680,6 +681,102 @@ func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
 	}
 	if decoded.Files[0].ID != "EOS_abc123" || decoded.Files[1].ID != "EOS_def456" {
 		t.Fatalf("decoded cluster IDs = %#v", decoded.Files)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportTributeJSONWritesSummaryToExplicitPath(t *testing.T) {
+	dir := t.TempDir()
+	tributePath := filepath.Join(dir, "abc.arktributetribe")
+	outPath := filepath.Join(dir, "tribute.json")
+	createSyntheticTribute(t, tributePath, []uint64{11, 22}, []uint64{33})
+
+	var out bytes.Buffer
+	err := run([]string{"export-tribute-json", tributePath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-tribute-json) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-tribute-json output %q does not mention %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(tribute json) error = %v", err)
+	}
+	var decoded arkapi.TributeDataInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.ID != "abc" || decoded.PlayerDataCount != 2 || decoded.TribeDataCount != 1 {
+		t.Fatalf("decoded TributeDataInfo = %#v", decoded)
+	}
+	if !reflect.DeepEqual(decoded.PlayerDataIDs, []uint64{11, 22}) || !reflect.DeepEqual(decoded.TribeDataIDs, []uint64{33}) {
+		t.Fatalf("decoded tribute IDs = %#v", decoded)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportTributeJSONRedactsIdentifiersWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	tributePath := filepath.Join(dir, "abc.arktributetribe")
+	outPath := filepath.Join(dir, "tribute.json")
+	createSyntheticTribute(t, tributePath, []uint64{11, 22}, []uint64{33})
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "export-tribute-json", tributePath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact export-tribute-json) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-tribute-json output %q mentions output path %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted tribute json) error = %v", err)
+	}
+	var decoded arkapi.TributeDataInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.ID != "[redacted]" || decoded.Path != "[redacted]" || decoded.PlayerDataCount != 2 || decoded.TribeDataCount != 1 {
+		t.Fatalf("redacted TributeDataInfo = %#v", decoded)
+	}
+	if decoded.PlayerDataIDs != nil || decoded.TribeDataIDs != nil {
+		t.Fatalf("redacted tribute IDs = %#v/%#v, want hidden", decoded.PlayerDataIDs, decoded.TribeDataIDs)
+	}
+	if strings.Contains(string(raw), tributePath) || strings.Contains(string(raw), "abc.arktributetribe") || strings.Contains(string(raw), "11") {
+		t.Fatalf("redacted tribute json contains private detail: %s", raw)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportTributeJSONWritesDirectorySummary(t *testing.T) {
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "tributes.json")
+	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	createSyntheticTribute(t, filepath.Join(dir, "def.arktributetribetribe"), nil, []uint64{22})
+
+	var out bytes.Buffer
+	err := run([]string{"export-tribute-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-tribute-json directory) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) {
+		t.Fatalf("export-tribute-json directory output %q does not mention %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(tribute directory json) error = %v", err)
+	}
+	var decoded arkapi.TributeDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(tribute directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 2 || len(decoded.Files) != 2 {
+		t.Fatalf("decoded TributeDirectoryInfo = %#v, want two files", decoded)
+	}
+	if decoded.Files[0].ID != "abc" || decoded.Files[1].ID != "def" {
+		t.Fatalf("decoded tribute IDs = %#v", decoded.Files)
 	}
 	assertPrivateFileMode(t, outPath)
 }

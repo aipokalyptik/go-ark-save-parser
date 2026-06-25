@@ -235,6 +235,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only tamed dino container lookup by inventory UUID.
 - [x] Add read-only local cluster JSON export API and CLI command for single
       cluster files and directories.
+- [x] Add read-only local tribute JSON export API and CLI command for single
+      tribute files and directories.
 - [x] Add first read-only Equipment API surface for weapon/armor/saddle/shield queries.
 - [x] Add read-only Equipment API convenience wrappers for weapons, armor,
       saddles, shields, and quantity counting.

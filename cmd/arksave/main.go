@@ -86,6 +86,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("export-cluster-json requires a local cluster file path and explicit output path")
 		}
 		return exportClusterJSON(args[1], args[2], out, opts)
+	case "export-tribute-json":
+		if len(args) != 3 {
+			return fmt.Errorf("export-tribute-json requires a local tribute file or directory path and explicit output path")
+		}
+		return exportTributeJSON(args[1], args[2], out, opts)
 	case "mutate":
 		return mutate(args[1:], out, opts)
 	case "ftp", "rcon":
@@ -123,6 +128,7 @@ func usage(out io.Writer) error {
   arksave [--redact] export-json <save.ark> <out.json>
   arksave [--redact] export-domain-json <save.ark> <dinos|structures|equipment|stackables|bases> <out.json>
   arksave [--redact] export-cluster-json <cluster-file> <out.json>
+  arksave [--redact] export-tribute-json <tribute-file-or-directory> <out.json>
   arksave [--redact] mutate copy <save.ark> <out.ark>
   arksave [--redact] mutate remove-object <save.ark> <out.ark> <uuid>
   arksave [--redact] mutate put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
@@ -630,6 +636,74 @@ func exportClusterDirectoryJSON(path string, outputPath string, out io.Writer, o
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Wrote cluster JSON export: %s\n", displayString(outputPath, opts))
+	return err
+}
+
+func exportTributeJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return exportTributeDirectoryJSON(path, outputPath, out, opts)
+	}
+
+	data, err := arktribute.Open(path)
+	if err != nil {
+		return err
+	}
+	var raw []byte
+	if opts.Redact {
+		info := arkapi.ExportTributeData(data)
+		info.ID = redactedValue
+		info.Path = redactedValue
+		info.PlayerDataIDs = nil
+		info.TribeDataIDs = nil
+		raw, err = json.MarshalIndent(info, "", "  ")
+		if err != nil {
+			return err
+		}
+	} else {
+		raw, err = arkapi.ExportTributeDataJSON(data)
+		if err != nil {
+			return err
+		}
+	}
+	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o600); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote tribute JSON export: %s\n", displayString(outputPath, opts))
+	return err
+}
+
+func exportTributeDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
+	entries, err := arktribute.OpenDirectory(path)
+	if err != nil {
+		return err
+	}
+	var raw []byte
+	if opts.Redact {
+		info := arkapi.ExportTributeDirectoryData(entries)
+		for i := range info.Files {
+			info.Files[i].ID = redactedValue
+			info.Files[i].Path = redactedValue
+			info.Files[i].PlayerDataIDs = nil
+			info.Files[i].TribeDataIDs = nil
+		}
+		raw, err = json.MarshalIndent(info, "", "  ")
+		if err != nil {
+			return err
+		}
+	} else {
+		raw, err = arkapi.ExportTributeDirectoryDataJSON(entries)
+		if err != nil {
+			return err
+		}
+	}
+	if err := os.WriteFile(outputPath, append(raw, '\n'), 0o600); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Wrote tribute JSON export: %s\n", displayString(outputPath, opts))
 	return err
 }
 
