@@ -35,6 +35,8 @@ Go packages without losing oracle parity.
       equipment ranking workflows.
 - [x] Surface equipment crafted and average-stat ranking helpers through domain
       JSON export for CLI/library consumers.
+- [x] Add first typed local cluster API wrapper for uploaded item type counts,
+      dino parse-status filtering, and summary metadata.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

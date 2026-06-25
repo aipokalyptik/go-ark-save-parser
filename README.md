@@ -44,6 +44,8 @@ Implemented:
   include type classification, blueprint, quantity, rating, quality, and
   crafter metadata where present. Uploaded dino summaries include a
   `parse_error` field when embedded dino archive bytes cannot yet be parsed.
+- Typed local cluster API helpers provide uploaded item type counts, dino
+  parse-status filters, and summary metadata for library callers.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
