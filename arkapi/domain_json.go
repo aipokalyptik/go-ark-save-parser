@@ -11,9 +11,10 @@ import (
 )
 
 type DomainExport struct {
-	Domain string `json:"domain"`
-	Count  int    `json:"count"`
-	Items  any    `json:"items"`
+	Domain     string `json:"domain"`
+	Count      int    `json:"count"`
+	FaultCount int    `json:"fault_count,omitempty"`
+	Items      any    `json:"items"`
 }
 
 type DinoInfo struct {
@@ -207,20 +208,20 @@ type DinoStatValuesInfo struct {
 func (j *JSONAPI) ExportDomain(domain string) (DomainExport, error) {
 	switch domain {
 	case "dinos":
-		items, err := j.ExportDinos()
-		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+		items, faultCount, err := j.exportDinosWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "structures":
-		items, err := j.ExportStructures()
-		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+		items, faultCount, err := j.exportStructuresWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "equipment":
-		items, err := j.ExportEquipment()
-		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+		items, faultCount, err := j.exportEquipmentWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "stackables":
-		items, err := j.ExportStackables()
-		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+		items, faultCount, err := j.exportStackablesWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "bases":
-		items, err := j.ExportBases()
-		return DomainExport{Domain: domain, Count: len(items), Items: items}, err
+		items, faultCount, err := j.exportBasesWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	default:
 		return DomainExport{}, fmt.Errorf("unsupported export domain %q", domain)
 	}
@@ -235,10 +236,15 @@ func (j *JSONAPI) ExportDomainJSON(domain string) ([]byte, error) {
 }
 
 func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
+	items, _, err := j.exportDinosWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportDinosWithFaultCount() ([]DinoInfo, int, error) {
 	dinoAPI := NewDino(j.save)
-	dinos, _, err := dinoAPI.AllWithFaults()
+	dinos, faults, err := dinoAPI.AllWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	children := dinoAPI.ChildrenByAncestor(dinos)
 	out := make([]DinoInfo, 0, len(dinos))
@@ -274,7 +280,7 @@ func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
 			Location:               locationInfo(dino.Location),
 		})
 	}
-	return out, nil
+	return out, len(faults), nil
 }
 
 func descendantsFromChildren(children map[arkobject.DinoID][]uuid.UUID, dinos map[uuid.UUID]arkobject.Dino, root arkobject.DinoID) map[uuid.UUID]arkobject.Dino {
@@ -305,9 +311,14 @@ func descendantsFromChildren(children map[arkobject.DinoID][]uuid.UUID, dinos ma
 }
 
 func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {
-	structures, _, err := NewStructure(j.save).AllWithFaults()
+	items, _, err := j.exportStructuresWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportStructuresWithFaultCount() ([]StructureInfo, int, error) {
+	structures, faults, err := NewStructure(j.save).AllWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	out := make([]StructureInfo, 0, len(structures))
 	for _, id := range sortedUUIDKeys(structures) {
@@ -334,26 +345,31 @@ func (j *JSONAPI) ExportStructures() ([]StructureInfo, error) {
 			LastInAllyRangeTimeSerialized: structure.LastInAllyRangeTimeSerialized,
 		})
 	}
-	return out, nil
+	return out, len(faults), nil
 }
 
 func (j *JSONAPI) ExportEquipment() ([]EquipmentInfo, error) {
-	equipment, err := NewEquipment(j.save).All()
+	items, _, err := j.exportEquipmentWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportEquipmentWithFaultCount() ([]EquipmentInfo, int, error) {
+	equipment, faults, err := NewEquipment(j.save).AllWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	out := make([]EquipmentInfo, 0, len(equipment))
 	for _, id := range sortedUUIDKeys(equipment) {
 		out = append(out, equipmentInfo(id, equipment[id], false))
 	}
-	cryopodSaddles, _, err := NewDino(j.save).SaddlesFromCryopodsWithFaults()
+	cryopodSaddles, cryopodFaults, err := NewDino(j.save).SaddlesFromCryopodsWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	for _, id := range sortedUUIDKeys(cryopodSaddles) {
 		out = append(out, equipmentInfo(id, cryopodSaddles[id], true))
 	}
-	return out, nil
+	return out, len(faults) + len(cryopodFaults), nil
 }
 
 func equipmentInfo(id uuid.UUID, item arkobject.EquipmentItem, inCryopod bool) EquipmentInfo {
@@ -380,9 +396,14 @@ func equipmentInfo(id uuid.UUID, item arkobject.EquipmentItem, inCryopod bool) E
 }
 
 func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {
-	stackables, err := NewStackable(j.save).All()
+	items, _, err := j.exportStackablesWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportStackablesWithFaultCount() ([]StackableInfo, int, error) {
+	stackables, faults, err := NewStackable(j.save).AllWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	out := make([]StackableInfo, 0, len(stackables))
 	for _, id := range sortedUUIDKeys(stackables) {
@@ -394,14 +415,19 @@ func (j *JSONAPI) ExportStackables() ([]StackableInfo, error) {
 			OwnerInventoryUUID: optionalUUIDString(item.OwnerInventory),
 		})
 	}
-	return out, nil
+	return out, len(faults), nil
 }
 
 func (j *JSONAPI) ExportBases() ([]BaseInfo, error) {
+	items, _, err := j.exportBasesWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportBasesWithFaultCount() ([]BaseInfo, int, error) {
 	baseAPI := NewBase(j.save, "")
-	bases, err := baseAPI.All()
+	bases, faults, err := baseAPI.AllWithFaults()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	out := make([]BaseInfo, 0, len(bases))
 	for _, base := range bases {
@@ -417,7 +443,7 @@ func (j *JSONAPI) ExportBases() ([]BaseInfo, error) {
 			TurretCount:        base.TurretCount,
 		})
 	}
-	return out, nil
+	return out, len(faults), nil
 }
 
 func sortedUUIDKeys[T any](values map[uuid.UUID]T) []uuid.UUID {

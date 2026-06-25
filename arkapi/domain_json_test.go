@@ -256,6 +256,19 @@ func TestJSONAPIExportStructuresSkipsFaultyMatchingRows(t *testing.T) {
 	}
 }
 
+func TestJSONAPIExportDomainReportsFaultCount(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	export, err := NewJSON(save).ExportDomain("structures")
+	if err != nil {
+		t.Fatalf("ExportDomain(structures) error = %v", err)
+	}
+	if export.Domain != "structures" || export.Count != 1 || export.FaultCount != 1 {
+		t.Fatalf("DomainExport = %#v, want one structure and one fault", export)
+	}
+}
+
 func TestJSONAPIExportStructuresIncludesLinkedStructureMetadata(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()

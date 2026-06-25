@@ -199,6 +199,8 @@ enough that oracle-derived tests can run against translated packages.
       export for upstream base-location example parity.
 - [x] Route structure domain JSON export through the fault-tolerant structure
       scan so malformed matching rows do not abort valid exports.
+- [x] Add domain JSON `fault_count` envelope metadata so fault-tolerant exports
+      can report when returned items are partial.
 - [x] Include parsed tamed dino owner/detail and baby maturation fields in
       dino domain JSON export.
 - [x] Add read-first dino color-set indices/names and uploaded-server origin

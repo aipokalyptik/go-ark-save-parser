@@ -23,6 +23,8 @@ Implemented:
   and simple sets.
 - Read-only General, Player/Tribe local-file, local tribute, Dino, Structure,
   Base, Stackable, Equipment, save-info JSON, and domain JSON API wrappers.
+- Domain JSON exports include `fault_count` when fault-tolerant scans preserve
+  valid rows while skipping malformed matching objects.
 - Save-contained player and tribe parsing for game-table
   `PrimalPlayerDataBP`/`PrimalTribeData` objects and embedded
   `GameModeCustomBytes` player/tribe archives.
