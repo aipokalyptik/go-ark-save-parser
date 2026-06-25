@@ -90,7 +90,10 @@ hard-coded placeholder paths with local `.ark` paths:
 - `examples/structure_api/ex_02_get_all_structures_at_location.py`
 - `examples/structure_api/ex_04_get_nr_of_structures_owned_by_tribe.py`
 - `examples/structure_api/ex_06_print_struycture_owner.py`
-- `examples/other/ex_01_logging_configuration.py`
+- `examples/other/ex_01_logging_configuration.py` is covered by
+  `examples/logging_config` as a standalone logging-helper demonstration. The
+  Go version keeps logging state process-local and does not persist global
+  config files.
 
 ## Export And Heatmap Examples
 

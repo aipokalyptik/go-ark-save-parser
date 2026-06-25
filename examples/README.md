@@ -101,6 +101,11 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `tribute_json`: read one local compact tribute index file or directory and
   print the tribute summary JSON.
 
+## Utility Examples
+
+- `logging_config`: demonstrate the Go logging helper's per-level filtering and
+  all-level switch without reading save data or writing persistent config.
+
 ## Mutation-Copy Example
 
 - `mutation_copy`: copy a `.ark` save to a new explicit output path, remove an

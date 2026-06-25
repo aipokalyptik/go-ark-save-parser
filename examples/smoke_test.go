@@ -111,6 +111,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
 	runExample(t, "tribute_json", `"player_data_count": 2`, tributePath)
+	runExample(t, "logging_config", "[api] This is an API log.")
 	runExample(t, "mutation_copy", "wrote copy:", savePath, copyPath)
 	if _, err := os.Stat(copyPath); err != nil {
 		t.Fatalf("mutation_copy output missing: %v", err)

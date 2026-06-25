@@ -420,6 +420,9 @@ enough that oracle-derived tests can run against translated packages.
       `dino_api/ex_11_get_dino_pedigrees.py`; both are offline-compatible in
       principle but blocked as oracle cases on the supplied private save by
       malformed embedded cryopod parsing before stable aggregate output.
+- [x] Add a standalone Go `logging_config` example for the upstream logging
+      configuration demonstration. The Go helper keeps state process-local and
+      avoids upstream's persistent global config-file side effect.
 - [x] Compare normalized Go `class_lookup` output with upstream storage class
       substring filtering using privacy-safe aggregate fields.
 - [x] Compare normalized Go `class_property_summary` output with upstream
