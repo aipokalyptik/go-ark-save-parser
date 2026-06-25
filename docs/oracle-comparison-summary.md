@@ -17,6 +17,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `player_inventory`: `pass` (player inventory item count and location presence compared)
 - `dino_filter`: `pass` (dino aggregate counts compared)
 - `dino_best_stat_no_cryos`: `pass` (best stat dino without cryopods compared)
+- `dino_best_base_stat`: `pass` (class-filtered tamed base stat dino compared)
 - `dino_most_mutated`: `pass` (most mutated tamed dino aggregate compared)
 - `dino_babies`: `pass` (wild and tamed baby dino counts compared)
 - `dino_wild_tamables`: `pass` (wild and tameable dino counts compared)
@@ -37,4 +38,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 28
+- `pass`: 29

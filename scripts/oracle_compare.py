@@ -347,6 +347,39 @@ def python_dino_best_stat_no_cryos_oracle(save_path: Path, upstream_src: Path) -
                 save.close()
 
 
+def python_dino_best_base_stat_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.enums import ArkStat  # type: ignore
+    from arkparse.object_model.dinos.tamed_dino import TamedDino  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dino_api = DinoApi(save)
+                dinos = dino_api.get_all(include_cryos=False, include_wild=False, include_tamed=True, max_workers=1, bypass_inventory=True)
+                by_class: dict[str, list[Any]] = {}
+                for dino in dinos.values():
+                    if not isinstance(dino, TamedDino) or dino.stats is None:
+                        continue
+                    by_class.setdefault(dino.object.blueprint, []).append(dino)
+                if not by_class:
+                    return None
+                blueprint, candidates = max(by_class.items(), key=lambda item: (len(item[1]), item[0]))
+                best = max(candidates, key=lambda dino: dino.stats.get(ArkStat.WEIGHT, base=True))
+                return {
+                    "blueprint": blueprint,
+                    "stat": "weight",
+                    "has_result": 1,
+                    "points": int(best.stats.get(ArkStat.WEIGHT, base=True)),
+                    "level": int(best.stats.current_level),
+                }
+            finally:
+                save.close()
+
+
 def python_dino_most_mutated_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.dino_api import DinoApi  # type: ignore
@@ -810,6 +843,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_player_tribe_links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
+    py_dino_best_base_stat = python_dino_best_base_stat_oracle(save_path, upstream_src)
     py_dino_most_mutated = python_dino_most_mutated_oracle(save_path, upstream_src)
     py_dino_babies = python_dino_babies_oracle(save_path, upstream_src)
     py_dino_wild_tamables = python_dino_wild_tamables_oracle(save_path, upstream_src)
@@ -835,6 +869,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_player_tribe_links": py_player_tribe_links,
         "python_dino_filter": py_dino_filter,
         "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
+        "python_dino_best_base_stat": py_dino_best_base_stat,
         "python_dino_most_mutated": py_dino_most_mutated,
         "python_dino_babies": py_dino_babies,
         "python_dino_wild_tamables": py_dino_wild_tamables,
@@ -1027,6 +1062,30 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             except Exception as exc:  # noqa: BLE001 - private report captures details
                 private["go"]["dino_best_stat_no_cryos"]["parse_error"] = str(exc)
                 cases.append(CaseResult("dino_best_stat_no_cryos", "fail", "Go dino_best_stat output could not be parsed"))
+
+    if py_dino_best_base_stat is None:
+        cases.append(CaseResult("dino_best_base_stat", "skip", "oracle save has no direct tamed stat-bearing dino candidate"))
+    else:
+        go_dino_best_base_stat = run([
+            "go",
+            "run",
+            "./examples/dino_best_base_stat",
+            str(save_path),
+            str(py_dino_best_base_stat["blueprint"]),
+            str(py_dino_best_base_stat["stat"]),
+        ], repo_root, env)
+        private["go"]["dino_best_base_stat"] = {
+            "exit_code": go_dino_best_base_stat.returncode,
+            "stdout": go_dino_best_base_stat.stdout,
+            "stderr": go_dino_best_base_stat.stderr,
+        }
+        if go_dino_best_base_stat.returncode != 0:
+            cases.append(CaseResult("dino_best_base_stat", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_dino_best_base_stat.stdout)
+            private["go"]["dino_best_base_stat"]["parsed"] = got
+            want = {key: py_dino_best_base_stat[key] for key in ("has_result", "stat", "points", "level")}
+            cases.append(CaseResult("dino_best_base_stat", "pass" if {key: got.get(key) for key in want} == want else "fail", "class-filtered tamed base stat dino compared"))
 
     if py_dino_most_mutated is None:
         cases.append(CaseResult("dino_most_mutated", "skip", "oracle save has no tamed mutation-bearing dino candidate"))

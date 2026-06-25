@@ -33,6 +33,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `dino_best_stat`: find the dino with the highest parsed stat points, or print
   `no_match` when no stat-bearing dino status components are present. Pass
   `--no-cryos` before the save path to skip cryopod payloads.
+- `dino_best_base_stat`: find the tamed, direct-save dino with the highest base
+  points for a requested blueprint and stat without printing object IDs,
+  locations, or owners.
 - `dino_most_mutated`: find the tamed dino with the highest upstream-compatible
   displayed mutation count and print only aggregate-safe values.
 - `dino_babies`: count wild and tamed baby dinos without printing individual
@@ -70,6 +73,11 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   extensionless local cluster files, then print discovered counts, parsed
   counts, aggregate tribe-player links, deaths, levels, experience, and
   unlocked engram blueprint counts.
+- `player_all`: accept a save path or save directory and print player/tribe
+  aggregate counts, falling back to sibling local profile files when a save has
+  no embedded player store.
+- `player_tribe_links`: accept a save path or save directory and print active
+  tribe-player links plus inactive-member and missing-tribe aggregate counts.
 - `player_inventory`: open a local `.ark`, resolve a player data ID through its
   pawn, and print the linked inventory item count plus pawn location when
   present.

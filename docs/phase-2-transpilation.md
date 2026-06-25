@@ -357,6 +357,10 @@ enough that oracle-derived tests can run against translated packages.
       available for large private saves.
 - [x] Compare normalized Go `dino_best_stat --no-cryos` output with the
       upstream `DinoApi.get_all(include_cryos=False)` best-stat workflow.
+- [x] Compare normalized Go `dino_best_base_stat` output with an upstream
+      class-filtered, tamed-only, base-weight best-stat workflow using a
+      private-save class selected by the oracle and kept out of committed
+      output.
 - [x] Compare normalized Go `dino_most_mutated` output with the upstream
       tamed-dino total mutation workflow using privacy-safe aggregate fields.
 - [x] Compare normalized Go `dino_babies` output with upstream wild/tamed baby
