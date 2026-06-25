@@ -91,6 +91,12 @@ Inspect a local save:
 ./bin/arksave inspect /path/to/Valguero_WP.ark
 ```
 
+Run a fault-tolerant full-object parse smoke check:
+
+```sh
+./bin/arksave parse /path/to/Valguero_WP.ark
+```
+
 Export save metadata and object classes to JSON:
 
 ```sh

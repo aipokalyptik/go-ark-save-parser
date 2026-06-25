@@ -38,6 +38,48 @@ func TestInspectCommandPrintsOfflineSaveSummary(t *testing.T) {
 	}
 }
 
+func TestParseCommandPrintsOfflineParseSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	createSyntheticSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"parse", path}, &out)
+	if err != nil {
+		t.Fatalf("run(parse) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Save: " + path,
+		"Map: Valguero_WP",
+		"Save version: 12",
+		"Objects: 1",
+		"Parsed objects: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("parse output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestParseCommandRedactsPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	createSyntheticSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "parse", path}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact parse) error = %v", err)
+	}
+	got := out.String()
+	if strings.Contains(got, path) || !strings.Contains(got, "Save: [redacted]") {
+		t.Fatalf("redacted parse output = %q", got)
+	}
+	if !strings.Contains(got, "Parsed objects: 1") || !strings.Contains(got, "Parse faults: 0") {
+		t.Fatalf("redacted parse output missing aggregate counts: %q", got)
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)

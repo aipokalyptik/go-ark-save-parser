@@ -41,11 +41,16 @@ func run(args []string, out io.Writer) error {
 		return usage(out)
 	}
 	switch args[0] {
-	case "inspect", "parse":
+	case "inspect":
 		if len(args) != 2 {
 			return fmt.Errorf("%s requires a local .ark path", args[0])
 		}
 		return inspect(args[1], out)
+	case "parse":
+		if len(args) != 2 {
+			return fmt.Errorf("parse requires a local .ark path")
+		}
+		return parseSave(args[1], out, opts)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -149,6 +154,37 @@ func inspect(path string, out io.Writer) error {
 		save.Context.SaveVersion,
 		save.Context.GameTime,
 		len(ids),
+	)
+	return err
+}
+
+func parseSave(path string, out io.Writer, opts runOptions) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	ids, err := save.ObjectIDs()
+	if err != nil {
+		return err
+	}
+	objects, faults, err := arkapi.NewGeneral(save).ObjectsWithFaults()
+	if err != nil {
+		return err
+	}
+	if save.Context == nil {
+		return errors.New("save context is nil")
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Save: %s\nMap: %s\nSave version: %d\nObjects: %d\nParsed objects: %d\nParse faults: %d\n",
+		displayString(path, opts),
+		save.Context.MapName,
+		save.Context.SaveVersion,
+		len(ids),
+		len(objects),
+		len(faults),
 	)
 	return err
 }

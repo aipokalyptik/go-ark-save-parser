@@ -53,9 +53,10 @@ Go packages without losing oracle parity.
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
-- [x] Expand `cmd/arksave` commands beyond `inspect`/`parse` with local
-      profile/tribe file and directory summaries plus save-info/domain JSON
-      exports.
+- [x] Keep `inspect` as metadata-only and make `parse` perform a
+      fault-tolerant full-object parse summary, then expand `cmd/arksave`
+      with local profile/tribe file and directory summaries plus
+      save-info/domain JSON exports.
 - [x] Keep mutation helpers in an explicit experimental surface that requires an
       output path, including copy, object removal, object-byte upsert, and
       custom-table upsert CLI commands.
