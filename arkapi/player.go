@@ -24,6 +24,13 @@ type PlayerAPI struct {
 	tributePaths []string
 }
 
+type TribePlayerRelation struct {
+	Tribe               arkobject.Tribe
+	ActivePlayers       []arkobject.Player
+	InactiveMemberIDs   []int32
+	InactiveMemberNames []string
+}
+
 func NewPlayer(save *arksave.Save) *PlayerAPI {
 	return &PlayerAPI{save: save}
 }
@@ -868,6 +875,38 @@ func (p *PlayerAPI) TribePlayerMap() (map[int32][]arkobject.Player, error) {
 				out[tribe.TribeID] = append(out[tribe.TribeID], player)
 			}
 		}
+	}
+	return out, nil
+}
+
+func (p *PlayerAPI) TribePlayerRelations() ([]TribePlayerRelation, error) {
+	players, err := p.Players()
+	if err != nil {
+		return nil, err
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return nil, err
+	}
+	byID := map[uint64]arkobject.Player{}
+	for _, player := range players {
+		byID[player.PlayerDataID] = player
+	}
+	out := make([]TribePlayerRelation, 0, len(tribes))
+	for _, tribe := range tribes {
+		relation := TribePlayerRelation{Tribe: tribe}
+		for idx, memberID := range tribe.MemberIDs {
+			player, ok := byID[uint64(memberID)]
+			if ok {
+				relation.ActivePlayers = append(relation.ActivePlayers, player)
+				continue
+			}
+			relation.InactiveMemberIDs = append(relation.InactiveMemberIDs, memberID)
+			if idx < len(tribe.Members) {
+				relation.InactiveMemberNames = append(relation.InactiveMemberNames, tribe.Members[idx])
+			}
+		}
+		out = append(out, relation)
 	}
 	return out, nil
 }

@@ -140,10 +140,12 @@ enough that oracle-derived tests can run against translated packages.
       aggregate helpers.
 - [x] Add CLI directory summaries for local player profiles and tribe saves.
 - [x] Port save-contained Player and Tribe API parsing for `.ark` game-table
-      `PrimalPlayerDataBP` and `PrimalTribeData` objects, including lookup,
-      tribe-player relation, and owner helper reuse.
+      `PrimalPlayerDataBP` and `PrimalTribeData` objects and embedded
+      `GameModeCustomBytes` payloads, including lookup, tribe-player relation,
+      and owner helper reuse.
 - [ ] Port any remaining upstream Player/Tribe edge behavior not covered by
-      parsed `.arkprofile`, `.arktribe`, or save-contained player/tribe objects.
+      parsed `.arkprofile`, `.arktribe`, game-table save objects, or embedded
+      `GameModeCustomBytes` save-contained objects.
 - [x] Add first read-only Structure API surface for class, owner, and location
       queries with optional class filters.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
@@ -312,13 +314,22 @@ enough that oracle-derived tests can run against translated packages.
 ### Examples And Review
 
 - [x] Add first Go examples for runnable offline Python example categories:
-      map summary, class listing, local profile/tribe discovery, cluster JSON,
-      and mutation-copy workflows.
+      map summary, class listing, local profile/tribe discovery,
+      player/tribe aggregate reporting, cluster JSON, and mutation-copy
+      workflows.
 - [x] Compare normalized Go outputs with the private Python oracle for the
       implemented direct read-only counterparts: `map_summary` and
       `object_classes`.
 - [x] Compare normalized Go `local_profiles` aggregate counts with the private
       Python oracle using upstream `PlayerApi` over local profile/tribe files.
+- [x] Compare normalized Go `player_all` aggregate output with private Python
+      upstream oracle output for save-level player/tribe fallback aggregate
+      parity: players, tribes, highest_level, total_deaths, and
+      unlocked_engrams.
+- [x] Compare normalized Go `player_tribe_links` aggregate output with private
+      Python upstream oracle output for active tribe-player links, inactive
+      members, players without parsed tribes, and tribes without active
+      players.
 - [x] Compare normalized Go CLI `export-json` save-info output with the private
       Python oracle for save metrics and object class lists.
 - [x] Compare normalized Go `property_filter` aggregate counts with the

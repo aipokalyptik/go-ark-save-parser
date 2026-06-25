@@ -247,6 +247,50 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
         save.close()
 
 
+def python_player_tribe_links_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.player_api import PlayerApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    empty_cluster_dir = repo_root / ".oracle" / "output" / "empty-cluster"
+    empty_cluster_dir.mkdir(parents=True, exist_ok=True)
+    save = AsaSave(save_path)
+    try:
+        player_api = PlayerApi(
+            save,
+            no_pawns=True,
+            bypass_inventory=True,
+            force_legacy_store=True,
+            cluster_data_dir=empty_cluster_dir,
+        )
+        player_by_id = {player.id_: player for player in player_api.players}
+        tribe_ids = {tribe.tribe_id for tribe in player_api.tribes}
+        active_links = 0
+        inactive_members = 0
+        tribes_with_inactive = 0
+        tribes_without_active = 0
+        for tribe in player_api.tribes:
+            active = len(player_api.tribe_to_player_map.get(tribe.tribe_id, []))
+            active_links += active
+            if active == 0:
+                tribes_without_active += 1
+            inactive = sum(1 for member_id in tribe.member_ids if member_id not in player_by_id)
+            inactive_members += inactive
+            if inactive > 0:
+                tribes_with_inactive += 1
+        return {
+            "players": len(player_api.players),
+            "tribes": len(player_api.tribes),
+            "active_links": active_links,
+            "inactive_members": inactive_members,
+            "players_without_tribe": sum(1 for player in player_api.players if player.tribe not in tribe_ids),
+            "tribes_with_inactive": tribes_with_inactive,
+            "tribes_without_active": tribes_without_active,
+        }
+    finally:
+        save.close()
+
+
 def python_dino_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.dino_api import DinoApi  # type: ignore
@@ -763,6 +807,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py = python_oracle(save_path, upstream_src)
     py_class_lookup = python_class_lookup_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
+    py_player_tribe_links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
     py_dino_most_mutated = python_dino_most_mutated_oracle(save_path, upstream_src)
@@ -787,6 +832,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python": py,
         "python_class_lookup": py_class_lookup,
         "python_local_profiles": py_local_profiles,
+        "python_player_tribe_links": py_player_tribe_links,
         "python_dino_filter": py_dino_filter,
         "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
         "python_dino_most_mutated": py_dino_most_mutated,
@@ -912,6 +958,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             "unlocked_engrams": py_local_profiles["unlocked_engrams"],
         }
         cases.append(CaseResult("player_all", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path player aggregate fallback compared"))
+
+    go_player_tribe_links = run(["go", "run", "./examples/player_tribe_links", str(save_path)], repo_root, env)
+    private["go"]["player_tribe_links"] = {
+        "exit_code": go_player_tribe_links.returncode,
+        "stdout": go_player_tribe_links.stdout,
+        "stderr": go_player_tribe_links.stderr,
+    }
+    if go_player_tribe_links.returncode != 0:
+        cases.append(CaseResult("player_tribe_links", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_player_tribe_links.stdout)
+        private["go"]["player_tribe_links"]["parsed"] = got
+        cases.append(CaseResult("player_tribe_links", "pass" if {key: got.get(key) for key in py_player_tribe_links} == py_player_tribe_links else "fail", "player tribe active and inactive relation aggregates compared"))
 
     if py_player_inventory is None:
         cases.append(CaseResult("player_inventory", "skip", "oracle save has no player inventory candidate"))

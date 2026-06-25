@@ -828,6 +828,19 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	if len(tribePlayers[12345]) != 2 {
 		t.Fatalf("TribePlayerMap()[12345] = %#v, want two active local players", tribePlayers[12345])
 	}
+	relations, err := api.TribePlayerRelations()
+	if err != nil {
+		t.Fatalf("TribePlayerRelations() error = %v", err)
+	}
+	if len(relations) != 1 {
+		t.Fatalf("TribePlayerRelations() length = %d, want 1", len(relations))
+	}
+	if len(relations[0].ActivePlayers) != 2 || len(relations[0].InactiveMemberIDs) != 1 || relations[0].InactiveMemberIDs[0] != 99 {
+		t.Fatalf("TribePlayerRelations()[0] = %#v, want two active players and inactive member 99", relations[0])
+	}
+	if len(relations[0].InactiveMemberNames) != 1 || relations[0].InactiveMemberNames[0] != "Inactive" {
+		t.Fatalf("TribePlayerRelations()[0].InactiveMemberNames = %#v, want Inactive", relations[0].InactiveMemberNames)
+	}
 	player, ok, err := api.PlayerByDataID(42)
 	if err != nil || !ok {
 		t.Fatalf("PlayerByDataID(42) = %#v, %v, %v; want player, true, nil", player, ok, err)
