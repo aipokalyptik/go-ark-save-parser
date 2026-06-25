@@ -291,7 +291,7 @@ func openSyntheticBaseSaveWithFault(t *testing.T) *arksave.Save {
 	}, map[uuid.UUID][]byte{
 		firstID:  syntheticBaseStructureObjectBytes(101, secondID),
 		secondID: syntheticBaseStructureObjectBytes(102, firstID),
-		faultyID: truncatedStructureObjectBytes(),
+		faultyID: testfixtures.TruncatedObjectBytes(0x10000005),
 	})
 }
 

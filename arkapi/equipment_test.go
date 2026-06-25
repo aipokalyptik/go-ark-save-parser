@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"strings"
@@ -641,7 +640,7 @@ func openSyntheticEquipmentSaveWithFault(t *testing.T) *arksave.Save {
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
 		weaponID: syntheticEquipmentObjectBytes(false),
-		faultyID: truncatedEquipmentObjectBytes(),
+		faultyID: testfixtures.TruncatedObjectBytes(0x1000000f),
 	})
 }
 
@@ -702,7 +701,7 @@ func openSyntheticEquipmentOwnedByStructureSaveWithFault(t *testing.T) *arksave.
 	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
 		structureID:       syntheticStructureWithInventoryObjectBytes(inventoryID),
-		faultyStructureID: truncatedStructureObjectBytes(),
+		faultyStructureID: testfixtures.TruncatedObjectBytes(0x10000005),
 		ownedItemID:       syntheticEquipmentObjectBytesWithOwnerInventory(inventoryID),
 		otherItemID:       syntheticEquipmentObjectBytesWithOwnerInventory(otherInventoryID),
 	})
@@ -744,13 +743,6 @@ func syntheticEquipmentObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) [
 	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 3, 1234)
 	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
 	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
-}
-
-func truncatedEquipmentObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000f))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
 }
 
 func syntheticArmorEquipmentObjectBytes() []byte {

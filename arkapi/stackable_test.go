@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -243,7 +242,7 @@ func openSyntheticStackableOwnedByStructureSaveWithFault(t *testing.T) *arksave.
 	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
 		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
-		faultyID:    truncatedStructureObjectBytes(),
+		faultyID:    testfixtures.TruncatedObjectBytes(0x10000005),
 		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
 	})
 }
@@ -277,15 +276,8 @@ func openSyntheticStackableSaveWithFault(t *testing.T) *arksave.Save {
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
 		itemID:   syntheticStackableObjectBytes(false),
-		faultyID: truncatedStackableObjectBytes(),
+		faultyID: testfixtures.TruncatedObjectBytes(0x1000000b),
 	})
-}
-
-func truncatedStackableObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000b))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
 }
 
 func syntheticStackableObjectBytes(isBlueprint bool) []byte {

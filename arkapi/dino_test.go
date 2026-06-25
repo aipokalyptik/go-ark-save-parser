@@ -1390,7 +1390,7 @@ func openSyntheticDinoSaveWithFault(t *testing.T) *arksave.Save {
 		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
 	}, map[uuid.UUID][]byte{
 		dinoID:   syntheticDinoObjectBytes(),
-		faultyID: truncatedDinoObjectBytes(),
+		faultyID: testfixtures.TruncatedObjectBytes(0x10000014),
 	})
 }
 
@@ -1454,13 +1454,6 @@ func syntheticCryopodItemObjectBytesWithPayloads(payloads ...[]byte) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
 	writeCustomItemDatasProperty(&buf, payloads...)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
-}
-
-func truncatedDinoObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
 }

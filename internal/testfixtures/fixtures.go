@@ -289,6 +289,13 @@ func GenericObjectBytes(classNameID uint32, noneNameID uint32) []byte {
 	return ObjectBytesWithProperties(classNameID, noneNameID, nil)
 }
 
+func TruncatedObjectBytes(classNameID uint32) []byte {
+	var buf bytes.Buffer
+	WriteUInt32(&buf, classNameID)
+	WriteInt32(&buf, 0)
+	return buf.Bytes()
+}
+
 func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties []byte) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, classNameID)

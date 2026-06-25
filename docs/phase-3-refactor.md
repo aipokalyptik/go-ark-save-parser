@@ -67,9 +67,11 @@ For the cross-phase monitorable checklist, see
       helpers; dino custom item data struct/byte-array payload writers use
       shared helpers; low-level `arkproperty` and `arkobject` name-table-ID,
       integer, float, string, and compound custom-data test writers use shared
-      helpers; and modern cryopod embedded dino/saddle payload builders are
-      shared by API and object-model tests. Remaining lower-level
-      domain-specific parser fixtures still need incremental migration.
+      helpers; API malformed class-only object row fixtures use a shared helper;
+      and modern cryopod embedded dino/saddle payload builders are shared by API
+      and object-model tests. Remaining lower-level domain-specific parser
+      fixtures and other malformed object-shape fixtures still need incremental
+      migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query

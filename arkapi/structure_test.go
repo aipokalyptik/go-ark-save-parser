@@ -674,7 +674,7 @@ func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 		"ActorTransforms": syntheticStructureActorTransforms(structureID),
 	}, map[uuid.UUID][]byte{
 		structureID: syntheticStructureObjectBytes(),
-		faultyID:    truncatedStructureObjectBytes(),
+		faultyID:    testfixtures.TruncatedObjectBytes(0x10000005),
 	})
 }
 
@@ -734,13 +734,6 @@ func syntheticStructureEngramObjectBytes() []byte {
 	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
 	testfixtures.WriteBoolPropertyID(&props, 0x10000013, 0x1000000e, true)
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
-}
-
-func truncatedStructureObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
 }
 
 func syntheticStructureActorTransforms(id uuid.UUID) []byte {
