@@ -354,6 +354,17 @@ func TruncatedObjectBytes(classNameID uint32) []byte {
 	return buf.Bytes()
 }
 
+func TruncatedObjectWithPropertiesBytes(classNameID uint32, noneNameID uint32, properties []byte, truncateBytes int) []byte {
+	raw := ObjectBytesWithProperties(classNameID, noneNameID, properties)
+	if truncateBytes <= 0 {
+		return raw
+	}
+	if truncateBytes >= len(raw) {
+		return raw[:0]
+	}
+	return raw[:len(raw)-truncateBytes]
+}
+
 func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties []byte) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.LittleEndian, classNameID)

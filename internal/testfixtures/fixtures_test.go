@@ -32,6 +32,28 @@ func TestObjectBytesWithPropertiesWrapsObjectHeaderAndNoneMarker(t *testing.T) {
 	}
 }
 
+func TestTruncatedObjectWithPropertiesBytesTrimsWrappedObject(t *testing.T) {
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, 0x10000002, 0x10000003, 250)
+	full := ObjectBytesWithProperties(0x10000001, 0x10000004, props.Bytes())
+
+	got := TruncatedObjectWithPropertiesBytes(0x10000001, 0x10000004, props.Bytes(), 10)
+
+	if !bytes.Equal(got, full[:len(full)-10]) {
+		t.Fatalf("TruncatedObjectWithPropertiesBytes() = %x, want %x", got, full[:len(full)-10])
+	}
+
+	untruncated := TruncatedObjectWithPropertiesBytes(0x10000001, 0x10000004, props.Bytes(), 0)
+	if !bytes.Equal(untruncated, full) {
+		t.Fatalf("TruncatedObjectWithPropertiesBytes(zero) = %x, want %x", untruncated, full)
+	}
+
+	empty := TruncatedObjectWithPropertiesBytes(0x10000001, 0x10000004, props.Bytes(), len(full))
+	if empty == nil || len(empty) != 0 {
+		t.Fatalf("TruncatedObjectWithPropertiesBytes(full) length = %d nil=%v, want non-nil empty slice", len(empty), empty == nil)
+	}
+}
+
 func TestActorTransformsWritesEntriesAndNilTerminator(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 

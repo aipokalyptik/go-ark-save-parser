@@ -365,7 +365,7 @@ func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
 		Header: header,
 		Objects: map[uuid.UUID][]byte{
 			objectID: syntheticObjectBytes(0x10000001),
-			faultyID: truncatedObjectBytes(0x10000005),
+			faultyID: testfixtures.TruncatedObjectWithPropertiesBytes(0x10000005, 0x10000004, nil, 10),
 		},
 	})
 
@@ -395,12 +395,11 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	header := syntheticHeader()
-	faultyBytes := syntheticObjectBytes(0x10000005)
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: header,
 		Objects: map[uuid.UUID][]byte{
 			objectID: syntheticObjectBytes(0x10000001),
-			faultyID: faultyBytes[:len(faultyBytes)-2],
+			faultyID: testfixtures.TruncatedObjectWithPropertiesBytes(0x10000005, 0x10000004, syntheticObjectProperties(), 2),
 		},
 	})
 
@@ -423,15 +422,12 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 }
 
 func syntheticObjectBytes(classNameID uint32) []byte {
-	var buf bytes.Buffer
-	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
-	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
+	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, syntheticObjectProperties())
 }
 
-func truncatedObjectBytes(classNameID uint32) []byte {
+func syntheticObjectProperties() []byte {
 	var buf bytes.Buffer
-	buf.Write(testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, nil))
-	buf.Truncate(buf.Len() - 10)
+	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
 	return buf.Bytes()
 }
 
