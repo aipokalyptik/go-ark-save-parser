@@ -146,6 +146,43 @@ def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
         save.close()
 
 
+STORAGE_CLASS_SUBSTRINGS = [
+    "StorageBox_Large_C",
+    "BP_DedicatedStorage_C",
+    "StorageBox_ChemBench_C",
+    "StorageBox_IndustrialGrinder_C",
+    "StorageBox_Fabricator_C",
+    "StorageBox_TekGenerator_C",
+    "StorageBox_Huge_C",
+    "StorageBox_AnvilBench_C",
+    "StorageBox_TekReplicator_C",
+    "StorageBox_Small_C",
+    "PrimalItemStructure_LibraryStorage_C",
+]
+
+
+def python_class_lookup_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                config = GameObjectReaderConfiguration(
+                    blueprint_name_filter=lambda name: name is not None and any(cls in name for cls in STORAGE_CLASS_SUBSTRINGS)
+                )
+                structures = StructureApi(save).get_all(config, max_workers=1)
+                return {
+                    "objects": len(structures),
+                    "classes": len({structure.object.blueprint for structure in structures.values()}),
+                }
+            finally:
+                save.close()
+
+
 def python_player_inventory_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.player_api import PlayerApi  # type: ignore
@@ -723,6 +760,7 @@ def normalize_blueprint(value: str) -> str:
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
+    py_class_lookup = python_class_lookup_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
@@ -746,6 +784,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     private: dict[str, Any] = {
         "save_path": str(save_path),
         "python": py,
+        "python_class_lookup": py_class_lookup,
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
         "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
@@ -800,6 +839,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got_classes = sorted(line for line in go_classes.stdout.splitlines() if line)
         private["go"]["object_classes"]["classes"] = got_classes
         cases.append(CaseResult("object_classes", "pass" if got_classes == py["classes"] else "fail", "class list compared"))
+
+    go_class_lookup = run(["go", "run", "./examples/class_lookup", str(save_path), *STORAGE_CLASS_SUBSTRINGS], repo_root, env)
+    private["go"]["class_lookup"] = {
+        "exit_code": go_class_lookup.returncode,
+        "stdout": go_class_lookup.stdout,
+        "stderr": go_class_lookup.stderr,
+    }
+    if go_class_lookup.returncode != 0:
+        cases.append(CaseResult("class_lookup", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_class_lookup.stdout)
+        private["go"]["class_lookup"]["parsed"] = got
+        cases.append(CaseResult("class_lookup", "pass" if {key: got.get(key) for key in py_class_lookup} == py_class_lookup else "fail", "storage class substring structure counts compared"))
 
     export_json_path = repo_root / ".oracle" / "output" / "export-save-info.json"
     go_export_json = run(["go", "run", "./cmd/arksave", "export-json", str(save_path), str(export_json_path)], repo_root, env)
