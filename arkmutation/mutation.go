@@ -116,6 +116,23 @@ func ImportBaseBinary(inputPath string, outputPath string, baseExportDir string)
 	return putObjectRows(inputPath, outputPath, rows)
 }
 
+func ImportStructureBinary(inputPath string, outputPath string, structureExportDir string) (int, error) {
+	if structureExportDir == "" {
+		return 0, errors.New("structure export directory is required")
+	}
+	if _, err := os.Stat(filepath.Join(structureExportDir, "manifest.json")); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return 0, fmt.Errorf("structure export directory %s is missing manifest.json", structureExportDir)
+		}
+		return 0, err
+	}
+	rows, err := readExportRows(structureExportDir, []string{"str_"})
+	if err != nil {
+		return 0, err
+	}
+	return putObjectRows(inputPath, outputPath, rows)
+}
+
 func ImportDinoBinary(inputPath string, outputPath string, dinoExportDir string) (int, error) {
 	rows, err := readExportRows(dinoExportDir, []string{"dino_", "status_", "inv_"})
 	if err != nil {

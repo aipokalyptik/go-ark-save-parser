@@ -3,6 +3,9 @@ package arkapi
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -28,6 +31,51 @@ func TestStructureAPIGetAllParsesStructureObjects(t *testing.T) {
 	}
 	if got.ID != 123 || got.Owner.TribeID != 555 || got.Location == nil || got.Location.X != 11 {
 		t.Fatalf("Structure = %#v", got)
+	}
+}
+
+func TestStructureAPIExportBinaryWritesStructureRowsAndManifest(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	dir := t.TempDir()
+	exported, err := NewStructure(save).ExportBinary(dir)
+	if err != nil {
+		t.Fatalf("ExportBinary() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if exported.StructureCount != 1 || exported.RowCount != 1 || exported.FaultCount != 0 || len(exported.Files) != 1 {
+		t.Fatalf("ExportBinary() = %#v, want one structure row and no faults", exported)
+	}
+	if exported.Files[0].UUID != id.String() || exported.Files[0].Kind != "structure_binary" || exported.Files[0].Owner.TribeID != 555 {
+		t.Fatalf("ExportBinary() file metadata = %#v", exported.Files[0])
+	}
+	binPath := filepath.Join(dir, "str_"+id.String()+".bin")
+	got, err := os.ReadFile(binPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", binPath, err)
+	}
+	want, err := save.ObjectBinary(id)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("exported structure bytes = % x, want save ObjectBinary bytes", got)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "str_"+id.String()+"_location.json")); err != nil {
+		t.Fatalf("stat structure location export: %v", err)
+	}
+
+	rawManifest, err := os.ReadFile(filepath.Join(dir, "manifest.json"))
+	if err != nil {
+		t.Fatalf("ReadFile(manifest.json) error = %v", err)
+	}
+	var manifest StructureBinaryExport
+	if err := json.Unmarshal(rawManifest, &manifest); err != nil {
+		t.Fatalf("json.Unmarshal(manifest) error = %v", err)
+	}
+	if manifest.StructureCount != 1 || manifest.RowCount != 1 || len(manifest.Files) != 1 {
+		t.Fatalf("manifest = %#v, want exported structure summary", manifest)
 	}
 }
 

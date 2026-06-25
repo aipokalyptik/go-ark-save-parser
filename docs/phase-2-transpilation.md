@@ -353,6 +353,10 @@ For the cross-phase monitorable checklist, see
       explicit copied save. Location movement, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
+- [x] Add partial structural structure modification coverage by reading
+      `structure_export_from_save` raw structure rows and reinserting them into
+      an explicit copied save. Health/owner edits and live-server acceptance
+      remain unverified.
 - [x] Add partial structural dino extract/reinsert coverage by exporting
       direct-save dino rows plus linked status/inventory rows and reinserting
       them into an explicit copied save. Cryopod insertion, generated location
@@ -362,9 +366,9 @@ For the cross-phase monitorable checklist, see
       Generated blueprint construction, insertion into target inventories, and
       live-server acceptance remain unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal by
-      UUID or class substring, base/dino/equipment binary row import, object
-      hex-byte upserts, and custom-table hex-byte upserts against explicit
-      output copies.
+      UUID or class substring, base/structure/dino/equipment binary row
+      import, object hex-byte upserts, and custom-table hex-byte upserts
+      against explicit output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.
@@ -466,6 +470,10 @@ For the cross-phase monitorable checklist, see
       export of base metadata, copied raw structure rows, and structure
       location JSON. Inventory item expansion, binary import, and live-server
       validation remain mutation-copy-adjacent and unverified.
+- [x] Add `structure_export_from_save` as a read-only, explicit-output
+      structural export of copied raw structure rows and structure location
+      JSON. Health/owner edits and live-server validation remain
+      mutation-copy-adjacent and unverified.
 - [x] Compare normalized Go `dino_best_stat --no-cryos` output with the
       upstream `DinoApi.get_all(include_cryos=False)` best-stat workflow.
 - [x] Compare normalized Go `dino_best_base_stat` output with an upstream

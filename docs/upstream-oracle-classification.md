@@ -138,6 +138,12 @@ These are offline-compatible but produce files or images, so outputs stay under
   remain open because full Go structure parsing is currently too slow on the
   supplied large private save, while the efficient selected-property scan finds
   a few additional owner/location buckets.
+- `examples/structure_api/ex_05_modify_structures.py` and
+  `examples/structure_api/ex_08_modify_structures_of_tribe.py` are partially
+  structurally represented by `examples/structure_export_from_save` plus
+  `arkmutation.ImportStructureBinary`, which can reinsert copied raw structure
+  rows into an explicit output save copy. Health/owner edits and live-server
+  acceptance remain unverified.
 - `examples/json_api/ex_01_export_all_items.py` is implemented as
   `examples/export_all_items`, which writes save info plus all implemented
   domain JSON exports to an explicit output directory with a manifest.
@@ -194,8 +200,14 @@ correctness.
   item rows into an explicit output save copy. Generated blueprint construction,
   insertion into target inventories, and live-server acceptance remain
   unverified.
-- `examples/structure_api/ex_05_modify_structures.py`
-- `examples/structure_api/ex_08_modify_structures_of_tribe.py`
+- `examples/structure_api/ex_05_modify_structures.py` is partially
+  structurally represented by `examples/structure_export_from_save` plus
+  `arkmutation.ImportStructureBinary`. Actual health mutation and live-server
+  acceptance remain unverified.
+- `examples/structure_api/ex_08_modify_structures_of_tribe.py` is partially
+  structurally represented by `examples/structure_export_from_save` plus
+  `arkmutation.ImportStructureBinary`. Actual owner-scoped structure mutation
+  and live-server acceptance remain unverified.
 
 ## Offline Skips
 

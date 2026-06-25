@@ -28,6 +28,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	equipmentExportPath := filepath.Join(dir, "equipment-export")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
 	baseExportPath := filepath.Join(dir, "base-export")
+	structureExportPath := filepath.Join(dir, "structure-export")
 	exportAllPath := filepath.Join(dir, "json-exports")
 	equipmentHistoryManifestPath := filepath.Join(dir, "equipment-history-files.json")
 	equipmentHistoryReportPath := filepath.Join(dir, "equipment-history-report.json")
@@ -169,6 +170,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "structure_owners", "structures=1 with_tribe_id=1 with_player_id=0 with_tribe_name=0 with_player_name=0 with_original_placer_id=0 unique_tribes=1", savePath)
 	runExample(t, "structure_owner_locations", "structures=1 owners=1 cells=1 named_cells=1 multi_structure_cells=0 faults=0", savePath, "Valguero", "1")
+	runExample(t, "structure_export_from_save", "structures=1 rows=1 faults=0 wrote=", savePath, structureExportPath)
+	for _, path := range []string{
+		filepath.Join(structureExportPath, "manifest.json"),
+		filepath.Join(structureExportPath, "str_"+structureID.String()+".bin"),
+		filepath.Join(structureExportPath, "str_"+structureID.String()+"_location.json"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("structure_export_from_save output %s missing: %v", path, err)
+		}
+	}
 	runExample(t, "base_components", "bases=1 total_structures=1 largest=1 min10=0 faults=0", savePath)
 	runExample(t, "base_export_from_save", "bases=1 structures=1 faults=0 wrote=", savePath, baseExportPath)
 	for _, path := range []string{
@@ -220,6 +231,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		t.Fatalf("ObjectBinary(imported structure %s) error = %v", structureID, err)
 	}
 	_ = baseImportCopy.Close()
+	runExample(t, "mutation_copy", "imported structure rows: 1", "import-structure-binary", savePath, baseImportCopyPath+"-structure", structureExportPath)
+	structureImportCopy, err := arksave.Open(baseImportCopyPath + "-structure")
+	if err != nil {
+		t.Fatalf("Open(structure import mutation copy) error = %v", err)
+	}
+	if _, err := structureImportCopy.ObjectBinary(structureID); err != nil {
+		_ = structureImportCopy.Close()
+		t.Fatalf("ObjectBinary(imported structure %s) error = %v", structureID, err)
+	}
+	_ = structureImportCopy.Close()
 	runExample(t, "mutation_copy", "imported dino rows: 1", "import-dino-binary", savePath, baseImportCopyPath+"-dino", dinoExportPath)
 	runExample(t, "mutation_copy", "imported equipment rows: 1", "import-equipment-binary", savePath, baseImportCopyPath+"-equipment", equipmentExportPath)
 	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")

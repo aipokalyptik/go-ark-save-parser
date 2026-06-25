@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
@@ -161,6 +162,67 @@ func TestImportBaseBinaryWritesCopyAndReopens(t *testing.T) {
 
 	if _, err := os.Stat(input); err != nil {
 		t.Fatalf("input save missing after import: %v", err)
+	}
+}
+
+func TestImportStructureBinaryWritesCopyAndReopens(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	exportDir := filepath.Join(dir, "structure-export")
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	createSyntheticSave(t, input, uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), testfixtures.GenericObjectBytes(0x10000001, 0x10000003))
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(exportDir, "manifest.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write structure export manifest: %v", err)
+	}
+	want := testfixtures.GenericObjectBytes(0x10000002, 0x10000003)
+	if err := os.WriteFile(filepath.Join(exportDir, "str_"+structureID.String()+".bin"), want, 0o600); err != nil {
+		t.Fatalf("write structure export row: %v", err)
+	}
+
+	imported, err := ImportStructureBinary(input, output, exportDir)
+	if err != nil {
+		t.Fatalf("ImportStructureBinary() error = %v", err)
+	}
+	if imported != 1 {
+		t.Fatalf("ImportStructureBinary() imported = %d, want 1", imported)
+	}
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	got, err := mutated.ObjectBinary(structureID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(imported) error = %v", err)
+	}
+	_ = mutated.Close()
+	if !bytes.Equal(got, want) {
+		t.Fatalf("imported ObjectBinary = % x, want % x", got, want)
+	}
+}
+
+func TestImportStructureBinaryRequiresManifestAtExportRoot(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	exportDir := filepath.Join(dir, "structure-export")
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	createSyntheticSave(t, input, uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), testfixtures.GenericObjectBytes(0x10000001, 0x10000003))
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(exportDir, "str_"+structureID.String()+".bin"), testfixtures.GenericObjectBytes(0x10000002, 0x10000003), 0o600); err != nil {
+		t.Fatalf("write structure export row: %v", err)
+	}
+
+	if _, err := ImportStructureBinary(input, output, exportDir); err == nil || !strings.Contains(err.Error(), "manifest.json") {
+		t.Fatalf("ImportStructureBinary(missing manifest) error = %v, want manifest error", err)
+	}
+	if _, err := os.Stat(output); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("output stat error = %v, want os.ErrNotExist", err)
 	}
 }
 

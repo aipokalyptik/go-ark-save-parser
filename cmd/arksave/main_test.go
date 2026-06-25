@@ -918,9 +918,11 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	removedClassPath := filepath.Join(dir, "removed-class.ark")
 	objectPath := filepath.Join(dir, "object.ark")
 	importBasePath := filepath.Join(dir, "import-base.ark")
+	importStructurePath := filepath.Join(dir, "import-structure.ark")
 	importDinoPath := filepath.Join(dir, "import-dino.ark")
 	importEquipmentPath := filepath.Join(dir, "import-equipment.ark")
 	baseExportDir := filepath.Join(dir, "base-export", "base_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structureExportDir := filepath.Join(dir, "structure-export")
 	dinoExportDir := filepath.Join(dir, "dino-export", "dino_bbbbbbbb-bbbb-cccc-dddd-eeeeffffffff")
 	equipmentExportDir := filepath.Join(dir, "equipment-export")
 	createSyntheticSave(t, savePath)
@@ -930,6 +932,15 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	}
 	if err := os.WriteFile(filepath.Join(baseExportDir, "str_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff.bin"), testfixtures.GenericObjectBytes(1, 2), 0o600); err != nil {
 		t.Fatalf("write base export row: %v", err)
+	}
+	if err := os.MkdirAll(structureExportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(structure export) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(structureExportDir, "manifest.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write structure export manifest: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(structureExportDir, "str_dddddddd-bbbb-cccc-dddd-eeeeffffffff.bin"), testfixtures.GenericObjectBytes(1, 2), 0o600); err != nil {
+		t.Fatalf("write structure export row: %v", err)
 	}
 	if err := os.MkdirAll(dinoExportDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll(dino export) error = %v", err)
@@ -986,6 +997,15 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	got = importBaseOut.String()
 	if strings.Contains(got, importBasePath) || strings.Contains(got, filepath.Join(dir, "base-export")) || !strings.Contains(got, "[redacted]") {
 		t.Fatalf("redacted mutate import-base-binary output = %q", got)
+	}
+
+	var importStructureOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "import-structure-binary", savePath, importStructurePath, structureExportDir}, &importStructureOut); err != nil {
+		t.Fatalf("run(--redact mutate import-structure-binary) error = %v", err)
+	}
+	got = importStructureOut.String()
+	if strings.Contains(got, importStructurePath) || strings.Contains(got, structureExportDir) || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate import-structure-binary output = %q", got)
 	}
 
 	var importDinoOut bytes.Buffer
@@ -1131,6 +1151,9 @@ func TestMutateImportBaseBinaryCommandWritesReopenableCopy(t *testing.T) {
 	if err := os.MkdirAll(exportDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll(exportDir) error = %v", err)
 	}
+	if err := os.WriteFile(filepath.Join(exportDir, "manifest.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write structure export manifest: %v", err)
+	}
 	want := testfixtures.GenericObjectBytes(1, 2)
 	if err := os.WriteFile(filepath.Join(exportDir, "str_"+objectID.String()+".bin"), want, 0o600); err != nil {
 		t.Fatalf("write base export row: %v", err)
@@ -1143,6 +1166,46 @@ func TestMutateImportBaseBinaryCommandWritesReopenableCopy(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), "rows=1") {
 		t.Fatalf("mutate import-base-binary output %q missing path or row count", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	got, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", objectID, err)
+	}
+	_ = save.Close()
+	if !bytes.Equal(got, want) {
+		t.Fatalf("ObjectBinary(%s) = % x, want exported row", objectID, got)
+	}
+}
+
+func TestMutateImportStructureBinaryCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "imported-structure.ark")
+	exportDir := filepath.Join(dir, "structure-export")
+	createSyntheticSave(t, savePath)
+	objectID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(exportDir, "manifest.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write structure export manifest: %v", err)
+	}
+	want := testfixtures.GenericObjectBytes(1, 2)
+	if err := os.WriteFile(filepath.Join(exportDir, "str_"+objectID.String()+".bin"), want, 0o600); err != nil {
+		t.Fatalf("write structure export row: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "import-structure-binary", savePath, outPath, exportDir}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate import-structure-binary) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), "rows=1") {
+		t.Fatalf("mutate import-structure-binary output %q missing path or row count", out.String())
 	}
 	save, err := arksave.Open(outPath)
 	if err != nil {

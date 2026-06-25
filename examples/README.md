@@ -93,6 +93,10 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `structure_heatmap`: generate a compact JSON summary for a local structure
   heatmap using an explicit output path, resolution, and minimum-per-cell
   threshold.
+- `structure_export_from_save`: write parsed structure rows and structure
+  location JSON files to an explicit output directory and print
+  structure/row/fault counts. Health/owner mutation and live-server validation
+  remain mutation-copy-only and unverified.
 - `base_components`: group parsed structures into linked connected components
   and print aggregate base counts using a selected-property scan over structure
   IDs and linked-structure UUIDs.
@@ -145,9 +149,11 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 
 - `mutation_copy`: copy a `.ark` save to a new explicit output path, remove an
   object row or all objects whose class contains a substring from a copied save,
-  import raw structure rows from `base_export_from_save`, import direct-save
-  dino/status/inventory rows from `dino_export_from_save`, import equipment
-  item rows from `equipment_export_from_save`, upsert object bytes from hex, or
-  upsert a custom-table value from hex. Mutation helpers never modify inputs in
-  place and are structurally tested only; live Ark server behavior remains
-  unverified.
+  import raw structure rows from `base_export_from_save` or
+  `structure_export_from_save`, import direct-save dino/status/inventory rows
+  from `dino_export_from_save`, import equipment item rows from
+  `equipment_export_from_save`, upsert object bytes from hex, or upsert a
+  custom-table value from hex. Mutation helpers never modify inputs in place
+  and are structurally tested only; live Ark server behavior remains
+  unverified. The standalone structure import command expects the
+  `manifest.json` written by `structure_export_from_save` at the export root.

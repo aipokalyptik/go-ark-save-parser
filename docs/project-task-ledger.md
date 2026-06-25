@@ -220,6 +220,10 @@ documented.
       explicit copied saves. Moving structures, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
+- [~] Upstream structure modification examples have partial structural
+      coverage through standalone `structure_export_from_save` raw structure
+      rows and `ImportStructureBinary` reinsert into explicit copied saves.
+      Health/owner mutation and live-server acceptance remain unverified.
 - [~] Upstream dino extract/reinsert examples have partial structural coverage
       through exported direct-save dino, status, and inventory rows plus
       `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
@@ -231,8 +235,8 @@ documented.
       blueprint construction, insertion into target inventories, and
       live-server acceptance remain unverified.
 - [ ] Add more structural mutation tests for upstream dino trait/stat/growth
-      and structure mutation examples where local-copy behavior can be
-      represented without claiming live-server safety.
+      examples where local-copy behavior can be represented without claiming
+      live-server safety.
 
 ### Examples And Oracle Comparisons
 
@@ -290,6 +294,10 @@ documented.
 - [x] `structure_at_location`.
 - [blocked] `structure_heatmap` oracle comparison: upstream out-of-range
       heatmap indexing on supplied private save.
+- [x] `structure_export_from_save`: represented as an explicit-output
+      structural export that writes copied raw structure rows and structure
+      location JSON. Health/owner mutation, binary editing, and live-server
+      validation remain mutation-copy-adjacent and unverified.
 - [x] `base_components`.
 - [x] `base_export_from_save`: represented as an explicit-output structural
       export that writes base metadata, copied raw structure rows, and
