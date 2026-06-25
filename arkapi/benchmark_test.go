@@ -53,6 +53,24 @@ func BenchmarkObjectParse(b *testing.B) {
 	}
 }
 
+func BenchmarkObjectParseWithObjectCache(b *testing.B) {
+	save := openBenchmarkSave(b)
+	defer save.Close()
+	save.SetObjectCacheEnabled(true)
+	api := NewGeneral(save)
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	if _, err := api.Object(id); err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := api.Object(id); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkFilteredAPICalls(b *testing.B) {
 	save := openBenchmarkSave(b)
 	defer save.Close()

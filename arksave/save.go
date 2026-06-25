@@ -21,8 +21,10 @@ type Save struct {
 	path string
 	db   *sql.DB
 
-	Context *Context
-	names   *arkbinary.Context
+	Context            *Context
+	names              *arkbinary.Context
+	objectCacheEnabled bool
+	objectBinaryCache  map[uuid.UUID][]byte
 }
 
 type ObjectClassInfo struct {
@@ -82,6 +84,7 @@ func (s *Save) Close() error {
 	if s.db == nil {
 		return nil
 	}
+	s.ClearObjectCache()
 	err := s.db.Close()
 	s.db = nil
 	return err
@@ -92,6 +95,34 @@ func (s *Save) Path() string {
 		return ""
 	}
 	return s.path
+}
+
+func (s *Save) SetObjectCacheEnabled(enabled bool) {
+	if s == nil {
+		return
+	}
+	s.objectCacheEnabled = enabled
+	if !enabled {
+		s.ClearObjectCache()
+		return
+	}
+	if s.objectBinaryCache == nil {
+		s.objectBinaryCache = map[uuid.UUID][]byte{}
+	}
+}
+
+func (s *Save) ObjectCacheEnabled() bool {
+	return s != nil && s.objectCacheEnabled
+}
+
+func (s *Save) ClearObjectCache() {
+	if s == nil {
+		return
+	}
+	s.objectBinaryCache = nil
+	if s.objectCacheEnabled {
+		s.objectBinaryCache = map[uuid.UUID][]byte{}
+	}
 }
 
 func (s *Save) CustomValue(key string) ([]byte, error) {
@@ -128,14 +159,26 @@ func (s *Save) ObjectIDs() ([]uuid.UUID, error) {
 }
 
 func (s *Save) ObjectBinary(id uuid.UUID) ([]byte, error) {
+	if s.objectCacheEnabled {
+		if value, ok := s.objectBinaryCache[id]; ok {
+			return copyBytes(value), nil
+		}
+	}
 	var value []byte
 	err := s.db.QueryRow(`select value from game where key = ?`, id[:]).Scan(&value)
 	if err != nil {
 		return nil, err
 	}
+	if s.objectCacheEnabled {
+		s.objectBinaryCache[id] = copyBytes(value)
+	}
+	return copyBytes(value), nil
+}
+
+func copyBytes(value []byte) []byte {
 	out := make([]byte, len(value))
 	copy(out, value)
-	return out, nil
+	return out
 }
 
 func (s *Save) ClassOf(id uuid.UUID) (string, error) {

@@ -65,6 +65,8 @@ For the cross-phase monitorable checklist, see
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
       filters, and JSON export.
+- [x] Add opt-in `arksave.Save` object row cache controls for repeated object
+      lookup/parse workflows, plus cached object-parse benchmark coverage.
 - [x] Keep `inspect` as metadata-only and make `parse` perform a
       fault-tolerant full-object parse summary, then expand `cmd/arksave`
       with local profile/tribe file and directory summaries plus

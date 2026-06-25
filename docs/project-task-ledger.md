@@ -350,8 +350,8 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Add benchmarks for full save open/object enumeration, object parse,
         query filters, and JSON export.
   - [x] Add selected-property scans for expensive structure/base workflows.
-  - [ ] Add object cache controls where benchmarks show repeat parsing is a
-        practical bottleneck.
+  - [x] Add opt-in object row cache controls on `arksave.Save`, plus cached
+        object-parse benchmark coverage.
   - [ ] Add safe concurrency only where tests prove no behavior drift.
 - [x] CLI:
   - [x] `inspect`.

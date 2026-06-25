@@ -178,6 +178,125 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	}
 }
 
+func TestObjectCacheControlsRawObjectRows(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	firstBytes := syntheticObjectBytes(0x10000001)
+	secondBytes := syntheticObjectBytes(0x10000005)
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: syntheticHeader(),
+		Objects: map[uuid.UUID][]byte{
+			objectID: firstBytes,
+		},
+	})
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	if save.ObjectCacheEnabled() {
+		t.Fatalf("ObjectCacheEnabled() = true, want default false")
+	}
+	raw, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(first) error = %v", err)
+	}
+	if !bytes.Equal(raw, firstBytes) {
+		t.Fatalf("ObjectBinary(first) = % x, want first bytes", raw)
+	}
+	if err := replaceGameRow(save, objectID, secondBytes); err != nil {
+		t.Fatalf("replaceGameRow(second) error = %v", err)
+	}
+	raw, err = save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(second uncached) error = %v", err)
+	}
+	if !bytes.Equal(raw, secondBytes) {
+		t.Fatalf("ObjectBinary(second uncached) = % x, want second bytes", raw)
+	}
+
+	save.SetObjectCacheEnabled(true)
+	if !save.ObjectCacheEnabled() {
+		t.Fatalf("ObjectCacheEnabled() = false, want true")
+	}
+	raw, err = save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(cache fill) error = %v", err)
+	}
+	if !bytes.Equal(raw, secondBytes) {
+		t.Fatalf("ObjectBinary(cache fill) = % x, want second bytes", raw)
+	}
+	thirdBytes := syntheticObjectBytes(0x10000001)
+	if err := replaceGameRow(save, objectID, thirdBytes); err != nil {
+		t.Fatalf("replaceGameRow(third) error = %v", err)
+	}
+	raw, err = save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(cached) error = %v", err)
+	}
+	if !bytes.Equal(raw, secondBytes) {
+		t.Fatalf("ObjectBinary(cached) = % x, want cached second bytes", raw)
+	}
+
+	save.ClearObjectCache()
+	raw, err = save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(after clear) error = %v", err)
+	}
+	if !bytes.Equal(raw, thirdBytes) {
+		t.Fatalf("ObjectBinary(after clear) = % x, want third bytes", raw)
+	}
+
+	save.SetObjectCacheEnabled(false)
+	if save.ObjectCacheEnabled() {
+		t.Fatalf("ObjectCacheEnabled() = true after disable")
+	}
+	if err := replaceGameRow(save, objectID, secondBytes); err != nil {
+		t.Fatalf("replaceGameRow(second again) error = %v", err)
+	}
+	raw, err = save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(after disable) error = %v", err)
+	}
+	if !bytes.Equal(raw, secondBytes) {
+		t.Fatalf("ObjectBinary(after disable) = % x, want live second bytes", raw)
+	}
+}
+
+func TestObjectCacheReturnsDefensiveCopies(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	objectBytes := syntheticObjectBytes(0x10000001)
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: syntheticHeader(),
+		Objects: map[uuid.UUID][]byte{
+			objectID: objectBytes,
+		},
+	})
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+	save.SetObjectCacheEnabled(true)
+
+	raw, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(first) error = %v", err)
+	}
+	raw[0] = 0xff
+	again, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(second) error = %v", err)
+	}
+	if !bytes.Equal(again, objectBytes) {
+		t.Fatalf("ObjectBinary(second) = % x, want unmutated object bytes", again)
+	}
+}
+
 func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
@@ -255,6 +374,11 @@ func truncatedObjectBytes(classNameID uint32) []byte {
 	buf.Write(testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, nil))
 	buf.Truncate(buf.Len() - 10)
 	return buf.Bytes()
+}
+
+func replaceGameRow(save *Save, id uuid.UUID, value []byte) error {
+	_, err := save.db.Exec(`update game set value = ? where key = ?`, value, id[:])
+	return err
 }
 
 func syntheticHeader() []byte {
