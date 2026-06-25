@@ -114,7 +114,10 @@ hard-coded placeholder paths with local `.ark` paths:
 These are offline-compatible but produce files or images, so outputs stay under
 `.oracle/output`:
 
-- `examples/base_api/ex_01_export_base_from_save.py`
+- `examples/base_api/ex_01_export_base_from_save.py` is represented by
+  `examples/base_export_from_save`, which writes an explicit JSON export of the
+  implemented base domain model. Upstream's binary row export/import format is
+  treated as mutation-copy-adjacent and remains live-server-unverified.
 - `examples/base_api/ex_03_get_all_connected_sets_of_structures.py`
 - `examples/dino_api/ex_02a_dino_by_stat_heatmap.py` is implemented as the
   lower-level `DinoAPI.Heatmap` helper plus the `examples/dino_heatmap` JSON

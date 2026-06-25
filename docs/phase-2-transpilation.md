@@ -445,6 +445,9 @@ For the cross-phase monitorable checklist, see
 - [x] Compare normalized Go `base_components` aggregate output with upstream
       connected base grouping after a fast selected-property structure scan is
       available for large private saves.
+- [x] Add `base_export_from_save` as a read-only, explicit-output JSON export
+      of the implemented base domain model. Upstream binary base row
+      export/import remains mutation-copy-adjacent and live-server-unverified.
 - [x] Compare normalized Go `dino_best_stat --no-cryos` output with the
       upstream `DinoApi.get_all(include_cryos=False)` best-stat workflow.
 - [x] Compare normalized Go `dino_best_base_stat` output with an upstream

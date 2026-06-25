@@ -88,6 +88,11 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `base_components`: group parsed structures into linked connected components
   and print aggregate base counts using a selected-property scan over structure
   IDs and linked-structure UUIDs.
+- `base_export_from_save`: write the implemented base domain JSON export for a
+  local save to an explicit output path and print base/fault counts. This is
+  the read-only export counterpart to upstream's binary base export example;
+  base import/write workflows remain mutation-copy-only and live-server
+  unverified.
 
 ## Profile, Tribe, And Cluster Examples
 
