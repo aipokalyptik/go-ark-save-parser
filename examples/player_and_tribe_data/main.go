@@ -84,8 +84,9 @@ func buildSummary(api *arkapi.PlayerAPI) (summary, error) {
 		TribeRows:    make([]tribeRow, 0, len(tribes)),
 		RelationRows: make([]relationRow, 0, len(relations)),
 	}
-	activePlayerIDs := map[uint64]struct{}{}
+	tribeIDs := map[int32]struct{}{}
 	for _, tribe := range tribes {
+		tribeIDs[tribe.TribeID] = struct{}{}
 		row := tribeRow{HasName: tribe.Name != "", Members: len(tribe.MemberIDs), Dinos: tribe.NumDinos}
 		if row.HasName {
 			out.TribesWithNames++
@@ -102,18 +103,17 @@ func buildSummary(api *arkapi.PlayerAPI) (summary, error) {
 		if row.HasCharacterName || row.HasPlayerName {
 			out.PlayersWithNames++
 		}
+		if _, ok := tribeIDs[player.TribeID]; !ok {
+			out.PlayersWithoutTribe++
+		}
 		out.PlayerRows = append(out.PlayerRows, row)
 	}
 	for _, relation := range relations {
 		row := relationRow{ActiveMembers: len(relation.ActivePlayers), InactiveMembers: len(relation.InactiveMemberIDs)}
 		out.ActiveLinks += row.ActiveMembers
 		out.InactiveMembers += row.InactiveMembers
-		for _, player := range relation.ActivePlayers {
-			activePlayerIDs[player.PlayerDataID] = struct{}{}
-		}
 		out.RelationRows = append(out.RelationRows, row)
 	}
-	out.PlayersWithoutTribe = len(players) - len(activePlayerIDs)
 
 	sort.Slice(out.PlayerRows, func(i int, j int) bool {
 		if out.PlayerRows[i].TribeID != out.PlayerRows[j].TribeID {

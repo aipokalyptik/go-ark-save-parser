@@ -381,9 +381,7 @@ enough that oracle-derived tests can run against translated packages.
       privacy-safe aggregate inventory and item counts.
 - [x] Compare normalized Go `player_and_tribe_data` output with private Python
       upstream oracle output for combined all-player, all-tribe, and
-      active/inactive tribe relation iteration. The private comparison covers
-      stable aggregate fields; exact missing-tribe classification remains open
-      for profiles whose `TribeID` is not yet parsed from all archive layouts.
+      active/inactive tribe relation iteration.
 - [x] Compare normalized Go `tribe_list` output with private Python upstream
       oracle output for all-tribe iteration using privacy-safe aggregate
       fields.

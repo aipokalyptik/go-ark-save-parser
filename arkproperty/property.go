@@ -1113,6 +1113,12 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 		return UnknownStruct{TypeName: structType, Raw: raw}, structType, dataSize, nil
 	}
 	if err := alignDeclaredBody(r, bodyStart, dataSize); err != nil {
+		if r.Position() > bodyEnd {
+			if seekErr := r.SetPosition(bodyEnd); seekErr != nil {
+				return nil, "", 0, seekErr
+			}
+			return Container{Properties: props}, structType, dataSize, recoverableCompoundError{err: err}
+		}
 		return nil, "", 0, err
 	}
 	return Container{Properties: props}, structType, dataSize, nil

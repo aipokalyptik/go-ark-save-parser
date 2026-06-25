@@ -1625,8 +1625,8 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             got["player_rows"] = len(parsed.get("player_rows", []))
             got["relation_rows"] = len(parsed.get("relation_rows", []))
             private["go"]["player_and_tribe_data"]["parsed"] = got
-            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "tribe_rows", "player_rows", "relation_rows")
-            cases.append(CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared; player missing-tribe parity remains open"))
+            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "players_without_tribe", "tribe_rows", "player_rows", "relation_rows")
+            cases.append(CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared"))
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["player_and_tribe_data"]["parse_error"] = str(exc)
             cases.append(CaseResult("player_and_tribe_data", "fail", "Go player and tribe data JSON could not be parsed"))
@@ -2207,8 +2207,8 @@ def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src:
             got["player_rows"] = len(parsed.get("player_rows", []))
             got["relation_rows"] = len(parsed.get("relation_rows", []))
             private["go"]["player_and_tribe_data"]["parsed"] = got
-            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "tribe_rows", "player_rows", "relation_rows")
-            return [CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared; player missing-tribe parity remains open")], private
+            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "players_without_tribe", "tribe_rows", "player_rows", "relation_rows")
+            return [CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared")], private
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["player_and_tribe_data"]["parse_error"] = str(exc)
             return [CaseResult("player_and_tribe_data", "fail", "Go player and tribe data JSON could not be parsed")], private

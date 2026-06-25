@@ -449,6 +449,53 @@ func TestParsePrimitivePropertyRealignsToDeclaredDataSize(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyReturnsPartialContainerOnDeclaredBodyOverread(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "MyData",
+		2: "StructProperty",
+		3: "PlayerDataID",
+		4: "IntProperty",
+		5: "None",
+		6: "PlayerData",
+	})
+	var body bytes.Buffer
+	writeName(&body, 3)
+	writeName(&body, 4)
+	writeInt32(&body, 4)
+	writeInt32(&body, 0)
+	body.WriteByte(0)
+	writeInt32(&body, 42)
+	writeName(&body, 5)
+
+	var stream bytes.Buffer
+	writeName(&stream, 1)
+	writeName(&stream, 2)
+	writeUInt32(&stream, 1)
+	writeName(&stream, 6)
+	writeUInt32(&stream, 1)
+	writeName(&stream, 6)
+	writeUInt32(&stream, 0)
+	writeUInt32(&stream, uint32(body.Len()-2))
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+
+	prop, err := ParseOne(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err == nil || !isRecoverableCompoundError(err) {
+		t.Fatalf("ParseOne() error = %v, want recoverable compound error", err)
+	}
+	if prop == nil {
+		t.Fatalf("ParseOne() prop = nil, want partial property")
+	}
+	container, ok := prop.Value.(Container)
+	if !ok {
+		t.Fatalf("MyData value type = %T, want Container", prop.Value)
+	}
+	if value, ok := container.Value("PlayerDataID"); !ok || value != int32(42) {
+		t.Fatalf("PlayerDataID = %#v, %v; want 42, true", value, ok)
+	}
+}
+
 func TestParsePropertyPreservesEncodedBytes(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

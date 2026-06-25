@@ -20,7 +20,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `tribe_list`: `pass` (save path tribe list aggregates compared)
 - `player_all`: `pass` (save path player aggregate fallback compared)
 - `player_tribe_links`: `pass` (player tribe active and inactive relation aggregates compared)
-- `player_and_tribe_data`: `pass` (combined player, tribe, and relation JSON aggregates compared; player missing-tribe parity remains open)
+- `player_and_tribe_data`: `pass` (combined player, tribe, and relation JSON aggregates compared)
 - `player_inventory`: `pass` (player inventory item count and location presence compared)
 - `player_inventories`: `pass` (all-player inventory aggregate counts compared)
 - `dino_filter`: `pass` (dino aggregate counts compared)
