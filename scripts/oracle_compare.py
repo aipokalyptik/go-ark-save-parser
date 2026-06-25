@@ -95,6 +95,18 @@ def parse_go_player_inventory(output: str) -> dict[str, Any]:
     return values
 
 
+def parse_go_unlocked_engrams(output: str) -> dict[str, Any]:
+    for line in reversed(output.splitlines()):
+        match = re.fullmatch(r"unlocked_engrams=(?P<count>\d+) first=(?P<first>.*?) last=(?P<last>.*)", line)
+        if match:
+            return {
+                "unlocked_engrams": int(match.group("count")),
+                "first": match.group("first"),
+                "last": match.group("last"),
+            }
+    raise ValueError("unexpected player_unlocked_engrams output")
+
+
 def parse_go_dino_best_stat(output: str) -> dict[str, Any] | None:
     if output.strip() == "no_match":
         return None
@@ -294,6 +306,7 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             force_legacy_store=True,
             cluster_data_dir=empty_cluster_dir,
         )
+        unlocked_engrams = sorted({engram.value for player in player_api.players for engram in player.stats.engrams})
         return {
             "profiles": len(player_api.profile_paths),
             "tribes": len(player_api.tribe_paths),
@@ -304,7 +317,9 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             "tribe_player_links": sum(len(players) for players in player_api.tribe_to_player_map.values()),
             "total_deaths": sum(player.nr_of_deaths for player in player_api.players),
             "highest_level": max((player.stats.level for player in player_api.players), default=0),
-            "unlocked_engrams": len({engram.value for player in player_api.players for engram in player.stats.engrams}),
+            "unlocked_engrams": len(unlocked_engrams),
+            "first_unlocked_engram": unlocked_engrams[0] if unlocked_engrams else "",
+            "last_unlocked_engram": unlocked_engrams[-1] if unlocked_engrams else "",
         }
     finally:
         save.close()
@@ -1195,6 +1210,24 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
         want = {key: py_local_profiles[key] for key in ("total_deaths", "unlocked_engrams")}
         cases.append(CaseResult("local_profile_player_aggregates", "pass" if {key: got.get(key) for key in want} == want else "fail", "local player death and unlocked engram aggregates compared"))
+
+    go_player_unlocked_engrams = run(["go", "run", "./examples/player_unlocked_engrams", str(save_path)], repo_root, env)
+    private["go"]["player_unlocked_engrams"] = {
+        "exit_code": go_player_unlocked_engrams.returncode,
+        "stdout": go_player_unlocked_engrams.stdout,
+        "stderr": go_player_unlocked_engrams.stderr,
+    }
+    if go_player_unlocked_engrams.returncode != 0:
+        cases.append(CaseResult("player_unlocked_engrams", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_go_unlocked_engrams(go_player_unlocked_engrams.stdout)
+        private["go"]["player_unlocked_engrams"]["parsed"] = got
+        want = {
+            "unlocked_engrams": py_local_profiles["unlocked_engrams"],
+            "first": py_local_profiles["first_unlocked_engram"],
+            "last": py_local_profiles["last_unlocked_engram"],
+        }
+        cases.append(CaseResult("player_unlocked_engrams", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path unlocked-engram set compared"))
 
     go_player_all = run(["go", "run", "./examples/player_all", str(save_path)], repo_root, env)
     private["go"]["player_all"] = {

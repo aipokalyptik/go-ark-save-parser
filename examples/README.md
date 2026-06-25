@@ -1,8 +1,8 @@
 # Examples
 
-These examples are offline-only Go counterparts for runnable upstream example
-categories. They require local files and do not use FTP, RCON, or live server
-access.
+These examples are offline-only Go counterparts for implemented runnable
+upstream example categories. They require local files and do not use FTP, RCON,
+or live server access.
 
 Example output is not redacted. It can include local paths, class names,
 profile/tribe IDs, upload IDs, locations, and other save-derived details. Treat
@@ -80,6 +80,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `player_all`: accept a save path or save directory and print player/tribe
   aggregate counts, falling back to sibling local profile files when a save has
   no embedded player store.
+- `player_unlocked_engrams`: accept a save path or save directory and print the
+  sorted distinct unlocked engram blueprint set plus aggregate boundary values.
 - `player_tribe_links`: accept a save path or save directory and print active
   tribe-player links plus inactive-member and missing-tribe aggregate counts.
 - `player_inventory`: open a local `.ark`, resolve a player data ID through its

@@ -350,6 +350,9 @@ enough that oracle-derived tests can run against translated packages.
       upstream oracle output for save-level player/tribe fallback aggregate
       parity: players, tribes, highest_level, total_deaths, and
       unlocked_engrams.
+- [x] Compare normalized Go `player_unlocked_engrams` output with private
+      Python upstream oracle output for sorted distinct unlocked engram set
+      count and boundary values.
 - [x] Compare normalized Go `player_tribe_links` aggregate output with private
       Python upstream oracle output for active tribe-player links, inactive
       members, players without parsed tribes, and tribes without active

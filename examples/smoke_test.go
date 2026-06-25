@@ -104,6 +104,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "base_components", "bases=1 total_structures=1 largest=1 min10=0 faults=0", savePath)
 	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
+	runExample(t, "player_unlocked_engrams", "unlocked_engrams=2 first=Blueprint'/Game/Engrams/EngramA.EngramA_C' last=Blueprint'/Game/Engrams/EngramB.EngramB_C'", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
 	runExample(t, "tribute_json", `"player_data_count": 2`, tributePath)

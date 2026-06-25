@@ -14,6 +14,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `export_json`: `pass` (save-info JSON metrics and class list compared)
 - `local_profiles`: `pass` (local profile and tribe aggregate counts compared)
 - `local_profile_player_aggregates`: `pass` (local player death and unlocked engram aggregates compared)
+- `player_unlocked_engrams`: `pass` (save path unlocked-engram set compared)
 - `player_all`: `pass` (save path player aggregate fallback compared)
 - `player_tribe_links`: `pass` (player tribe active and inactive relation aggregates compared)
 - `player_inventory`: `pass` (player inventory item count and location presence compared)
@@ -43,4 +44,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 34
+- `pass`: 35
