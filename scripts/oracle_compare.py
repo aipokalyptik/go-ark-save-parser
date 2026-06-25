@@ -455,6 +455,23 @@ def python_player_tribe_links_oracle(save_path: Path, repo_root: Path, upstream_
         save.close()
 
 
+def python_player_and_tribe_data_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any]:
+    local = python_local_profiles_oracle(save_path, repo_root, upstream_src)
+    links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
+    return {
+        "players": local["parsed_players"],
+        "tribes": local["parsed_tribes"],
+        "players_with_names": local["players_with_names"],
+        "tribes_with_names": local["tribes_with_names"],
+        "active_links": links["active_links"],
+        "inactive_members": links["inactive_members"],
+        "players_without_tribe": links["players_without_tribe"],
+        "tribe_rows": local["parsed_tribes"],
+        "player_rows": local["parsed_players"],
+        "relation_rows": local["parsed_tribes"],
+    }
+
+
 def python_dino_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.dino_api import DinoApi  # type: ignore
@@ -1316,6 +1333,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_class_property_summary = python_class_property_summary_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_player_tribe_links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
+    py_player_and_tribe_data = python_player_and_tribe_data_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
     py_dino_best_base_stat = python_dino_best_base_stat_oracle(save_path, upstream_src)
@@ -1351,6 +1369,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_class_property_summary": py_class_property_summary,
         "python_local_profiles": py_local_profiles,
         "python_player_tribe_links": py_player_tribe_links,
+        "python_player_and_tribe_data": py_player_and_tribe_data,
         "python_dino_filter": py_dino_filter,
         "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
         "python_dino_best_base_stat": py_dino_best_base_stat,
@@ -1589,6 +1608,28 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_player_tribe_links.stdout)
         private["go"]["player_tribe_links"]["parsed"] = got
         cases.append(CaseResult("player_tribe_links", "pass" if {key: got.get(key) for key in py_player_tribe_links} == py_player_tribe_links else "fail", "player tribe active and inactive relation aggregates compared"))
+
+    go_player_and_tribe_data = run(["go", "run", "./examples/player_and_tribe_data", str(save_path)], repo_root, env)
+    private["go"]["player_and_tribe_data"] = {
+        "exit_code": go_player_and_tribe_data.returncode,
+        "stdout": go_player_and_tribe_data.stdout,
+        "stderr": go_player_and_tribe_data.stderr,
+    }
+    if go_player_and_tribe_data.returncode != 0:
+        cases.append(CaseResult("player_and_tribe_data", "fail", "Go example exited non-zero"))
+    else:
+        try:
+            parsed = json.loads(go_player_and_tribe_data.stdout)
+            got = {key: parsed.get(key) for key in py_player_and_tribe_data}
+            got["tribe_rows"] = len(parsed.get("tribe_rows", []))
+            got["player_rows"] = len(parsed.get("player_rows", []))
+            got["relation_rows"] = len(parsed.get("relation_rows", []))
+            private["go"]["player_and_tribe_data"]["parsed"] = got
+            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "tribe_rows", "player_rows", "relation_rows")
+            cases.append(CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared; player missing-tribe parity remains open"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["player_and_tribe_data"]["parse_error"] = str(exc)
+            cases.append(CaseResult("player_and_tribe_data", "fail", "Go player and tribe data JSON could not be parsed"))
 
     if py_player_inventory is None:
         cases.append(CaseResult("player_inventory", "skip", "oracle save has no player inventory candidate"))
@@ -2148,6 +2189,29 @@ def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src:
         got = parse_key_value_lines(go_player_inventories.stdout)
         private["go"]["player_inventories"]["parsed"] = got
         return [CaseResult("player_inventories", "pass" if {key: got.get(key) for key in py_player_inventories} == py_player_inventories else "fail", "all-player inventory aggregate counts compared")], private
+    if case_name == "player_and_tribe_data":
+        py_player_and_tribe_data = python_player_and_tribe_data_oracle(save_path, repo_root, upstream_src)
+        private["python_player_and_tribe_data"] = py_player_and_tribe_data
+        go_player_and_tribe_data = run(["go", "run", "./examples/player_and_tribe_data", str(save_path)], repo_root, env)
+        private["go"]["player_and_tribe_data"] = {
+            "exit_code": go_player_and_tribe_data.returncode,
+            "stdout": go_player_and_tribe_data.stdout,
+            "stderr": go_player_and_tribe_data.stderr,
+        }
+        if go_player_and_tribe_data.returncode != 0:
+            return [CaseResult("player_and_tribe_data", "fail", "Go example exited non-zero")], private
+        try:
+            parsed = json.loads(go_player_and_tribe_data.stdout)
+            got = {key: parsed.get(key) for key in py_player_and_tribe_data}
+            got["tribe_rows"] = len(parsed.get("tribe_rows", []))
+            got["player_rows"] = len(parsed.get("player_rows", []))
+            got["relation_rows"] = len(parsed.get("relation_rows", []))
+            private["go"]["player_and_tribe_data"]["parsed"] = got
+            stable_keys = ("players", "tribes", "players_with_names", "tribes_with_names", "active_links", "inactive_members", "tribe_rows", "player_rows", "relation_rows")
+            return [CaseResult("player_and_tribe_data", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_player_and_tribe_data[key] for key in stable_keys} else "fail", "combined player, tribe, and relation JSON aggregates compared; player missing-tribe parity remains open")], private
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["player_and_tribe_data"]["parse_error"] = str(exc)
+            return [CaseResult("player_and_tribe_data", "fail", "Go player and tribe data JSON could not be parsed")], private
     raise ValueError(f"unsupported focused oracle case {case_name!r}")
 
 
@@ -2180,7 +2244,7 @@ def main() -> int:
     parser.add_argument("--upstream-src", type=Path, default=Path(".oracle/upstream/src"))
     parser.add_argument("--out", type=Path, default=Path(".oracle/output/oracle-comparison.json"))
     parser.add_argument("--summary", type=Path, default=Path("docs/oracle-comparison-summary.md"))
-    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list", "player_inventories"], default=None)
+    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list", "player_inventories", "player_and_tribe_data"], default=None)
     args = parser.parse_args()
 
     repo_root = Path.cwd()

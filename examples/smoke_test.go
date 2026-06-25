@@ -146,6 +146,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "player_list", "players=1 with_names=1 highest_level=1", dir)
 	runExample(t, "tribe_list", "tribes=1 with_names=1 members=0 dinos=7", dir)
+	runExample(t, "player_and_tribe_data", `"players": 1`, dir)
 	runExample(t, "player_unlocked_engrams", "unlocked_engrams=2 first=Blueprint'/Game/Engrams/EngramA.EngramA_C' last=Blueprint'/Game/Engrams/EngramB.EngramB_C'", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)

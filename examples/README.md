@@ -101,6 +101,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   sorted distinct unlocked engram blueprint set plus aggregate boundary values.
 - `player_tribe_links`: accept a save path or save directory and print active
   tribe-player links plus inactive-member and missing-tribe aggregate counts.
+- `player_and_tribe_data`: accept a save path or save directory and print a
+  deterministic JSON summary for players, tribes, and active/inactive relation
+  rows without private names or IDs.
 - `player_inventory`: open a local `.ark`, resolve a player data ID through its
   pawn, and print the linked inventory item count plus pawn location when
   present.
