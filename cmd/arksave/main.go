@@ -640,8 +640,9 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 	if opts.Redact {
 		return nil
 	}
-	for _, item := range data.Items {
-		if _, err := fmt.Fprintf(out, "  item[%d] blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
+	clusterInfo := arkapi.ExportClusterData(data)
+	for _, item := range clusterInfo.Items {
+		if _, err := fmt.Fprintf(out, "  item[%d] type=%s blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Type, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
 			return err
 		}
 	}

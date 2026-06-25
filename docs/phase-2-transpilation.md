@@ -142,7 +142,7 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add richer local cluster uploaded item metadata for quantity, rating,
       quality index, and crafter names where present.
 - [x] Add local cluster uploaded item type classification for dino, equipment,
-      and other items in JSON summaries.
+      and other items in JSON and CLI summaries.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

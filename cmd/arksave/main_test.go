@@ -12,6 +12,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
@@ -410,6 +411,44 @@ func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 	got := out.String()
 	if !strings.Contains(got, "parse_error=unsupported embedded dino archive") {
 		t.Fatalf("cluster summary %q does not contain dino parse error", got)
+	}
+}
+
+func TestClusterSummaryPrintsItemTypes(t *testing.T) {
+	var out bytes.Buffer
+	err := printClusterSummary(&out, &arkcluster.Data{
+		Path:    "/tmp/EOS_abc123",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+		Items: []arkcluster.Item{
+			{
+				Index:      0,
+				Blueprint:  "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+				Quantity:   1,
+				UploadTime: 12345,
+			},
+			{
+				Index:     1,
+				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
+					Name:  "CustomItemDatas",
+					Type:  arkproperty.TypeArray,
+					Value: arkproperty.Array{Values: []any{arkproperty.Container{}}},
+				}}},
+				UploadTime: 67890,
+			},
+		},
+	}, runOptions{})
+	if err != nil {
+		t.Fatalf("printClusterSummary() error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"item[0] type=equipment blueprint=/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C quantity=1 upload=12345",
+		"item[1] type=dino blueprint=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C quantity=0 upload=67890",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster summary %q does not contain %q", got, want)
+		}
 	}
 }
 
