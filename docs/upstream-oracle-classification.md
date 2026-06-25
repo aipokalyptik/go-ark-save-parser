@@ -118,7 +118,11 @@ These are offline-compatible but produce files or images, so outputs stay under
 - `examples/json_api/ex_01_export_all_items.py` is implemented as
   `examples/export_all_items`, which writes save info plus all implemented
   domain JSON exports to an explicit output directory with a manifest.
-- `examples/equipment_api/history/*.py`
+- `examples/equipment_api/history/*.py` are local multi-save history utilities.
+  They require a timestamped sequence of `.ark` snapshots or `.ark.gz`
+  snapshots plus an `ark_files.json` manifest. The supplied private backup only
+  provides a single current save per map, so private oracle execution is not
+  available yet.
 
 ## Currently Blocked Read-Only Oracle Paths
 
@@ -147,6 +151,7 @@ correctness.
 - `examples/dino_api/ex_13_extract_and_reinsert_dino.py`
 - `examples/dino_api/ex_14_boost_dino_stats.py`
 - `examples/dino_api/ex_15_force_grow_up_babies.py`
+- `examples/equipment_api/ex_07_generate_blueprint_and_insert_in_save.py`
 - `examples/structure_api/ex_05_modify_structures.py`
 - `examples/structure_api/ex_08_modify_structures_of_tribe.py`
 

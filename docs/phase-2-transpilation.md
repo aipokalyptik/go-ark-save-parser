@@ -186,6 +186,10 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add `export_all_items` as an explicit-output-directory counterpart to
       upstream `JsonApi.export_all`, writing save info plus implemented domain
       JSON files with a manifest.
+- [x] Classify upstream equipment history scripts as local multi-save utilities
+      that need timestamped save snapshots or `.ark.gz` archives. The supplied
+      private backup does not include enough historical snapshots for an oracle
+      run.
 - [x] Include equipment crafted state, implemented stat names, and average
       internal stat ranking values in equipment domain JSON export.
 - [x] Include structure inventory UUID, item counts, open slots, and empty-state
@@ -335,6 +339,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Port first copy-based modification helpers where upstream behavior can be
       translated safely: copy save, remove object row, upsert object bytes, and
       upsert custom values on copied SQLite saves.
+- [x] Classify upstream generated-blueprint insertion as mutation-copy only:
+      structural copy/write/reparse checks are in scope, but live-server
+      behavior remains unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal,
       object hex-byte upserts, and custom-table hex-byte upserts against
       explicit output copies.
