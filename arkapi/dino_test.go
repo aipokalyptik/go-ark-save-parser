@@ -1506,7 +1506,7 @@ func syntheticDinoDetailObjectBytes() []byte {
 	testfixtures.WritePositionedNamePropertyID(&buf, 0x1000002f, 0x10000033, 1, 0x10000034)
 	testfixtures.WritePositionedNamePropertyID(&buf, 0x1000002f, 0x10000033, 4, 0x10000031)
 	testfixtures.WriteStringPropertyID(&buf, 0x10000030, 0x1000001a, "\nTheIsland")
-	writeNameArrayProperty(&buf, 0x1000003d, []uint32{0x1000003e, 0x1000003f})
+	testfixtures.WriteNameArrayPropertyID(&buf, 0x1000003d, 0x1000001e, 0x10000033, []uint32{0x1000003e, 0x1000003f})
 	testfixtures.WriteStringPropertyID(&buf, 0x10000026, 0x1000001a, "Porters")
 	writeIntProperty(&buf, 0x10000027, 555)
 	testfixtures.WriteStringPropertyID(&buf, 0x10000028, 0x1000001a, "Porters")
@@ -1642,23 +1642,4 @@ func writeByteArrayProperty(buf *bytes.Buffer, name uint32, byteProperty uint32,
 	buf.WriteByte(0)
 	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
 	buf.Write(values)
-}
-
-func writeNameArrayProperty(buf *bytes.Buffer, name uint32, values []uint32) {
-	dataSize := uint32(4 + len(values)*8)
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(dataSize))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000033))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, dataSize)
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	for _, value := range values {
-		_ = binary.Write(buf, binary.LittleEndian, value)
-		_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	}
 }

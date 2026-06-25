@@ -375,9 +375,9 @@ CLI tools, and reusable APIs without losing oracle parity.
         archive tests now reuse shared archive framing/string/property writers.
         Dino/equipment string property payload writers and equipment positioned
         UInt16 property payload writers are now shared, and dino scalar,
-        object-reference, and positioned stat/color property payload writers now
-        use shared helpers; lower-level dino/equipment parser payload builders
-        still remain.
+        object-reference, positioned stat/color, and name-array property payload
+        writers now use shared helpers; lower-level dino/equipment parser
+        payload builders still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 
