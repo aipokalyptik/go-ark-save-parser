@@ -348,9 +348,14 @@ For the cross-phase monitorable checklist, see
 - [x] Classify upstream generated-blueprint insertion as mutation-copy only:
       structural copy/write/reparse checks are in scope, but live-server
       behavior remains unverified.
+- [x] Add partial structural base import coverage by reading
+      `base_export_from_save` raw structure rows and reinserting them into an
+      explicit copied save. Location movement, inventory expansion,
+      customization, owner replacement, and live-server acceptance remain
+      unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal by
-      UUID or class substring, object hex-byte upserts, and custom-table
-      hex-byte upserts against explicit output copies.
+      UUID or class substring, base binary row import, object hex-byte upserts,
+      and custom-table hex-byte upserts against explicit output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.

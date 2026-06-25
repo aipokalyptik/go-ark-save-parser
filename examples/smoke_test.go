@@ -20,6 +20,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
 	classRemoveCopyPath := filepath.Join(dir, "class-remove-copy.ark")
+	baseImportCopyPath := filepath.Join(dir, "base-import-copy.ark")
 	objectCopyPath := filepath.Join(dir, "object-copy.ark")
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
@@ -189,6 +190,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		t.Fatalf("ObjectBinary(%s) error = nil, want removed object", objectID)
 	}
 	_ = classRemoveCopy.Close()
+	runExample(t, "mutation_copy", "imported base rows: 1", "import-base-binary", savePath, baseImportCopyPath, baseExportPath)
+	baseImportCopy, err := arksave.Open(baseImportCopyPath)
+	if err != nil {
+		t.Fatalf("Open(base import mutation copy) error = %v", err)
+	}
+	if _, err := baseImportCopy.ObjectBinary(structureID); err != nil {
+		_ = baseImportCopy.Close()
+		t.Fatalf("ObjectBinary(imported structure %s) error = %v", structureID, err)
+	}
+	_ = baseImportCopy.Close()
 	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")
 	objectCopy, err := arksave.Open(objectCopyPath)
 	if err != nil {

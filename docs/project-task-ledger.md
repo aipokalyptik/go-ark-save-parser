@@ -215,9 +215,14 @@ documented.
 - [x] Document live-server validation as out of scope.
 - [~] Upstream generated-blueprint insertion is classified as mutation-copy
       only; live-server acceptance remains unverified.
-- [ ] Add more structural mutation tests for upstream mutation examples where
-      local-copy behavior can be represented without claiming live-server
-      safety.
+- [~] Upstream base import/customize examples have partial structural coverage
+      through exported raw structure rows and `ImportBaseBinary` reinsert into
+      explicit copied saves. Moving structures, inventory expansion,
+      customization, owner replacement, and live-server acceptance remain
+      unverified.
+- [ ] Add more structural mutation tests for upstream dino, equipment, and
+      structure mutation examples where local-copy behavior can be represented
+      without claiming live-server safety.
 
 ### Examples And Oracle Comparisons
 

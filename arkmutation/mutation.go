@@ -108,6 +108,63 @@ func PutCustomValue(inputPath string, outputPath string, key string, value []byt
 	})
 }
 
+func ImportBaseBinary(inputPath string, outputPath string, baseExportDir string) (int, error) {
+	rows, err := readBaseExportRows(baseExportDir)
+	if err != nil {
+		return 0, err
+	}
+	err = mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
+		for id, value := range rows {
+			if _, err := db.Exec(`insert into game (key, value) values (?, ?)
+				on conflict(key) do update set value = excluded.value`, id[:], value); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(rows), nil
+}
+
+func readBaseExportRows(baseExportDir string) (map[uuid.UUID][]byte, error) {
+	if baseExportDir == "" {
+		return nil, errors.New("base export directory is required")
+	}
+	rows := map[uuid.UUID][]byte{}
+	err := filepath.WalkDir(baseExportDir, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		name := entry.Name()
+		if !strings.HasPrefix(name, "str_") || !strings.HasSuffix(name, ".bin") {
+			return nil
+		}
+		rawID := strings.TrimSuffix(strings.TrimPrefix(name, "str_"), ".bin")
+		id, err := uuid.Parse(rawID)
+		if err != nil {
+			return fmt.Errorf("parse base export structure filename %s: %w", name, err)
+		}
+		value, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rows[id] = value
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("base export directory %s contains no str_<uuid>.bin files", baseExportDir)
+	}
+	return rows, nil
+}
+
 func matchingObjectIDsByClassContains(inputPath string, substring string) ([]uuid.UUID, error) {
 	save, err := arksave.Open(inputPath)
 	if err != nil {

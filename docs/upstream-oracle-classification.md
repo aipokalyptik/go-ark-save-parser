@@ -170,8 +170,14 @@ correctness.
 - `examples/basic_parsing/ex_04_remove_blueprint_from_save_file.py` is covered
   structurally by copy-based class-substring object removal; live server
   acceptance remains unverified.
-- `examples/base_api/ex_02a_import_base_at_location.py`
-- `examples/base_api/ex_02b_import_and_customize_base.py`
+- `examples/base_api/ex_02a_import_base_at_location.py` is structurally
+  represented by `BaseAPI.ExportBinary` plus `arkmutation.ImportBaseBinary`,
+  which can reinsert copied raw structure rows into an explicit output save
+  copy. Moving structures, inventory expansion, owner replacement, and
+  live-server acceptance remain unverified.
+- `examples/base_api/ex_02b_import_and_customize_base.py` has partial
+  structural coverage through copied row reinsert only. Customization,
+  generated fuel/ammo contents, and live-server acceptance remain unverified.
 - `examples/dino_api/ex_06_change_dino_traits.py`
 - `examples/dino_api/ex_12_remove_tamed_dino_from_save.py`
 - `examples/dino_api/ex_13_extract_and_reinsert_dino.py`

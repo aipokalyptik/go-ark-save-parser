@@ -124,6 +124,46 @@ func TestPutCustomValueWritesCopyAndReopens(t *testing.T) {
 	}
 }
 
+func TestImportBaseBinaryWritesCopyAndReopens(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	exportDir := filepath.Join(dir, "base-export", "base_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	objectID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	createSyntheticSave(t, input, uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), testfixtures.GenericObjectBytes(0x10000001, 0x10000003))
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	want := testfixtures.GenericObjectBytes(0x10000002, 0x10000003)
+	if err := os.WriteFile(filepath.Join(exportDir, "str_"+objectID.String()+".bin"), want, 0o600); err != nil {
+		t.Fatalf("write base export row: %v", err)
+	}
+
+	imported, err := ImportBaseBinary(input, output, filepath.Join(dir, "base-export"))
+	if err != nil {
+		t.Fatalf("ImportBaseBinary() error = %v", err)
+	}
+	if imported != 1 {
+		t.Fatalf("ImportBaseBinary() imported = %d, want 1", imported)
+	}
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	got, err := mutated.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(imported) error = %v", err)
+	}
+	_ = mutated.Close()
+	if !bytes.Equal(got, want) {
+		t.Fatalf("imported ObjectBinary = % x, want % x", got, want)
+	}
+
+	if _, err := os.Stat(input); err != nil {
+		t.Fatalf("input save missing after import: %v", err)
+	}
+}
+
 func TestCopySaveRequiresDistinctNewOutputPath(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.ark")

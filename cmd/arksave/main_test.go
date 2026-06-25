@@ -917,8 +917,16 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	removedPath := filepath.Join(dir, "removed.ark")
 	removedClassPath := filepath.Join(dir, "removed-class.ark")
 	objectPath := filepath.Join(dir, "object.ark")
+	importBasePath := filepath.Join(dir, "import-base.ark")
+	baseExportDir := filepath.Join(dir, "base-export", "base_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	createSyntheticSave(t, savePath)
 	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+	if err := os.MkdirAll(baseExportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(base export) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(baseExportDir, "str_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff.bin"), testfixtures.GenericObjectBytes(1, 2), 0o600); err != nil {
+		t.Fatalf("write base export row: %v", err)
+	}
 
 	var copyOut bytes.Buffer
 	if err := run([]string{"--redact", "mutate", "copy", savePath, copyPath}, &copyOut); err != nil {
@@ -953,6 +961,15 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	got = objectOut.String()
 	if strings.Contains(got, objectPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
 		t.Fatalf("redacted mutate put-object-hex output = %q", got)
+	}
+
+	var importBaseOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "import-base-binary", savePath, importBasePath, filepath.Join(dir, "base-export")}, &importBaseOut); err != nil {
+		t.Fatalf("run(--redact mutate import-base-binary) error = %v", err)
+	}
+	got = importBaseOut.String()
+	if strings.Contains(got, importBasePath) || strings.Contains(got, filepath.Join(dir, "base-export")) || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate import-base-binary output = %q", got)
 	}
 }
 
@@ -1067,6 +1084,43 @@ func TestMutatePutObjectHexCommandWritesReopenableCopy(t *testing.T) {
 	_ = save.Close()
 	if !bytes.Equal(got, []byte{9, 8, 7}) {
 		t.Fatalf("ObjectBinary(%s) = % x, want 09 08 07", objectID, got)
+	}
+}
+
+func TestMutateImportBaseBinaryCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "imported-base.ark")
+	exportDir := filepath.Join(dir, "base-export", "base_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	createSyntheticSave(t, savePath)
+	objectID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	want := testfixtures.GenericObjectBytes(1, 2)
+	if err := os.WriteFile(filepath.Join(exportDir, "str_"+objectID.String()+".bin"), want, 0o600); err != nil {
+		t.Fatalf("write base export row: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "import-base-binary", savePath, outPath, filepath.Join(dir, "base-export")}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate import-base-binary) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), "rows=1") {
+		t.Fatalf("mutate import-base-binary output %q missing path or row count", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	got, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", objectID, err)
+	}
+	_ = save.Close()
+	if !bytes.Equal(got, want) {
+		t.Fatalf("ObjectBinary(%s) = % x, want exported row", objectID, got)
 	}
 }
 
