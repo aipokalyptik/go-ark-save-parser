@@ -190,12 +190,13 @@ Inspect local tribute indexes:
 ./bin/arksave tribute /path/to/tribute-directory-or-file
 ```
 
-Create an experimental mutation copy, remove an object from a copied save,
-upsert object bytes, or upsert a custom-table value from hex bytes:
+Create an experimental mutation copy, remove objects from a copied save, upsert
+object bytes, or upsert a custom-table value from hex bytes:
 
 ```sh
 ./bin/arksave mutate copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
 ./bin/arksave mutate remove-object /path/to/Valguero_WP.ark /tmp/Valguero_removed.ark 00112233-4455-6677-8899-aabbccddeeff
+./bin/arksave mutate remove-class-contains /path/to/Valguero_WP.ark /tmp/Valguero_no_spyglass.ark SuperSpyglass
 ./bin/arksave mutate put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
 ./bin/arksave mutate put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```
@@ -243,6 +244,7 @@ go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file
 go run ./examples/tribute_json /path/to/tribute-directory-or-file
 go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
+go run ./examples/mutation_copy remove-class-contains /path/to/Valguero_WP.ark /tmp/Valguero_no_spyglass.ark SuperSpyglass
 go run ./examples/mutation_copy put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
 go run ./examples/mutation_copy put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```

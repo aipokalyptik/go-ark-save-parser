@@ -49,6 +49,56 @@ func TestRemoveObjectWritesCopyAndReopens(t *testing.T) {
 	}
 }
 
+func TestRemoveObjectsByClassContainsWritesCopyAndReopens(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	removeID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	keepID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	createSyntheticSaveWithObjects(t, input, map[uuid.UUID][]byte{
+		removeID: testfixtures.GenericObjectBytes(0x10000001, 0x10000003),
+		keepID:   testfixtures.GenericObjectBytes(0x10000002, 0x10000003),
+	}, map[uint32]string{
+		0x10000001: "Blueprint'/Game/Test/SuperSpyglass.SuperSpyglass_C'",
+		0x10000002: "Blueprint'/Game/Test/StorageBox.StorageBox_C'",
+		0x10000003: "None",
+	})
+
+	removed, err := RemoveObjectsByClassContains(input, output, "SuperSpyglass")
+	if err != nil {
+		t.Fatalf("RemoveObjectsByClassContains() error = %v", err)
+	}
+	if removed != 1 {
+		t.Fatalf("RemoveObjectsByClassContains() removed = %d, want 1", removed)
+	}
+
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	ids, err := mutated.ObjectIDs()
+	if err != nil {
+		t.Fatalf("ObjectIDs(output) error = %v", err)
+	}
+	_ = mutated.Close()
+	if len(ids) != 1 || ids[0] != keepID {
+		t.Fatalf("mutated ObjectIDs = %v, want only %s", ids, keepID)
+	}
+
+	original, err := arksave.Open(input)
+	if err != nil {
+		t.Fatalf("Open(input) error = %v", err)
+	}
+	ids, err = original.ObjectIDs()
+	if err != nil {
+		t.Fatalf("ObjectIDs(input) error = %v", err)
+	}
+	_ = original.Close()
+	if len(ids) != 2 {
+		t.Fatalf("input ObjectIDs length = %d, want original two objects", len(ids))
+	}
+}
+
 func TestPutCustomValueWritesCopyAndReopens(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.ark")
@@ -113,8 +163,13 @@ func TestMutationFailureRemovesOutputCopy(t *testing.T) {
 
 func createSyntheticSave(t *testing.T, path string, objectID uuid.UUID, objectBytes []byte) {
 	t.Helper()
+	createSyntheticSaveWithObjects(t, path, map[uuid.UUID][]byte{objectID: objectBytes}, map[uint32]string{0x10000000: "None"})
+}
+
+func createSyntheticSaveWithObjects(t *testing.T, path string, objects map[uuid.UUID][]byte, names map[uint32]string) {
+	t.Helper()
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
-		Header:  testfixtures.Header("Valguero_WP", map[uint32]string{0x10000000: "None"}),
-		Objects: map[uuid.UUID][]byte{objectID: objectBytes},
+		Header:  testfixtures.Header("Valguero_WP", names),
+		Objects: objects,
 	})
 }

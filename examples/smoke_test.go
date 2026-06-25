@@ -19,6 +19,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
+	classRemoveCopyPath := filepath.Join(dir, "class-remove-copy.ark")
 	objectCopyPath := filepath.Join(dir, "object-copy.ark")
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
@@ -150,6 +151,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	if _, err := os.Stat(copyPath); err != nil {
 		t.Fatalf("mutation_copy output missing: %v", err)
 	}
+	runExample(t, "mutation_copy", "removed class substring:", "remove-class-contains", savePath, classRemoveCopyPath, "/Game/Test.Test_C")
+	classRemoveCopy, err := arksave.Open(classRemoveCopyPath)
+	if err != nil {
+		t.Fatalf("Open(class remove mutation copy) error = %v", err)
+	}
+	if _, err := classRemoveCopy.ObjectBinary(objectID); err == nil {
+		_ = classRemoveCopy.Close()
+		t.Fatalf("ObjectBinary(%s) error = nil, want removed object", objectID)
+	}
+	_ = classRemoveCopy.Close()
 	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")
 	objectCopy, err := arksave.Open(objectCopyPath)
 	if err != nil {

@@ -339,14 +339,15 @@ enough that oracle-derived tests can run against translated packages.
 ### Experimental Mutation
 
 - [x] Port first copy-based modification helpers where upstream behavior can be
-      translated safely: copy save, remove object row, upsert object bytes, and
-      upsert custom values on copied SQLite saves.
+      translated safely: copy save, remove object rows by UUID or class
+      substring, upsert object bytes, and upsert custom values on copied SQLite
+      saves.
 - [x] Classify upstream generated-blueprint insertion as mutation-copy only:
       structural copy/write/reparse checks are in scope, but live-server
       behavior remains unverified.
-- [x] Expose experimental CLI mutation commands for copy, object removal,
-      object hex-byte upserts, and custom-table hex-byte upserts against
-      explicit output copies.
+- [x] Expose experimental CLI mutation commands for copy, object removal by
+      UUID or class substring, object hex-byte upserts, and custom-table
+      hex-byte upserts against explicit output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.

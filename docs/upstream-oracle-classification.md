@@ -145,7 +145,9 @@ These examples mutate save data and must run only against copied inputs. They
 are useful for write/reparse structural tests but cannot prove live Ark server
 correctness.
 
-- `examples/basic_parsing/ex_04_remove_blueprint_from_save_file.py`
+- `examples/basic_parsing/ex_04_remove_blueprint_from_save_file.py` is covered
+  structurally by copy-based class-substring object removal; live server
+  acceptance remains unverified.
 - `examples/base_api/ex_02a_import_base_at_location.py`
 - `examples/base_api/ex_02b_import_and_customize_base.py`
 - `examples/dino_api/ex_06_change_dino_traits.py`

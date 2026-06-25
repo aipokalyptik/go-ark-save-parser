@@ -33,6 +33,15 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Printf("removed object: %s\nwrote copy: %s\n", id, os.Args[3])
+	case "remove-class-contains":
+		if len(os.Args) != 5 {
+			usage()
+		}
+		removed, err := arkmutation.RemoveObjectsByClassContains(os.Args[2], os.Args[3], os.Args[4])
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("removed class substring: %s removed=%d\nwrote copy: %s\n", os.Args[4], removed, os.Args[3])
 	case "put-object-hex":
 		if len(os.Args) != 6 {
 			usage()
@@ -85,6 +94,7 @@ func usage() {
   %s <save.ark> <out.ark>
   %s copy <save.ark> <out.ark>
   %s remove-object <save.ark> <out.ark> <uuid>
+  %s remove-class-contains <save.ark> <out.ark> <class-substring>
   %s put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
-  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }

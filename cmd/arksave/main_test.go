@@ -915,6 +915,7 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	savePath := filepath.Join(dir, "synthetic.ark")
 	copyPath := filepath.Join(dir, "copy.ark")
 	removedPath := filepath.Join(dir, "removed.ark")
+	removedClassPath := filepath.Join(dir, "removed-class.ark")
 	objectPath := filepath.Join(dir, "object.ark")
 	createSyntheticSave(t, savePath)
 	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
@@ -934,6 +935,15 @@ func TestMutateCommandsRedactOutputDetailsWhenRequested(t *testing.T) {
 	got := removeOut.String()
 	if strings.Contains(got, removedPath) || strings.Contains(got, objectID) || !strings.Contains(got, "[redacted]") {
 		t.Fatalf("redacted mutate remove-object output = %q", got)
+	}
+
+	var removeClassOut bytes.Buffer
+	if err := run([]string{"--redact", "mutate", "remove-class-contains", savePath, removedClassPath, "/Game/Test"}, &removeClassOut); err != nil {
+		t.Fatalf("run(--redact mutate remove-class-contains) error = %v", err)
+	}
+	got = removeClassOut.String()
+	if strings.Contains(got, removedClassPath) || strings.Contains(got, "/Game/Test") || !strings.Contains(got, "[redacted]") {
+		t.Fatalf("redacted mutate remove-class-contains output = %q", got)
 	}
 
 	var objectOut bytes.Buffer
@@ -960,6 +970,34 @@ func TestMutateRemoveObjectCommandWritesReopenableCopy(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), objectID) {
 		t.Fatalf("mutate remove-object output %q missing path or uuid", out.String())
+	}
+	save, err := arksave.Open(outPath)
+	if err != nil {
+		t.Fatalf("Open(mutated output) error = %v", err)
+	}
+	ids, err := save.ObjectIDs()
+	if err != nil {
+		t.Fatalf("ObjectIDs(mutated output) error = %v", err)
+	}
+	_ = save.Close()
+	if len(ids) != 0 {
+		t.Fatalf("mutated output ObjectIDs length = %d, want 0", len(ids))
+	}
+}
+
+func TestMutateRemoveClassContainsCommandWritesReopenableCopy(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	outPath := filepath.Join(dir, "removed-class.ark")
+	createSyntheticSave(t, savePath)
+
+	var out bytes.Buffer
+	err := run([]string{"mutate", "remove-class-contains", savePath, outPath, "/Game/Test"}, &out)
+	if err != nil {
+		t.Fatalf("run(mutate remove-class-contains) error = %v", err)
+	}
+	if !strings.Contains(out.String(), outPath) || !strings.Contains(out.String(), "/Game/Test") || !strings.Contains(out.String(), "removed=1") {
+		t.Fatalf("mutate remove-class-contains output %q missing path, class substring, or removal count", out.String())
 	}
 	save, err := arksave.Open(outPath)
 	if err != nil {

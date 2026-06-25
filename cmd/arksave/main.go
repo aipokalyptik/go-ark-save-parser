@@ -406,6 +406,16 @@ func mutate(args []string, out io.Writer, opts runOptions) error {
 		}
 		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy without object %s: %s\n", displayString(id.String(), opts), displayString(args[2], opts))
 		return err
+	case "remove-class-contains":
+		if len(args) != 4 {
+			return fmt.Errorf("mutate remove-class-contains requires a local .ark path, explicit output path, and class substring")
+		}
+		removed, err := arkmutation.RemoveObjectsByClassContains(args[1], args[2], args[3])
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy without class substring %s removed=%d: %s\n", displayString(args[3], opts), removed, displayString(args[2], opts))
+		return err
 	case "put-object-hex":
 		if len(args) != 5 {
 			return fmt.Errorf("mutate put-object-hex requires a local .ark path, explicit output path, object UUID, and hex value")

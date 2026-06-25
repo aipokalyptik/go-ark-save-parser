@@ -121,7 +121,7 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 ## Mutation-Copy Example
 
 - `mutation_copy`: copy a `.ark` save to a new explicit output path, remove an
-  object row from a copied save, upsert object bytes from hex, or upsert a
-  custom-table value from hex. Mutation helpers never modify inputs in place
-  and are structurally tested only; live Ark server behavior remains
-  unverified.
+  object row or all objects whose class contains a substring from a copied save,
+  upsert object bytes from hex, or upsert a custom-table value from hex.
+  Mutation helpers never modify inputs in place and are structurally tested
+  only; live Ark server behavior remains unverified.

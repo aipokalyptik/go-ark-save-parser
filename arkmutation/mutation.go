@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
@@ -69,6 +70,28 @@ func RemoveObject(inputPath string, outputPath string, id uuid.UUID) error {
 	})
 }
 
+func RemoveObjectsByClassContains(inputPath string, outputPath string, substring string) (int, error) {
+	if substring == "" {
+		return 0, errors.New("class substring is required")
+	}
+	ids, err := matchingObjectIDsByClassContains(inputPath, substring)
+	if err != nil {
+		return 0, err
+	}
+	err = mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
+		for _, id := range ids {
+			if _, err := db.Exec(`delete from game where key = ?`, id[:]); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(ids), nil
+}
+
 func PutObjectBinary(inputPath string, outputPath string, id uuid.UUID, value []byte) error {
 	return mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
 		_, err := db.Exec(`insert into game (key, value) values (?, ?)
@@ -83,6 +106,25 @@ func PutCustomValue(inputPath string, outputPath string, key string, value []byt
 			on conflict(key) do update set value = excluded.value`, key, value)
 		return err
 	})
+}
+
+func matchingObjectIDsByClassContains(inputPath string, substring string) ([]uuid.UUID, error) {
+	save, err := arksave.Open(inputPath)
+	if err != nil {
+		return nil, err
+	}
+	defer save.Close()
+	infos, err := save.ObjectClassInfos()
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]uuid.UUID, 0)
+	for _, info := range infos {
+		if strings.Contains(info.ClassName, substring) {
+			ids = append(ids, info.UUID)
+		}
+	}
+	return ids, nil
 }
 
 func mutateCopy(inputPath string, outputPath string, fn func(*sql.DB) error) error {
