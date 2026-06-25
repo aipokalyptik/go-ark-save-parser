@@ -115,7 +115,9 @@ These are offline-compatible but produce files or images, so outputs stay under
   raises `IndexError` on the supplied private save when a structure coordinate
   falls outside the fixed 100x100 heatmap grid.
 - `examples/structure_api/ex_07_extract_structures_per_owner.py`
-- `examples/json_api/ex_01_export_all_items.py`
+- `examples/json_api/ex_01_export_all_items.py` is implemented as
+  `examples/export_all_items`, which writes save info plus all implemented
+  domain JSON exports to an explicit output directory with a manifest.
 - `examples/equipment_api/history/*.py`
 
 ## Currently Blocked Read-Only Oracle Paths

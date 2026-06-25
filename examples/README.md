@@ -105,6 +105,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   player-data and tribe-data ID counts.
 - `tribute_json`: read one local compact tribute index file or directory and
   print the tribute summary JSON.
+- `export_all_items`: write save info plus all implemented domain JSON exports
+  into an explicit output directory with a manifest.
 
 ## Utility Examples
 

@@ -183,6 +183,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
       dino, structure, equipment, stackable, player, tribe, and base summaries.
+- [x] Add `export_all_items` as an explicit-output-directory counterpart to
+      upstream `JsonApi.export_all`, writing save info plus implemented domain
+      JSON files with a manifest.
 - [x] Include equipment crafted state, implemented stat names, and average
       internal stat ranking values in equipment domain JSON export.
 - [x] Include structure inventory UUID, item counts, open slots, and empty-state

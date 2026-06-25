@@ -22,6 +22,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
+	exportAllPath := filepath.Join(dir, "json-exports")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	profilePath := filepath.Join(dir, "123.arkprofile")
@@ -107,6 +108,10 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "equipment_ascendant_weapon_bps", "items=0 max_damage=0.0", savePath)
 	runExample(t, "equipment_saddles", "item_saddles=0 cryopod_saddles=0 total_saddles=0 max_armor=0.0", savePath)
 	runExample(t, "equipment_owned_by", "tribe_id=555 items=0 max_damage=0.0", savePath, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'", "555")
+	runExample(t, "export_all_items", "exports=8 wrote=", savePath, exportAllPath)
+	if _, err := os.Stat(filepath.Join(exportAllPath, "manifest.json")); err != nil {
+		t.Fatalf("export_all_items manifest missing: %v", err)
+	}
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "structure_owners", "structures=1 with_tribe_id=1 with_player_id=0 with_tribe_name=0 with_player_name=0 with_original_placer_id=0 unique_tribes=1", savePath)
 	runExample(t, "base_components", "bases=1 total_structures=1 largest=1 min10=0 faults=0", savePath)
