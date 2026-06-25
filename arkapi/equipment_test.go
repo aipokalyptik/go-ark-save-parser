@@ -404,6 +404,24 @@ func TestEquipmentAPIFilterOwnedByFindsItemsThroughOwnerInventory(t *testing.T) 
 	}
 }
 
+func TestEquipmentAPIFilterOwnedByIgnoresMalformedUnrelatedContainers(t *testing.T) {
+	save := openSyntheticEquipmentOwnedByStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	weapons, err := api.Weapons()
+	if err != nil {
+		t.Fatalf("Weapons() error = %v", err)
+	}
+	owned, err := api.FilterOwnedBy(weapons, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("FilterOwnedBy() error = %v", err)
+	}
+	if len(owned) != 1 || api.Count(owned) != 1 {
+		t.Fatalf("FilterOwnedBy() = len %d count %d, want one owned weapon", len(owned), api.Count(owned))
+	}
+}
+
 func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
 	save := openSyntheticEquipmentFilterSave(t)
 	defer save.Close()
@@ -632,6 +650,23 @@ func openSyntheticEquipmentOwnedByStructureSave(t *testing.T) *arksave.Save {
 		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
 		ownedItemID: syntheticEquipmentObjectBytesWithOwnerInventory(inventoryID),
 		otherItemID: syntheticEquipmentObjectBytesWithOwnerInventory(otherInventoryID),
+	})
+}
+
+func openSyntheticEquipmentOwnedByStructureSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyStructureID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	ownedItemID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	otherItemID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		structureID:       syntheticStructureWithInventoryObjectBytes(inventoryID),
+		faultyStructureID: truncatedStructureObjectBytes(),
+		ownedItemID:       syntheticEquipmentObjectBytesWithOwnerInventory(inventoryID),
+		otherItemID:       syntheticEquipmentObjectBytesWithOwnerInventory(otherInventoryID),
 	})
 }
 

@@ -532,6 +532,54 @@ def python_equipment_saddles_oracle(save_path: Path, upstream_src: Path) -> dict
         save.close()
 
 
+def python_equipment_owned_by_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.classes.equipment import Weapons  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        equipment_api = EquipmentApi(save)
+        structure_api = StructureApi(save)
+        candidates: dict[tuple[str, int], list[Any]] = {}
+        containers: dict[Any, Any] = {}
+        for blueprint in Weapons.advanced.all_bps:
+            weapons = equipment_api.get_filtered(
+                EquipmentApi.Classes.WEAPON,
+                classes=[blueprint],
+                only_blueprints=True,
+            )
+            for weapon in weapons.values():
+                owner_inv_uuid = getattr(weapon, "owner_inv_uuid", None)
+                if owner_inv_uuid is None:
+                    continue
+                if owner_inv_uuid not in containers:
+                    containers[owner_inv_uuid] = structure_api.get_container_of_inventory(owner_inv_uuid)
+                container = containers[owner_inv_uuid]
+                if container is None or getattr(container, "owner", None) is None:
+                    continue
+                tribe_id = getattr(container.owner, "tribe_id", None)
+                if tribe_id is None:
+                    continue
+                candidates.setdefault((blueprint, int(tribe_id)), []).append(weapon)
+        if not candidates:
+            return {"blueprint": "", "tribe_id": 0, "items": 0, "max_damage": 0.0}
+        (blueprint, tribe_id), weapons = max(
+            candidates.items(),
+            key=lambda item: (len(item[1]), max((weapon.damage for weapon in item[1]), default=0.0), item[0][0], item[0][1]),
+        )
+        return {
+            "blueprint": blueprint,
+            "tribe_id": tribe_id,
+            "items": len(weapons),
+            "max_damage": max((float(f"{weapon.damage:.1f}") for weapon in weapons), default=0.0),
+        }
+    finally:
+        save.close()
+
+
 def python_base_components_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.structure_api import StructureApi  # type: ignore
@@ -641,6 +689,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
     py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
+    py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
@@ -661,6 +710,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_equipment_best": py_equipment_best,
         "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
         "python_equipment_saddles": py_equipment_saddles,
+        "python_equipment_owned_by": py_equipment_owned_by,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
@@ -969,6 +1019,30 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_equipment_saddles.stdout)
         private["go"]["equipment_saddles"]["parsed"] = got
         cases.append(CaseResult("equipment_saddles", "pass" if {key: got.get(key) for key in py_equipment_saddles} == py_equipment_saddles else "fail", "direct saddle count compared; upstream cryopod saddle extraction blocked by malformed private cryopods and armor-value parity needs default armor tables"))
+
+    if py_equipment_owned_by["items"] == 0:
+        cases.append(CaseResult("equipment_owned_by", "skip", "oracle save has no owned advanced weapon blueprints"))
+    else:
+        go_equipment_owned_by = run([
+            "go",
+            "run",
+            "./examples/equipment_owned_by",
+            str(save_path),
+            py_equipment_owned_by["blueprint"],
+            str(py_equipment_owned_by["tribe_id"]),
+        ], repo_root, env)
+        private["go"]["equipment_owned_by"] = {
+            "exit_code": go_equipment_owned_by.returncode,
+            "stdout": go_equipment_owned_by.stdout,
+            "stderr": go_equipment_owned_by.stderr,
+        }
+        if go_equipment_owned_by.returncode != 0:
+            cases.append(CaseResult("equipment_owned_by", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_equipment_owned_by.stdout)
+            private["go"]["equipment_owned_by"]["parsed"] = got
+            want = {key: py_equipment_owned_by[key] for key in ("tribe_id", "items", "max_damage")}
+            cases.append(CaseResult("equipment_owned_by", "pass" if {key: got.get(key) for key in want} == want else "fail", "owned advanced weapon blueprint count and max damage compared"))
 
     go_base_components = run(["go", "run", "./examples/base_components", str(save_path)], repo_root, env)
     private["go"]["base_components"] = {

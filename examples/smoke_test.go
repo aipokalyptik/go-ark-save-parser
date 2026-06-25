@@ -96,6 +96,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "equipment_best", "weapon_damage=0.0 weapon=WeaponBow weapon_crafted=false\narmor=no_match", savePath)
 	runExample(t, "equipment_ascendant_weapon_bps", "items=0 max_damage=0.0", savePath)
 	runExample(t, "equipment_saddles", "item_saddles=0 cryopod_saddles=0 total_saddles=0 max_armor=0.0", savePath)
+	runExample(t, "equipment_owned_by", "tribe_id=555 items=0 max_damage=0.0", savePath, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'", "555")
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "base_components", "bases=1 total_structures=1 largest=1 min10=0 faults=0", savePath)
 	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")

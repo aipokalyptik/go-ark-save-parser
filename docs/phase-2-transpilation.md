@@ -338,6 +338,9 @@ enough that oracle-derived tests can run against translated packages.
       upstream saddle filtering; Go additionally reports tolerant cryopod
       saddle counts and max armor, but armor-value parity still needs the
       upstream default armor tables.
+- [x] Compare normalized Go `equipment_owned_by` aggregate output with the
+      upstream advanced weapon blueprint owner lookup through structure
+      inventory containers.
 - [x] Compare normalized Go `base_components` aggregate output with upstream
       connected base grouping after a fast selected-property structure scan is
       available for large private saves.

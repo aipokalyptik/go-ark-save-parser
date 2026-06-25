@@ -297,25 +297,17 @@ func (e *EquipmentAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 }
 
 func (e *EquipmentAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.EquipmentItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.EquipmentItem, error) {
-	structures := NewStructure(e.save)
-	containers := map[uuid.UUID]*arkobject.Structure{}
+	containers, err := selectedInventoryContainerOwners(e.save)
+	if err != nil {
+		return nil, err
+	}
 	out := map[uuid.UUID]arkobject.EquipmentItem{}
 	for id, item := range items {
 		if item.OwnerInventory == nil {
 			continue
 		}
-		container, cached := containers[*item.OwnerInventory]
-		if !cached {
-			_, structure, ok, err := structures.ContainerOfInventory(*item.OwnerInventory)
-			if err != nil {
-				return nil, err
-			}
-			if ok {
-				container = &structure
-			}
-			containers[*item.OwnerInventory] = container
-		}
-		if container != nil && container.IsOwnedBy(owner) {
+		containerOwner, ok := containers[*item.OwnerInventory]
+		if ok && ownerMatches(containerOwner, owner) {
 			out[id] = item
 		}
 	}

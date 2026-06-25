@@ -108,7 +108,7 @@ func (s *StackableAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 }
 
 func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
-	containers, err := s.inventoryContainerOwners()
+	containers, err := selectedInventoryContainerOwners(s.save)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +125,8 @@ func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem
 	return out, nil
 }
 
-func (s *StackableAPI) inventoryContainerOwners() (map[uuid.UUID]arkobject.ObjectOwner, error) {
-	infos, _, err := s.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+func selectedInventoryContainerOwners(save *arksave.Save) (map[uuid.UUID]arkobject.ObjectOwner, error) {
+	infos, _, err := save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
 		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
 	}, []string{"StructureID", "MyInventoryComponent", "OriginalPlacerPlayerID", "OwnerName", "OwningPlayerName", "OwningPlayerID", "TargetingTeam", "bIsEngram"})
 	if err != nil {

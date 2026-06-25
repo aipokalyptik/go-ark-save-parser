@@ -50,6 +50,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   the maximum parsed damage value.
 - `equipment_saddles`: count upstream-listed direct saddle items plus tolerant
   modern cryopod saddle parses and print aggregate saddle counts and max armor.
+- `equipment_owned_by`: count weapon blueprints of one class owned by a target
+  tribe through the structure inventory container relationship.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
 - `structure_at_location`: count structures near map coordinates and expand
