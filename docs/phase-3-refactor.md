@@ -72,7 +72,8 @@ For the cross-phase monitorable checklist, see
       save-contained player/tribe game object fixture payloads share archive
       property builders while keeping game-object framing explicit;
       embedded `GameModeCustomBytes` player/tribe fixture assembly lives in
-      shared testfixtures;
+      shared testfixtures; minimal embedded cryopod archive test payloads use a
+      shared helper;
       and modern cryopod embedded dino/saddle payload builders are shared by API
       and object-model tests. Remaining lower-level domain-specific parser
       fixtures and other malformed object-shape fixtures still need incremental

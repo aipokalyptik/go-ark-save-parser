@@ -470,6 +470,52 @@ func CryopodSaddlePayload() []byte {
 	return payload.Bytes()
 }
 
+func MinimalEmbeddedCryopodPayload(tb testing.TB, dinoID uuid.UUID, statusID uuid.UUID) []byte {
+	tb.Helper()
+
+	var decoded bytes.Buffer
+	WriteInt32(&decoded, 0)
+	WriteInt32(&decoded, 0)
+	WriteUInt32(&decoded, 2)
+	dinoOffsetPos := writeMinimalEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
+	statusOffsetPos := writeMinimalEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
+
+	dinoPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeMinimalEmbeddedNameIntProperty(&decoded, 0x10000001, 1001)
+	writeMinimalEmbeddedNone(&decoded)
+	statusPropsOffset := decoded.Len()
+	decoded.WriteByte(0)
+	writeMinimalEmbeddedNameIntProperty(&decoded, 0x10000003, 12)
+	writeMinimalEmbeddedNone(&decoded)
+
+	binary.LittleEndian.PutUint32(decoded.Bytes()[dinoOffsetPos:dinoOffsetPos+4], uint32(dinoPropsOffset))
+	binary.LittleEndian.PutUint32(decoded.Bytes()[statusOffsetPos:statusOffsetPos+4], uint32(statusPropsOffset))
+
+	namesOffset := decoded.Len()
+	WriteUInt32(&decoded, 4)
+	WriteArkString(&decoded, "None")
+	WriteArkString(&decoded, "DinoID1")
+	WriteArkString(&decoded, "IntProperty")
+	WriteArkString(&decoded, "BaseCharacterLevel")
+
+	var compressed bytes.Buffer
+	writer := zlib.NewWriter(&compressed)
+	if _, err := writer.Write(decoded.Bytes()); err != nil {
+		tb.Fatalf("zlib write: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		tb.Fatalf("zlib close: %v", err)
+	}
+
+	var payload bytes.Buffer
+	WriteUInt32(&payload, 0x0407)
+	WriteUInt32(&payload, uint32(decoded.Len()))
+	WriteUInt32(&payload, uint32(namesOffset))
+	payload.Write(compressed.Bytes())
+	return payload.Bytes()
+}
+
 func WriteArkString(buf *bytes.Buffer, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
 	buf.WriteString(value)
@@ -912,6 +958,38 @@ func writeCryopodPathObjectProperty(buf *bytes.Buffer, name string, path string)
 	WriteInt32(buf, 0)
 	buf.WriteByte(0)
 	buf.Write(body.Bytes())
+}
+
+func writeMinimalEmbeddedObjectHeader(buf *bytes.Buffer, id uuid.UUID, className string, names []string) int {
+	buf.Write(id[:])
+	WriteArkString(buf, className)
+	WriteUInt32(buf, 0)
+	WriteStringArray(buf, names)
+	WriteUInt32(buf, 0)
+	WriteInt32(buf, 0)
+	WriteUInt32(buf, 0)
+	offsetPos := buf.Len()
+	WriteInt32(buf, 0)
+	WriteUInt32(buf, 0)
+	return offsetPos
+}
+
+func writeMinimalEmbeddedNameIntProperty(buf *bytes.Buffer, nameID uint32, value int32) {
+	writeMinimalEmbeddedName(buf, nameID)
+	writeMinimalEmbeddedName(buf, 0x10000002)
+	WriteInt32(buf, 4)
+	WriteInt32(buf, 0)
+	buf.WriteByte(0)
+	WriteInt32(buf, value)
+}
+
+func writeMinimalEmbeddedNone(buf *bytes.Buffer) {
+	writeMinimalEmbeddedName(buf, 0x10000000)
+}
+
+func writeMinimalEmbeddedName(buf *bytes.Buffer, nameID uint32) {
+	WriteUInt32(buf, nameID)
+	WriteInt32(buf, 0)
 }
 
 func writeFile(tb testing.TB, path string, data []byte, label string) {

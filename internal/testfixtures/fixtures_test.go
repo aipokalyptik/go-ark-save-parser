@@ -90,6 +90,47 @@ func TestCryopodDinoPayloadWritesSupportedCompressedArchive(t *testing.T) {
 	}
 }
 
+func TestMinimalEmbeddedCryopodPayloadWritesMinimalNameTable(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+
+	payload := MinimalEmbeddedCryopodPayload(t, dinoID, statusID)
+
+	if got := binary.LittleEndian.Uint32(payload[0:4]); got != 0x0407 {
+		t.Fatalf("payload version = %#x, want 0x0407", got)
+	}
+	decodedSize := int(binary.LittleEndian.Uint32(payload[4:8]))
+	namesOffset := int(binary.LittleEndian.Uint32(payload[8:12]))
+	reader, err := zlib.NewReader(bytes.NewReader(payload[12:]))
+	if err != nil {
+		t.Fatalf("zlib reader: %v", err)
+	}
+	decoded, err := io.ReadAll(reader)
+	_ = reader.Close()
+	if err != nil {
+		t.Fatalf("zlib read: %v", err)
+	}
+	if len(decoded) != decodedSize {
+		t.Fatalf("decoded length = %d, want %d", len(decoded), decodedSize)
+	}
+	if got := binary.LittleEndian.Uint32(decoded[8:12]); got != 2 {
+		t.Fatalf("embedded object count = %d, want 2", got)
+	}
+
+	names := decoded[namesOffset:]
+	if got := binary.LittleEndian.Uint32(names[0:4]); got != 4 {
+		t.Fatalf("name count = %d, want 4", got)
+	}
+	names = names[4:]
+	for _, want := range []string{"None", "DinoID1", "IntProperty", "BaseCharacterLevel"} {
+		got, rest := readFixtureArkString(t, names)
+		if got != want {
+			t.Fatalf("name = %q, want %q", got, want)
+		}
+		names = rest
+	}
+}
+
 func TestCryopodSaddlePayloadWritesSupportedNoHeaderPayload(t *testing.T) {
 	payload := CryopodSaddlePayload()
 
@@ -105,4 +146,20 @@ func TestCryopodSaddlePayloadWritesSupportedNoHeaderPayload(t *testing.T) {
 	if !bytes.Contains(payload, []byte("ItemArchetype")) {
 		t.Fatalf("CryopodSaddlePayload() missing ItemArchetype property")
 	}
+}
+
+func readFixtureArkString(t *testing.T, data []byte) (string, []byte) {
+	t.Helper()
+	if len(data) < 4 {
+		t.Fatalf("ark string length missing")
+	}
+	size := int(int32(binary.LittleEndian.Uint32(data[0:4])))
+	if size <= 0 || len(data) < 4+size {
+		t.Fatalf("ark string size = %d for %d bytes", size, len(data))
+	}
+	raw := data[4 : 4+size]
+	if raw[len(raw)-1] != 0 {
+		t.Fatalf("ark string %q missing terminator", raw)
+	}
+	return string(raw[:len(raw)-1]), data[4+size:]
 }
