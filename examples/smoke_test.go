@@ -108,6 +108,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	})
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
+	runExample(t, "parse_all", "objects=9 parsed=9 faults=0", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
 	runExample(t, "class_lookup", "objects=1 classes=1", savePath, "PrimalStructure_Wall_Stone_C")
 	runExample(t, "property_filter", "objects=9 classes=8", savePath, "None")

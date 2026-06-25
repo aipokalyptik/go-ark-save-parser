@@ -20,6 +20,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 
 - `map_summary`: open a local `.ark` and print map, version, object, and name
   counts. This covers the basic parsing and save-info JSON workflow.
+- `parse_all`: open a local `.ark`, fault-tolerantly parse all game objects,
+  and print object, parsed-object, and parse-fault counts.
 - `object_classes`: list unique object class names from a local `.ark`, matching
   the class lookup/filtering style of the upstream basic parsing examples.
 - `object_summary`: look up one object by UUID and print raw byte and parsed

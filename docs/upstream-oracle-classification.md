@@ -56,7 +56,11 @@ Side effects remain private and ignored:
 These examples can be used as oracle cases after replacing FTP downloads or
 hard-coded placeholder paths with local `.ark` paths:
 
-- `examples/basic_parsing/ex_00_parse_all.py`
+- `examples/basic_parsing/ex_00_parse_all.py` is implemented as
+  `examples/parse_all`, which reports object, parsed-object, and parse-fault
+  counts through the fault-tolerant Go parser. Private oracle comparison is
+  treated as a manual heavy check because full-object parsing takes roughly a
+  minute on the supplied large private save.
 - `examples/basic_parsing/ex_01_get_obj_by_uuid.py`
 - `examples/basic_parsing/ex_02_get_obj_by_class_string.py`
 - `examples/basic_parsing/ex_03_reading_property_definitions_and_positions.py`

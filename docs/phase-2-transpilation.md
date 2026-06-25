@@ -358,6 +358,11 @@ enough that oracle-derived tests can run against translated packages.
       map summary, class listing, local profile/tribe discovery,
       player/tribe aggregate reporting, cluster/tribute JSON, and
       mutation-copy workflows.
+- [x] Add `parse_all` as the Go counterpart to upstream
+      `basic_parsing/ex_00_parse_all.py`, using the fault-tolerant full-object
+      parser and printing object, parsed-object, and fault counts. Private
+      oracle comparison is a manual heavy check rather than part of the default
+      suite because it requires a full save parse on the large private save.
 - [x] Compare normalized Go outputs with the private Python oracle for the
       implemented direct read-only counterparts: `map_summary` and
       `object_classes`.
