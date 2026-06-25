@@ -1558,6 +1558,28 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["local_tribute"]["parsed"] = got
         cases.append(CaseResult("local_tribute", "pass" if {key: got.get(key) for key in py_local_tribute} == py_local_tribute else "fail", "local tribute aggregate counts compared"))
 
+    go_tribute_json = run(["go", "run", "./examples/tribute_json", str(save_path.parent)], repo_root, env)
+    private["go"]["tribute_json"] = {
+        "exit_code": go_tribute_json.returncode,
+        "stdout": go_tribute_json.stdout,
+        "stderr": go_tribute_json.stderr,
+    }
+    if go_tribute_json.returncode != 0:
+        cases.append(CaseResult("tribute_json", "fail", "Go example exited non-zero"))
+    else:
+        try:
+            parsed = json.loads(go_tribute_json.stdout)
+            got = {
+                "tribute_files": parsed["count"],
+                "player_data_ids": sum(file["player_data_count"] for file in parsed["files"]),
+                "tribe_data_ids": sum(file["tribe_data_count"] for file in parsed["files"]),
+            }
+            private["go"]["tribute_json"]["parsed"] = got
+            cases.append(CaseResult("tribute_json", "pass" if got == py_local_tribute else "fail", "local tribute JSON aggregate counts compared"))
+        except Exception as exc:  # noqa: BLE001 - private report captures details
+            private["go"]["tribute_json"]["parse_error"] = str(exc)
+            cases.append(CaseResult("tribute_json", "fail", "Go tribute JSON could not be parsed"))
+
     return cases, private
 
 

@@ -397,6 +397,8 @@ enough that oracle-derived tests can run against translated packages.
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local
       compact tribute index files.
+- [x] Compare normalized Go `tribute_json` aggregate counts with private local
+      compact tribute index files.
 - [ ] Compare normalized Go outputs with private Python oracle outputs where
       available for the remaining runnable upstream examples.
 - [x] Run subagent spec and quality reviews on parser parity and API coverage;
