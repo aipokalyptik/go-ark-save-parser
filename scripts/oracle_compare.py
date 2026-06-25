@@ -138,6 +138,21 @@ def parse_go_dino_most_mutated(output: str) -> dict[str, Any] | None:
     }
 
 
+def parse_go_heatmap_summary(output: str) -> dict[str, Any]:
+    match = re.fullmatch(
+        r"cells=(?P<nonzero_cells>\d+) total=(?P<total>\d+) max=(?P<max>\d+) faults=(?P<faults>\d+) wrote=.*\n?",
+        output,
+    )
+    if not match:
+        raise ValueError("unexpected heatmap output")
+    return {
+        "nonzero_cells": int(match.group("nonzero_cells")),
+        "total": int(match.group("total")),
+        "max": int(match.group("max")),
+        "faults": int(match.group("faults")),
+    }
+
+
 def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.saves.asa_save import AsaSave  # type: ignore
@@ -557,6 +572,69 @@ def python_dino_wild_tamed_oracle(save_path: Path, upstream_src: Path) -> dict[s
                     "wild_tamed": len(wild_tamed),
                     "max_level": max((int(getattr(dino.stats, "current_level", 0)) for dino in wild_tamed), default=0),
                 }
+            finally:
+                save.close()
+
+
+def ark_map_for_name(map_name: str, upstream_src: Path) -> Any | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.enums import ArkMap  # type: ignore
+
+    normalized = re.sub(r"[^a-z0-9]", "", map_name.lower().replace("_wp", ""))
+    map_aliases = {
+        "island": ArkMap.THE_ISLAND,
+        "theisland": ArkMap.THE_ISLAND,
+        "scorchedearth": ArkMap.SCORCHED_EARTH,
+        "aberration": ArkMap.ABERRATION,
+        "extinction": ArkMap.EXTINCTION,
+        "ragnarok": ArkMap.RAGNAROK,
+        "thecenter": ArkMap.THE_CENTER,
+        "valguero": ArkMap.VALGUERO,
+        "clubark": ArkMap.CLUB_ARK,
+        "lostcolony": ArkMap.LOST_COLONY,
+        "astraeos": ArkMap.ASTRAEOS,
+        "svartalfheim": ArkMap.SVARTALFHEIM,
+    }
+    return map_aliases.get(normalized)
+
+
+def summarize_heatmap(heatmap: Any) -> dict[str, int]:
+    out = {
+        "nonzero_cells": 0,
+        "total": 0,
+        "max": 0,
+    }
+    for row in heatmap:
+        for raw_value in row:
+            value = int(raw_value)
+            if value == 0:
+                continue
+            out["nonzero_cells"] += 1
+            out["total"] += value
+            out["max"] = max(out["max"], value)
+    return out
+
+
+def python_dino_heatmap_oracle(save_path: Path, map_name: str, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.logging import ArkSaveLogger  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    ark_map = ark_map_for_name(map_name, upstream_src)
+    if ark_map is None:
+        return None
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            ArkSaveLogger.allow_invalid_objects(True)
+            ArkSaveLogger.allow_invalid_mod_objects(True)
+            save = AsaSave(save_path, map=ark_map)
+            try:
+                api = DinoApi(save)
+                dinos = api.get_all(include_cryos=False, max_workers=1, bypass_inventory=True)
+                heatmap = api.create_heatmap(map=ark_map, resolution=100, dinos=dinos)
+                return summarize_heatmap(heatmap)
             finally:
                 save.close()
 
@@ -1112,6 +1190,40 @@ def normalize_blueprint(value: str) -> str:
     return value
 
 
+def compare_dino_heatmap_case(
+    save_path: Path,
+    repo_root: Path,
+    env: dict[str, str],
+    py_dino_heatmap: dict[str, Any] | None,
+    private: dict[str, Any],
+) -> CaseResult:
+    if py_dino_heatmap is None:
+        return CaseResult("dino_heatmap", "skip", "oracle save map is not supported by upstream heatmap map enum")
+
+    dino_heatmap_path = repo_root / ".oracle" / "output" / "dino-heatmap.json"
+    go_dino_heatmap = run(["go", "run", "./examples/dino_heatmap", "--no-cryos", str(save_path), str(dino_heatmap_path)], repo_root, env)
+    private["go"]["dino_heatmap"] = {
+        "exit_code": go_dino_heatmap.returncode,
+        "stdout": go_dino_heatmap.stdout,
+        "stderr": go_dino_heatmap.stderr,
+        "output": str(dino_heatmap_path),
+    }
+    if go_dino_heatmap.returncode != 0:
+        return CaseResult("dino_heatmap", "fail", "Go example exited non-zero")
+    try:
+        got_stdout = parse_go_heatmap_summary(go_dino_heatmap.stdout)
+        got_json = json.loads(dino_heatmap_path.read_text(encoding="utf-8"))
+        private["go"]["dino_heatmap"]["parsed"] = got_stdout
+        private["go"]["dino_heatmap"]["json"] = got_json
+        stable_keys = ("nonzero_cells", "total", "max")
+        stdout_matches_json = all(got_stdout[key] == got_json[key] for key in ("nonzero_cells", "total", "max", "faults"))
+        status = "pass" if stdout_matches_json and {key: got_stdout.get(key) for key in stable_keys} == py_dino_heatmap else "fail"
+        return CaseResult("dino_heatmap", status, "direct dino heatmap cell aggregates compared without cryopod parsing")
+    except Exception as exc:  # noqa: BLE001 - private report captures details
+        private["go"]["dino_heatmap"]["parse_error"] = str(exc)
+        return CaseResult("dino_heatmap", "fail", "Go heatmap output could not be parsed")
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
@@ -1127,6 +1239,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_dino_babies = python_dino_babies_oracle(save_path, upstream_src)
     py_dino_wild_tamables = python_dino_wild_tamables_oracle(save_path, upstream_src)
     py_dino_wild_tamed = python_dino_wild_tamed_oracle(save_path, upstream_src)
+    py_dino_heatmap = python_dino_heatmap_oracle(save_path, py["map_name"], upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_stackable_owned_by = python_stackable_owned_by_oracle(save_path, upstream_src)
@@ -1160,6 +1273,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_dino_babies": py_dino_babies,
         "python_dino_wild_tamables": py_dino_wild_tamables,
         "python_dino_wild_tamed": py_dino_wild_tamed,
+        "python_dino_heatmap": py_dino_heatmap,
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
         "python_stackable_owned_by": py_stackable_owned_by,
@@ -1526,6 +1640,8 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_dino_wild_tamed.stdout)
         private["go"]["dino_wild_tamed"]["parsed"] = got
         cases.append(CaseResult("dino_wild_tamed", "pass" if {key: got.get(key) for key in py_dino_wild_tamed} == py_dino_wild_tamed else "fail", "wild-tamed dino count and max level compared"))
+
+    cases.append(compare_dino_heatmap_case(save_path, repo_root, env, py_dino_heatmap, private))
 
     go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)
     private["go"]["property_filter"] = {
@@ -1901,6 +2017,21 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     return cases, private
 
 
+def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
+    env = oracle_env(repo_root)
+    py = python_oracle(save_path, upstream_src)
+    private: dict[str, Any] = {
+        "save_path": str(save_path),
+        "python": py,
+        "go": {},
+    }
+    if case_name == "dino_heatmap":
+        py_dino_heatmap = python_dino_heatmap_oracle(save_path, py["map_name"], upstream_src)
+        private["python_dino_heatmap"] = py_dino_heatmap
+        return [compare_dino_heatmap_case(save_path, repo_root, env, py_dino_heatmap, private)], private
+    raise ValueError(f"unsupported focused oracle case {case_name!r}")
+
+
 def write_summary(path: Path, cases: list[CaseResult]) -> None:
     counts: dict[str, int] = {}
     for case in cases:
@@ -1930,6 +2061,7 @@ def main() -> int:
     parser.add_argument("--upstream-src", type=Path, default=Path(".oracle/upstream/src"))
     parser.add_argument("--out", type=Path, default=Path(".oracle/output/oracle-comparison.json"))
     parser.add_argument("--summary", type=Path, default=Path("docs/oracle-comparison-summary.md"))
+    parser.add_argument("--case", choices=["dino_heatmap"], default=None)
     args = parser.parse_args()
 
     repo_root = Path.cwd()
@@ -1940,7 +2072,14 @@ def main() -> int:
     if not save_path.exists():
         raise SystemExit("oracle save does not exist")
 
-    cases, private = compare(save_path, repo_root, args.upstream_src)
+    if args.case:
+        if args.out == Path(".oracle/output/oracle-comparison.json"):
+            args.out = Path(f".oracle/output/oracle-comparison-{args.case}.json")
+        if args.summary == Path("docs/oracle-comparison-summary.md"):
+            args.summary = Path(f".oracle/output/oracle-comparison-{args.case}.md")
+        cases, private = compare_case(args.case, save_path, repo_root, args.upstream_src)
+    else:
+        cases, private = compare(save_path, repo_root, args.upstream_src)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps({"cases": [asdict(c) for c in cases], **private}, indent=2, sort_keys=True), encoding="utf-8")
     write_summary(args.summary, cases)

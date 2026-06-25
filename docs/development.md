@@ -67,6 +67,14 @@ ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-compare
 `.oracle/output/oracle-comparison.json` and updates the commit-safe aggregate
 status in `docs/oracle-comparison-summary.md`.
 
+Focused oracle comparisons are useful when validating a newly added case without
+rerunning every upstream example comparison. Focused output defaults to ignored
+files under `.oracle/output`:
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark .oracle/venv/bin/python scripts/oracle_compare.py --case dino_heatmap
+```
+
 Upstream fixed tests require non-public `tests/test_data` and are recorded as
 blocked in `docs/upstream-oracle-classification.md`. The upstream `testbench/`
 suite is the useful arbitrary-save oracle path for private `.ark` files.

@@ -56,7 +56,7 @@ Implemented:
   `export-tribute-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering forty aggregate read-only cases.
+  covering forty-one aggregate read-only cases.
 
 Still in progress:
 
@@ -217,6 +217,13 @@ Run the private oracle comparison suite for implemented Go examples:
 
 ```sh
 ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-compare
+```
+
+Run a focused private oracle comparison without overwriting the committed
+aggregate summary:
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/save.ark .oracle/venv/bin/python scripts/oracle_compare.py --case dino_heatmap
 ```
 
 Run standalone Go examples:

@@ -20,19 +20,28 @@ type heatmapSummary struct {
 }
 
 func main() {
-	if len(os.Args) < 3 || len(os.Args) > 4 {
-		log.Fatalf("usage: %s <save.ark> <out.json> [resolution]", os.Args[0])
+	if len(os.Args) < 3 || len(os.Args) > 5 {
+		log.Fatalf("usage: %s [--no-cryos] <save.ark> <out.json> [resolution]", os.Args[0])
 	}
 	resolution := 100
-	if len(os.Args) == 4 {
-		value, err := strconv.Atoi(os.Args[3])
+	includeCryos := true
+	args := os.Args[1:]
+	if args[0] == "--no-cryos" {
+		includeCryos = false
+		args = args[1:]
+	}
+	if len(args) < 2 || len(args) > 3 {
+		log.Fatalf("usage: %s [--no-cryos] <save.ark> <out.json> [resolution]", os.Args[0])
+	}
+	if len(args) == 3 {
+		value, err := strconv.Atoi(args[2])
 		if err != nil {
 			log.Fatal(err)
 		}
 		resolution = value
 	}
 
-	save, err := arksave.Open(os.Args[1])
+	save, err := arksave.Open(args[0])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +51,14 @@ func main() {
 	dinos, faults, err := api.AllWithFaults()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if !includeCryos {
+		for id, dino := range dinos {
+			if dino.IsCryopodded {
+				delete(dinos, id)
+			}
+		}
+		faults = nil
 	}
 	heatmap, err := api.Heatmap(save.Context.MapName, resolution, dinos, nil, false)
 	if err != nil {
@@ -53,10 +70,10 @@ func main() {
 		log.Fatal(err)
 	}
 	data = append(data, '\n')
-	if err := os.WriteFile(os.Args[2], data, 0o644); err != nil {
+	if err := os.WriteFile(args[1], data, 0o644); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("cells=%d total=%d max=%d faults=%d wrote=%s\n", summary.NonzeroCells, summary.Total, summary.Max, summary.Faults, os.Args[2])
+	fmt.Printf("cells=%d total=%d max=%d faults=%d wrote=%s\n", summary.NonzeroCells, summary.Total, summary.Max, summary.Faults, args[1])
 }
 
 func summarizeHeatmap(heatmap [][]int, faults int) heatmapSummary {

@@ -52,7 +52,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `dino_wild_tamed`: count tamed dinos with no parsed ancestors and report the
   highest current level without printing names, classes, or owners.
 - `dino_heatmap`: generate a compact JSON summary for a local dino heatmap
-  using an explicit output path and optional resolution.
+  using an explicit output path, optional resolution, and optional `--no-cryos`
+  mode for oracle comparisons that avoid malformed embedded cryopod payloads.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
 - `stackable_owned_by`: filter stackables by blueprint and owning tribe through

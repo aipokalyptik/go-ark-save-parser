@@ -103,6 +103,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	if _, err := os.Stat(dinoHeatmapPath); err != nil {
 		t.Fatalf("dino_heatmap output missing: %v", err)
 	}
+	runExample(t, "dino_heatmap", "cells=0 total=0 max=0 faults=0 wrote=", "--no-cryos", savePath, dinoHeatmapPath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
 	runExample(t, "stackable_owned_by", "tribe_id=555 items=0 total=0", savePath, resourceBlueprint, "555")
 	runExample(t, "equipment_summary", "items=1 weapons=1 armor=0 saddles=0 cryopod_saddles=0 shields=0", savePath)

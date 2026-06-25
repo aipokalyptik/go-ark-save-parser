@@ -292,6 +292,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add read-only Dino API heatmap generation with class and tamed filters
       plus a `dino_heatmap` JSON-summary example for upstream dino heatmap
       workflows.
+- [x] Compare normalized Go `dino_heatmap --no-cryos` output with upstream
+      direct-dino heatmap cell aggregates using privacy-safe summary fields.
 - [x] Add structure container lookup by inventory UUID and stackable owner
       filtering/counting through owning structure inventories.
 - [x] Add read-only Structure API lookup by object UUID for upstream

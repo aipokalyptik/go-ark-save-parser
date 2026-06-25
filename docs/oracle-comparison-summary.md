@@ -27,6 +27,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `dino_babies`: `pass` (wild and tamed baby dino counts compared)
 - `dino_wild_tamables`: `pass` (wild and tameable dino counts compared)
 - `dino_wild_tamed`: `pass` (wild-tamed dino count and max level compared)
+- `dino_heatmap`: `pass` (direct dino heatmap cell aggregates compared without cryopod parsing)
 - `property_filter`: `pass` (property-name filtered object counts compared)
 - `stackable_count`: `pass` (stackable item count and total quantity compared)
 - `stackable_owned_by`: `pass` (owned advanced rifle bullet count and total compared)
@@ -49,4 +50,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 40
+- `pass`: 41
