@@ -136,21 +136,14 @@ func (p *PlayerAPI) PlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObj
 }
 
 func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {
-	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
-		return isPlayerDataClass(info.ClassName)
-	})
+	players, faults, err := p.savePlayersWithFaults()
 	if err != nil {
 		return nil, err
 	}
-	out := make([]arkobject.Player, 0, len(objects))
-	for _, info := range objects {
-		player, err := arkobject.PlayerFromContainer(info.Object.Container())
-		if err != nil {
-			return nil, fmt.Errorf("parse player object %s: %w", info.UUID, err)
-		}
-		out = append(out, player)
+	if len(faults) > 0 {
+		return nil, faults[0].Err
 	}
-	return out, nil
+	return players, nil
 }
 
 func (p *PlayerAPI) savePlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObjectInfo, error) {
@@ -169,6 +162,12 @@ func (p *PlayerAPI) savePlayersWithFaults() ([]arkobject.Player, []arksave.Fault
 		}
 		out = append(out, player)
 	}
+	embedded, embeddedFaults, err := p.saveEmbeddedPlayersWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out = mergePlayersByDataID(out, embedded)
+	faults = append(faults, embeddedFaults...)
 	return out, faults, nil
 }
 
@@ -726,21 +725,14 @@ func (p *PlayerAPI) TribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.Fault
 }
 
 func (p *PlayerAPI) saveTribeDetails() ([]arkobject.Tribe, error) {
-	objects, err := p.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
-		return isTribeDataClass(info.ClassName)
-	})
+	tribes, faults, err := p.saveTribeDetailsWithFaults()
 	if err != nil {
 		return nil, err
 	}
-	out := make([]arkobject.Tribe, 0, len(objects))
-	for _, info := range objects {
-		tribe, err := arkobject.TribeFromContainer(info.Object.Container())
-		if err != nil {
-			return nil, fmt.Errorf("parse tribe object %s: %w", info.UUID, err)
-		}
-		out = append(out, tribe)
+	if len(faults) > 0 {
+		return nil, faults[0].Err
 	}
-	return out, nil
+	return tribes, nil
 }
 
 func (p *PlayerAPI) saveTribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.FaultyObjectInfo, error) {
@@ -759,6 +751,12 @@ func (p *PlayerAPI) saveTribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.F
 		}
 		out = append(out, tribe)
 	}
+	embedded, embeddedFaults, err := p.saveEmbeddedTribeDetailsWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out = mergeTribesByID(out, embedded)
+	faults = append(faults, embeddedFaults...)
 	return out, faults, nil
 }
 

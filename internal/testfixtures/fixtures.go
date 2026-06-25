@@ -92,6 +92,11 @@ type PlayerArchiveOptions struct {
 
 func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiveOptions) {
 	tb.Helper()
+	writeFile(tb, path, PlayerArchiveBytes(tb, opts), "player archive fixture")
+}
+
+func PlayerArchiveBytes(tb testing.TB, opts PlayerArchiveOptions) []byte {
+	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var myData bytes.Buffer
 	WriteNameIntProperty(&myData, "PlayerDataID", opts.PlayerDataID)
@@ -128,7 +133,7 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 	}
 	WriteNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
 	WriteArkString(&buf, "None")
-	writeFile(tb, path, buf.Bytes(), "player archive fixture")
+	return buf.Bytes()
 }
 
 func WriteTribeArchive(tb testing.TB, path string) {
@@ -152,6 +157,11 @@ type TribeArchiveOptions struct {
 }
 
 func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveOptions) {
+	tb.Helper()
+	writeFile(tb, path, TribeArchiveBytes(tb, opts), "tribe archive fixture")
+}
+
+func TribeArchiveBytes(tb testing.TB, opts TribeArchiveOptions) []byte {
 	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	var tribeData bytes.Buffer
@@ -179,7 +189,7 @@ func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveO
 	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
 	WriteNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
 	WriteArkString(&buf, "None")
-	writeFile(tb, path, buf.Bytes(), "tribe archive fixture")
+	return buf.Bytes()
 }
 
 func WriteTributeFile(tb testing.TB, path string, playerIDs []uint64, tribeIDs []uint64) {

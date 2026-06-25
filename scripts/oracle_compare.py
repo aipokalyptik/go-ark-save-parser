@@ -240,6 +240,7 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             "parsed_tribes": len(player_api.tribes),
             "tribe_player_links": sum(len(players) for players in player_api.tribe_to_player_map.values()),
             "total_deaths": sum(player.nr_of_deaths for player in player_api.players),
+            "highest_level": max((player.stats.level for player in player_api.players), default=0),
             "unlocked_engrams": len({engram.value for player in player_api.players for engram in player.stats.engrams}),
         }
     finally:
@@ -891,6 +892,26 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         cases.append(CaseResult("local_profiles", "pass" if {key: got.get(key) for key in want} == want else "fail", "local profile and tribe aggregate counts compared"))
         want = {key: py_local_profiles[key] for key in ("total_deaths", "unlocked_engrams")}
         cases.append(CaseResult("local_profile_player_aggregates", "pass" if {key: got.get(key) for key in want} == want else "fail", "local player death and unlocked engram aggregates compared"))
+
+    go_player_all = run(["go", "run", "./examples/player_all", str(save_path)], repo_root, env)
+    private["go"]["player_all"] = {
+        "exit_code": go_player_all.returncode,
+        "stdout": go_player_all.stdout,
+        "stderr": go_player_all.stderr,
+    }
+    if go_player_all.returncode != 0:
+        cases.append(CaseResult("player_all", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_player_all.stdout)
+        private["go"]["player_all"]["parsed"] = got
+        want = {
+            "players": py_local_profiles["parsed_players"],
+            "tribes": py_local_profiles["parsed_tribes"],
+            "highest_level": py_local_profiles["highest_level"],
+            "total_deaths": py_local_profiles["total_deaths"],
+            "unlocked_engrams": py_local_profiles["unlocked_engrams"],
+        }
+        cases.append(CaseResult("player_all", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path player aggregate fallback compared"))
 
     if py_player_inventory is None:
         cases.append(CaseResult("player_inventory", "skip", "oracle save has no player inventory candidate"))

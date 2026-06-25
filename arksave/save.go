@@ -87,6 +87,13 @@ func (s *Save) Close() error {
 	return err
 }
 
+func (s *Save) Path() string {
+	if s == nil {
+		return ""
+	}
+	return s.path
+}
+
 func (s *Save) CustomValue(key string) ([]byte, error) {
 	var value []byte
 	err := s.db.QueryRow(`select value from custom where key = ? limit 1`, key).Scan(&value)
