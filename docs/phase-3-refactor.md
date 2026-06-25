@@ -37,6 +37,8 @@ Go packages without losing oracle parity.
       JSON export for CLI/library consumers.
 - [x] Add first typed local cluster API wrapper for uploaded item type counts,
       dino parse-status filtering, and summary metadata.
+- [x] Surface typed player and tribe exports through domain JSON for CLI and
+      library consumers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

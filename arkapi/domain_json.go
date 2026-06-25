@@ -94,6 +94,35 @@ type StackableInfo struct {
 	OwnerInventoryUUID string `json:"owner_inventory_uuid,omitempty"`
 }
 
+type PlayerInfo struct {
+	PlayerDataVersion int32    `json:"player_data_version,omitempty"`
+	PlayerDataID      uint64   `json:"player_data_id"`
+	CharacterName     string   `json:"character_name,omitempty"`
+	PlayerName        string   `json:"player_name,omitempty"`
+	UniqueID          string   `json:"unique_id,omitempty"`
+	IPAddress         string   `json:"ip_address,omitempty"`
+	FirstSpawned      bool     `json:"first_spawned,omitempty"`
+	TribeID           int32    `json:"tribe_id,omitempty"`
+	NumDeaths         int32    `json:"num_deaths,omitempty"`
+	LastTimeDied      float64  `json:"last_time_died,omitempty"`
+	LoginTime         float64  `json:"login_time,omitempty"`
+	Level             int32    `json:"level,omitempty"`
+	Experience        float64  `json:"experience,omitempty"`
+	EngramPoints      int32    `json:"engram_points,omitempty"`
+	UnlockedEngrams   []string `json:"unlocked_engrams,omitempty"`
+}
+
+type TribeInfo struct {
+	Name      string   `json:"name,omitempty"`
+	OwnerID   int32    `json:"owner_id,omitempty"`
+	TribeID   int32    `json:"tribe_id"`
+	Members   []string `json:"members,omitempty"`
+	MemberIDs []int32  `json:"member_ids,omitempty"`
+	TribeLog  []string `json:"tribe_log,omitempty"`
+	LogIndex  int32    `json:"log_index,omitempty"`
+	NumDinos  int32    `json:"num_dinos,omitempty"`
+}
+
 type BaseInfo struct {
 	KeystoneUUID       string         `json:"keystone_uuid"`
 	StructureUUIDs     []string       `json:"structure_uuids"`
@@ -218,6 +247,12 @@ func (j *JSONAPI) ExportDomain(domain string) (DomainExport, error) {
 		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "stackables":
 		items, faultCount, err := j.exportStackablesWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
+	case "players":
+		items, faultCount, err := j.exportPlayersWithFaultCount()
+		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
+	case "tribes":
+		items, faultCount, err := j.exportTribesWithFaultCount()
 		return DomainExport{Domain: domain, Count: len(items), FaultCount: faultCount, Items: items}, err
 	case "bases":
 		items, faultCount, err := j.exportBasesWithFaultCount()
@@ -416,6 +451,90 @@ func (j *JSONAPI) exportStackablesWithFaultCount() ([]StackableInfo, int, error)
 		})
 	}
 	return out, len(faults), nil
+}
+
+func (j *JSONAPI) ExportPlayers() ([]PlayerInfo, error) {
+	items, _, err := j.exportPlayersWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportPlayersWithFaultCount() ([]PlayerInfo, int, error) {
+	players, faults, err := NewPlayer(j.save).PlayersWithFaults()
+	if err != nil {
+		return nil, 0, err
+	}
+	sort.Slice(players, func(i, k int) bool {
+		if players[i].PlayerDataID == players[k].PlayerDataID {
+			return players[i].CharacterName < players[k].CharacterName
+		}
+		return players[i].PlayerDataID < players[k].PlayerDataID
+	})
+	out := make([]PlayerInfo, 0, len(players))
+	for _, player := range players {
+		out = append(out, playerInfo(player))
+	}
+	return out, len(faults), nil
+}
+
+func playerInfo(player arkobject.Player) PlayerInfo {
+	engrams := append([]string(nil), player.UnlockedEngrams...)
+	sort.Strings(engrams)
+	return PlayerInfo{
+		PlayerDataVersion: player.PlayerDataVersion,
+		PlayerDataID:      player.PlayerDataID,
+		CharacterName:     player.CharacterName,
+		PlayerName:        player.PlayerName,
+		UniqueID:          player.UniqueID,
+		IPAddress:         player.IPAddress,
+		FirstSpawned:      player.FirstSpawned,
+		TribeID:           player.TribeID,
+		NumDeaths:         player.NumDeaths,
+		LastTimeDied:      player.LastTimeDied,
+		LoginTime:         player.LoginTime,
+		Level:             player.Level,
+		Experience:        player.Experience,
+		EngramPoints:      player.EngramPoints,
+		UnlockedEngrams:   engrams,
+	}
+}
+
+func (j *JSONAPI) ExportTribes() ([]TribeInfo, error) {
+	items, _, err := j.exportTribesWithFaultCount()
+	return items, err
+}
+
+func (j *JSONAPI) exportTribesWithFaultCount() ([]TribeInfo, int, error) {
+	tribes, faults, err := NewPlayer(j.save).TribeDetailsWithFaults()
+	if err != nil {
+		return nil, 0, err
+	}
+	sort.Slice(tribes, func(i, k int) bool {
+		if tribes[i].TribeID == tribes[k].TribeID {
+			return tribes[i].Name < tribes[k].Name
+		}
+		return tribes[i].TribeID < tribes[k].TribeID
+	})
+	out := make([]TribeInfo, 0, len(tribes))
+	for _, tribe := range tribes {
+		out = append(out, tribeInfo(tribe))
+	}
+	return out, len(faults), nil
+}
+
+func tribeInfo(tribe arkobject.Tribe) TribeInfo {
+	members := append([]string(nil), tribe.Members...)
+	memberIDs := append([]int32(nil), tribe.MemberIDs...)
+	logs := append([]string(nil), tribe.TribeLog...)
+	return TribeInfo{
+		Name:      tribe.Name,
+		OwnerID:   tribe.OwnerID,
+		TribeID:   tribe.TribeID,
+		Members:   members,
+		MemberIDs: memberIDs,
+		TribeLog:  logs,
+		LogIndex:  tribe.LogIndex,
+		NumDinos:  tribe.NumDinos,
+	}
 }
 
 func (j *JSONAPI) ExportBases() ([]BaseInfo, error) {

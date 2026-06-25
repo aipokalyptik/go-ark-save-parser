@@ -131,6 +131,8 @@ Export implemented domain summaries to JSON:
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark structures /tmp/structures.json
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark equipment /tmp/equipment.json
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark stackables /tmp/stackables.json
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark players /tmp/players.json
+./bin/arksave export-domain-json /path/to/Valguero_WP.ark tribes /tmp/tribes.json
 ./bin/arksave export-domain-json /path/to/Valguero_WP.ark bases /tmp/bases.json
 ```
 

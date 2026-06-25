@@ -126,7 +126,7 @@ func usage(out io.Writer) error {
   arksave [--redact] cluster <cluster-file-or-directory>
   arksave [--redact] tribute <tribute-file-or-directory>
   arksave [--redact] export-json <save.ark> <out.json>
-  arksave [--redact] export-domain-json <save.ark> <dinos|structures|equipment|stackables|bases> <out.json>
+  arksave [--redact] export-domain-json <save.ark> <dinos|structures|equipment|stackables|players|tribes|bases> <out.json>
   arksave [--redact] export-cluster-json <cluster-file> <out.json>
   arksave [--redact] export-tribute-json <tribute-file-or-directory> <out.json>
   arksave [--redact] mutate copy <save.ark> <out.ark>

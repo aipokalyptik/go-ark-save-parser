@@ -32,7 +32,7 @@ offline parser without Python or private chat context.
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
 - [x] Synthetic domain JSON export tests for dinos, structures, equipment,
-      stackables, and bases.
+      stackables, players, tribes, and bases.
 - [x] Private oracle comparison harness for implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local

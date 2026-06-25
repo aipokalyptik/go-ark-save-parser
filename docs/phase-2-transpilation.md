@@ -182,7 +182,7 @@ enough that oracle-derived tests can run against translated packages.
       engrams match the Python oracle aggregate behavior.
 - [x] Add read-only save-info JSON export API and CLI command.
 - [x] Add read-only domain JSON export API and CLI command for implemented
-      dino, structure, equipment, stackable, and base summaries.
+      dino, structure, equipment, stackable, player, tribe, and base summaries.
 - [x] Include equipment crafted state, implemented stat names, and average
       internal stat ranking values in equipment domain JSON export.
 - [x] Include structure inventory UUID, item counts, open slots, and empty-state

@@ -862,6 +862,35 @@ func TestExportDomainJSONRedactsItemsWhenRequested(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportDomainJSONAcceptsPlayerAndTribeDomains(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "synthetic.ark")
+	createSyntheticEmptySave(t, savePath)
+
+	for _, domain := range []string{"players", "tribes"} {
+		outPath := filepath.Join(dir, domain+".json")
+		var out bytes.Buffer
+		if err := run([]string{"--redact", "export-domain-json", savePath, domain, outPath}, &out); err != nil {
+			t.Fatalf("run(--redact export-domain-json %s) error = %v", domain, err)
+		}
+		if strings.Contains(out.String(), outPath) {
+			t.Fatalf("redacted export-domain-json %s output %q mentions output path %q", domain, out.String(), outPath)
+		}
+		raw, err := os.ReadFile(outPath)
+		if err != nil {
+			t.Fatalf("ReadFile(%s domain json) error = %v", domain, err)
+		}
+		var decoded arkapi.DomainExport
+		if err := json.Unmarshal(raw, &decoded); err != nil {
+			t.Fatalf("json.Unmarshal(%s) error = %v; data = %s", domain, err, raw)
+		}
+		if decoded.Domain != domain || decoded.Count != 0 || decoded.Items != nil {
+			t.Fatalf("redacted %s DomainExport = %#v", domain, decoded)
+		}
+		assertPrivateFileMode(t, outPath)
+	}
+}
+
 func TestMutateCopyCommandWritesExplicitOutput(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

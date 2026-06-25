@@ -527,3 +527,89 @@ func TestJSONAPIExportDomainJSONIsDeterministic(t *testing.T) {
 		t.Fatalf("ExportDomainJSON(unknown) error = nil, want unsupported domain")
 	}
 }
+
+func TestJSONAPIExportPlayersAndTribes(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewJSON(save)
+	players, err := api.ExportPlayers()
+	if err != nil {
+		t.Fatalf("ExportPlayers() error = %v", err)
+	}
+	if len(players) != 1 {
+		t.Fatalf("ExportPlayers() length = %d, want 1", len(players))
+	}
+	if players[0].PlayerDataID != 42 || players[0].CharacterName != "Survivor" || players[0].PlayerName != "PlatformName" || players[0].TribeID != 12345 {
+		t.Fatalf("PlayerInfo = %#v", players[0])
+	}
+	if players[0].Level != 5 || players[0].Experience != 123.5 || players[0].EngramPoints != 12 || players[0].NumDeaths != 3 {
+		t.Fatalf("PlayerInfo stats = %#v", players[0])
+	}
+
+	tribes, err := api.ExportTribes()
+	if err != nil {
+		t.Fatalf("ExportTribes() error = %v", err)
+	}
+	if len(tribes) != 1 {
+		t.Fatalf("ExportTribes() length = %d, want 1", len(tribes))
+	}
+	if tribes[0].TribeID != 12345 || tribes[0].Name != "Porters" || tribes[0].OwnerID != 42 || tribes[0].NumDinos != 7 {
+		t.Fatalf("TribeInfo = %#v", tribes[0])
+	}
+	if len(tribes[0].Members) != 1 || tribes[0].Members[0] != "Survivor" || len(tribes[0].MemberIDs) != 1 || tribes[0].MemberIDs[0] != 42 {
+		t.Fatalf("TribeInfo members = %#v/%#v", tribes[0].Members, tribes[0].MemberIDs)
+	}
+
+	playerDomain, err := api.ExportDomain("players")
+	if err != nil {
+		t.Fatalf("ExportDomain(players) error = %v", err)
+	}
+	if playerDomain.Domain != "players" || playerDomain.Count != 1 || playerDomain.FaultCount != 0 {
+		t.Fatalf("player DomainExport = %#v", playerDomain)
+	}
+	tribeDomain, err := api.ExportDomain("tribes")
+	if err != nil {
+		t.Fatalf("ExportDomain(tribes) error = %v", err)
+	}
+	if tribeDomain.Domain != "tribes" || tribeDomain.Count != 1 || tribeDomain.FaultCount != 0 {
+		t.Fatalf("tribe DomainExport = %#v", tribeDomain)
+	}
+}
+
+func TestJSONAPIExportPlayersAndTribesReportFaultCount(t *testing.T) {
+	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	brokenPlayerID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	tribeID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	brokenTribeID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	path := filepath.Join(t.TempDir(), "player-tribe-faults.ark")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			playerID:       savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
+			brokenPlayerID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
+			tribeID:        saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{Name: "Porters", TribeID: 12345, OwnerID: 42}),
+			brokenTribeID:  saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{Name: "Broken", TribeID: 999})[:40],
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	playerDomain, err := NewJSON(save).ExportDomain("players")
+	if err != nil {
+		t.Fatalf("ExportDomain(players) error = %v", err)
+	}
+	if playerDomain.Count != 1 || playerDomain.FaultCount == 0 {
+		t.Fatalf("player DomainExport = %#v, want one item and nonzero faults", playerDomain)
+	}
+	tribeDomain, err := NewJSON(save).ExportDomain("tribes")
+	if err != nil {
+		t.Fatalf("ExportDomain(tribes) error = %v", err)
+	}
+	if tribeDomain.Count != 1 || tribeDomain.FaultCount == 0 {
+		t.Fatalf("tribe DomainExport = %#v, want one item and nonzero faults", tribeDomain)
+	}
+}
