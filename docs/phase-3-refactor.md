@@ -65,8 +65,10 @@ For the cross-phase monitorable checklist, see
       UInt16 property payload writers are shared; dino scalar, object-reference,
       positioned stat/color, and name-array property payload writers use shared
       helpers; dino custom item data struct/byte-array payload writers use
-      shared helpers; and modern cryopod embedded dino/saddle payload builders
-      are shared by API and object-model tests. Remaining lower-level
+      shared helpers; low-level `arkproperty` and `arkobject` name-table-ID,
+      integer, float, string, and compound custom-data test writers use shared
+      helpers; and modern cryopod embedded dino/saddle payload builders are
+      shared by API and object-model tests. Remaining lower-level
       domain-specific parser fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.

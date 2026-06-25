@@ -23,19 +23,19 @@ func TestParseGameObjectReadsHeaderNamesSectionAndProperties(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 
 	stream := bytes.NewBuffer(nil)
-	writeName(stream, 1)
-	writeUInt32(stream, 0)
-	writeInt32(stream, 1)
-	writeName(stream, 2)
-	writeInt32(stream, 0)
+	testfixtures.WriteNameID(stream, 1)
+	testfixtures.WriteUInt32(stream, 0)
+	testfixtures.WriteInt32(stream, 1)
+	testfixtures.WriteNameID(stream, 2)
+	testfixtures.WriteInt32(stream, 0)
 	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	writeName(stream, 3)
-	writeName(stream, 4)
-	writeInt32(stream, 4)
-	writeInt32(stream, 0)
+	testfixtures.WriteNameID(stream, 3)
+	testfixtures.WriteNameID(stream, 4)
+	testfixtures.WriteInt32(stream, 4)
+	testfixtures.WriteInt32(stream, 0)
 	stream.WriteByte(0)
-	writeInt32(stream, 250)
-	writeName(stream, 5)
+	testfixtures.WriteInt32(stream, 250)
+	testfixtures.WriteNameID(stream, 5)
 
 	obj, err := ParseGameObject(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
 	if err != nil {
@@ -76,19 +76,19 @@ func TestParseGameObjectReadsStringEncodedObjectNames(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 
 	stream := bytes.NewBuffer(nil)
-	writeName(stream, 1)
-	writeUInt32(stream, 0)
-	writeInt32(stream, 1)
+	testfixtures.WriteNameID(stream, 1)
+	testfixtures.WriteUInt32(stream, 0)
+	testfixtures.WriteInt32(stream, 1)
 	testfixtures.WriteArkString(stream, "RuntimeObjectName_123")
-	writeInt32(stream, 0)
+	testfixtures.WriteInt32(stream, 0)
 	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	writeName(stream, 3)
-	writeName(stream, 4)
-	writeInt32(stream, 4)
-	writeInt32(stream, 0)
+	testfixtures.WriteNameID(stream, 3)
+	testfixtures.WriteNameID(stream, 4)
+	testfixtures.WriteInt32(stream, 4)
+	testfixtures.WriteInt32(stream, 0)
 	stream.WriteByte(0)
-	writeInt32(stream, 250)
-	writeName(stream, 5)
+	testfixtures.WriteInt32(stream, 250)
+	testfixtures.WriteNameID(stream, 5)
 
 	obj, err := ParseGameObject(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
 	if err != nil {
@@ -115,22 +115,22 @@ func TestParseGameObjectPartialKeepsPropertiesBeforePropertyError(t *testing.T) 
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 
 	stream := bytes.NewBuffer(nil)
-	writeName(stream, 1)
-	writeUInt32(stream, 0)
-	writeInt32(stream, 1)
-	writeName(stream, 2)
-	writeInt32(stream, 0)
+	testfixtures.WriteNameID(stream, 1)
+	testfixtures.WriteUInt32(stream, 0)
+	testfixtures.WriteInt32(stream, 1)
+	testfixtures.WriteNameID(stream, 2)
+	testfixtures.WriteInt32(stream, 0)
 	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	writeName(stream, 3)
-	writeName(stream, 4)
-	writeInt32(stream, 4)
-	writeInt32(stream, 0)
+	testfixtures.WriteNameID(stream, 3)
+	testfixtures.WriteNameID(stream, 4)
+	testfixtures.WriteInt32(stream, 4)
+	testfixtures.WriteInt32(stream, 0)
 	stream.WriteByte(0)
-	writeInt32(stream, 250)
-	writeName(stream, 5)
-	writeName(stream, 6)
-	writeInt32(stream, 2)
-	writeInt32(stream, 0)
+	testfixtures.WriteInt32(stream, 250)
+	testfixtures.WriteNameID(stream, 5)
+	testfixtures.WriteNameID(stream, 6)
+	testfixtures.WriteInt32(stream, 2)
+	testfixtures.WriteInt32(stream, 0)
 	stream.WriteByte(0)
 	_ = binary.Write(stream, binary.LittleEndian, int16(5))
 
@@ -185,17 +185,4 @@ func TestGameObjectShortNameFollowsUpstreamBlueprintRules(t *testing.T) {
 			}
 		})
 	}
-}
-
-func writeName(buf *bytes.Buffer, id uint32) {
-	writeUInt32(buf, id)
-	writeInt32(buf, 0)
-}
-
-func writeUInt32(buf *bytes.Buffer, value uint32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeInt32(buf *bytes.Buffer, value int32) {
-	_ = binary.Write(buf, binary.LittleEndian, value)
 }

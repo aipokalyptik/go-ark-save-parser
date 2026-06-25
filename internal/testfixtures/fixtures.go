@@ -408,11 +408,24 @@ func WriteInt32(buf *bytes.Buffer, value int32) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
+func WriteNameID(buf *bytes.Buffer, id uint32) {
+	WriteUInt32(buf, id)
+	WriteInt32(buf, 0)
+}
+
 func WriteInt16(buf *bytes.Buffer, value int16) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
 func WriteUInt32(buf *bytes.Buffer, value uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteFloat32(buf *bytes.Buffer, value float32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteFloat64(buf *bytes.Buffer, value float64) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
