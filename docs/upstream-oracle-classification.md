@@ -84,6 +84,7 @@ hard-coded placeholder paths with local `.ark` paths:
 - `examples/player_api/ex_01a_get_all_players.py`
 - `examples/player_api/ex_01b_get_all_tribes.py`
 - `examples/player_api/ex_01c_get_all_player_and_tribe_data.py`
+- `examples/player_api/ex_02_get_player_inventories.py`
 - `examples/player_api/ex_05_get_unlocked_engrams.py`
 - `examples/stackable_api/ex_01_get_nr_of_resource.py`
 - `examples/stackable_api/ex_02_get_nr_of_arb_owned_by.py`

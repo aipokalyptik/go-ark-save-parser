@@ -376,6 +376,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go `player_list` output with private Python upstream
       oracle output for all-player iteration using privacy-safe aggregate
       fields.
+- [x] Compare normalized Go `player_inventories` output with private Python
+      upstream oracle output for all-player inventory iteration using
+      privacy-safe aggregate inventory and item counts.
 - [x] Compare normalized Go `tribe_list` output with private Python upstream
       oracle output for all-tribe iteration using privacy-safe aggregate
       fields.

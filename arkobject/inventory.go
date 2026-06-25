@@ -39,7 +39,11 @@ func InventoryFromObject(object *GameObject) Inventory {
 }
 
 func (i Inventory) NumberOfItems() int {
-	return len(i.ItemUUIDs)
+	seen := make(map[uuid.UUID]struct{}, len(i.ItemUUIDs))
+	for _, id := range i.ItemUUIDs {
+		seen[id] = struct{}{}
+	}
+	return len(seen)
 }
 
 type InventoryItem struct {

@@ -21,6 +21,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `player_all`: `pass` (save path player aggregate fallback compared)
 - `player_tribe_links`: `pass` (player tribe active and inactive relation aggregates compared)
 - `player_inventory`: `pass` (player inventory item count and location presence compared)
+- `player_inventories`: `pass` (all-player inventory aggregate counts compared)
 - `dino_filter`: `pass` (dino aggregate counts compared)
 - `dino_best_stat_no_cryos`: `pass` (best stat dino without cryopods compared)
 - `dino_best_base_stat`: `pass` (class-filtered tamed base stat dino compared)
@@ -51,4 +52,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 42
+- `pass`: 43

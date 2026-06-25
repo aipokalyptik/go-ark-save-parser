@@ -65,15 +65,18 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			0x10000013: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
 			0x10000014: "StructureID",
 			0x10000015: "TargetingTeam",
+			0x10000016: "Blueprint'/Game/Test/InventoryItem.InventoryItem_C'",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			objectID:    testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
-			dinoID:      testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
-			stackableID: stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
-			equipmentID: testfixtures.GenericObjectBytes(0x10000012, 0x10000002),
-			structureID: syntheticSmokeStructureObjectBytes(0x10000013, 0x10000002, 0x10000014, 0x10000006, 0x10000015, 555),
-			pawnID:      playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, 0x1000000e, 0x1000000f, 0x10000010, 0x10000011, inventoryID),
-			inventoryID: inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
+			objectID:     testfixtures.GenericObjectBytes(0x10000001, 0x10000002),
+			dinoID:       testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
+			stackableID:  stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
+			equipmentID:  testfixtures.GenericObjectBytes(0x10000012, 0x10000002),
+			structureID:  syntheticSmokeStructureObjectBytes(0x10000013, 0x10000002, 0x10000014, 0x10000006, 0x10000015, 555),
+			pawnID:       playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, 0x1000000e, 0x1000000f, 0x10000010, 0x10000011, inventoryID),
+			inventoryID:  inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
+			firstItemID:  testfixtures.GenericObjectBytes(0x10000016, 0x10000002),
+			secondItemID: testfixtures.GenericObjectBytes(0x10000016, 0x10000002),
 		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
@@ -98,7 +101,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
 	runExample(t, "class_lookup", "objects=1 classes=1", savePath, "PrimalStructure_Wall_Stone_C")
-	runExample(t, "property_filter", "objects=7 classes=7", savePath, "None")
+	runExample(t, "property_filter", "objects=9 classes=8", savePath, "None")
 	runExample(t, "property_positions", "properties=3 name_offsets=3 value_offsets=3 encoded=3 positioned=1 offsets_ok=3", savePath, pawnID.String())
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", savePath)
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", "--no-cryos", savePath)
@@ -139,6 +142,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		t.Fatalf("structure_heatmap output missing: %v", err)
 	}
 	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")
+	runExample(t, "player_inventories", "players=1 with_inventory=1 without_inventory=0 total_items=2 max_items=2 min_items=2 avg_items=2.00 faults=0", savePath)
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "player_list", "players=1 with_names=1 highest_level=1", dir)
 	runExample(t, "tribe_list", "tribes=1 with_names=1 members=0 dinos=7", dir)

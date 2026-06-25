@@ -316,6 +316,61 @@ def python_player_inventory_oracle(save_path: Path, repo_root: Path, upstream_sr
         save.close()
 
 
+def python_player_inventories_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.player_api import PlayerApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    empty_cluster_dir = repo_root / ".oracle" / "output" / "empty-cluster"
+    empty_cluster_dir.mkdir(parents=True, exist_ok=True)
+    save = AsaSave(save_path)
+    try:
+        player_api = PlayerApi(
+            save,
+            force_legacy_store=True,
+            cluster_data_dir=empty_cluster_dir,
+        )
+        total_items = 0
+        with_inventory = 0
+        without_inventory = 0
+        max_items = 0
+        min_items = 0
+        faults = 0
+        for index, player in enumerate(player_api.players):
+            item_count = 0
+            try:
+                inventory = player_api.get_player_inventory(player, save)
+            except Exception:  # noqa: BLE001 - private report captures aggregate fault count
+                inventory = None
+                faults += 1
+            if inventory is None:
+                without_inventory += 1
+            else:
+                with_inventory += 1
+                item_count = getattr(inventory, "number_of_items")
+                if callable(item_count):
+                    item_count = item_count()
+                item_count = int(item_count)
+            if index == 0 or item_count < min_items:
+                min_items = item_count
+            if item_count > max_items:
+                max_items = item_count
+            total_items += item_count
+        players = len(player_api.players)
+        return {
+            "players": players,
+            "with_inventory": with_inventory,
+            "without_inventory": without_inventory,
+            "total_items": total_items,
+            "max_items": max_items,
+            "min_items": min_items,
+            "avg_items": round(total_items / players, 2) if players else 0.0,
+            "faults": faults,
+        }
+    finally:
+        save.close()
+
+
 def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.player_api import PlayerApi  # type: ignore
@@ -1285,6 +1340,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_structure_at_location = python_structure_at_location_oracle(save_path, py["map_name"], upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
+    py_player_inventories = python_player_inventories_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
     private: dict[str, Any] = {
@@ -1319,6 +1375,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_structure_at_location": py_structure_at_location,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
+        "python_player_inventories": py_player_inventories,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
         "go": {},
@@ -1553,6 +1610,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             except Exception as exc:  # noqa: BLE001 - private report captures details
                 private["go"]["player_inventory"]["parse_error"] = str(exc)
                 cases.append(CaseResult("player_inventory", "fail", "Go player inventory output could not be parsed"))
+
+    go_player_inventories = run(["go", "run", "./examples/player_inventories", str(save_path)], repo_root, env)
+    private["go"]["player_inventories"] = {
+        "exit_code": go_player_inventories.returncode,
+        "stdout": go_player_inventories.stdout,
+        "stderr": go_player_inventories.stderr,
+    }
+    if go_player_inventories.returncode != 0:
+        cases.append(CaseResult("player_inventories", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_player_inventories.stdout)
+        private["go"]["player_inventories"]["parsed"] = got
+        cases.append(CaseResult("player_inventories", "pass" if {key: got.get(key) for key in py_player_inventories} == py_player_inventories else "fail", "all-player inventory aggregate counts compared"))
 
     go_dino_filter = run(["go", "run", "./examples/dino_filter", "--no-cryos", str(save_path)], repo_root, env)
     private["go"]["dino_filter"] = {
@@ -2064,6 +2134,20 @@ def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src:
         py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
         private["python_local_profiles"] = py_local_profiles
         return [compare_tribe_list_case(save_path, repo_root, env, py_local_profiles, private)], private
+    if case_name == "player_inventories":
+        py_player_inventories = python_player_inventories_oracle(save_path, repo_root, upstream_src)
+        private["python_player_inventories"] = py_player_inventories
+        go_player_inventories = run(["go", "run", "./examples/player_inventories", str(save_path)], repo_root, env)
+        private["go"]["player_inventories"] = {
+            "exit_code": go_player_inventories.returncode,
+            "stdout": go_player_inventories.stdout,
+            "stderr": go_player_inventories.stderr,
+        }
+        if go_player_inventories.returncode != 0:
+            return [CaseResult("player_inventories", "fail", "Go example exited non-zero")], private
+        got = parse_key_value_lines(go_player_inventories.stdout)
+        private["go"]["player_inventories"]["parsed"] = got
+        return [CaseResult("player_inventories", "pass" if {key: got.get(key) for key in py_player_inventories} == py_player_inventories else "fail", "all-player inventory aggregate counts compared")], private
     raise ValueError(f"unsupported focused oracle case {case_name!r}")
 
 
@@ -2096,7 +2180,7 @@ def main() -> int:
     parser.add_argument("--upstream-src", type=Path, default=Path(".oracle/upstream/src"))
     parser.add_argument("--out", type=Path, default=Path(".oracle/output/oracle-comparison.json"))
     parser.add_argument("--summary", type=Path, default=Path("docs/oracle-comparison-summary.md"))
-    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list"], default=None)
+    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list", "player_inventories"], default=None)
     args = parser.parse_args()
 
     repo_root = Path.cwd()

@@ -76,3 +76,13 @@ func TestInventoryFromObjectReadsReferencedItems(t *testing.T) {
 		t.Fatalf("Inventory.ItemUUIDs = %#v", inventory.ItemUUIDs)
 	}
 }
+
+func TestInventoryNumberOfItemsCollapsesDuplicateReferences(t *testing.T) {
+	first := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	second := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	inventory := Inventory{ItemUUIDs: []uuid.UUID{first, first, second}}
+
+	if inventory.NumberOfItems() != 2 {
+		t.Fatalf("NumberOfItems() = %d, want unique item count 2", inventory.NumberOfItems())
+	}
+}

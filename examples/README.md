@@ -104,6 +104,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `player_inventory`: open a local `.ark`, resolve a player data ID through its
   pawn, and print the linked inventory item count plus pawn location when
   present.
+- `player_inventories`: open a local `.ark`, resolve inventories for all
+  save-contained players or sibling local profiles, and print privacy-safe
+  aggregate inventory counts.
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
 - `local_tribute`: read local compact tribute index files and print aggregate
