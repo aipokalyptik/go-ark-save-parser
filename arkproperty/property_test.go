@@ -109,6 +109,47 @@ func TestParsePropertiesReadsPrimitivePropertiesUntilNone(t *testing.T) {
 	}
 }
 
+func TestParsePropertiesNormalizesPositionFlagPrimitiveOnlyWhenFlagIsFalse(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Health",
+		2: "IntProperty",
+		3: "Weight",
+		4: "FloatProperty",
+		5: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeInt32(stream, 7)
+	stream.WriteByte(0)
+	writeInt32(stream, 250)
+
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 4)
+	writeInt32(stream, 8)
+	stream.WriteByte(0)
+	_ = binary.Write(stream, binary.LittleEndian, float32(3.5))
+
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() length = %d, want 2", len(props))
+	}
+	if props[0].Name != "Health" || props[0].Position != 7 {
+		t.Fatalf("Health Position = %d, want 7", props[0].Position)
+	}
+	if props[1].Name != "Weight" || props[1].Position != 0 {
+		t.Fatalf("Weight Position = %d, want 0", props[1].Position)
+	}
+}
+
 func TestParsePropertiesGeneratesUnknownNamesForUnknownPropertyKeys(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

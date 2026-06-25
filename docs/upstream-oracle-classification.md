@@ -60,6 +60,9 @@ hard-coded placeholder paths with local `.ark` paths:
 - `examples/basic_parsing/ex_01_get_obj_by_uuid.py`
 - `examples/basic_parsing/ex_02_get_obj_by_class_string.py`
 - `examples/basic_parsing/ex_03_reading_property_definitions_and_positions.py`
+  is covered by `examples/property_positions`, which compares property name
+  offsets, value offsets, encoded byte spans, and property index-position
+  aggregates without committing property names or raw bytes.
 - `examples/basic_parsing/ex_05_get_objects_with_property.py`
 - `examples/basic_parsing/ex_06_find_all_properties_for_objects.py`
 - `examples/dino_api/ex_01_generic_filter.py`
@@ -134,7 +137,10 @@ correctness.
 
 ## Offline Skips
 
-Network-facing behavior is intentionally unsupported in this Go port.
+Network-facing behavior is intentionally unsupported in this Go port. Examples
+that only use FTP to acquire a save remain offline oracle candidates after
+patching the path to a local `.ark`; they are classified separately from true
+network-only behavior.
 
 Always skipped:
 

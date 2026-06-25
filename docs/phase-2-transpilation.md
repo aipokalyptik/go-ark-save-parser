@@ -425,6 +425,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go `class_property_summary` output with upstream
       class-filtered property-name enumeration using a private oracle-selected
       class and aggregate object/property/fault counts.
+- [x] Compare normalized Go `property_positions` output with upstream property
+      metadata for name offsets, value offsets, encoded byte spans, and
+      property index positions using privacy-safe aggregate fields.
 - [x] Compare normalized Go `cluster_json` aggregate counts with the upstream
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local

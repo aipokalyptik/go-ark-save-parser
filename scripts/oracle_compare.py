@@ -172,11 +172,23 @@ def python_object_summary_oracle(save_path: Path, upstream_src: Path) -> dict[st
             if obj is None:
                 continue
             raw = save.save_connection.get_game_obj_binary(obj_uuid)
+            props = list(obj.properties)
             return {
                 "uuid": str(obj_uuid),
                 "has_object": 1,
                 "bytes": len(raw),
-                "properties": len(obj.properties),
+                "properties": len(props),
+                "name_offsets": sum(1 for prop in props if getattr(prop, "name_position", 0) > 0),
+                "value_offsets": sum(1 for prop in props if getattr(prop, "value_position", 0) > 0),
+                "encoded": sum(1 for prop in props if len(getattr(prop, "bytes", b"") or b"") > 0),
+                "positioned": sum(1 for prop in props if getattr(prop, "position", 0) != 0),
+                "offsets_ok": sum(
+                    1
+                    for prop in props
+                    if getattr(prop, "name_position", -1) >= 0
+                    and getattr(prop, "value_position", 0) > getattr(prop, "name_position", -1)
+                    and len(getattr(prop, "bytes", b"") or b"") > 0
+                ),
             }
         return None
     finally:
@@ -1217,6 +1229,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             private["go"]["object_summary"]["parsed"] = got
             want = {key: py_object_summary[key] for key in ("has_object", "bytes", "properties")}
             cases.append(CaseResult("object_summary", "pass" if {key: got.get(key) for key in want} == want else "fail", "object-by-UUID byte and property counts compared"))
+
+        go_property_positions = run(["go", "run", "./examples/property_positions", str(save_path), str(py_object_summary["uuid"])], repo_root, env)
+        private["go"]["property_positions"] = {
+            "exit_code": go_property_positions.returncode,
+            "stdout": go_property_positions.stdout,
+            "stderr": go_property_positions.stderr,
+        }
+        if go_property_positions.returncode != 0:
+            cases.append(CaseResult("property_positions", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_property_positions.stdout)
+            private["go"]["property_positions"]["parsed"] = got
+            want = {key: py_object_summary[key] for key in ("has_object", "properties", "name_offsets", "value_offsets", "encoded", "positioned", "offsets_ok")}
+            cases.append(CaseResult("property_positions", "pass" if {key: got.get(key) for key in want} == want else "fail", "property metadata offsets and encoded byte counts compared"))
 
     go_class_lookup = run(["go", "run", "./examples/class_lookup", str(save_path), *STORAGE_CLASS_SUBSTRINGS], repo_root, env)
     private["go"]["class_lookup"] = {

@@ -40,7 +40,8 @@ offline parser without Python or private chat context.
       set aggregates, player list aggregates, save-level player and tribe
       relation aggregates,
       dino aggregate counts, no-cryopod dino best-stat selection,
-      property-filtered object counts, player inventory item/location
+      property-position metadata aggregates, property-filtered object counts,
+      player inventory item/location
       aggregates, stackable item/quantity counts, equipment longneck blueprint
       damage aggregates, equipment best weapon/armor value aggregates,
       canonical direct equipment class counts, stable equipment ranking

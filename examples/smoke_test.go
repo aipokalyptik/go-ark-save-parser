@@ -85,6 +85,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
 	runExample(t, "class_lookup", "objects=1 classes=1", savePath, "PrimalStructure_Wall_Stone_C")
 	runExample(t, "property_filter", "objects=7 classes=7", savePath, "None")
+	runExample(t, "property_positions", "properties=3 name_offsets=3 value_offsets=3 encoded=3 positioned=1 offsets_ok=3", savePath, pawnID.String())
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", savePath)
 	runExample(t, "dino_filter", "dinos=1 tamed=0 wild=1 cryopodded=0 classes=1", "--no-cryos", savePath)
 	runExample(t, "dino_best_stat", "no_match", savePath)

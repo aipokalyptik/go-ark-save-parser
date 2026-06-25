@@ -292,6 +292,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "Int8Property":
 		prop.Type = TypeInt8
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err
@@ -311,6 +312,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = int8(value)
 	case "Int16Property":
 		prop.Type = TypeInt16
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err
@@ -356,7 +358,9 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "FloatProperty":
 		prop.Type = TypeFloat
+		prop.Position = 0
 		if dataSize == 0 && key == "CurrentStatusValues" {
+			prop.Position = position
 			prop.ValueOffset = r.Position()
 			value, err := r.ReadFloat32()
 			if err != nil {
@@ -384,6 +388,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "StrProperty":
 		prop.Type = TypeString
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err
@@ -407,6 +412,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		}
 	case "ObjectProperty":
 		prop.Type = TypeObject
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err
@@ -426,6 +432,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = ref
 	case "NameProperty":
 		prop.Type = TypeName
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err
@@ -526,6 +533,7 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		prop.Value = value
 	case "UInt16Property":
 		prop.Type = TypeUInt16
+		prop.Position = 0
 		isPositioned, err := r.ReadBool()
 		if err != nil {
 			return nil, err

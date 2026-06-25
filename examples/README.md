@@ -24,6 +24,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   the class lookup/filtering style of the upstream basic parsing examples.
 - `object_summary`: look up one object by UUID and print raw byte and parsed
   property counts without printing class names or property values.
+- `property_positions`: look up one object by UUID and print aggregate property
+  metadata counts for name offsets, value offsets, encoded byte spans, and
+  nonzero property positions without printing property names or values.
 - `class_lookup`: count objects and distinct classes matching one or more class
   name substrings without printing class names or object UUIDs.
 - `class_property_summary`: parse objects matching one class substring and
