@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -23,7 +24,9 @@ type Save struct {
 
 	Context            *Context
 	names              *arkbinary.Context
+	objectCacheMu      sync.RWMutex
 	objectCacheEnabled bool
+	objectCacheVersion uint64
 	objectBinaryCache  map[uuid.UUID][]byte
 }
 
@@ -101,9 +104,12 @@ func (s *Save) SetObjectCacheEnabled(enabled bool) {
 	if s == nil {
 		return
 	}
+	s.objectCacheMu.Lock()
+	defer s.objectCacheMu.Unlock()
+	s.objectCacheVersion++
 	s.objectCacheEnabled = enabled
 	if !enabled {
-		s.ClearObjectCache()
+		s.objectBinaryCache = nil
 		return
 	}
 	if s.objectBinaryCache == nil {
@@ -112,13 +118,21 @@ func (s *Save) SetObjectCacheEnabled(enabled bool) {
 }
 
 func (s *Save) ObjectCacheEnabled() bool {
-	return s != nil && s.objectCacheEnabled
+	if s == nil {
+		return false
+	}
+	s.objectCacheMu.RLock()
+	defer s.objectCacheMu.RUnlock()
+	return s.objectCacheEnabled
 }
 
 func (s *Save) ClearObjectCache() {
 	if s == nil {
 		return
 	}
+	s.objectCacheMu.Lock()
+	defer s.objectCacheMu.Unlock()
+	s.objectCacheVersion++
 	s.objectBinaryCache = nil
 	if s.objectCacheEnabled {
 		s.objectBinaryCache = map[uuid.UUID][]byte{}
@@ -159,19 +173,28 @@ func (s *Save) ObjectIDs() ([]uuid.UUID, error) {
 }
 
 func (s *Save) ObjectBinary(id uuid.UUID) ([]byte, error) {
-	if s.objectCacheEnabled {
+	s.objectCacheMu.RLock()
+	cacheEnabled := s.objectCacheEnabled
+	cacheVersion := s.objectCacheVersion
+	if cacheEnabled {
 		if value, ok := s.objectBinaryCache[id]; ok {
+			s.objectCacheMu.RUnlock()
 			return copyBytes(value), nil
 		}
 	}
+	s.objectCacheMu.RUnlock()
+
 	var value []byte
 	err := s.db.QueryRow(`select value from game where key = ?`, id[:]).Scan(&value)
 	if err != nil {
 		return nil, err
 	}
-	if s.objectCacheEnabled {
+
+	s.objectCacheMu.Lock()
+	if cacheEnabled && s.objectCacheEnabled && s.objectCacheVersion == cacheVersion {
 		s.objectBinaryCache[id] = copyBytes(value)
 	}
+	s.objectCacheMu.Unlock()
 	return copyBytes(value), nil
 }
 

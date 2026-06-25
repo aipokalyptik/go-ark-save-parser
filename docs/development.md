@@ -30,12 +30,14 @@ For repeated object lookup/parse changes, compare the raw object row cache
 against the uncached path:
 
 ```sh
-GOCACHE=$PWD/.cache/go-build go test ./arkapi -bench BenchmarkObjectParse -benchtime=1x
+GOCACHE=$PWD/.cache/go-build go test ./arkapi -bench 'BenchmarkObjectParse' -benchtime=1x
 ```
 
 The cache is opt-in on `arksave.Save` via `SetObjectCacheEnabled(true)`.
 Disable it or call `ClearObjectCache()` when reusing a save handle after
-out-of-band copied-save mutations.
+out-of-band copied-save mutations. Object row cache access is guarded for
+concurrent `ObjectBinary` reads, but higher-level API concurrency is not a
+compatibility guarantee unless a specific path has tests.
 
 The build target uses `CGO_ENABLED=0` so the CLI remains portable and does not
 depend on a system SQLite library.

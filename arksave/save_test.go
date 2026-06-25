@@ -2,7 +2,9 @@ package arksave
 
 import (
 	"bytes"
+	"errors"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -294,6 +296,63 @@ func TestObjectCacheReturnsDefensiveCopies(t *testing.T) {
 	}
 	if !bytes.Equal(again, objectBytes) {
 		t.Fatalf("ObjectBinary(second) = % x, want unmutated object bytes", again)
+	}
+}
+
+func TestObjectCacheAllowsConcurrentReads(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	objectBytes := syntheticObjectBytes(0x10000001)
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: syntheticHeader(),
+		Objects: map[uuid.UUID][]byte{
+			objectID: objectBytes,
+		},
+	})
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+	save.SetObjectCacheEnabled(true)
+
+	if _, err := save.ObjectBinary(objectID); err != nil {
+		t.Fatalf("ObjectBinary(cache fill) error = %v", err)
+	}
+
+	var wg sync.WaitGroup
+	errs := make(chan error, 64)
+	for i := 0; i < 64; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				raw, err := save.ObjectBinary(objectID)
+				if err != nil {
+					errs <- err
+					return
+				}
+				if !bytes.Equal(raw, objectBytes) {
+					errs <- errors.New("cached object bytes changed")
+					return
+				}
+				raw[0] = 0xff
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatal(err)
+	}
+
+	raw, err := save.ObjectBinary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(after concurrent reads) error = %v", err)
+	}
+	if !bytes.Equal(raw, objectBytes) {
+		t.Fatalf("ObjectBinary(after concurrent reads) = % x, want unmutated object bytes", raw)
 	}
 }
 

@@ -67,6 +67,9 @@ For the cross-phase monitorable checklist, see
       filters, and JSON export.
 - [x] Add opt-in `arksave.Save` object row cache controls for repeated object
       lookup/parse workflows, plus cached object-parse benchmark coverage.
+- [x] Guard opt-in object row cache access for concurrent cached `ObjectBinary`
+      reads; broader high-level API concurrency is not claimed without
+      path-specific tests.
 - [x] Keep `inspect` as metadata-only and make `parse` perform a
       fault-tolerant full-object parse summary, then expand `cmd/arksave`
       with local profile/tribe file and directory summaries plus

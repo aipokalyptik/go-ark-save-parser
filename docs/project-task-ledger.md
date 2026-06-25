@@ -352,7 +352,9 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Add selected-property scans for expensive structure/base workflows.
   - [x] Add opt-in object row cache controls on `arksave.Save`, plus cached
         object-parse benchmark coverage.
-  - [ ] Add safe concurrency only where tests prove no behavior drift.
+  - [~] Add safe concurrency only where tests prove no behavior drift; currently
+        covered for opt-in object row cache reads only, with broader high-level
+        API concurrency intentionally unclaimed.
 - [x] CLI:
   - [x] `inspect`.
   - [x] `parse`.
