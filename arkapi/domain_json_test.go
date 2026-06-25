@@ -219,7 +219,7 @@ func pedigreeDinoObjectBytes(id1 int32, id2 int32, ancestors ...arkobject.DinoID
 			_ = binary.Write(&element, binary.LittleEndian, int32(0))
 			elements = append(elements, element.Bytes())
 		}
-		writeStructArrayProperty(&props, 0x10000055, 0x10000049, 0x10000052, elements)
+		testfixtures.WriteStructArrayPropertyID(&props, 0x10000055, 0x1000001e, 0x10000049, 0x10000052, elements)
 	}
 	return testfixtures.ObjectBytesWithProperties(0x10000014, 0x10000004, props.Bytes())
 }

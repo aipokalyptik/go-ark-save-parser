@@ -1565,81 +1565,21 @@ func writeCustomItemDatasProperty(buf *bytes.Buffer, payloads ...[]byte) {
 		copy(byteValues, payload)
 
 		var bytesElement bytes.Buffer
-		writeByteArrayProperty(&bytesElement, 0x1000004f, 0x10000050, byteValues)
+		testfixtures.WriteByteArrayPropertyID(&bytesElement, 0x1000004f, 0x1000001e, 0x10000050, byteValues)
 		_ = binary.Write(&bytesElement, binary.LittleEndian, uint32(0x10000004))
 		_ = binary.Write(&bytesElement, binary.LittleEndian, int32(0))
 		elements = append(elements, bytesElement.Bytes())
 	}
 
 	var customDataBytes bytes.Buffer
-	writeStructArrayProperty(&customDataBytes, 0x1000004d, 0x10000049, 0x1000004e, elements)
+	testfixtures.WriteStructArrayPropertyID(&customDataBytes, 0x1000004d, 0x1000001e, 0x10000049, 0x1000004e, elements)
 	_ = binary.Write(&customDataBytes, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&customDataBytes, binary.LittleEndian, int32(0))
 
 	var customItemData bytes.Buffer
-	writeStructProperty(&customItemData, 0x1000004b, 0x10000049, 0x1000004c, customDataBytes.Bytes())
+	testfixtures.WriteStructPropertyID(&customItemData, 0x1000004b, 0x10000049, 0x1000004c, customDataBytes.Bytes())
 	_ = binary.Write(&customItemData, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&customItemData, binary.LittleEndian, int32(0))
 
-	writeStructArrayProperty(buf, 0x10000048, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
-}
-
-func writeStructProperty(buf *bytes.Buffer, name uint32, structProperty uint32, structType uint32, body []byte) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, structProperty)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, structType)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, structType)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
-	buf.WriteByte(0)
-	buf.Write(body)
-}
-
-func writeStructArrayProperty(buf *bytes.Buffer, name uint32, structProperty uint32, structType uint32, elements [][]byte) {
-	bodySize := 4
-	for _, element := range elements {
-		bodySize += len(element)
-	}
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
-	_ = binary.Write(buf, binary.LittleEndian, structProperty)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, structType)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, structType)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(elements)))
-	for _, element := range elements {
-		buf.Write(element)
-	}
-}
-
-func writeByteArrayProperty(buf *bytes.Buffer, name uint32, byteProperty uint32, values []byte) {
-	bodySize := 4 + len(values)
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
-	_ = binary.Write(buf, binary.LittleEndian, byteProperty)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	buf.Write(values)
+	testfixtures.WriteStructArrayPropertyID(buf, 0x10000048, 0x1000001e, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
 }

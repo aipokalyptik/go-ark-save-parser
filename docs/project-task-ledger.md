@@ -376,8 +376,9 @@ CLI tools, and reusable APIs without losing oracle parity.
         Dino/equipment string property payload writers and equipment positioned
         UInt16 property payload writers are now shared, and dino scalar,
         object-reference, positioned stat/color, and name-array property payload
-        writers now use shared helpers; lower-level dino/equipment parser
-        payload builders still remain.
+        writers now use shared helpers; dino custom item data struct/byte-array
+        payload writers now use shared helpers; remaining lower-level
+        dino/equipment parser payload builders still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

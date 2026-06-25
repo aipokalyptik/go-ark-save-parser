@@ -503,6 +503,66 @@ func WriteNameArrayPropertyID(buf *bytes.Buffer, name uint32, arrayPropertyType 
 	}
 }
 
+func WriteByteArrayPropertyID(buf *bytes.Buffer, name uint32, arrayPropertyType uint32, bytePropertyType uint32, values []byte) {
+	bodySize := 4 + len(values)
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, arrayPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	_ = binary.Write(buf, binary.LittleEndian, bytePropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
+	buf.Write(values)
+}
+
+func WriteStructPropertyID(buf *bytes.Buffer, name uint32, structPropertyType uint32, structType uint32, body []byte) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, structPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(body)))
+	buf.WriteByte(0)
+	buf.Write(body)
+}
+
+func WriteStructArrayPropertyID(buf *bytes.Buffer, name uint32, arrayPropertyType uint32, structPropertyType uint32, structType uint32, elements [][]byte) {
+	bodySize := 4
+	for _, element := range elements {
+		bodySize += len(element)
+	}
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, arrayPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
+	_ = binary.Write(buf, binary.LittleEndian, structPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, structType)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(bodySize))
+	buf.WriteByte(0)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(len(elements)))
+	for _, element := range elements {
+		buf.Write(element)
+	}
+}
+
 func WritePositionedIntPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value int32) {
 	writePropertyIDHeader(buf, name, propertyType, 4, position, false)
 	_ = binary.Write(buf, binary.LittleEndian, value)
