@@ -403,43 +403,34 @@ func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 
 func gameModeCustomBytesFixture(t *testing.T) []byte {
 	t.Helper()
-	player := testfixtures.PlayerArchiveBytes(t, testfixtures.PlayerArchiveOptions{
-		PlayerDataID:        42,
-		CharacterName:       "Survivor",
-		PlayerName:          "PlatformName",
-		UniqueID:            "eos-survivor",
-		TribeID:             12345,
-		NumDeaths:           3,
-		ExtraCharacterLevel: 4,
-		ExperiencePoints:    123.5,
-		TotalEngramPoints:   12,
+	return testfixtures.GameModeCustomBytes(t, testfixtures.GameModeCustomBytesOptions{
+		Player: testfixtures.PlayerArchiveOptions{
+			PlayerDataID:        42,
+			CharacterName:       "Survivor",
+			PlayerName:          "PlatformName",
+			UniqueID:            "eos-survivor",
+			TribeID:             12345,
+			NumDeaths:           3,
+			ExtraCharacterLevel: 4,
+			ExperiencePoints:    123.5,
+			TotalEngramPoints:   12,
+		},
+		NextPlayer: testfixtures.PlayerArchiveOptions{
+			PlayerDataID:  99,
+			CharacterName: "Marker",
+			PlayerName:    "MarkerPlatform",
+			UniqueID:      "eos-marker",
+			TribeID:       12345,
+		},
+		Tribe: testfixtures.TribeArchiveOptions{
+			Name:      "Porters",
+			TribeID:   12345,
+			OwnerID:   42,
+			NumDinos:  7,
+			Members:   []string{"Survivor"},
+			MemberIDs: []int32{42},
+		},
 	})
-	nextPlayer := testfixtures.PlayerArchiveBytes(t, testfixtures.PlayerArchiveOptions{
-		PlayerDataID:  99,
-		CharacterName: "Marker",
-		PlayerName:    "MarkerPlatform",
-		UniqueID:      "eos-marker",
-		TribeID:       12345,
-	})
-	tribe := testfixtures.TribeArchiveBytes(t, testfixtures.TribeArchiveOptions{
-		Name:      "Porters",
-		TribeID:   12345,
-		OwnerID:   42,
-		NumDinos:  7,
-		Members:   []string{"Survivor"},
-		MemberIDs: []int32{42},
-	})
-	tribeArchiveID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-	copy(tribe[16:32], tribeArchiveID[:])
-	var buf bytes.Buffer
-	buf.WriteByte(1)
-	buf.Write(player)
-	buf.WriteByte(0)
-	buf.Write(nextPlayer)
-	buf.WriteByte(0)
-	buf.Write(tribe)
-	buf.Write(tribe[15:31])
-	return buf.Bytes()
 }
 
 func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {

@@ -197,6 +197,13 @@ type TribeArchiveOptions struct {
 	TribeLog  []string
 }
 
+type GameModeCustomBytesOptions struct {
+	Player         PlayerArchiveOptions
+	NextPlayer     PlayerArchiveOptions
+	Tribe          TribeArchiveOptions
+	TribeArchiveID uuid.UUID
+}
+
 func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveOptions) {
 	tb.Helper()
 	writeFile(tb, path, TribeArchiveBytes(tb, opts), "tribe archive fixture")
@@ -242,6 +249,31 @@ func tribeProperties(opts TribeArchiveOptions) []byte {
 	WriteNameStructProperty(&props, "TribeData", "TribeDataStruct", tribeData.Bytes())
 	WriteArkString(&props, "None")
 	return props.Bytes()
+}
+
+func GameModeCustomBytes(tb testing.TB, opts GameModeCustomBytesOptions) []byte {
+	tb.Helper()
+	tribeArchiveID := opts.TribeArchiveID
+	if tribeArchiveID == uuid.Nil {
+		tribeArchiveID = uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	}
+
+	player := PlayerArchiveBytes(tb, opts.Player)
+	nextPlayer := PlayerArchiveBytes(tb, opts.NextPlayer)
+	tribe := TribeArchiveBytes(tb, opts.Tribe)
+
+	const archiveUUIDOffset = 16
+	copy(tribe[archiveUUIDOffset:archiveUUIDOffset+16], tribeArchiveID[:])
+
+	var buf bytes.Buffer
+	buf.WriteByte(1)
+	buf.Write(player)
+	buf.WriteByte(0)
+	buf.Write(nextPlayer)
+	buf.WriteByte(0)
+	buf.Write(tribe)
+	buf.Write(tribe[archiveUUIDOffset-1 : archiveUUIDOffset+15])
+	return buf.Bytes()
 }
 
 func WriteTributeFile(tb testing.TB, path string, playerIDs []uint64, tribeIDs []uint64) {
