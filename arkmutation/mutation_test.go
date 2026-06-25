@@ -95,6 +95,22 @@ func TestCopySaveRequiresDistinctNewOutputPath(t *testing.T) {
 	}
 }
 
+func TestMutationFailureRemovesOutputCopy(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	if err := os.WriteFile(input, []byte("not sqlite"), 0o600); err != nil {
+		t.Fatalf("write invalid input: %v", err)
+	}
+
+	if err := PutCustomValue(input, output, "Extra", []byte{1, 2, 3}); err == nil {
+		t.Fatalf("PutCustomValue(invalid input) error = nil, want error")
+	}
+	if _, err := os.Stat(output); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("mutated output stat error = %v, want os.ErrNotExist", err)
+	}
+}
+
 func createSyntheticSave(t *testing.T, path string, objectID uuid.UUID, objectBytes []byte) {
 	t.Helper()
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{

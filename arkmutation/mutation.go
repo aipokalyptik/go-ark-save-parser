@@ -89,6 +89,12 @@ func mutateCopy(inputPath string, outputPath string, fn func(*sql.DB) error) err
 	if err := CopySave(inputPath, outputPath); err != nil {
 		return err
 	}
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(outputPath)
+		}
+	}()
 	db, err := sql.Open("sqlite", outputPath)
 	if err != nil {
 		return err
@@ -104,5 +110,9 @@ func mutateCopy(inputPath string, outputPath string, fn func(*sql.DB) error) err
 	if err != nil {
 		return fmt.Errorf("reopen mutated copy: %w", err)
 	}
-	return save.Close()
+	if err := save.Close(); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
 }
