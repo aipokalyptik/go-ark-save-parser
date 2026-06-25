@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestObjectBytesWithPropertiesWrapsObjectHeaderAndNoneMarker(t *testing.T) {
@@ -25,5 +27,31 @@ func TestObjectBytesWithPropertiesWrapsObjectHeaderAndNoneMarker(t *testing.T) {
 
 	if !bytes.Equal(got, want.Bytes()) {
 		t.Fatalf("ObjectBytesWithProperties() = %x, want %x", got, want.Bytes())
+	}
+}
+
+func TestActorTransformsWritesEntriesAndNilTerminator(t *testing.T) {
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+
+	got := ActorTransforms(ActorTransform{
+		UUID:       id,
+		X:          1,
+		Y:          2,
+		Z:          3,
+		Pitch:      4,
+		Roll:       5,
+		Yaw:        6,
+		Quaternion: 7,
+	})
+
+	var want bytes.Buffer
+	want.Write(id[:])
+	for _, value := range []float64{1, 2, 3, 4, 5, 6, 7} {
+		_ = binary.Write(&want, binary.LittleEndian, value)
+	}
+	want.Write(uuid.Nil[:])
+
+	if !bytes.Equal(got, want.Bytes()) {
+		t.Fatalf("ActorTransforms() = %x, want %x", got, want.Bytes())
 	}
 }

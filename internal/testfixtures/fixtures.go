@@ -19,6 +19,17 @@ type SaveOptions struct {
 	EmptyTables bool
 }
 
+type ActorTransform struct {
+	UUID       uuid.UUID
+	X          float64
+	Y          float64
+	Z          float64
+	Pitch      float64
+	Roll       float64
+	Yaw        float64
+	Quaternion float64
+}
+
 func WriteSave(tb testing.TB, path string, opts SaveOptions) {
 	tb.Helper()
 	db, err := sql.Open("sqlite", path)
@@ -274,6 +285,22 @@ func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties
 	buf.Write(properties)
 	_ = binary.Write(&buf, binary.LittleEndian, noneNameID)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func ActorTransforms(transforms ...ActorTransform) []byte {
+	var buf bytes.Buffer
+	for _, transform := range transforms {
+		buf.Write(transform.UUID[:])
+		_ = binary.Write(&buf, binary.LittleEndian, transform.X)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Y)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Z)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Pitch)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Roll)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Yaw)
+		_ = binary.Write(&buf, binary.LittleEndian, transform.Quaternion)
+	}
+	buf.Write(uuid.Nil[:])
 	return buf.Bytes()
 }
 

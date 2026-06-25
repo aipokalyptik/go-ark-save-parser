@@ -2,14 +2,12 @@ package arksave
 
 import (
 	"bytes"
-	"database/sql"
-	"encoding/binary"
 	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 )
 
 func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
@@ -19,22 +17,26 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	secondObjectID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	secondObjectBytes := syntheticObjectBytes(0x10000005)
 	header := syntheticHeader()
-	actorTransforms := syntheticActorTransforms(objectID)
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "ActorTransforms", actorTransforms)
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], objectBytes)
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, secondObjectID[:], secondObjectBytes)
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
+	actorTransforms := testfixtures.ActorTransforms(testfixtures.ActorTransform{
+		UUID:       objectID,
+		X:          1,
+		Y:          2,
+		Z:          3,
+		Pitch:      4,
+		Roll:       5,
+		Yaw:        6,
+		Quaternion: 7,
+	})
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: header,
+		Custom: map[string][]byte{
+			"ActorTransforms": actorTransforms,
+		},
+		Objects: map[uuid.UUID][]byte{
+			objectID:       objectBytes,
+			secondObjectID: secondObjectBytes,
+		},
+	})
 
 	save, err := Open(path)
 	if err != nil {
@@ -181,20 +183,13 @@ func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	header := syntheticHeader()
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], syntheticObjectBytes(0x10000001))
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], truncatedObjectBytes(0x10000005))
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: header,
+		Objects: map[uuid.UUID][]byte{
+			objectID: syntheticObjectBytes(0x10000001),
+			faultyID: truncatedObjectBytes(0x10000005),
+		},
+	})
 
 	save, err := Open(path)
 	if err != nil {
@@ -222,21 +217,14 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	header := syntheticHeader()
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	mustExec(t, db, `create table custom (key text primary key, value blob)`)
-	mustExec(t, db, `create table game (key blob primary key, value blob)`)
-	mustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", header)
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, objectID[:], syntheticObjectBytes(0x10000001))
 	faultyBytes := syntheticObjectBytes(0x10000005)
-	mustExec(t, db, `insert into game (key, value) values (?, ?)`, faultyID[:], faultyBytes[:len(faultyBytes)-2])
-	if err := db.Close(); err != nil {
-		t.Fatalf("close fixture db: %v", err)
-	}
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: header,
+		Objects: map[uuid.UUID][]byte{
+			objectID: syntheticObjectBytes(0x10000001),
+			faultyID: faultyBytes[:len(faultyBytes)-2],
+		},
+	})
 
 	save, err := Open(path)
 	if err != nil {
@@ -256,90 +244,26 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 	}
 }
 
-func syntheticActorTransforms(id uuid.UUID) []byte {
-	var buf bytes.Buffer
-	buf.Write(id[:])
-	for _, value := range []float64{1, 2, 3, 4, 5, 6, 7} {
-		_ = binary.Write(&buf, binary.LittleEndian, value)
-	}
-	buf.Write(uuid.Nil[:])
-	return buf.Bytes()
-}
-
-func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
-	t.Helper()
-	if _, err := db.Exec(query, args...); err != nil {
-		t.Fatalf("exec %q: %v", query, err)
-	}
-}
-
 func syntheticObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(250))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
+	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
 }
 
 func truncatedObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	buf.Write(testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, nil))
+	buf.Truncate(buf.Len() - 10)
 	return buf.Bytes()
 }
 
 func syntheticHeader() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int16(12))
-	nameOffsetPosition := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, float64(1234.5))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(77))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	for buf.Len() < 30 {
-		buf.WriteByte(0)
-	}
-	writeArkString(&buf, "Valguero_WP")
-	nameOffset := int32(buf.Len())
-	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(6))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
-	writeArkString(&buf, "None")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
-	writeArkString(&buf, "Blueprint'/Game/Test.Test_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
-	writeArkString(&buf, "Health")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
-	writeArkString(&buf, "IntProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	writeArkString(&buf, "None")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
-	writeArkString(&buf, "Blueprint'/Game/Other.Other_C'")
-	return buf.Bytes()
-}
-
-func writeArkString(buf *bytes.Buffer, s string) {
-	if s == "" {
-		_ = binary.Write(buf, binary.LittleEndian, int32(0))
-		return
-	}
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(s)+1))
-	buf.WriteString(s)
-	buf.WriteByte(0)
+	return testfixtures.Header("Valguero_WP", map[uint32]string{
+		0x10000000: "None",
+		0x10000001: "Blueprint'/Game/Test.Test_C'",
+		0x10000002: "Health",
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x10000005: "Blueprint'/Game/Other.Other_C'",
+	})
 }
