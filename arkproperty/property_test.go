@@ -1726,6 +1726,53 @@ func TestParseSetPropertyReadsCompactObjectValues(t *testing.T) {
 	}
 }
 
+func TestParseSetPropertySkipsUnsupportedElementTypeAndContinues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "UnsupportedSet",
+		2: "SetProperty",
+		3: "MysteryProperty",
+		4: "AfterSet",
+		5: "IntProperty",
+		6: "None",
+	})
+
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 3)
+	writeName(stream, 3)
+	writeUInt32(stream, 0)
+	writeInt32(stream, 8)
+	stream.WriteByte(0)
+	writeUInt32(stream, 0)
+	writeUInt32(stream, 0xaabbccdd)
+	writeUInt32(stream, 0x11223344)
+
+	writeName(stream, 4)
+	writeName(stream, 5)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 42)
+	writeName(stream, 6)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() returned %d properties, want skipped set placeholder plus trailing int: %#v", len(props), props)
+	}
+	got, ok := props[0].Value.(Set)
+	if !ok || got.ElementType != Type("MysteryProperty") || len(got.Values) != 0 {
+		t.Fatalf("unsupported set = %#v, want empty MysteryProperty placeholder", props[0].Value)
+	}
+	if props[1].Name != "AfterSet" || props[1].Type != TypeInt || props[1].Value != int32(42) {
+		t.Fatalf("trailing property = %#v, want AfterSet int 42", props[1])
+	}
+}
+
 func writeName(buf *bytes.Buffer, id uint32) {
 	_ = binary.Write(buf, binary.LittleEndian, id)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))

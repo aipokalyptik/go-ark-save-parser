@@ -59,6 +59,8 @@ enough that oracle-derived tests can run against translated packages.
       `TMap<TEnumAsByte<...>, ...>` payloads.
 - [x] Add tests and reader alignment for unsupported struct-keyed maps so the
       map body is skipped and subsequent properties can still parse.
+- [x] Add tests and reader alignment for unsupported set element encodings so
+      declared set bodies are skipped and subsequent properties can still parse.
 - [x] Add tests and parsing for nested map/set property-list edge cases seen in
       structure wireless exchange references.
 - [x] Add raw fallback preservation for packed unknown structs.

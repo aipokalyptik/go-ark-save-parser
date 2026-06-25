@@ -785,7 +785,7 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 	}
 	elementType, err := typeFromPropertyName(valueTypeName)
 	if err != nil {
-		return Set{}, err
+		return skipUnsupportedSet(r, valueTypeName)
 	}
 	zero, err := r.ReadUInt32()
 	if err != nil {
@@ -831,6 +831,37 @@ func readSet(r *arkbinary.Reader) (Set, error) {
 		return Set{}, err
 	}
 	return Set{ElementType: elementType, Values: values}, nil
+}
+
+func skipUnsupportedSet(r *arkbinary.Reader, valueTypeName string) (Set, error) {
+	zero, err := r.ReadUInt32()
+	if err != nil {
+		return Set{}, err
+	}
+	if zero != 0 {
+		return Set{}, fmt.Errorf("invalid set header zero %#x", zero)
+	}
+	dataSize, err := r.ReadInt32()
+	if err != nil {
+		return Set{}, err
+	}
+	if dataSize < 0 {
+		return Set{}, fmt.Errorf("negative set payload size %d", dataSize)
+	}
+	endByte, err := r.ReadByte()
+	if err != nil {
+		return Set{}, err
+	}
+	if endByte != 0 {
+		return Set{}, fmt.Errorf("invalid set end byte %#x", endByte)
+	}
+	if _, err := r.ReadUInt32(); err != nil {
+		return Set{}, err
+	}
+	if err := r.Skip(int(dataSize)); err != nil {
+		return Set{}, err
+	}
+	return Set{ElementType: Type(valueTypeName)}, nil
 }
 
 func readSetValues(elementType Type, count int32, r *arkbinary.Reader) ([]any, error) {
