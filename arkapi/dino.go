@@ -562,6 +562,20 @@ func (d *DinoAPI) WildTamed() (map[uuid.UUID]arkobject.Dino, error) {
 	return d.FilterWildTamed(tamed), nil
 }
 
+func (d *DinoAPI) WildTamedWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	all, faults, err := d.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range all {
+		if dino.IsWildTamed() {
+			out[id] = dino
+		}
+	}
+	return out, faults, nil
+}
+
 func (d *DinoAPI) FilterWildTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
 	out := map[uuid.UUID]arkobject.Dino{}
 	for id, dino := range dinos {

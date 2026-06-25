@@ -184,6 +184,23 @@ func TestDinoFromObjectReadsAncestorIDsInUpstreamOrder(t *testing.T) {
 	}
 }
 
+func TestDinoIsWildTamedMirrorsUpstreamFemaleAncestorCheck(t *testing.T) {
+	dino := DinoFromObject(&GameObject{
+		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),
+		Properties: []arkproperty.Property{
+			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+			{Name: "DinoAncestorsMale", Type: arkproperty.TypeArray, Value: arkproperty.Array{
+				ElementType: arkproperty.TypeStruct,
+				Values:      []any{arkproperty.Container{}},
+			}},
+		},
+	}, nil)
+
+	if !dino.IsWildTamed() {
+		t.Fatalf("IsWildTamed() = false, want upstream-compatible true when only DinoAncestorsMale exists")
+	}
+}
+
 func TestDinoFromObjectSetsFirstGenerationForTamedDinosWithoutAncestors(t *testing.T) {
 	object := &GameObject{
 		UUID: uuid.MustParse("11112222-3333-4444-5555-666677778888"),

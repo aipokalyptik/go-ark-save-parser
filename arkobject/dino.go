@@ -112,7 +112,14 @@ func (d Dino) ShortName() string {
 }
 
 func (d Dino) IsWildTamed() bool {
-	return d.IsTamed && len(d.AncestorIDs) == 0
+	if !d.IsTamed {
+		return false
+	}
+	if d.Object != nil {
+		_, hasFemaleAncestors := (arkproperty.Container{Properties: d.Object.Properties}).Value("DinoAncestors")
+		return !hasFemaleAncestors
+	}
+	return len(d.AncestorIDs) == 0
 }
 
 func colorSetIndices(properties arkproperty.Container) [6]int {

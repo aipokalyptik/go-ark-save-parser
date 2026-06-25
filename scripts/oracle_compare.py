@@ -335,6 +335,26 @@ def python_dino_wild_tamables_oracle(save_path: Path, upstream_src: Path) -> dic
                 save.close()
 
 
+def python_dino_wild_tamed_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.helpers.dino.is_wild_tamed import is_wild_tamed  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dinos = DinoApi(save).get_all_tamed(include_cryopodded=False)
+                wild_tamed = [dino for dino in dinos.values() if is_wild_tamed(dino)]
+                return {
+                    "wild_tamed": len(wild_tamed),
+                    "max_level": max((int(getattr(dino.stats, "current_level", 0)) for dino in wild_tamed), default=0),
+                }
+            finally:
+                save.close()
+
+
 def python_property_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
@@ -682,6 +702,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_dino_most_mutated = python_dino_most_mutated_oracle(save_path, upstream_src)
     py_dino_babies = python_dino_babies_oracle(save_path, upstream_src)
     py_dino_wild_tamables = python_dino_wild_tamables_oracle(save_path, upstream_src)
+    py_dino_wild_tamed = python_dino_wild_tamed_oracle(save_path, upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
     py_stackable_owned_by = python_stackable_owned_by_oracle(save_path, upstream_src)
@@ -703,6 +724,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_dino_most_mutated": py_dino_most_mutated,
         "python_dino_babies": py_dino_babies,
         "python_dino_wild_tamables": py_dino_wild_tamables,
+        "python_dino_wild_tamed": py_dino_wild_tamed,
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
         "python_stackable_owned_by": py_stackable_owned_by,
@@ -890,6 +912,19 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_dino_wild_tamables.stdout)
         private["go"]["dino_wild_tamables"]["parsed"] = got
         cases.append(CaseResult("dino_wild_tamables", "pass" if {key: got.get(key) for key in py_dino_wild_tamables} == py_dino_wild_tamables else "fail", "wild and tameable dino counts compared"))
+
+    go_dino_wild_tamed = run(["go", "run", "./examples/dino_wild_tamed", str(save_path)], repo_root, env)
+    private["go"]["dino_wild_tamed"] = {
+        "exit_code": go_dino_wild_tamed.returncode,
+        "stdout": go_dino_wild_tamed.stdout,
+        "stderr": go_dino_wild_tamed.stderr,
+    }
+    if go_dino_wild_tamed.returncode != 0:
+        cases.append(CaseResult("dino_wild_tamed", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_dino_wild_tamed.stdout)
+        private["go"]["dino_wild_tamed"]["parsed"] = got
+        cases.append(CaseResult("dino_wild_tamed", "pass" if {key: got.get(key) for key in py_dino_wild_tamed} == py_dino_wild_tamed else "fail", "wild-tamed dino count and max level compared"))
 
     go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)
     private["go"]["property_filter"] = {

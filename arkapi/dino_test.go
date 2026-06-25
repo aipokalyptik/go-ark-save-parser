@@ -446,6 +446,23 @@ func TestDinoAPIWildTamedFiltersTamedDinosWithoutAncestors(t *testing.T) {
 	}
 }
 
+func TestDinoAPIWildTamedWithFaultsSkipsMalformedCryopods(t *testing.T) {
+	save := openSyntheticDinoStatsSaveWithMalformedCryopod(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	wildTamed, faults, err := api.WildTamedWithFaults()
+	if err != nil {
+		t.Fatalf("WildTamedWithFaults() error = %v", err)
+	}
+	if len(faults) != 1 {
+		t.Fatalf("WildTamedWithFaults() faults = %d, want 1", len(faults))
+	}
+	if len(wildTamed) != 1 {
+		t.Fatalf("WildTamedWithFaults() length = %d, want 1", len(wildTamed))
+	}
+}
+
 func TestDinoAPIFilterWildTamableDropsKnownNonTameableClasses(t *testing.T) {
 	api := DinoAPI{}
 	raptorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")

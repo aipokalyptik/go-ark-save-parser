@@ -352,6 +352,8 @@ enough that oracle-derived tests can run against translated packages.
       dino counts using privacy-safe aggregate fields.
 - [x] Compare normalized Go `dino_wild_tamables` output with upstream wild and
       wild-tamable dino counts using privacy-safe aggregate fields.
+- [x] Compare normalized Go `dino_wild_tamed` output with upstream
+      ancestorless tamed-dino detection using privacy-safe aggregate fields.
 - [x] Compare normalized Go `cluster_json` aggregate counts with the upstream
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local
