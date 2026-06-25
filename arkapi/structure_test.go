@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -743,14 +742,16 @@ func syntheticStructureActorTransforms(id uuid.UUID) []byte {
 }
 
 func syntheticStructureActorTransformsFor(locations map[uuid.UUID][3]float64) []byte {
-	var buf bytes.Buffer
+	transforms := make([]testfixtures.ActorTransform, 0, len(locations))
 	for _, id := range sortedUUIDKeys(locations) {
-		buf.Write(id[:])
 		location := locations[id]
-		for _, value := range []float64{location[0], location[1], location[2], 0, 0, 0, 1} {
-			_ = binary.Write(&buf, binary.LittleEndian, value)
-		}
+		transforms = append(transforms, testfixtures.ActorTransform{
+			UUID:       id,
+			X:          location[0],
+			Y:          location[1],
+			Z:          location[2],
+			Quaternion: 1,
+		})
 	}
-	buf.Write(uuid.Nil[:])
-	return buf.Bytes()
+	return testfixtures.ActorTransforms(transforms...)
 }

@@ -1,8 +1,6 @@
 package arkapi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"path/filepath"
 	"testing"
 
@@ -145,13 +143,15 @@ func createBenchmarkSave(b *testing.B) string {
 }
 
 func benchmarkActorTransforms(ids ...uuid.UUID) []byte {
-	var buf bytes.Buffer
+	transforms := make([]testfixtures.ActorTransform, 0, len(ids))
 	for _, id := range ids {
-		buf.Write(id[:])
-		for _, value := range []float64{11, 22, 33, 0, 0, 0, 1} {
-			_ = binary.Write(&buf, binary.LittleEndian, value)
-		}
+		transforms = append(transforms, testfixtures.ActorTransform{
+			UUID:       id,
+			X:          11,
+			Y:          22,
+			Z:          33,
+			Quaternion: 1,
+		})
 	}
-	buf.Write(uuid.Nil[:])
-	return buf.Bytes()
+	return testfixtures.ActorTransforms(transforms...)
 }

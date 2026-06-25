@@ -308,17 +308,10 @@ func syntheticBaseStructureObjectBytes(structureID int32, linked ...uuid.UUID) [
 }
 
 func syntheticBaseActorTransforms(first uuid.UUID, second uuid.UUID) []byte {
-	var buf bytes.Buffer
-	buf.Write(first[:])
-	for _, value := range []float64{0, 0, 0, 0, 0, 0, 1} {
-		_ = binary.Write(&buf, binary.LittleEndian, value)
-	}
-	buf.Write(second[:])
-	for _, value := range []float64{1000, 1000, 0, 0, 0, 0, 1} {
-		_ = binary.Write(&buf, binary.LittleEndian, value)
-	}
-	buf.Write(uuid.Nil[:])
-	return buf.Bytes()
+	return testfixtures.ActorTransforms(
+		testfixtures.ActorTransform{UUID: first, Quaternion: 1},
+		testfixtures.ActorTransform{UUID: second, X: 1000, Y: 1000, Quaternion: 1},
+	)
 }
 
 func writeObjectReferenceArrayProperty(buf *bytes.Buffer, name uint32, values []uuid.UUID) {
