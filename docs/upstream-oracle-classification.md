@@ -103,6 +103,18 @@ These are offline-compatible but produce files or images, so outputs stay under
 - `examples/json_api/ex_01_export_all_items.py`
 - `examples/equipment_api/history/*.py`
 
+## Currently Blocked Read-Only Oracle Paths
+
+These examples are offline-compatible in principle, but the supplied private
+save currently drives upstream Python into malformed embedded cryopod parsing
+before a stable aggregate can be returned. They remain useful implementation
+targets, but are not reliable oracle cases until a quieter upstream invocation,
+a fixture without the malformed cryopod payloads, or broader legacy/modded
+cryopod support is available.
+
+- `examples/dino_api/ex_10_get_cryopod_location.py`
+- `examples/dino_api/ex_11_get_dino_pedigrees.py`
+
 ## Mutation-Copy Candidates
 
 These examples mutate save data and must run only against copied inputs. They

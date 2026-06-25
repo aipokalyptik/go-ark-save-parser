@@ -416,6 +416,10 @@ enough that oracle-derived tests can run against translated packages.
       wild-tamable dino counts using privacy-safe aggregate fields.
 - [x] Compare normalized Go `dino_wild_tamed` output with upstream
       ancestorless tamed-dino detection using privacy-safe aggregate fields.
+- [x] Probe upstream `dino_api/ex_10_get_cryopod_location.py` and
+      `dino_api/ex_11_get_dino_pedigrees.py`; both are offline-compatible in
+      principle but blocked as oracle cases on the supplied private save by
+      malformed embedded cryopod parsing before stable aggregate output.
 - [x] Compare normalized Go `class_lookup` output with upstream storage class
       substring filtering using privacy-safe aggregate fields.
 - [x] Compare normalized Go `class_property_summary` output with upstream

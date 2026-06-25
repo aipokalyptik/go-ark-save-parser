@@ -112,6 +112,9 @@ Public verification reported by reviewers:
   cryopod path before returning a stable aggregate; defer that comparison until
   the remaining legacy/modded cryopod handling is improved or a quieter
   upstream invocation is available.
+- The upstream cryopod-location and pedigree examples were also probed after
+  this review and are currently blocked as oracle cases on the supplied private
+  save by malformed embedded cryopod parsing before stable aggregate output.
 
 ## Next Actions
 

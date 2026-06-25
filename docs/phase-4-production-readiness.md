@@ -62,6 +62,9 @@ offline parser without Python or private chat context.
   player/tribe details, and base import/export remains incomplete. Modern
   cryopod dino/status and saddle payloads can be parsed when `CustomItemDatas`
   uses the supported embedded archive formats.
+- Upstream cryopod-location and pedigree examples remain blocked as private
+  oracle cases because upstream Python currently hits malformed embedded
+  cryopod parsing on the supplied save before stable aggregate output.
 - Legacy archive object parsing remains unsupported outside modern archive and
   compact local tribute index formats.
 - Mutation helpers are structurally tested only and require live-server manual
