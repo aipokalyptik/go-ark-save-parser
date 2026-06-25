@@ -282,6 +282,9 @@ enough that oracle-derived tests can run against translated packages.
       equivalents of upstream best-stat and most-mutated-tamed example flows.
 - [x] Add optionized Dino API best-stat selection for upstream class, tame
       state, stat-list, base/mutated-stat, and level-cap filters.
+- [x] Add read-only Dino API heatmap generation with class and tamed filters
+      plus a `dino_heatmap` JSON-summary example for upstream dino heatmap
+      workflows.
 - [x] Add structure container lookup by inventory UUID and stackable owner
       filtering/counting through owning structure inventories.
 - [x] Add read-only Structure API lookup by object UUID for upstream

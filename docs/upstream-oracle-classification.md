@@ -102,8 +102,13 @@ These are offline-compatible but produce files or images, so outputs stay under
 
 - `examples/base_api/ex_01_export_base_from_save.py`
 - `examples/base_api/ex_03_get_all_connected_sets_of_structures.py`
-- `examples/dino_api/ex_02a_dino_by_stat_heatmap.py`
-- `examples/dino_api/ex_02b_tamed_dino_heatmap.py`
+- `examples/dino_api/ex_02a_dino_by_stat_heatmap.py` is implemented as the
+  lower-level `DinoAPI.Heatmap` helper plus the `examples/dino_heatmap` JSON
+  summary example. The stat-filtered printed dino list is covered separately by
+  `examples/dino_best_stat` and dino filter examples.
+- `examples/dino_api/ex_02b_tamed_dino_heatmap.py` is implemented as the same
+  `DinoAPI.Heatmap` helper plus `examples/dino_heatmap`; owner/name printouts
+  remain intentionally excluded from committed example output.
 - `examples/structure_api/ex_03_create_structure_heatmap.py` is implemented as
   `examples/structure_heatmap`, which writes a compact JSON summary instead of
   an image. Private oracle comparison is currently blocked because upstream

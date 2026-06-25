@@ -463,6 +463,52 @@ func TestDinoAPIWildTamedWithFaultsSkipsMalformedCryopods(t *testing.T) {
 	}
 }
 
+func TestDinoAPIHeatmapCountsDinoMapCells(t *testing.T) {
+	api := DinoAPI{}
+	first := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	second := arkobject.MapCoords{Lat: 12.8, Long: 34.1}.AsActorTransform("Valguero")
+	outside := arkobject.MapCoords{Lat: 150, Long: 150}.AsActorTransform("Valguero")
+	dinos := map[uuid.UUID]arkobject.Dino{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			IsTamed:   true,
+			Location:  &first,
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			IsTamed:   true,
+			Location:  &second,
+		},
+		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			IsTamed:   true,
+			Location:  &outside,
+		},
+		uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C",
+			IsTamed:   false,
+			Location:  &first,
+		},
+	}
+
+	heatmap, err := api.Heatmap("Valguero", 100, dinos, []string{"/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"}, true)
+	if err != nil {
+		t.Fatalf("Heatmap() error = %v", err)
+	}
+	if len(heatmap) != 100 || len(heatmap[0]) != 100 {
+		t.Fatalf("Heatmap() dimensions = %dx%d, want 100x100", len(heatmap), len(heatmap[0]))
+	}
+	if heatmap[12][34] != 2 {
+		t.Fatalf("Heatmap()[12][34] = %d, want 2", heatmap[12][34])
+	}
+	if heatmap[50][50] != 0 {
+		t.Fatalf("Heatmap()[50][50] = %d, want no out-of-range spillover", heatmap[50][50])
+	}
+	if _, err := api.Heatmap("Valguero", 0, dinos, nil, false); err == nil {
+		t.Fatalf("Heatmap(resolution 0) error = nil, want error")
+	}
+}
+
 func TestDinoAPIFilterWildTamableDropsKnownNonTameableClasses(t *testing.T) {
 	api := DinoAPI{}
 	raptorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")

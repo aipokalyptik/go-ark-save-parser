@@ -2,6 +2,8 @@ package arkapi
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -574,6 +576,51 @@ func (d *DinoAPI) WildTamedWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave
 		}
 	}
 	return out, faults, nil
+}
+
+func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]arkobject.Dino, blueprints []string, onlyTamed bool) ([][]int, error) {
+	if resolution <= 0 {
+		return nil, fmt.Errorf("resolution must be positive")
+	}
+	if mapName == "" && d.save != nil && d.save.Context != nil {
+		mapName = d.save.Context.MapName
+	}
+	var err error
+	if dinos == nil {
+		dinos, err = d.All()
+		if err != nil {
+			return nil, err
+		}
+	}
+	allowed := map[string]struct{}{}
+	for _, blueprint := range blueprints {
+		allowed[blueprint] = struct{}{}
+	}
+	heatmap := make([][]int, resolution)
+	for i := range heatmap {
+		heatmap[i] = make([]int, resolution)
+	}
+	for _, dino := range dinos {
+		if dino.Location == nil {
+			continue
+		}
+		if onlyTamed && !dino.IsTamed {
+			continue
+		}
+		if len(allowed) > 0 {
+			if _, ok := allowed[dino.Blueprint]; !ok {
+				continue
+			}
+		}
+		coords := dino.Location.AsMapCoords(mapName)
+		x := int(math.Floor(coords.Lat))
+		y := int(math.Floor(coords.Long))
+		if x < 0 || x >= resolution || y < 0 || y >= resolution {
+			continue
+		}
+		heatmap[x][y]++
+	}
+	return heatmap, nil
 }
 
 func (d *DinoAPI) FilterWildTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {

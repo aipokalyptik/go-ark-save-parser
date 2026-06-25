@@ -20,6 +20,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	copyPath := filepath.Join(dir, "copy.ark")
 	objectCopyPath := filepath.Join(dir, "object-copy.ark")
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
+	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
@@ -94,6 +95,10 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "dino_babies", "wild_babies=0 tamed_babies=0", savePath)
 	runExample(t, "dino_wild_tamables", "wild_dinos=1 wild_tamables=1", savePath)
 	runExample(t, "dino_wild_tamed", "wild_tamed=0 max_level=0", savePath)
+	runExample(t, "dino_heatmap", "cells=0 total=0 max=0 faults=0 wrote=", savePath, dinoHeatmapPath)
+	if _, err := os.Stat(dinoHeatmapPath); err != nil {
+		t.Fatalf("dino_heatmap output missing: %v", err)
+	}
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
 	runExample(t, "stackable_owned_by", "tribe_id=555 items=0 total=0", savePath, resourceBlueprint, "555")
 	runExample(t, "equipment_summary", "items=1 weapons=1 armor=0 saddles=0 cryopod_saddles=0 shields=0", savePath)
