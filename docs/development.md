@@ -3,6 +3,12 @@
 This project is an offline-only Go port of upstream `ark-save-parser` at commit
 `4f7cc91fb96a080321bfbc884ba81bd897f72c49`.
 
+## Progress Tracking
+
+Update [`docs/project-task-ledger.md`](project-task-ledger.md) in the same
+commit whenever a phase task, blocker, or completion status changes. That file
+is the repository source of truth for monitorable project progress.
+
 ## Local Verification
 
 Use these commands before committing parser, API, CLI, or docs changes:

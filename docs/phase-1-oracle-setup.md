@@ -4,6 +4,9 @@ Phase 1 is complete when Python oracle behavior is reproducible from private
 backup data and every runnable offline upstream test or example has a recorded,
 sanitized status.
 
+For the cross-phase monitorable checklist, see
+[`docs/project-task-ledger.md`](project-task-ledger.md).
+
 ## Requirements
 
 - Keep all private save files, manifests, raw output, snapshots, and debug dumps

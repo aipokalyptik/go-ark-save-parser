@@ -3,6 +3,9 @@
 Phase 2 is complete when the Go code mirrors upstream offline behavior closely
 enough that oracle-derived tests can run against translated packages.
 
+For the cross-phase monitorable checklist, see
+[`docs/project-task-ledger.md`](project-task-ledger.md).
+
 ## Requirements
 
 - Preserve upstream behavior first, even when the shape is not idiomatic Go.

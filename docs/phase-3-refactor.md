@@ -3,6 +3,9 @@
 Phase 3 is complete when the translated implementation is organized into stable
 Go packages without losing oracle parity.
 
+For the cross-phase monitorable checklist, see
+[`docs/project-task-ledger.md`](project-task-ledger.md).
+
 ## Current Package Shape
 
 - `arkbinary`: primitive binary reader/decompression/name-table handling.

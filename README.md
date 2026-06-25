@@ -9,6 +9,12 @@ libraries that inspect `.ark`, `.arkprofile`, `.arktribe`, local cluster data,
 and local tribute index files without requiring Python, virtual environments,
 FTP, RCON, or live server access.
 
+## Progress Tracking
+
+The monitorable task ledger is
+[`docs/project-task-ledger.md`](docs/project-task-ledger.md). It is the source
+of truth for phase status, open tasks, blocked tasks, and verification commands.
+
 ## Current Status
 
 Implemented:
@@ -56,7 +62,7 @@ Implemented:
   `export-tribute-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering forty-four aggregate read-only cases.
+  covering forty-six aggregate read-only and utility cases.
 
 Still in progress:
 

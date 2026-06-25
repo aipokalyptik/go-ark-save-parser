@@ -3,6 +3,9 @@
 Phase 4 is complete when another engineer can build, test, run, and extend the
 offline parser without Python or private chat context.
 
+For the cross-phase monitorable checklist, see
+[`docs/project-task-ledger.md`](project-task-ledger.md).
+
 ## Documentation Tasks
 
 - [x] Write README with build, CLI, library, example, scope, and mutation safety
