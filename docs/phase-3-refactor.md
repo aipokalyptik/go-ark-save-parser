@@ -62,10 +62,11 @@ For the cross-phase monitorable checklist, see
       header and object wrapping to shared fixtures; `arkprofile` malformed
       archive tests reuse shared archive framing/string/property writers;
       dino/equipment string property payload writers and equipment positioned
-      UInt16 property payload writers are shared; and modern cryopod embedded
-      dino/saddle payload builders are shared by API and object-model tests.
-      Remaining lower-level domain-specific parser fixtures still need
-      incremental migration.
+      UInt16 property payload writers are shared; dino scalar, object-reference,
+      and positioned stat/color property payload writers use shared helpers; and
+      modern cryopod embedded dino/saddle payload builders are shared by API and
+      object-model tests. Remaining lower-level domain-specific parser fixtures
+      still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query

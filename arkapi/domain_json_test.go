@@ -208,7 +208,7 @@ func pedigreeDinoObjectBytes(id1 int32, id2 int32, ancestors ...arkobject.DinoID
 	var props bytes.Buffer
 	writeIntProperty(&props, 0x10000015, id1)
 	writeIntProperty(&props, 0x10000016, id2)
-	writeDoubleProperty(&props, 0x10000018, 42)
+	testfixtures.WriteDoublePropertyID(&props, 0x10000018, 0x10000019, 42)
 	if len(ancestors) > 0 {
 		elements := make([][]byte, 0, len(ancestors))
 		for _, ancestor := range ancestors {
