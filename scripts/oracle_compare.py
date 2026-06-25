@@ -826,6 +826,57 @@ def python_structure_owner_count_oracle(save_path: Path, upstream_src: Path) -> 
                 save.close()
 
 
+def python_structure_at_location_oracle(save_path: Path, map_name: str, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.enums import ArkMap  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    normalized = re.sub(r"[^a-z0-9]", "", map_name.lower().replace("_wp", ""))
+    map_aliases = {
+        "island": ArkMap.THE_ISLAND,
+        "theisland": ArkMap.THE_ISLAND,
+        "scorchedearth": ArkMap.SCORCHED_EARTH,
+        "aberration": ArkMap.ABERRATION,
+        "extinction": ArkMap.EXTINCTION,
+        "ragnarok": ArkMap.RAGNAROK,
+        "thecenter": ArkMap.THE_CENTER,
+        "valguero": ArkMap.VALGUERO,
+        "clubark": ArkMap.CLUB_ARK,
+        "lostcolony": ArkMap.LOST_COLONY,
+        "astraeos": ArkMap.ASTRAEOS,
+        "svartalfheim": ArkMap.SVARTALFHEIM,
+    }
+    ark_map = map_aliases.get(normalized)
+    if ark_map is None:
+        return None
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path, map=ark_map)
+            try:
+                api = StructureApi(save)
+                structures = api.get_all(max_workers=1)
+                selected = None
+                for structure in structures.values():
+                    if getattr(structure, "location", None) is not None:
+                        selected = structure
+                        break
+                if selected is None:
+                    return None
+                coords = selected.location.as_map_coords(ark_map)
+                found = api.get_at_location(ark_map, coords, radius=0.3)
+                return {
+                    "map": map_name,
+                    "lat": coords.lat,
+                    "lon": coords.long,
+                    "structures": len(found),
+                    "connected": len(api.get_connected_structures(found)),
+                }
+            finally:
+                save.close()
+
+
 def python_base_components_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.structure_api import StructureApi  # type: ignore
@@ -945,6 +996,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
     py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
     py_structure_owner_count = python_structure_owner_count_oracle(save_path, upstream_src)
+    py_structure_at_location = python_structure_at_location_oracle(save_path, py["map_name"], upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
@@ -974,6 +1026,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_equipment_saddles": py_equipment_saddles,
         "python_equipment_owned_by": py_equipment_owned_by,
         "python_structure_owner_count": py_structure_owner_count,
+        "python_structure_at_location": py_structure_at_location,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
@@ -1477,6 +1530,32 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             got = parse_key_value_lines(go_structure_owner_count.stdout)
             private["go"]["structure_owner_count"]["parsed"] = got
             cases.append(CaseResult("structure_owner_count", "pass" if {key: got.get(key) for key in py_structure_owner_count} == py_structure_owner_count else "fail", "owned structure count compared"))
+
+    if py_structure_at_location is None:
+        cases.append(CaseResult("structure_at_location", "skip", "oracle save has no supported map/location structure candidate"))
+    else:
+        go_structure_at_location = run([
+            "go",
+            "run",
+            "./examples/structure_at_location",
+            str(save_path),
+            py_structure_at_location["map"],
+            str(py_structure_at_location["lat"]),
+            str(py_structure_at_location["lon"]),
+            "0.3",
+        ], repo_root, env)
+        private["go"]["structure_at_location"] = {
+            "exit_code": go_structure_at_location.returncode,
+            "stdout": go_structure_at_location.stdout,
+            "stderr": go_structure_at_location.stderr,
+        }
+        if go_structure_at_location.returncode != 0:
+            cases.append(CaseResult("structure_at_location", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_structure_at_location.stdout)
+            private["go"]["structure_at_location"]["parsed"] = got
+            want = {key: py_structure_at_location[key] for key in ("structures", "connected")}
+            cases.append(CaseResult("structure_at_location", "pass" if {key: got.get(key) for key in want} == want else "fail", "map-coordinate structure and connected counts compared"))
 
     go_base_components = run(["go", "run", "./examples/base_components", str(save_path)], repo_root, env)
     private["go"]["base_components"] = {

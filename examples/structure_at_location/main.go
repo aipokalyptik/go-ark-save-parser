@@ -43,7 +43,7 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStructure(save)
-	found, _, err := api.AtLocationWithFaults(os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
+	found, err := api.AtLocation(os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "find structures: %v\n", err)
 		os.Exit(1)

@@ -255,6 +255,10 @@ func (s *StructureAPI) ConnectedStructures(structures map[uuid.UUID]arkobject.St
 	out := make(map[uuid.UUID]arkobject.Structure, len(structures))
 	queue := make([]uuid.UUID, 0, len(structures))
 	queued := map[uuid.UUID]bool{}
+	index, _, err := s.selectedStructureIndexWithFaults()
+	if err != nil {
+		return nil, err
+	}
 	for _, id := range sortedUUIDKeys(structures) {
 		out[id] = structures[id]
 		queue = append(queue, id)
@@ -274,10 +278,7 @@ func (s *StructureAPI) ConnectedStructures(structures map[uuid.UUID]arkobject.St
 			if queued[linkedID] {
 				continue
 			}
-			linked, ok, err := s.ByID(linkedID)
-			if err != nil {
-				return nil, err
-			}
+			linked, ok := index[linkedID]
 			if !ok {
 				continue
 			}
@@ -290,7 +291,7 @@ func (s *StructureAPI) ConnectedStructures(structures map[uuid.UUID]arkobject.St
 }
 
 func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (map[uuid.UUID]arkobject.Structure, error) {
-	all, err := s.All()
+	all, _, err := s.selectedStructureIndexWithFaults()
 	if err != nil {
 		return nil, err
 	}
@@ -343,6 +344,61 @@ func (s *StructureAPI) AtLocationWithFaults(mapName string, coords arkobject.Map
 		if structure.Location.IsAtMapCoordinate(mapName, coords, radius) {
 			out[id] = structure
 		}
+	}
+	return out, faults, nil
+}
+
+func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := s.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
+	}, []string{
+		"StructureID",
+		"LinkedStructures",
+		"MyInventoryComponent",
+		"CurrentItemCount",
+		"MaxItemCount",
+		"OriginalPlacerPlayerID",
+		"OwnerName",
+		"OwningPlayerName",
+		"OwningPlayerID",
+		"TargetingTeam",
+		"bIsEngram",
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if !isStructureBlueprint(info.ClassName) {
+			if !isPotentialStructureContainer(info.ClassName) {
+				continue
+			}
+			if _, ok := container.Value("MyInventoryComponent"); !ok {
+				continue
+			}
+		}
+		var location *arkobject.ActorTransform
+		if transform, ok := s.save.ActorTransform(info.UUID); ok {
+			location = &transform
+		}
+		structure := arkobject.Structure{
+			UUID:                 info.UUID,
+			Blueprint:            info.ClassName,
+			Owner:                arkobject.ObjectOwnerFromContainer(container),
+			ID:                   selectedInt32(container, "StructureID"),
+			Location:             location,
+			ItemCount:            selectedInt32(container, "CurrentItemCount"),
+			MaxItemCount:         selectedInt32(container, "MaxItemCount"),
+			LinkedStructureUUIDs: selectedLinkedStructureUUIDs(container),
+		}
+		if inventoryID, ok := selectedObjectReferenceUUID(container, "MyInventoryComponent"); ok {
+			structure.InventoryUUID = &inventoryID
+		}
+		out[info.UUID] = structure
 	}
 	return out, faults, nil
 }

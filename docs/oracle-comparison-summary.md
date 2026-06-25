@@ -34,6 +34,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `equipment_saddles`: `pass` (direct saddle count compared; upstream cryopod saddle extraction blocked by malformed private cryopods and armor-value parity needs default armor tables)
 - `equipment_owned_by`: `pass` (owned advanced weapon blueprint count and max damage compared)
 - `structure_owner_count`: `pass` (owned structure count compared)
+- `structure_at_location`: `pass` (map-coordinate structure and connected counts compared)
 - `base_components`: `pass` (connected base component aggregate counts compared)
 - `domain_json_dinos`: `pass` (dino domain JSON aggregate counts compared)
 - `cluster_json`: `pass` (local cluster upload counts compared)
@@ -41,4 +42,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 32
+- `pass`: 33
