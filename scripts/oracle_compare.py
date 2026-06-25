@@ -208,6 +208,44 @@ def python_class_lookup_oracle(save_path: Path, upstream_src: Path) -> dict[str,
                 save.close()
 
 
+def python_class_property_summary_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                candidates: dict[str, int] = {}
+                for class_name in save.get_all_present_classes() or []:
+                    if class_name is None:
+                        continue
+                    candidates[class_name] = candidates.get(class_name, 0) + 1
+                for class_name, _ in sorted(candidates.items(), key=lambda item: (item[1], item[0])):
+                    config = GameObjectReaderConfiguration(
+                        blueprint_name_filter=lambda name, selected=class_name: name == selected
+                    )
+                    try:
+                        objects = save.get_game_objects(config)
+                    except Exception:
+                        continue
+                    if not objects:
+                        continue
+                    properties = set()
+                    for obj in objects.values():
+                        properties.update(obj.property_names)
+                    return {
+                        "class_substring": class_name,
+                        "objects": len(objects),
+                        "properties": len(properties),
+                        "faults": 0,
+                    }
+                return None
+            finally:
+                save.close()
+
+
 def python_player_inventory_oracle(save_path: Path, repo_root: Path, upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.player_api import PlayerApi  # type: ignore
@@ -865,6 +903,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py = python_oracle(save_path, upstream_src)
     py_object_summary = python_object_summary_oracle(save_path, upstream_src)
     py_class_lookup = python_class_lookup_oracle(save_path, upstream_src)
+    py_class_property_summary = python_class_property_summary_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_player_tribe_links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
@@ -892,6 +931,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python": py,
         "python_object_summary": py_object_summary,
         "python_class_lookup": py_class_lookup,
+        "python_class_property_summary": py_class_property_summary,
         "python_local_profiles": py_local_profiles,
         "python_player_tribe_links": py_player_tribe_links,
         "python_dino_filter": py_dino_filter,
@@ -978,6 +1018,29 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got = parse_key_value_lines(go_class_lookup.stdout)
         private["go"]["class_lookup"]["parsed"] = got
         cases.append(CaseResult("class_lookup", "pass" if {key: got.get(key) for key in py_class_lookup} == py_class_lookup else "fail", "storage class substring structure counts compared"))
+
+    if py_class_property_summary is None:
+        cases.append(CaseResult("class_property_summary", "skip", "oracle save has no parseable class candidate"))
+    else:
+        go_class_property_summary = run([
+            "go",
+            "run",
+            "./examples/class_property_summary",
+            str(save_path),
+            str(py_class_property_summary["class_substring"]),
+        ], repo_root, env)
+        private["go"]["class_property_summary"] = {
+            "exit_code": go_class_property_summary.returncode,
+            "stdout": go_class_property_summary.stdout,
+            "stderr": go_class_property_summary.stderr,
+        }
+        if go_class_property_summary.returncode != 0:
+            cases.append(CaseResult("class_property_summary", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_class_property_summary.stdout)
+            private["go"]["class_property_summary"]["parsed"] = got
+            want = {key: py_class_property_summary[key] for key in ("objects", "properties", "faults")}
+            cases.append(CaseResult("class_property_summary", "pass" if {key: got.get(key) for key in want} == want else "fail", "class property-name aggregate compared"))
 
     export_json_path = repo_root / ".oracle" / "output" / "export-save-info.json"
     go_export_json = run(["go", "run", "./cmd/arksave", "export-json", str(save_path), str(export_json_path)], repo_root, env)

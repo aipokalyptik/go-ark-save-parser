@@ -26,6 +26,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   property counts without printing class names or property values.
 - `class_lookup`: count objects and distinct classes matching one or more class
   name substrings without printing class names or object UUIDs.
+- `class_property_summary`: parse objects matching one class substring and
+  print aggregate object, unique-property, and parse-fault counts.
 - `property_filter`: count objects and classes whose raw save object payloads
   contain any requested property name, matching the upstream property-name
   prefilter workflow without deep-parsing every object.
