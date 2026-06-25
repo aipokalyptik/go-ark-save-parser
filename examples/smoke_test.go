@@ -3,6 +3,7 @@ package examples_test
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,6 +24,8 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
 	exportAllPath := filepath.Join(dir, "json-exports")
+	equipmentHistoryManifestPath := filepath.Join(dir, "equipment-history-files.json")
+	equipmentHistoryReportPath := filepath.Join(dir, "equipment-history-report.json")
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	profilePath := filepath.Join(dir, "123.arkprofile")
@@ -111,6 +114,13 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "export_all_items", "exports=8 wrote=", savePath, exportAllPath)
 	if _, err := os.Stat(filepath.Join(exportAllPath, "manifest.json")); err != nil {
 		t.Fatalf("export_all_items manifest missing: %v", err)
+	}
+	if err := os.WriteFile(equipmentHistoryManifestPath, []byte(fmt.Sprintf("[\"%s\",\"%s\"]\n", savePath, savePath)), 0o600); err != nil {
+		t.Fatalf("write equipment history manifest: %v", err)
+	}
+	runExample(t, "equipment_history", "saves=2 initial=1 changes=0 final=1 wrote=", equipmentHistoryManifestPath, equipmentHistoryReportPath)
+	if _, err := os.Stat(equipmentHistoryReportPath); err != nil {
+		t.Fatalf("equipment_history report missing: %v", err)
 	}
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "structure_owners", "structures=1 with_tribe_id=1 with_player_id=0 with_tribe_name=0 with_player_name=0 with_original_placer_id=0 unique_tribes=1", savePath)

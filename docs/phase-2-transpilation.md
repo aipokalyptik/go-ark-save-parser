@@ -186,10 +186,10 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add `export_all_items` as an explicit-output-directory counterpart to
       upstream `JsonApi.export_all`, writing save info plus implemented domain
       JSON files with a manifest.
-- [x] Classify upstream equipment history scripts as local multi-save utilities
-      that need timestamped save snapshots or `.ark.gz` archives. The supplied
-      private backup does not include enough historical snapshots for an oracle
-      run.
+- [x] Add `equipment_history` as a local multi-save counterpart to upstream
+      equipment history scripts. It reads a JSON manifest of local `.ark`
+      snapshots and writes a JSON change report. The supplied private backup
+      does not include enough historical snapshots for an oracle run.
 - [x] Include equipment crafted state, implemented stat names, and average
       internal stat ranking values in equipment domain JSON export.
 - [x] Include structure inventory UUID, item counts, open slots, and empty-state

@@ -118,11 +118,12 @@ These are offline-compatible but produce files or images, so outputs stay under
 - `examples/json_api/ex_01_export_all_items.py` is implemented as
   `examples/export_all_items`, which writes save info plus all implemented
   domain JSON exports to an explicit output directory with a manifest.
-- `examples/equipment_api/history/*.py` are local multi-save history utilities.
-  They require a timestamped sequence of `.ark` snapshots or `.ark.gz`
-  snapshots plus an `ark_files.json` manifest. The supplied private backup only
-  provides a single current save per map, so private oracle execution is not
-  available yet.
+- `examples/equipment_api/history/*.py` are implemented as
+  `examples/equipment_history`, which reads a JSON manifest of local `.ark`
+  snapshots and writes a JSON change report. Private oracle execution is not
+  available yet because the supplied private backup only provides a single
+  current save per map, not a timestamped sequence of `.ark` or `.ark.gz`
+  snapshots.
 
 ## Currently Blocked Read-Only Oracle Paths
 

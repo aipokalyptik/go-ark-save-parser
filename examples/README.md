@@ -68,6 +68,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   modern cryopod saddle parses and print aggregate saddle counts and max armor.
 - `equipment_owned_by`: count weapon blueprints of one class owned by a target
   tribe through the structure inventory container relationship.
+- `equipment_history`: read a JSON manifest of local `.ark` snapshots, compare
+  equipment snapshots by stable item content, and write a JSON change report.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
 - `structure_owners`: summarize parsed structure owner fields without printing
