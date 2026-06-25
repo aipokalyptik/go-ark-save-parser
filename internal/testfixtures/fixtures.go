@@ -440,6 +440,11 @@ func WriteDoublePropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, 
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
+func WriteStringPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value string) {
+	writePropertyIDHeader(buf, name, propertyType, int32(len(value)+5), 0, false)
+	WriteArkString(buf, value)
+}
+
 func WriteBoolPropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, value bool) {
 	_ = binary.Write(buf, binary.LittleEndian, name)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
@@ -501,6 +506,12 @@ func WritePositionedNamePropertyID(buf *bytes.Buffer, name uint32, propertyType 
 	_ = binary.Write(buf, binary.LittleEndian, position)
 	_ = binary.Write(buf, binary.LittleEndian, valueName)
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+}
+
+func WritePositionedUInt16PropertyID(buf *bytes.Buffer, name uint32, propertyType uint32, position int32, value uint16) {
+	writePropertyIDHeader(buf, name, propertyType, 2, position, true)
+	_ = binary.Write(buf, binary.LittleEndian, position)
+	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 
 func writePropertyIDHeader(buf *bytes.Buffer, name uint32, propertyType uint32, size int32, position int32, positioned bool) {

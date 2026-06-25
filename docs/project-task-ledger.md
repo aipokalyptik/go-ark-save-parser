@@ -373,7 +373,9 @@ CLI tools, and reusable APIs without losing oracle parity.
         `arkapi` general/core synthetic save helpers now delegate header and
         object wrapping to `internal/testfixtures`, and `arkprofile` malformed
         archive tests now reuse shared archive framing/string/property writers.
-        Lower-level dino/equipment parser payload builders still remain.
+        Dino/equipment string property payload writers and equipment positioned
+        UInt16 property payload writers are now shared; lower-level
+        dino/equipment parser payload builders still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

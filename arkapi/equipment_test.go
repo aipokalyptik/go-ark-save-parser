@@ -718,10 +718,10 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 	writeFloatProperty(&props, 0x10000010, rating)
 	writeIntProperty(&props, 0x10000011, quality)
 	writeFloatProperty(&props, 0x10000012, durability)
-	writePositionedUInt16Property(&props, 0x10000040, 2, 1000)
-	writePositionedUInt16Property(&props, 0x10000040, 3, 1234)
-	writeStringProperty(&props, 0x1000001b, "Survivor")
-	writeStringProperty(&props, 0x1000001c, "Porters")
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 2, 1000)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 3, 1234)
+	testfixtures.WriteStringPropertyID(&props, 0x1000001b, 0x1000001a, "Survivor")
+	testfixtures.WriteStringPropertyID(&props, 0x1000001c, 0x1000001a, "Porters")
 	if isEngram {
 		writeBoolProperty(&props, 0x10000013, true)
 	}
@@ -740,8 +740,8 @@ func syntheticEquipmentObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) [
 	writeFloatProperty(&props, 0x10000010, 7.5)
 	writeIntProperty(&props, 0x10000011, 3)
 	writeFloatProperty(&props, 0x10000012, 0.75)
-	writePositionedUInt16Property(&props, 0x10000040, 2, 1000)
-	writePositionedUInt16Property(&props, 0x10000040, 3, 1234)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 2, 1000)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 3, 1234)
 	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
 	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
 }
@@ -756,35 +756,12 @@ func truncatedEquipmentObjectBytes() []byte {
 func syntheticArmorEquipmentObjectBytes() []byte {
 	var props bytes.Buffer
 	writeIntProperty(&props, 0x1000000c, 1)
-	writePositionedUInt16Property(&props, 0x10000040, 1, 1000)
-	writePositionedUInt16Property(&props, 0x10000040, 5, 500)
-	writePositionedUInt16Property(&props, 0x10000040, 7, 200)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 1, 1000)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 5, 500)
+	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 7, 200)
 	return testfixtures.ObjectBytesWithProperties(0x10000042, 0x10000004, props.Bytes())
 }
 
 func boolPtr(value bool) *bool {
 	return &value
-}
-
-func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001a))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+5))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	testfixtures.WriteArkString(buf, value)
-}
-
-func writePositionedUInt16Property(buf *bytes.Buffer, name uint32, position int32, value uint16) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x10000041))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(2))
-	_ = binary.Write(buf, binary.LittleEndian, position)
-	buf.WriteByte(1)
-	_ = binary.Write(buf, binary.LittleEndian, position)
-	_ = binary.Write(buf, binary.LittleEndian, value)
 }
