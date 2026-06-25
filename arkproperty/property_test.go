@@ -937,6 +937,125 @@ func TestParseStructPropertyReadsPackedVector(t *testing.T) {
 	}
 }
 
+func TestParseStructPropertyReadsPackedRotator(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Rotation",
+		2: "StructProperty",
+		3: "Rotator",
+		4: "None",
+	})
+	body := bytes.NewBuffer(nil)
+	writeFloat64(body, 10.5)
+	writeFloat64(body, 20.5)
+	writeFloat64(body, 30.5)
+
+	stream := bytes.NewBuffer(nil)
+	writeStructProperty(stream, 1, 2, 3, body.Bytes())
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(Rotator)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Rotator", props[0].Value)
+	}
+	if got.Pitch != 10.5 || got.Roll != 20.5 || got.Yaw != 30.5 {
+		t.Fatalf("Rotator = %#v, want pitch/roll/yaw 10.5/20.5/30.5", got)
+	}
+}
+
+func TestParseStructPropertyReadsPackedQuat(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Orientation",
+		2: "StructProperty",
+		3: "Quat",
+		4: "None",
+	})
+	body := bytes.NewBuffer(nil)
+	writeFloat64(body, 1.25)
+	writeFloat64(body, 2.25)
+	writeFloat64(body, 3.25)
+	writeFloat64(body, 4.25)
+
+	stream := bytes.NewBuffer(nil)
+	writeStructProperty(stream, 1, 2, 3, body.Bytes())
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(Quat)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Quat", props[0].Value)
+	}
+	if got.X != 1.25 || got.Y != 2.25 || got.Z != 3.25 || got.W != 4.25 {
+		t.Fatalf("Quat = %#v, want 1.25/2.25/3.25/4.25", got)
+	}
+}
+
+func TestParseStructPropertyReadsPackedColor(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Tint",
+		2: "StructProperty",
+		3: "Color",
+		4: "None",
+	})
+	body := []byte{10, 20, 30, 40}
+
+	stream := bytes.NewBuffer(nil)
+	writeStructProperty(stream, 1, 2, 3, body)
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(Color)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want Color", props[0].Value)
+	}
+	if got != (Color{R: 10, G: 20, B: 30, A: 40}) {
+		t.Fatalf("Color = %#v, want 10/20/30/40", got)
+	}
+}
+
+func TestParseStructPropertyReadsPackedLinearColor(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "LinearTint",
+		2: "StructProperty",
+		3: "LinearColor",
+		4: "None",
+	})
+	body := bytes.NewBuffer(nil)
+	writeFloat32(body, 0.1)
+	writeFloat32(body, 0.2)
+	writeFloat32(body, 0.3)
+	writeFloat32(body, 0.4)
+
+	stream := bytes.NewBuffer(nil)
+	writeStructProperty(stream, 1, 2, 3, body.Bytes())
+	writeName(stream, 4)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	got, ok := props[0].Value.(LinearColor)
+	if !ok {
+		t.Fatalf("StructProperty value type = %T, want LinearColor", props[0].Value)
+	}
+	if got.R != float32(0.1) || got.G != float32(0.2) || got.B != float32(0.3) || got.A != float32(0.4) {
+		t.Fatalf("LinearColor = %#v, want 0.1/0.2/0.3/0.4", got)
+	}
+}
+
 func TestParseStructPropertyReadsUniqueNetIDAndContinues(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

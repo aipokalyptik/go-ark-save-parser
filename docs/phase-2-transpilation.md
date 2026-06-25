@@ -61,6 +61,8 @@ enough that oracle-derived tests can run against translated packages.
       structure wireless exchange references.
 - [x] Add raw fallback preservation for packed unknown structs.
 - [x] Add packed `Vector` struct parsing for pawn/world-location properties.
+- [x] Add packed `Rotator`, `Quat`, `Color`, and `LinearColor` struct parsing
+      matching upstream fixed-layout readers.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [x] Add declared-size realignment and overread detection for compound array,
       map, set, and struct payloads covered by generic readers.

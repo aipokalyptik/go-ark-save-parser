@@ -88,6 +88,33 @@ type Vector struct {
 	Z float64
 }
 
+type Rotator struct {
+	Pitch float64
+	Yaw   float64
+	Roll  float64
+}
+
+type Quat struct {
+	X float64
+	Y float64
+	Z float64
+	W float64
+}
+
+type Color struct {
+	R byte
+	G byte
+	B byte
+	A byte
+}
+
+type LinearColor struct {
+	R float32
+	G float32
+	B float32
+	A float32
+}
+
 type UniqueNetID struct {
 	Unknown   byte
 	ValueType string
@@ -882,6 +909,78 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 			return nil, "", 0, err
 		}
 		return Vector{X: x, Y: y, Z: z}, structType, dataSize, nil
+	}
+	if structType == "Rotator" && dataSize == 24 {
+		pitch, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		roll, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		yaw, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		return Rotator{Pitch: pitch, Yaw: yaw, Roll: roll}, structType, dataSize, nil
+	}
+	if structType == "Quat" && dataSize == 32 {
+		x, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		y, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		z, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		w, err := r.ReadFloat64()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		return Quat{X: x, Y: y, Z: z, W: w}, structType, dataSize, nil
+	}
+	if structType == "Color" && dataSize == 4 {
+		rv, err := r.ReadByte()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		g, err := r.ReadByte()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		b, err := r.ReadByte()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		a, err := r.ReadByte()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		return Color{R: rv, G: g, B: b, A: a}, structType, dataSize, nil
+	}
+	if structType == "LinearColor" && dataSize == 16 {
+		rv, err := r.ReadFloat32()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		g, err := r.ReadFloat32()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		b, err := r.ReadFloat32()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		a, err := r.ReadFloat32()
+		if err != nil {
+			return nil, "", 0, err
+		}
+		return LinearColor{R: rv, G: g, B: b, A: a}, structType, dataSize, nil
 	}
 	props, err := ParseAllPartial(r, bodyEnd)
 	if err != nil {
