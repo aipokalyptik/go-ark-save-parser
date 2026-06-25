@@ -61,14 +61,22 @@ hard-coded placeholder paths with local `.ark` paths:
   counts through the fault-tolerant Go parser. Private oracle comparison is
   treated as a manual heavy check because full-object parsing takes roughly a
   minute on the supplied large private save.
-- `examples/basic_parsing/ex_01_get_obj_by_uuid.py`
-- `examples/basic_parsing/ex_02_get_obj_by_class_string.py`
+- `examples/basic_parsing/ex_01_get_obj_by_uuid.py` is covered by
+  `examples/object_summary`, which compares raw byte and parsed-property counts
+  for a private oracle-selected object UUID.
+- `examples/basic_parsing/ex_02_get_obj_by_class_string.py` is covered by
+  `examples/class_lookup`, which compares privacy-safe object and class counts
+  for one or more class substrings.
 - `examples/basic_parsing/ex_03_reading_property_definitions_and_positions.py`
   is covered by `examples/property_positions`, which compares property name
   offsets, value offsets, encoded byte spans, and property index-position
   aggregates without committing property names or raw bytes.
-- `examples/basic_parsing/ex_05_get_objects_with_property.py`
-- `examples/basic_parsing/ex_06_find_all_properties_for_objects.py`
+- `examples/basic_parsing/ex_05_get_objects_with_property.py` is covered by
+  `examples/property_filter`, which uses the same property-name prefilter
+  workflow and compares aggregate object/class counts.
+- `examples/basic_parsing/ex_06_find_all_properties_for_objects.py` is covered
+  by `examples/class_property_summary`, which class-filters objects and
+  compares aggregate unique-property counts without committing property names.
 - `examples/dino_api/ex_01_generic_filter.py`
 - `examples/dino_api/ex_03_get_dino_with_highest_stat.py`
 - `examples/dino_api/ex_04_get_tamed_rock_drake_with_highest_base_stam.py`
