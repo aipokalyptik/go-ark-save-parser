@@ -68,9 +68,18 @@ func WriteArchive(tb testing.TB, path string, className string) {
 
 func WriteArchiveWithProperties(tb testing.TB, path string, className string, properties []byte) {
 	tb.Helper()
+	WriteArchiveWithPropertiesAndNames(tb, path, className, []string{"Object_0"}, properties)
+}
+
+func WriteArchiveWithPropertiesAndNames(tb testing.TB, path string, className string, names []string, properties []byte) {
+	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	writeFile(tb, path, ArchiveBytesWithProperties(id, className, names, properties), "archive fixture")
+}
+
+func ArchiveBytesWithProperties(id uuid.UUID, className string, names []string, properties []byte) []byte {
 	var buf bytes.Buffer
-	WriteArchivePrefix(&buf, id, className, []string{"Object_0"})
+	WriteArchivePrefix(&buf, id, className, names)
 	offsetPos := buf.Len()
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
@@ -81,7 +90,7 @@ func WriteArchiveWithProperties(tb testing.TB, path string, className string, pr
 	} else {
 		binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(128))
 	}
-	writeFile(tb, path, buf.Bytes(), "archive fixture")
+	return buf.Bytes()
 }
 
 func WritePlayerArchive(tb testing.TB, path string) {
@@ -396,6 +405,10 @@ func WriteStringArray(buf *bytes.Buffer, values []string) {
 }
 
 func WriteInt32(buf *bytes.Buffer, value int32) {
+	_ = binary.Write(buf, binary.LittleEndian, value)
+}
+
+func WriteInt16(buf *bytes.Buffer, value int16) {
 	_ = binary.Write(buf, binary.LittleEndian, value)
 }
 

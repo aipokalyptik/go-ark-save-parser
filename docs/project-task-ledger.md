@@ -371,8 +371,9 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Centralize many public fixtures in `internal/testfixtures`.
   - [~] Continue migrating remaining domain-specific parser fixtures as touched;
         `arkapi` general/core synthetic save helpers now delegate header and
-        object wrapping to `internal/testfixtures`, with lower-level
-        dino/equipment/profile parser payload builders still remaining.
+        object wrapping to `internal/testfixtures`, and `arkprofile` malformed
+        archive tests now reuse shared archive framing/string/property writers.
+        Lower-level dino/equipment parser payload builders still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

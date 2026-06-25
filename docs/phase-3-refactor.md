@@ -59,10 +59,11 @@ For the cross-phase monitorable checklist, see
       `arktribute`, `arksave`, and benchmarks. Structure, base, stackable,
       equipment, and core save synthetic object builders now use the shared
       object wrapper; `arkapi` general/core synthetic save helpers now delegate
-      header and object wrapping to shared fixtures; and modern cryopod embedded
-      dino/saddle payload builders are shared by API and object-model tests.
-      Remaining lower-level domain-specific parser fixtures still need
-      incremental migration.
+      header and object wrapping to shared fixtures; `arkprofile` malformed
+      archive tests reuse shared archive framing/string/property writers; and
+      modern cryopod embedded dino/saddle payload builders are shared by API and
+      object-model tests. Remaining lower-level domain-specific parser fixtures
+      still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query

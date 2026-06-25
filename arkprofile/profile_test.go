@@ -2,9 +2,7 @@ package arkprofile
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -167,50 +165,14 @@ func TestOpenTribeSaveTribeUsesParsedArchiveProperties(t *testing.T) {
 func writeBrokenArchive(t *testing.T, path string, className string) {
 	t.Helper()
 	var props bytes.Buffer
-	writeProfileStringProperty(&props, "ValidName", "value")
-	writeProfileArkString(&props, "Broken")
-	writeProfileArkString(&props, "ObjectProperty")
-	_ = binary.Write(&props, binary.LittleEndian, int32(2))
-	_ = binary.Write(&props, binary.LittleEndian, int32(0))
+	testfixtures.WriteNameStringProperty(&props, "ValidName", "value")
+	testfixtures.WriteArkString(&props, "Broken")
+	testfixtures.WriteArkString(&props, "ObjectProperty")
+	testfixtures.WriteInt32(&props, 2)
+	testfixtures.WriteInt32(&props, 0)
 	props.WriteByte(0)
-	_ = binary.Write(&props, binary.LittleEndian, int16(5))
-	writeProfileArkString(&props, "None")
+	testfixtures.WriteInt16(&props, 5)
+	testfixtures.WriteArkString(&props, "None")
 
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int32(7))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(1))
-	buf.Write(make([]byte, 16))
-	writeProfileArkString(&buf, className)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	offsetPos := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	buf.Write(props.Bytes())
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		t.Fatalf("write broken archive: %v", err)
-	}
-}
-
-func writeProfileStringProperty(buf *bytes.Buffer, name string, value string) {
-	writeProfileArkString(buf, name)
-	writeProfileArkString(buf, "StrProperty")
-	bodySize := 4 + len(value) + 1
-	_ = binary.Write(buf, binary.LittleEndian, int32(bodySize))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	writeProfileArkString(buf, value)
-}
-
-func writeProfileArkString(buf *bytes.Buffer, value string) {
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+1))
-	buf.WriteString(value)
-	buf.WriteByte(0)
+	testfixtures.WriteArchiveWithPropertiesAndNames(t, path, className, nil, props.Bytes())
 }
