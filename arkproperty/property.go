@@ -78,6 +78,11 @@ type UnknownStruct struct {
 	Raw      []byte
 }
 
+type UnknownValue struct {
+	TypeName string
+	Raw      []byte
+}
+
 type EnumValue struct {
 	Name string
 }
@@ -552,7 +557,14 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		}
 		prop.Value = value
 	default:
-		return nil, fmt.Errorf("unsupported property type %q for %q at position %d", typeName, key, nameOffset)
+		unknown, raw, valueOffset, err := readUnknownPropertyValue(r, dataSize)
+		if err != nil {
+			return nil, err
+		}
+		prop.Type = Type(typeName)
+		prop.UnknownByte = unknown
+		prop.ValueOffset = valueOffset
+		prop.Value = UnknownValue{TypeName: typeName, Raw: raw}
 	}
 
 	if err := realignPrimitiveProperty(r, prop); err != nil {
@@ -562,6 +574,22 @@ func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
 		return nil, err
 	}
 	return prop, nil
+}
+
+func readUnknownPropertyValue(r *arkbinary.Reader, dataSize int32) (byte, []byte, int, error) {
+	if dataSize < 0 {
+		return 0, nil, 0, fmt.Errorf("negative unknown property payload size %d", dataSize)
+	}
+	unknown, err := r.ReadByte()
+	if err != nil {
+		return 0, nil, 0, err
+	}
+	valueOffset := r.Position()
+	raw, err := r.ReadBytes(int(dataSize))
+	if err != nil {
+		return 0, nil, 0, err
+	}
+	return unknown, raw, valueOffset, nil
 }
 
 func captureEncodedBytes(r *arkbinary.Reader, prop *Property) error {

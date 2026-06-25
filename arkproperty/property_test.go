@@ -139,6 +139,53 @@ func TestParsePropertiesGeneratesUnknownNamesForUnknownPropertyKeys(t *testing.T
 	}
 }
 
+func TestParsePropertiesPreservesUnknownPropertyTypeAndContinues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1: "Mystery",
+		2: "MysteryProperty",
+		3: "AfterMystery",
+		4: "IntProperty",
+		5: "None",
+	})
+	stream := bytes.NewBuffer(nil)
+	writeName(stream, 1)
+	writeName(stream, 2)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	stream.Write([]byte{0xde, 0xad, 0xbe, 0xef})
+
+	writeName(stream, 3)
+	writeName(stream, 4)
+	writeInt32(stream, 4)
+	writeInt32(stream, 0)
+	stream.WriteByte(0)
+	writeInt32(stream, 42)
+	writeName(stream, 5)
+
+	props, err := ParseAll(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err != nil {
+		t.Fatalf("ParseAll() error = %v", err)
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAll() returned %d properties, want unknown property plus trailing int: %#v", len(props), props)
+	}
+	if props[0].Name != "Mystery" || props[0].Type != Type("MysteryProperty") {
+		t.Fatalf("unknown property identity = %#v", props[0])
+	}
+	got, ok := props[0].Value.(UnknownValue)
+	if !ok {
+		t.Fatalf("unknown property value type = %T, want UnknownValue", props[0].Value)
+	}
+	if got.TypeName != "MysteryProperty" || !bytes.Equal(got.Raw, []byte{0xde, 0xad, 0xbe, 0xef}) {
+		t.Fatalf("UnknownValue = %#v, want preserved raw MysteryProperty payload", got)
+	}
+	if props[1].Name != "AfterMystery" || props[1].Type != TypeInt || props[1].Value != int32(42) {
+		t.Fatalf("trailing property = %#v, want AfterMystery int 42", props[1])
+	}
+}
+
 func TestParsePropertyReturnsNilForNoneMarkerWithoutTrailingZeros(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{7: "None"})
