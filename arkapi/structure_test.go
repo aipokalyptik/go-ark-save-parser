@@ -56,6 +56,14 @@ func TestStructureAPIAllIncludesMissedInventoryContainersAndSkipsEngrams(t *test
 	if _, ok := structures[engramID]; ok {
 		t.Fatalf("All() included engram structure %s: %#v", engramID, structures)
 	}
+
+	summary, _, err := api.OwnerSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("OwnerSummaryWithFaults() error = %v", err)
+	}
+	if summary.Structures != 2 {
+		t.Fatalf("OwnerSummaryWithFaults() structures = %d, want normal plus missed container only", summary.Structures)
+	}
 }
 
 func TestStructureAPIGetOwnedByFiltersByOwner(t *testing.T) {
@@ -91,6 +99,26 @@ func TestStructureAPICountOwnedByTribe(t *testing.T) {
 	}
 	if count != 1 {
 		t.Fatalf("CountOwnedByTribe(777) = %d, want 1", count)
+	}
+}
+
+func TestStructureAPIOwnerSummaryCountsOwnerFields(t *testing.T) {
+	save := openSyntheticMixedOwnedStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	summary, faults, err := api.OwnerSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("OwnerSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("OwnerSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.Structures != 3 || summary.WithTribeID != 3 || summary.UniqueTribes != 2 {
+		t.Fatalf("OwnerSummaryWithFaults() = %#v, want 3 structures, 3 tribe IDs, 2 unique tribes", summary)
+	}
+	if summary.WithPlayerID != 0 || summary.WithTribeName != 0 || summary.WithPlayerName != 0 || summary.WithOriginalPlacerID != 0 {
+		t.Fatalf("OwnerSummaryWithFaults() owner optional counts = %#v, want only tribe IDs", summary)
 	}
 }
 

@@ -17,6 +17,18 @@ type StructureAPI struct {
 	save *arksave.Save
 }
 
+type StructureOwnerSummary struct {
+	Structures            int
+	WithTribeID           int
+	WithPlayerID          int
+	WithTribeName         int
+	WithPlayerName        int
+	WithOriginalPlacerID  int
+	UniqueTribes          int
+	UniquePlayers         int
+	UniqueOriginalPlacers int
+}
+
 func NewStructure(save *arksave.Save) *StructureAPI {
 	return &StructureAPI{save: save}
 }
@@ -185,6 +197,42 @@ func (s *StructureAPI) CountOwnedByTribeWithFaults(tribeID int32) (int, []arksav
 		}
 	}
 	return count, faults, nil
+}
+
+func (s *StructureAPI) OwnerSummaryWithFaults() (StructureOwnerSummary, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.selectedStructureIndexWithFaults()
+	if err != nil {
+		return StructureOwnerSummary{}, nil, err
+	}
+	summary := StructureOwnerSummary{Structures: len(structures)}
+	tribes := map[int32]struct{}{}
+	players := map[int32]struct{}{}
+	placers := map[int32]struct{}{}
+	for _, structure := range structures {
+		owner := structure.Owner
+		if owner.TribeID != 0 {
+			summary.WithTribeID++
+			tribes[owner.TribeID] = struct{}{}
+		}
+		if owner.PlayerID != 0 {
+			summary.WithPlayerID++
+			players[owner.PlayerID] = struct{}{}
+		}
+		if owner.TribeName != "" {
+			summary.WithTribeName++
+		}
+		if owner.PlayerName != "" {
+			summary.WithPlayerName++
+		}
+		if owner.OriginalPlacerID != 0 {
+			summary.WithOriginalPlacerID++
+			placers[owner.OriginalPlacerID] = struct{}{}
+		}
+	}
+	summary.UniqueTribes = len(tribes)
+	summary.UniquePlayers = len(players)
+	summary.UniqueOriginalPlacers = len(placers)
+	return summary, faults, nil
 }
 
 func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structure, owner *arkobject.ObjectOwner, tribeID int32, invert bool) (map[uuid.UUID]arkobject.Structure, error) {
@@ -371,6 +419,9 @@ func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobje
 	for _, info := range infos {
 		container := arkproperty.Container{Properties: info.Properties}
 		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if _, ok := container.Value("bIsEngram"); ok {
 			continue
 		}
 		if !isStructureBlueprint(info.ClassName) {

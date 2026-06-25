@@ -44,8 +44,9 @@ offline parser without Python or private chat context.
       damage aggregates, equipment best weapon/armor value aggregates,
       canonical direct equipment class counts, stable equipment ranking
       aggregates, dino domain JSON aggregate counts,
-      structure map-coordinate/connected counts, local cluster JSON aggregate
-      counts, local tribute aggregate counts, and tribute JSON aggregate counts.
+      structure owner and map-coordinate/connected counts, local cluster JSON
+      aggregate counts, local tribute aggregate counts, and tribute JSON
+      aggregate counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in

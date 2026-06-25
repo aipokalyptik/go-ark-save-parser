@@ -65,6 +65,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   tribe through the structure inventory container relationship.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
+- `structure_owners`: summarize parsed structure owner fields without printing
+  individual owner names or IDs.
 - `structure_at_location`: count structures near map coordinates and expand
   the result with directly connected structures.
 - `base_components`: group parsed structures into linked connected components

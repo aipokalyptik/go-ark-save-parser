@@ -387,6 +387,15 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go `equipment_owned_by` aggregate output with the
       upstream advanced weapon blueprint owner lookup through structure
       inventory containers.
+- [x] Compare normalized Go `structure_owner_count` aggregate output with
+      upstream owned-structure counting using privacy-safe owner ID counts.
+- [x] Compare normalized Go `structure_owners` aggregate output with the
+      upstream structure-owner printing workflow using privacy-safe stable
+      owner identity aggregates; selected row field counts can include extra
+      inventory-bearing rows.
+- [x] Compare normalized Go `structure_at_location` aggregate output with
+      upstream map-coordinate structure lookup and connected-structure
+      expansion.
 - [x] Compare normalized Go `base_components` aggregate output with upstream
       connected base grouping after a fast selected-property structure scan is
       available for large private saves.

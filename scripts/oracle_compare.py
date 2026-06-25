@@ -902,6 +902,58 @@ def python_structure_owner_count_oracle(save_path: Path, upstream_src: Path) -> 
                 save.close()
 
 
+def python_structure_owners_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                structures = StructureApi(save).get_all(max_workers=1)
+                tribe_ids: set[int] = set()
+                player_ids: set[int] = set()
+                original_placer_ids: set[int] = set()
+                out = {
+                    "structures": len(structures),
+                    "with_tribe_id": 0,
+                    "with_player_id": 0,
+                    "with_tribe_name": 0,
+                    "with_player_name": 0,
+                    "with_original_placer_id": 0,
+                    "unique_tribes": 0,
+                    "unique_players": 0,
+                    "unique_original_placers": 0,
+                }
+                for structure in structures.values():
+                    owner = getattr(structure, "owner", None)
+                    if owner is None:
+                        continue
+                    tribe_id = getattr(owner, "tribe_id", None)
+                    if tribe_id is not None and int(tribe_id) != 0:
+                        out["with_tribe_id"] += 1
+                        tribe_ids.add(int(tribe_id))
+                    player_id = getattr(owner, "id_", None)
+                    if player_id is not None and int(player_id) != 0:
+                        out["with_player_id"] += 1
+                        player_ids.add(int(player_id))
+                    original_placer_id = getattr(owner, "original_placer_id", None)
+                    if original_placer_id is not None and int(original_placer_id) != 0:
+                        out["with_original_placer_id"] += 1
+                        original_placer_ids.add(int(original_placer_id))
+                    if getattr(owner, "tribe_name", None):
+                        out["with_tribe_name"] += 1
+                    if getattr(owner, "player_name", None):
+                        out["with_player_name"] += 1
+                out["unique_tribes"] = len(tribe_ids)
+                out["unique_players"] = len(player_ids)
+                out["unique_original_placers"] = len(original_placer_ids)
+                return out
+            finally:
+                save.close()
+
+
 def python_structure_at_location_oracle(save_path: Path, map_name: str, upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.structure_api import StructureApi  # type: ignore
@@ -1074,6 +1126,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
     py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
     py_structure_owner_count = python_structure_owner_count_oracle(save_path, upstream_src)
+    py_structure_owners = python_structure_owners_oracle(save_path, upstream_src)
     py_structure_at_location = python_structure_at_location_oracle(save_path, py["map_name"], upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
@@ -1106,6 +1159,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_equipment_saddles": py_equipment_saddles,
         "python_equipment_owned_by": py_equipment_owned_by,
         "python_structure_owner_count": py_structure_owner_count,
+        "python_structure_owners": py_structure_owners,
         "python_structure_at_location": py_structure_at_location,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
@@ -1656,6 +1710,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             got = parse_key_value_lines(go_structure_owner_count.stdout)
             private["go"]["structure_owner_count"]["parsed"] = got
             cases.append(CaseResult("structure_owner_count", "pass" if {key: got.get(key) for key in py_structure_owner_count} == py_structure_owner_count else "fail", "owned structure count compared"))
+
+    go_structure_owners = run(["go", "run", "./examples/structure_owners", str(save_path)], repo_root, env)
+    private["go"]["structure_owners"] = {
+        "exit_code": go_structure_owners.returncode,
+        "stdout": go_structure_owners.stdout,
+        "stderr": go_structure_owners.stderr,
+    }
+    if go_structure_owners.returncode != 0:
+        cases.append(CaseResult("structure_owners", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_structure_owners.stdout)
+        private["go"]["structure_owners"]["parsed"] = got
+        stable_keys = ("unique_tribes", "unique_players", "unique_original_placers")
+        cases.append(CaseResult("structure_owners", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_structure_owners[key] for key in stable_keys} else "fail", "stable structure owner identity aggregates compared; selected row field counts can include extra inventory-bearing rows"))
 
     if py_structure_at_location is None:
         cases.append(CaseResult("structure_at_location", "skip", "oracle save has no supported map/location structure candidate"))
