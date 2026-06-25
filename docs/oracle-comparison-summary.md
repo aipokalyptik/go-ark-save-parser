@@ -8,6 +8,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 - `map_summary`: `pass` (summary metrics compared)
 - `object_classes`: `pass` (class list compared)
+- `object_summary`: `pass` (object-by-UUID byte and property counts compared)
 - `class_lookup`: `pass` (storage class substring structure counts compared)
 - `export_json`: `pass` (save-info JSON metrics and class list compared)
 - `local_profiles`: `pass` (local profile and tribe aggregate counts compared)
@@ -38,4 +39,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 29
+- `pass`: 30

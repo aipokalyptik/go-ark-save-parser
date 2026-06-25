@@ -22,6 +22,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   counts. This covers the basic parsing and save-info JSON workflow.
 - `object_classes`: list unique object class names from a local `.ark`, matching
   the class lookup/filtering style of the upstream basic parsing examples.
+- `object_summary`: look up one object by UUID and print raw byte and parsed
+  property counts without printing class names or property values.
 - `class_lookup`: count objects and distinct classes matching one or more class
   name substrings without printing class names or object UUIDs.
 - `property_filter`: count objects and classes whose raw save object payloads

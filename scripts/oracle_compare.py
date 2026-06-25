@@ -146,6 +146,31 @@ def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
         save.close()
 
 
+def python_object_summary_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        for obj_uuid in save.save_connection.get_obj_uuids():
+            try:
+                obj = save.get_game_object_by_id(obj_uuid)
+            except Exception:
+                continue
+            if obj is None:
+                continue
+            raw = save.save_connection.get_game_obj_binary(obj_uuid)
+            return {
+                "uuid": str(obj_uuid),
+                "has_object": 1,
+                "bytes": len(raw),
+                "properties": len(obj.properties),
+            }
+        return None
+    finally:
+        save.close()
+
+
 STORAGE_CLASS_SUBSTRINGS = [
     "StorageBox_Large_C",
     "BP_DedicatedStorage_C",
@@ -838,6 +863,7 @@ def normalize_blueprint(value: str) -> str:
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
+    py_object_summary = python_object_summary_oracle(save_path, upstream_src)
     py_class_lookup = python_class_lookup_oracle(save_path, upstream_src)
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_player_tribe_links = python_player_tribe_links_oracle(save_path, repo_root, upstream_src)
@@ -864,6 +890,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     private: dict[str, Any] = {
         "save_path": str(save_path),
         "python": py,
+        "python_object_summary": py_object_summary,
         "python_class_lookup": py_class_lookup,
         "python_local_profiles": py_local_profiles,
         "python_player_tribe_links": py_player_tribe_links,
@@ -921,6 +948,23 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         got_classes = sorted(line for line in go_classes.stdout.splitlines() if line)
         private["go"]["object_classes"]["classes"] = got_classes
         cases.append(CaseResult("object_classes", "pass" if got_classes == py["classes"] else "fail", "class list compared"))
+
+    if py_object_summary is None:
+        cases.append(CaseResult("object_summary", "skip", "oracle save has no parseable object candidate"))
+    else:
+        go_object_summary = run(["go", "run", "./examples/object_summary", str(save_path), str(py_object_summary["uuid"])], repo_root, env)
+        private["go"]["object_summary"] = {
+            "exit_code": go_object_summary.returncode,
+            "stdout": go_object_summary.stdout,
+            "stderr": go_object_summary.stderr,
+        }
+        if go_object_summary.returncode != 0:
+            cases.append(CaseResult("object_summary", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_object_summary.stdout)
+            private["go"]["object_summary"]["parsed"] = got
+            want = {key: py_object_summary[key] for key in ("has_object", "bytes", "properties")}
+            cases.append(CaseResult("object_summary", "pass" if {key: got.get(key) for key in want} == want else "fail", "object-by-UUID byte and property counts compared"))
 
     go_class_lookup = run(["go", "run", "./examples/class_lookup", str(save_path), *STORAGE_CLASS_SUBSTRINGS], repo_root, env)
     private["go"]["class_lookup"] = {

@@ -320,6 +320,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Compare normalized Go outputs with the private Python oracle for the
       implemented direct read-only counterparts: `map_summary` and
       `object_classes`.
+- [x] Compare normalized Go `object_summary` output with upstream object-by-UUID
+      parsing using a private oracle-selected object UUID and privacy-safe byte
+      and property counts.
 - [x] Compare normalized Go `local_profiles` aggregate counts with the private
       Python oracle using upstream `PlayerApi` over local profile/tribe files.
 - [x] Compare normalized Go `player_all` aggregate output with private Python
