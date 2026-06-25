@@ -43,8 +43,11 @@ Public verification reported by reviewers:
 
 ## High-Priority Risks
 
-- Dynamic property parity remains incomplete. Unknown top-level property types
-  and unsupported compound value encodings can still fail full object parsing.
+- Dynamic property parity remains incomplete, but several previously high-risk
+  compound encodings are now covered: enum-keyed maps, struct-keyed map body
+  skipping with reader realignment, and fixed-layout `Rotator`, `Quat`, `Color`,
+  and `LinearColor` structs. Unknown top-level property types and remaining
+  unsupported compound value encodings can still fail full object parsing.
 - Legacy archive and legacy/modded embedded cryopod paths remain unsupported
   outside modern archive and compact tribute-index formats. Modern cryopod
   dino/status payloads now have a parsed API path, but broad upstream parity
@@ -94,7 +97,10 @@ Public verification reported by reviewers:
 - Legacy/unsupported archive behavior is documented, but user-facing CLI/API
   error behavior should be made more explicit and tested. Partially addressed
   after this review by printing aggregate property parse-error counts in CLI
-  archive summaries.
+  archive summaries. Further addressed by making `arksave parse` perform a
+  fault-tolerant full-object parse summary with parsed-object and parse-fault
+  counts; on the large private Valguero save this remains too slow for the
+  default oracle comparison suite and should be treated as a manual smoke path.
 - Some upstream read-only examples are not stable oracle candidates on the
   private save yet. In particular, `DinoApi.get_all_babies(include_wild=True)`
   produced high-volume parser debug output and previously failed in an embedded
