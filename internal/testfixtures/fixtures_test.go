@@ -2,7 +2,9 @@ package testfixtures
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
+	"io"
 	"testing"
 
 	"github.com/google/uuid"
@@ -53,5 +55,54 @@ func TestActorTransformsWritesEntriesAndNilTerminator(t *testing.T) {
 
 	if !bytes.Equal(got, want.Bytes()) {
 		t.Fatalf("ActorTransforms() = %x, want %x", got, want.Bytes())
+	}
+}
+
+func TestCryopodDinoPayloadWritesSupportedCompressedArchive(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+
+	payload := CryopodDinoPayload(t, dinoID, statusID, CryopodDinoPayloadOptions{Health: 6})
+
+	if len(payload) <= 12 {
+		t.Fatalf("CryopodDinoPayload() length = %d, want compressed body", len(payload))
+	}
+	if got := binary.LittleEndian.Uint32(payload[0:4]); got != 0x0407 {
+		t.Fatalf("payload version = %#x, want 0x0407", got)
+	}
+	decodedSize := int(binary.LittleEndian.Uint32(payload[4:8]))
+	namesOffset := int(binary.LittleEndian.Uint32(payload[8:12]))
+	if decodedSize <= 0 || namesOffset <= 0 || namesOffset >= decodedSize {
+		t.Fatalf("decodedSize=%d namesOffset=%d, want valid embedded archive offsets", decodedSize, namesOffset)
+	}
+
+	reader, err := zlib.NewReader(bytes.NewReader(payload[12:]))
+	if err != nil {
+		t.Fatalf("zlib reader: %v", err)
+	}
+	decoded, err := io.ReadAll(reader)
+	_ = reader.Close()
+	if err != nil {
+		t.Fatalf("zlib read: %v", err)
+	}
+	if len(decoded) != decodedSize {
+		t.Fatalf("decoded length = %d, want %d", len(decoded), decodedSize)
+	}
+}
+
+func TestCryopodSaddlePayloadWritesSupportedNoHeaderPayload(t *testing.T) {
+	payload := CryopodSaddlePayload()
+
+	if len(payload) <= 16 {
+		t.Fatalf("CryopodSaddlePayload() length = %d, want properties", len(payload))
+	}
+	if got := binary.LittleEndian.Uint32(payload[0:4]); got != 8 {
+		t.Fatalf("payload prefix[0] = %d, want 8", got)
+	}
+	if got := binary.LittleEndian.Uint32(payload[4:8]); got != 7 {
+		t.Fatalf("payload prefix[1] = %d, want 7", got)
+	}
+	if !bytes.Contains(payload, []byte("ItemArchetype")) {
+		t.Fatalf("CryopodSaddlePayload() missing ItemArchetype property")
 	}
 }

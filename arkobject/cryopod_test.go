@@ -2,8 +2,6 @@ package arkobject
 
 import (
 	"bytes"
-	"compress/zlib"
-	"encoding/binary"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -285,26 +283,7 @@ func customItemDatasProperty(payloads ...[]byte) arkproperty.Property {
 }
 
 func syntheticCryopodSaddlePayload() []byte {
-	var buf bytes.Buffer
-	testfixtures.WriteUInt32(&buf, 8)
-	testfixtures.WriteUInt32(&buf, 7)
-	testfixtures.WriteUInt32(&buf, 0)
-	testfixtures.WriteUInt32(&buf, 0)
-	writeCryopodSaddlePathObjectProperty(&buf, "ItemArchetype", "BlueprintGeneratedClass /Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C")
-	testfixtures.WriteArkString(&buf, "None")
-	return buf.Bytes()
-}
-
-func writeCryopodSaddlePathObjectProperty(buf *bytes.Buffer, name string, path string) {
-	testfixtures.WriteArkString(buf, name)
-	testfixtures.WriteArkString(buf, "ObjectProperty")
-	var body bytes.Buffer
-	testfixtures.WriteInt32(&body, 1)
-	testfixtures.WriteArkString(&body, path)
-	testfixtures.WriteInt32(buf, int32(body.Len()))
-	testfixtures.WriteInt32(buf, 0)
-	buf.WriteByte(0)
-	buf.Write(body.Bytes())
+	return testfixtures.CryopodSaddlePayload()
 }
 
 func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
@@ -312,100 +291,5 @@ func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.U
 }
 
 func syntheticCryopodDinoPayloadWithOrder(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID, reversed bool) []byte {
-	t.Helper()
-
-	var decoded bytes.Buffer
-	testfixtures.WriteInt32(&decoded, 0)
-	testfixtures.WriteInt32(&decoded, 0)
-	testfixtures.WriteUInt32(&decoded, 2)
-	var dinoOffsetPos int
-	var statusOffsetPos int
-	if reversed {
-		statusOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
-		dinoOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
-	} else {
-		dinoOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, dinoID, "Dino", []string{"D0"})
-		statusOffsetPos = writeCryopodEmbeddedObjectHeader(&decoded, statusID, "Status", []string{"S0"})
-	}
-
-	dinoPropsOffset := decoded.Len()
-	decoded.WriteByte(0)
-	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000001, 1001)
-	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000002, 2002)
-	writeCryopodEmbeddedNameDoubleProperty(&decoded, 0x10000003, 42)
-	writeCryopodEmbeddedNone(&decoded)
-	statusPropsOffset := decoded.Len()
-	decoded.WriteByte(0)
-	writeCryopodEmbeddedNameIntProperty(&decoded, 0x10000005, 12)
-	writeCryopodEmbeddedNone(&decoded)
-
-	binary.LittleEndian.PutUint32(decoded.Bytes()[dinoOffsetPos:dinoOffsetPos+4], uint32(dinoPropsOffset))
-	binary.LittleEndian.PutUint32(decoded.Bytes()[statusOffsetPos:statusOffsetPos+4], uint32(statusPropsOffset))
-
-	namesOffset := decoded.Len()
-	testfixtures.WriteUInt32(&decoded, 7)
-	testfixtures.WriteArkString(&decoded, "None")
-	testfixtures.WriteArkString(&decoded, "DinoID1")
-	testfixtures.WriteArkString(&decoded, "DinoID2")
-	testfixtures.WriteArkString(&decoded, "TamedTimeStamp")
-	testfixtures.WriteArkString(&decoded, "IntProperty")
-	testfixtures.WriteArkString(&decoded, "BaseCharacterLevel")
-	testfixtures.WriteArkString(&decoded, "DoubleProperty")
-
-	var compressed bytes.Buffer
-	writer := zlib.NewWriter(&compressed)
-	if _, err := writer.Write(decoded.Bytes()); err != nil {
-		t.Fatalf("zlib write: %v", err)
-	}
-	if err := writer.Close(); err != nil {
-		t.Fatalf("zlib close: %v", err)
-	}
-
-	var payload bytes.Buffer
-	testfixtures.WriteUInt32(&payload, 0x0407)
-	testfixtures.WriteUInt32(&payload, uint32(decoded.Len()))
-	testfixtures.WriteUInt32(&payload, uint32(namesOffset))
-	payload.Write(compressed.Bytes())
-	return payload.Bytes()
-}
-
-func writeCryopodEmbeddedObjectHeader(buf *bytes.Buffer, id uuid.UUID, className string, names []string) int {
-	buf.Write(id[:])
-	testfixtures.WriteArkString(buf, className)
-	testfixtures.WriteUInt32(buf, 0)
-	testfixtures.WriteStringArray(buf, names)
-	testfixtures.WriteUInt32(buf, 0)
-	testfixtures.WriteInt32(buf, 0)
-	testfixtures.WriteUInt32(buf, 0)
-	offsetPos := buf.Len()
-	testfixtures.WriteInt32(buf, 0)
-	testfixtures.WriteUInt32(buf, 0)
-	return offsetPos
-}
-
-func writeCryopodEmbeddedNameIntProperty(buf *bytes.Buffer, nameID uint32, value int32) {
-	writeCryopodEmbeddedName(buf, nameID)
-	writeCryopodEmbeddedName(buf, 0x10000004)
-	testfixtures.WriteInt32(buf, 4)
-	testfixtures.WriteInt32(buf, 0)
-	buf.WriteByte(0)
-	testfixtures.WriteInt32(buf, value)
-}
-
-func writeCryopodEmbeddedNameDoubleProperty(buf *bytes.Buffer, nameID uint32, value float64) {
-	writeCryopodEmbeddedName(buf, nameID)
-	writeCryopodEmbeddedName(buf, 0x10000006)
-	testfixtures.WriteInt32(buf, 8)
-	testfixtures.WriteInt32(buf, 0)
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, value)
-}
-
-func writeCryopodEmbeddedNone(buf *bytes.Buffer) {
-	writeCryopodEmbeddedName(buf, 0x10000000)
-}
-
-func writeCryopodEmbeddedName(buf *bytes.Buffer, nameID uint32) {
-	testfixtures.WriteUInt32(buf, nameID)
-	testfixtures.WriteInt32(buf, 0)
+	return testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{Reversed: reversed})
 }

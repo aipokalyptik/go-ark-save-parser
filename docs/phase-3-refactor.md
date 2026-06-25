@@ -55,8 +55,9 @@ Go packages without losing oracle parity.
       examples, CLI tests, `arkprofile`, `arkapi`, `arkarchive`, `arkcluster`,
       `arktribute`, `arksave`, and benchmarks. Structure, base, stackable,
       equipment, and core save synthetic object builders now use the shared
-      object wrapper; remaining lower-level domain-specific parser fixtures
-      still need incremental migration.
+      object wrapper, and modern cryopod embedded dino/saddle payload builders
+      are shared by API and object-model tests; remaining lower-level
+      domain-specific parser fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query
