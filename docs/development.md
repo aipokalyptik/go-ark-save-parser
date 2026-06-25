@@ -8,9 +8,11 @@ This project is an offline-only Go port of upstream `ark-save-parser` at commit
 Use these commands before committing parser, API, CLI, or docs changes:
 
 ```sh
-go test ./...
-make build
+make verify
 ```
+
+`make verify` runs the full Go test suite with repo-local build cache settings,
+compiles the Python oracle helper scripts, and builds the static CLI binary.
 
 Use benchmarks when changing parser or query paths:
 

@@ -28,6 +28,7 @@ offline parser without Python or private chat context.
 
 - [x] `go test ./...`
 - [x] `make build`
+- [x] `make verify`
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
