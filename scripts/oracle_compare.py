@@ -345,6 +345,9 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             "total_deaths": sum(player.nr_of_deaths for player in player_api.players),
             "highest_level": max((player.stats.level for player in player_api.players), default=0),
             "players_with_names": sum(1 for player in player_api.players if getattr(player, "name", None) or getattr(player, "char_name", None)),
+            "tribes_with_names": sum(1 for tribe in player_api.tribes if getattr(tribe, "name", None)),
+            "tribe_members": sum(len(getattr(tribe, "member_ids", []) or []) for tribe in player_api.tribes),
+            "tribe_dinos": sum(int(getattr(tribe, "nr_of_dinos", 0) or 0) for tribe in player_api.tribes),
             "unlocked_engrams": len(unlocked_engrams),
             "first_unlocked_engram": unlocked_engrams[0] if unlocked_engrams else "",
             "last_unlocked_engram": unlocked_engrams[-1] if unlocked_engrams else "",
@@ -1224,6 +1227,32 @@ def compare_dino_heatmap_case(
         return CaseResult("dino_heatmap", "fail", "Go heatmap output could not be parsed")
 
 
+def compare_tribe_list_case(
+    save_path: Path,
+    repo_root: Path,
+    env: dict[str, str],
+    py_local_profiles: dict[str, Any],
+    private: dict[str, Any],
+) -> CaseResult:
+    go_tribe_list = run(["go", "run", "./examples/tribe_list", str(save_path)], repo_root, env)
+    private["go"]["tribe_list"] = {
+        "exit_code": go_tribe_list.returncode,
+        "stdout": go_tribe_list.stdout,
+        "stderr": go_tribe_list.stderr,
+    }
+    if go_tribe_list.returncode != 0:
+        return CaseResult("tribe_list", "fail", "Go example exited non-zero")
+    got = parse_key_value_lines(go_tribe_list.stdout)
+    private["go"]["tribe_list"]["parsed"] = got
+    want = {
+        "tribes": py_local_profiles["parsed_tribes"],
+        "with_names": py_local_profiles["tribes_with_names"],
+        "members": py_local_profiles["tribe_members"],
+        "dinos": py_local_profiles["tribe_dinos"],
+    }
+    return CaseResult("tribe_list", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path tribe list aggregates compared")
+
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
@@ -1468,6 +1497,8 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             "highest_level": py_local_profiles["highest_level"],
         }
         cases.append(CaseResult("player_list", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path player list aggregates compared"))
+
+    cases.append(compare_tribe_list_case(save_path, repo_root, env, py_local_profiles, private))
 
     go_player_all = run(["go", "run", "./examples/player_all", str(save_path)], repo_root, env)
     private["go"]["player_all"] = {
@@ -2029,6 +2060,10 @@ def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src:
         py_dino_heatmap = python_dino_heatmap_oracle(save_path, py["map_name"], upstream_src)
         private["python_dino_heatmap"] = py_dino_heatmap
         return [compare_dino_heatmap_case(save_path, repo_root, env, py_dino_heatmap, private)], private
+    if case_name == "tribe_list":
+        py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
+        private["python_local_profiles"] = py_local_profiles
+        return [compare_tribe_list_case(save_path, repo_root, env, py_local_profiles, private)], private
     raise ValueError(f"unsupported focused oracle case {case_name!r}")
 
 
@@ -2061,7 +2096,7 @@ def main() -> int:
     parser.add_argument("--upstream-src", type=Path, default=Path(".oracle/upstream/src"))
     parser.add_argument("--out", type=Path, default=Path(".oracle/output/oracle-comparison.json"))
     parser.add_argument("--summary", type=Path, default=Path("docs/oracle-comparison-summary.md"))
-    parser.add_argument("--case", choices=["dino_heatmap"], default=None)
+    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list"], default=None)
     args = parser.parse_args()
 
     repo_root = Path.cwd()

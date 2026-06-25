@@ -95,6 +95,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   no embedded player store.
 - `player_list`: accept a save path or save directory and print privacy-safe
   player list aggregates for the upstream all-players iteration workflow.
+- `tribe_list`: accept a save path or save directory and print privacy-safe
+  tribe list aggregates for the upstream all-tribes iteration workflow.
 - `player_unlocked_engrams`: accept a save path or save directory and print the
   sorted distinct unlocked engram blueprint set plus aggregate boundary values.
 - `player_tribe_links`: accept a save path or save directory and print active

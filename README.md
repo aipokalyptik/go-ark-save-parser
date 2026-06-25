@@ -56,7 +56,7 @@ Implemented:
   `export-tribute-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering forty-one aggregate read-only cases.
+  covering forty-two aggregate read-only cases.
 
 Still in progress:
 

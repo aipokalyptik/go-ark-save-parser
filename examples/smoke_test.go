@@ -29,6 +29,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	profilePath := filepath.Join(dir, "123.arkprofile")
+	tribePath := filepath.Join(dir, "777.arktribe")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	dinoID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	stackableID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
@@ -86,6 +87,12 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
 		},
 	})
+	testfixtures.WriteTribeArchiveWithOptions(t, tribePath, testfixtures.TribeArchiveOptions{
+		Name:     "Porters",
+		TribeID:  777,
+		OwnerID:  42,
+		NumDinos: 7,
+	})
 
 	runExample(t, "map_summary", "map=Valguero_WP", savePath)
 	runExample(t, "object_classes", "Blueprint'/Game/Test.Test_C'", savePath)
@@ -133,6 +140,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
 	runExample(t, "player_list", "players=1 with_names=1 highest_level=1", dir)
+	runExample(t, "tribe_list", "tribes=1 with_names=1 members=0 dinos=7", dir)
 	runExample(t, "player_unlocked_engrams", "unlocked_engrams=2 first=Blueprint'/Game/Engrams/EngramA.EngramA_C' last=Blueprint'/Game/Engrams/EngramB.EngramB_C'", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
