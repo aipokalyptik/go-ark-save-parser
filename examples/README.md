@@ -72,6 +72,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   individual owner names or IDs.
 - `structure_at_location`: count structures near map coordinates and expand
   the result with directly connected structures.
+- `structure_heatmap`: generate a compact JSON summary for a local structure
+  heatmap using an explicit output path, resolution, and minimum-per-cell
+  threshold.
 - `base_components`: group parsed structures into linked connected components
   and print aggregate base counts using a selected-property scan over structure
   IDs and linked-structure UUIDs.

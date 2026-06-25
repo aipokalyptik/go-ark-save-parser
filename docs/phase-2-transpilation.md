@@ -296,6 +296,10 @@ enough that oracle-derived tests can run against translated packages.
       filtering for upstream owned-structure and owned-vault example flows.
 - [x] Add read-only Structure API heatmap generation with class, owner, and
       minimum-cell filters for upstream `create_heatmap` parity.
+- [x] Add `structure_heatmap` as a file-producing Go example with explicit
+      output path, resolution, and minimum-per-cell threshold. Private oracle
+      comparison is blocked on the supplied save because upstream indexes
+      out-of-range heatmap cells instead of skipping them.
 - [x] Add read-only Structure API discovery of missed inventory-bearing
       container structures plus engram filtering for upstream `get_all_objects`
       parity.
