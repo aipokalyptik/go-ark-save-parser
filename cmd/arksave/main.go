@@ -720,17 +720,17 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 			return err
 		}
 	}
-	for _, dino := range data.Dinos {
-		objectCount := 0
-		if dino.Archive != nil {
-			objectCount = len(dino.Archive.Objects)
+	for _, dino := range clusterInfo.Dinos {
+		classNames := ""
+		if len(dino.ClassNames) > 0 {
+			classNames = fmt.Sprintf(" class_names=%s", strings.Join(dino.ClassNames, ","))
 		}
 		if dino.ParseError != "" {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f parse_error=%s\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime, dino.ParseError); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s parse_error=%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, classNames, dino.ParseError); err != nil {
 				return err
 			}
 		} else {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f\n", dino.Index, dino.RawSize, objectCount, dino.UploadTime); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, classNames); err != nil {
 				return err
 			}
 		}

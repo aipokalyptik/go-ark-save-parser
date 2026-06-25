@@ -415,6 +415,31 @@ func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 	}
 }
 
+func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
+	var out bytes.Buffer
+	err := printClusterSummary(&out, &arkcluster.Data{
+		Path:    "/tmp/EOS_abc123",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+		Dinos: []arkcluster.Dino{{
+			Index:      0,
+			UploadTime: 12345,
+			RawSize:    64,
+			Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+				{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"},
+				{ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"},
+			}},
+		}},
+	}, runOptions{})
+	if err != nil {
+		t.Fatalf("printClusterSummary() error = %v", err)
+	}
+	got := out.String()
+	want := "dino[0] raw_bytes=64 objects=2 upload=12345 class_names=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C,/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"
+	if !strings.Contains(got, want) {
+		t.Fatalf("cluster summary %q does not contain %q", got, want)
+	}
+}
+
 func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterSummary(&out, &arkcluster.Data{
