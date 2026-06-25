@@ -89,6 +89,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   summary JSON.
 - `local_tribute`: read local compact tribute index files and print aggregate
   player-data and tribe-data ID counts.
+- `tribute_json`: read one local compact tribute index file or directory and
+  print the tribute summary JSON.
 
 ## Mutation-Copy Example
 
