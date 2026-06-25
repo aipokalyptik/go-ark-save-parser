@@ -57,6 +57,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and parsing for enum-keyed map entries with generic struct
       values, including the serialized enum descriptor block used by
       `TMap<TEnumAsByte<...>, ...>` payloads.
+- [x] Add tests and reader alignment for unsupported map value encodings so
+      declared map bodies are skipped and subsequent properties can still parse.
 - [x] Add tests and reader alignment for unsupported struct-keyed maps so the
       map body is skipped and subsequent properties can still parse.
 - [x] Add tests and reader alignment for unsupported set element encodings so

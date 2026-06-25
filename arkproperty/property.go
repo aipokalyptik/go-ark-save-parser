@@ -711,7 +711,7 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 	}
 	valueType, err := typeFromPropertyName(valueTypeName)
 	if err != nil {
-		return Map{}, err
+		return skipUnsupportedMapValue(r, keyType, Type(valueTypeName))
 	}
 	structNames, err := r.ReadInt32()
 	if err != nil {
@@ -751,6 +751,27 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		return Map{}, err
 	}
 	return Map{KeyType: keyType, ValueType: valueType, Entries: entries}, nil
+}
+
+func skipUnsupportedMapValue(r *arkbinary.Reader, keyType Type, valueType Type) (Map, error) {
+	structNames, err := r.ReadInt32()
+	if err != nil {
+		return Map{}, err
+	}
+	if structNames > 0 {
+		if _, err := r.ReadName(""); err != nil {
+			return Map{}, err
+		}
+	}
+	dataSize, err := readInlineStructHeader(r, uint32(structNames))
+	if err != nil {
+		return Map{}, err
+	}
+	bodyEnd := r.Position() + int(dataSize)
+	if err := r.SetPosition(bodyEnd); err != nil {
+		return Map{}, err
+	}
+	return Map{KeyType: keyType, ValueType: valueType}, nil
 }
 
 func readMapKey(t Type, enumKeyed bool, r *arkbinary.Reader) (any, error) {
