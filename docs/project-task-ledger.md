@@ -4,6 +4,10 @@ This is the monitorable task list for the offline-only Go port of upstream
 `ark-save-parser`. It exists so progress can be audited from the repository
 without reading chat history.
 
+For stable up-front task IDs across the whole goal, see
+[`docs/task-inventory.md`](task-inventory.md). This ledger carries the detailed
+status notes behind those IDs.
+
 Status markers:
 
 - `[x]`: complete and committed.
@@ -426,7 +430,7 @@ without Python or private chat context.
 Use these commands to monitor progress from the repo:
 
 ```sh
-rg -n "^- \\[ \\]|\\[~\\]|\\[blocked\\]" docs/project-task-ledger.md docs/phase-*.md docs/production-readiness-review.md
+rg -n "^\\s*- \\[ \\]|\\[~\\]|\\[blocked\\]" docs/project-task-ledger.md docs/phase-*.md docs/production-readiness-review.md
 ```
 
 ```sh

@@ -5,9 +5,11 @@ This project is an offline-only Go port of upstream `ark-save-parser` at commit
 
 ## Progress Tracking
 
-Update [`docs/project-task-ledger.md`](project-task-ledger.md) in the same
-commit whenever a phase task, blocker, or completion status changes. That file
-is the repository source of truth for monitorable project progress.
+Use [`docs/task-inventory.md`](task-inventory.md) for stable task IDs and the
+up-front goal checklist. Update [`docs/project-task-ledger.md`](project-task-ledger.md)
+in the same commit whenever a phase task, blocker, or completion status
+changes. Together those files are the repository source of truth for
+monitorable project progress.
 
 ## Local Verification
 

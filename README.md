@@ -11,9 +11,11 @@ FTP, RCON, or live server access.
 
 ## Progress Tracking
 
-The monitorable task ledger is
-[`docs/project-task-ledger.md`](docs/project-task-ledger.md). It is the source
-of truth for phase status, open tasks, blocked tasks, and verification commands.
+The up-front stable task inventory is
+[`docs/task-inventory.md`](docs/task-inventory.md). The detailed monitorable
+task ledger is [`docs/project-task-ledger.md`](docs/project-task-ledger.md).
+Together they are the source of truth for phase status, open tasks, blocked
+tasks, and verification commands.
 
 ## Current Status
 

@@ -1,0 +1,134 @@
+# Task Inventory
+
+This is the up-front, stable task inventory for the offline-only Go port. It is
+intended for progress monitoring without reading chat history. Detailed status
+notes live in [`project-task-ledger.md`](project-task-ledger.md); phase-specific
+evidence lives in the linked phase documents.
+
+Status markers:
+
+- `[x]`: complete and committed.
+- `[~]`: partially complete; the remaining work is listed in the same row.
+- `[ ]`: not complete.
+- `[blocked]`: blocked by fixture availability, upstream behavior, runtime
+  limits, live-server validation, or explicit scope boundaries.
+
+## Scope Rules
+
+| ID | Status | Requirement | Evidence / Remaining Work |
+| --- | --- | --- | --- |
+| SCOPE-001 | `[x]` | Offline local-file access is the compatibility target. | README scope and package docs cover `.ark`, `.arkprofile`, `.arktribe`, local cluster, and local tribute files. |
+| SCOPE-002 | `[x]` | FTP is unsupported. | Documented as intentionally out of scope. |
+| SCOPE-003 | `[x]` | RCON is unsupported. | Documented as intentionally out of scope. |
+| SCOPE-004 | `[x]` | Cluster support is local-file-only. | `arkcluster` and CLI cluster commands read local extensionless archive files only. |
+| SCOPE-005 | `[~]` | Mutation APIs are translated only as explicit copied-save workflows. | `arkmutation` requires output paths and has structural tests; live-server acceptance remains unverified by design. |
+| SCOPE-006 | `[x]` | Private saves, raw oracle output, debug dumps, extracted saves, and snapshots never enter git. | `.gitignore`, development docs, and sanitized oracle docs define the privacy boundary. |
+
+## Phase 1: Oracle Setup
+
+| ID | Status | Requirement | Evidence / Remaining Work |
+| --- | --- | --- | --- |
+| P1-001 | `[x]` | Initialize repo hygiene. | `go.mod`, `.gitignore`, MIT license, public GitHub repository, and pushed `main` exist. |
+| P1-002 | `[x]` | Prepare Python oracle workspace from private backup. | `.oracle` workflow documented in [`development.md`](development.md) and Phase 1 docs. |
+| P1-003 | `[x]` | Clone upstream at commit `4f7cc91fb96a080321bfbc884ba81bd897f72c49`. | Oracle setup docs pin the upstream commit. |
+| P1-004 | `[x]` | Use Python 3.13+ and install upstream editable package plus test tooling. | Oracle regeneration docs record the setup commands. |
+| P1-005 | `[x]` | Inventory `.ark`, `.arkprofile`, `.arktribe`, local cluster, and local tribute files privately. | Sanitized count-only summary exists in [`oracle-summary.md`](oracle-summary.md). |
+| P1-006 | `[x]` | Run upstream packaged tests and record blockers. | Missing non-public upstream `tests/test_data` is documented. |
+| P1-007 | `[x]` | Run upstream `testbench/pytest` against usable private `.ark` saves. | Sanitized status is recorded in Phase 1/oracle docs. |
+| P1-008 | `[~]` | Classify and run offline upstream examples. | Classification and comparison harness exist; not every runnable example has a default-suite private normalized output due slow or blocked cases. |
+| P1-009 | `[~]` | Capture Python-vs-Go oracle output privately and commit sanitized summaries. | Forty-six aggregate comparison cases are recorded; remaining feasible examples still need coverage expansion. |
+| P1-010 | `[x]` | Review oracle completeness and privacy boundaries. | Phase 1 report and privacy docs are committed. |
+
+## Phase 2: Literal Go Transpilation
+
+| ID | Status | Requirement | Evidence / Remaining Work |
+| --- | --- | --- | --- |
+| P2-BIN-001 | `[x]` | Port byte reader/writer behavior. | `arkbinary` tests cover bounds, seek, skip, peek, and remaining bytes. |
+| P2-BIN-002 | `[x]` | Port strings, UUIDs, numeric values, bools, arrays, structs, name tables, and position semantics where exercised. | `arkbinary`, `arkproperty`, and `arkobject` tests cover implemented encodings. |
+| P2-BIN-003 | `[x]` | Port zlib inflation and ARK wildcard decompression. | `arkbinary` tests cover both paths. |
+| P2-SAVE-001 | `[x]` | Port SQLite `.ark` loading using pure-Go SQLite. | `arksave` uses `modernc.org/sqlite` and synthetic SQLite tests. |
+| P2-SAVE-002 | `[x]` | Port save header, custom tables, actor transforms, class lookup, object binary access, and object enumeration. | `arksave` tests and gated private oracle tests. |
+| P2-PROP-001 | `[x]` | Port primitive, object, soft object, name, byte, enum, array, map, set, and generic struct property parsing. | `arkproperty` tests cover the implemented parser surface. |
+| P2-PROP-002 | `[x]` | Preserve unknown property/struct fallback and declared-size realignment. | `arkproperty` tests cover fallback and recoverable overread behavior. |
+| P2-PROP-003 | `[ ]` | Port future compound payload encodings discovered by oracle failures. | No open runnable failure currently has a complete parser slice; add cases as private oracle exposes them. |
+| P2-PROP-004 | `[ ]` | Port legacy property/object parsing where a runnable offline oracle path exists. | Legacy paths are isolated behind typed unsupported errors until fixtures are available. |
+| P2-OBJ-001 | `[x]` | Port generic game objects and raw position/span preservation. | `arkobject` and mutation tests cover parsing and structural spans. |
+| P2-OBJ-002 | `[x]` | Port read-first wrappers for inventory, owner, structure, equipment, player, tribe, dino, base, and cluster summaries. | Implemented wrappers live under `arkobject` and `arkcluster`. |
+| P2-OBJ-003 | `[ ]` | Complete remaining read-first wrappers as oracle examples require them. | Lower-priority fields for inventory, traits, dino, structure, equipment, stackable, player, tribe, and local cluster remain incremental. |
+| P2-API-001 | `[x]` | Port General API queries and fault collection. | `arkapi.GeneralAPI` tests. |
+| P2-API-002 | `[x]` | Port local profile, tribe, local tribute, and local cluster parsing. | `arkprofile`, `arktribute`, `arkcluster`, and `arkapi` tests. |
+| P2-API-003 | `[x]` | Port save-contained player and tribe parsing, including embedded `GameModeCustomBytes`. | `arkapi` player/tribe tests. |
+| P2-API-004 | `[x]` | Port Dino, Structure, Equipment, Stackable, Base, and JSON read APIs for implemented offline workflows. | Domain tests, examples, and CLI/domain JSON tests. |
+| P2-API-005 | `[ ]` | Finish full dino edge behavior. | Legacy/modded cryopods, cryopod-location parity, and full pedigree tree rendering remain. |
+| P2-API-006 | `[~]` | Finish full structure/base edge behavior. | Exact owner/cell parity and base import/customize write parity remain; structure heatmap oracle is blocked by upstream private-save cell indexing. |
+| P2-API-007 | `[ ]` | Finish full equipment edge behavior. | Exact ranking/average parity, legacy/modded cryopod saddle payloads, cosmetics, and remaining default stat-table parity remain. |
+| P2-API-008 | `[ ]` | Finish richer local cluster item/dino domain models. | Add fields as local-file oracle fixtures expose them. |
+| P2-API-009 | `[ ]` | Finish remaining Player/Tribe edge behavior. | Remaining upstream edge cases beyond parsed local archives, save objects, and embedded `GameModeCustomBytes` remain. |
+| P2-MUT-001 | `[x]` | Port copy-based DB modification, object removal, object upsert, and custom-table upsert. | `arkmutation` tests and CLI mutate commands. |
+| P2-MUT-002 | `[~]` | Translate higher-level mutation examples where feasible. | Structural copied-save coverage exists; generated blueprint/base customization live-server acceptance is unverified. |
+| P2-EX-001 | `[x]` | Create Go equivalents for runnable offline Python examples that currently have implemented API support. | `examples/` contains committed Go examples and smoke tests. |
+| P2-EX-002 | `[~]` | Compare Go example output to Python oracle output. | Forty-six aggregate cases pass; feasible slow or blocked examples still need incremental comparison coverage. |
+
+## Phase 3: Idiomatic Go Refactor
+
+| ID | Status | Requirement | Evidence / Remaining Work |
+| --- | --- | --- | --- |
+| P3-PKG-001 | `[x]` | Split packages for binary, save, property, object, profile, cluster, tribute, API, mutation, and CLI surfaces. | Current package shape is documented in [`phase-3-refactor.md`](phase-3-refactor.md). |
+| P3-PKG-002 | `[ ]` | Further split large domain models under `arkobject` or subpackages. | Dino, structure, equipment, stackable, player, tribe, inventory, and local cluster model split remains. |
+| P3-API-001 | `[x]` | Replace dynamic returns with typed Go structs, explicit errors, and fault collections for implemented paths. | Implemented typed APIs and domain JSON exports. |
+| P3-API-002 | `[ ]` | Replace remaining Python-shaped compatibility helpers where typed Go surfaces now exist. | Compatibility helpers remain until examples and callers have typed replacements. |
+| P3-API-003 | `[ ]` | Add remaining full typed API layers and model-specific JSON exports. | Full dino, full structure, equipment, full stackable, base, cluster, and player/tribe parity remain incremental. |
+| P3-PERF-001 | `[x]` | Add benchmarks for full save open/object enumeration, object parse, query filters, and JSON export. | Benchmarks are committed. |
+| P3-PERF-002 | `[x]` | Add object cache controls and prove safe concurrency only where tested. | `arksave.Save` object row cache and concurrent raw read tests exist. |
+| P3-CLI-001 | `[x]` | Implement offline CLI commands. | `inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`, JSON export commands, and experimental mutate commands exist. |
+| P3-FIX-001 | `[~]` | Replace duplicated synthetic fixture builders with internal helpers. | `internal/testfixtures` centralizes many shared fixtures; lower-level domain-specific parser fixtures and non-save malformed object-shape fixtures remain. |
+| P3-REG-001 | `[x]` | Re-run regression tests after refactor slices. | `make verify` is the committed verification gate. |
+
+## Phase 4: Documentation And Production Readiness
+
+| ID | Status | Requirement | Evidence / Remaining Work |
+| --- | --- | --- | --- |
+| P4-DOC-001 | `[x]` | README covers install, build, CLI, library examples, scope, and mutation safety. | README is committed. |
+| P4-DOC-002 | `[x]` | Supported file types and unsupported features are documented. | README and development docs. |
+| P4-DOC-003 | `[x]` | Mutation APIs are documented as experimental and live-server-unverified. | README, docs, and mutation package comments. |
+| P4-DEV-001 | `[x]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | [`development.md`](development.md). |
+| P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`. |
+| P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
+| P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
+| P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests. |
+| P4-VERIFY-004 | `[~]` | Oracle comparison suite is rerunnable. | Harness exists and records aggregate results; not every feasible upstream example is covered yet. |
+| P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
+
+## Ledger Detail Map
+
+Use this table to jump from stable inventory IDs to the detailed ledger sections.
+The detailed ledger is prose-oriented and may group several IDs under one
+heading, but every inventory ID belongs to one of these ranges.
+
+| Inventory IDs | Detailed Status Location |
+| --- | --- |
+| `SCOPE-*` | [`project-task-ledger.md#operating-rules`](project-task-ledger.md#operating-rules) |
+| `P1-*` | [`project-task-ledger.md#phase-1-oracle-setup`](project-task-ledger.md#phase-1-oracle-setup) |
+| `P2-BIN-*` | [`project-task-ledger.md#core-binary-layer`](project-task-ledger.md#core-binary-layer) |
+| `P2-SAVE-*` | [`project-task-ledger.md#save-access`](project-task-ledger.md#save-access) |
+| `P2-PROP-*` | [`project-task-ledger.md#property-parser`](project-task-ledger.md#property-parser) |
+| `P2-OBJ-*` | [`project-task-ledger.md#object-model`](project-task-ledger.md#object-model) |
+| `P2-API-*` | [`project-task-ledger.md#offline-apis`](project-task-ledger.md#offline-apis) |
+| `P2-MUT-*` | [`project-task-ledger.md#mutation-apis`](project-task-ledger.md#mutation-apis) |
+| `P2-EX-*` | [`project-task-ledger.md#examples`](project-task-ledger.md#examples) |
+| `P3-*` | [`project-task-ledger.md#phase-3-idiomatic-go-refactor`](project-task-ledger.md#phase-3-idiomatic-go-refactor) |
+| `P4-*` | [`project-task-ledger.md#phase-4-documentation-and-production-readiness`](project-task-ledger.md#phase-4-documentation-and-production-readiness) |
+
+## Monitoring Commands
+
+List all open, partial, or blocked inventory rows:
+
+```sh
+rg -n '^\\| [A-Z0-9-]+ \\| `\\[( |~|blocked)\\]`' docs/task-inventory.md
+```
+
+List open items across all progress docs:
+
+```sh
+rg -n "^\\s*- \\[ \\]|\\[~\\]|\\[blocked\\]" docs/project-task-ledger.md docs/phase-*.md docs/production-readiness-review.md
+```
