@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -133,12 +134,57 @@ func (s *StructureAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 	return out, nil
 }
 
+func (s *StructureAPI) OwnedByWithFaults(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {
+	all, faults, err := s.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range all {
+		if structure.IsOwnedBy(owner) {
+			out[id] = structure
+		}
+	}
+	return out, faults, nil
+}
+
 func (s *StructureAPI) CountOwnedByTribe(tribeID int32) (int, error) {
 	structures, err := s.OwnedBy(arkobject.ObjectOwner{TribeID: tribeID})
 	if err != nil {
 		return 0, err
 	}
 	return len(structures), nil
+}
+
+func (s *StructureAPI) CountOwnedByTribeWithFaults(tribeID int32) (int, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := s.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
+	}, []string{"StructureID", "MyInventoryComponent", "TargetingTeam", "bIsEngram"})
+	if err != nil {
+		return 0, nil, err
+	}
+	count := 0
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if _, ok := container.Value("bIsEngram"); ok {
+			continue
+		}
+		if !isStructureBlueprint(info.ClassName) {
+			if !isPotentialStructureContainer(info.ClassName) {
+				continue
+			}
+			if _, ok := container.Value("MyInventoryComponent"); !ok {
+				continue
+			}
+		}
+		if selectedInt32(container, "TargetingTeam") == tribeID {
+			count++
+		}
+	}
+	return count, faults, nil
 }
 
 func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structure, owner *arkobject.ObjectOwner, tribeID int32, invert bool) (map[uuid.UUID]arkobject.Structure, error) {
@@ -441,4 +487,33 @@ func isStructureBlueprint(name string) bool {
 		return false
 	}
 	return !strings.Contains(name, "PrimalItemStructure_") || strings.Contains(name, "PrimalItemStructure_ASR")
+}
+
+func selectedInt32(properties arkproperty.Container, name string) int32 {
+	value, ok := properties.Value(name)
+	if !ok {
+		return 0
+	}
+	switch v := value.(type) {
+	case int32:
+		return v
+	case uint32:
+		return int32(v)
+	case int16:
+		return int32(v)
+	case uint16:
+		return int32(v)
+	case int8:
+		return int32(v)
+	case uint8:
+		return int32(v)
+	case int:
+		return int32(v)
+	case float32:
+		return int32(v)
+	case float64:
+		return int32(v)
+	default:
+		return 0
+	}
 }

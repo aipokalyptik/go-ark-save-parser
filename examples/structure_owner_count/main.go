@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -29,11 +28,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStructure(save)
-	owned, err := api.OwnedBy(arkobject.ObjectOwner{TribeID: int32(tribeID64)})
+	count, _, err := api.CountOwnedByTribeWithFaults(int32(tribeID64))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read structures: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("tribe_id=%d structures=%d\n", tribeID64, len(owned))
+	fmt.Printf("tribe_id=%d structures=%d\n", tribeID64, count)
 }

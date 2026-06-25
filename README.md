@@ -44,7 +44,7 @@ Implemented:
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering twenty-four aggregate read-only cases.
+  covering twenty-five aggregate read-only cases.
 
 Still in progress:
 

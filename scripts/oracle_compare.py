@@ -600,6 +600,33 @@ def python_equipment_owned_by_oracle(save_path: Path, upstream_src: Path) -> dic
         save.close()
 
 
+def python_structure_owner_count_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                structures = StructureApi(save).get_all(max_workers=1)
+                counts: dict[int, int] = {}
+                for structure in structures.values():
+                    tribe_id = getattr(getattr(structure, "owner", None), "tribe_id", None)
+                    if tribe_id is None or int(tribe_id) == 0:
+                        continue
+                    counts[int(tribe_id)] = counts.get(int(tribe_id), 0) + 1
+                if not counts:
+                    return None
+                tribe_id, count = max(counts.items(), key=lambda item: (item[1], item[0]))
+                return {
+                    "tribe_id": tribe_id,
+                    "structures": count,
+                }
+            finally:
+                save.close()
+
+
 def python_base_components_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.structure_api import StructureApi  # type: ignore
@@ -711,6 +738,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
     py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
+    py_structure_owner_count = python_structure_owner_count_oracle(save_path, upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
@@ -733,6 +761,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
         "python_equipment_saddles": py_equipment_saddles,
         "python_equipment_owned_by": py_equipment_owned_by,
+        "python_structure_owner_count": py_structure_owner_count,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
@@ -1078,6 +1107,28 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             private["go"]["equipment_owned_by"]["parsed"] = got
             want = {key: py_equipment_owned_by[key] for key in ("tribe_id", "items", "max_damage")}
             cases.append(CaseResult("equipment_owned_by", "pass" if {key: got.get(key) for key in want} == want else "fail", "owned advanced weapon blueprint count and max damage compared"))
+
+    if py_structure_owner_count is None:
+        cases.append(CaseResult("structure_owner_count", "skip", "oracle save has no owned structures with nonzero tribe IDs"))
+    else:
+        go_structure_owner_count = run([
+            "go",
+            "run",
+            "./examples/structure_owner_count",
+            str(save_path),
+            str(py_structure_owner_count["tribe_id"]),
+        ], repo_root, env)
+        private["go"]["structure_owner_count"] = {
+            "exit_code": go_structure_owner_count.returncode,
+            "stdout": go_structure_owner_count.stdout,
+            "stderr": go_structure_owner_count.stderr,
+        }
+        if go_structure_owner_count.returncode != 0:
+            cases.append(CaseResult("structure_owner_count", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_structure_owner_count.stdout)
+            private["go"]["structure_owner_count"]["parsed"] = got
+            cases.append(CaseResult("structure_owner_count", "pass" if {key: got.get(key) for key in py_structure_owner_count} == py_structure_owner_count else "fail", "owned structure count compared"))
 
     go_base_components = run(["go", "run", "./examples/base_components", str(save_path)], repo_root, env)
     private["go"]["base_components"] = {

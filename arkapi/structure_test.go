@@ -468,6 +468,44 @@ func TestStructureAPIAllWithFaultsKeepsValidStructuresAndReportsParseFaults(t *t
 	}
 }
 
+func TestStructureAPIOwnedByWithFaultsKeepsOwnedStructuresAndReportsFaults(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	structures, faults, err := api.OwnedByWithFaults(arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("OwnedByWithFaults() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if len(structures) != 1 {
+		t.Fatalf("OwnedByWithFaults() structures length = %d, want 1", len(structures))
+	}
+	if _, ok := structures[id]; !ok {
+		t.Fatalf("OwnedByWithFaults() missing valid owned structure %s: %#v", id, structures)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("OwnedByWithFaults() faults = %#v, want one structure parse fault", faults)
+	}
+}
+
+func TestStructureAPICountOwnedByTribeWithFaultsUsesSelectedProperties(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	count, faults, err := api.CountOwnedByTribeWithFaults(555)
+	if err != nil {
+		t.Fatalf("CountOwnedByTribeWithFaults() error = %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("CountOwnedByTribeWithFaults() count = %d, want 1", count)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("CountOwnedByTribeWithFaults() faults = %#v, want no selected-property parse faults", faults)
+	}
+}
+
 func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
