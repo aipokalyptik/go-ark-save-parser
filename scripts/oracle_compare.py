@@ -714,6 +714,42 @@ def python_equipment_best_oracle(save_path: Path, upstream_src: Path) -> dict[st
         save.close()
 
 
+def python_equipment_rank_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    ignored = ["WeaponCrossbow", "WeaponMetalHatchet", "WeaponMetalPick", "WeaponBow", "Chitin", "Hide", "WeaponPike", "WeaponGun", "CLoth"]
+    save = AsaSave(save_path)
+    try:
+        api = EquipmentApi(save)
+        ranked: list[Any] = []
+        for equipment_class in (
+            EquipmentApi.Classes.WEAPON,
+            EquipmentApi.Classes.ARMOR,
+            EquipmentApi.Classes.SHIELD,
+            EquipmentApi.Classes.SADDLE,
+        ):
+            for item in api.get_all(equipment_class, max_workers=1).values():
+                if item.rating <= 3:
+                    continue
+                if item.is_crafted():
+                    continue
+                if any(part in item.get_short_name() for part in ignored):
+                    continue
+                ranked.append(item)
+        return {
+            "ranked": len(ranked),
+            "best_rating": max((float(f"{item.rating:.1f}") for item in ranked), default=0.0),
+            "best_average_stat": max((float(f"{item.get_average_stat():.1f}") for item in ranked), default=0.0),
+            "crafted": sum(1 for item in ranked if item.is_crafted()),
+            "blueprints": sum(1 for item in ranked if item.is_bp),
+            "classes": len({item.object.blueprint for item in ranked}),
+        }
+    finally:
+        save.close()
+
+
 def python_equipment_ascendant_weapon_bps_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.equipment_api import EquipmentApi  # type: ignore
@@ -992,6 +1028,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_domain_stackables = python_domain_stackables_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
     py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
+    py_equipment_rank = python_equipment_rank_oracle(save_path, upstream_src)
     py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
     py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
@@ -1022,6 +1059,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_domain_stackables": py_domain_stackables,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
         "python_equipment_best": py_equipment_best,
+        "python_equipment_rank": py_equipment_rank,
         "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
         "python_equipment_saddles": py_equipment_saddles,
         "python_equipment_owned_by": py_equipment_owned_by,
@@ -1458,6 +1496,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["equipment_best"]["parsed"] = got
         stable_keys = [key for key in py_equipment_best if key not in {"weapon", "armor"}]
         cases.append(CaseResult("equipment_best", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_best[key] for key in stable_keys} else "fail", "highest weapon damage and armor durability values compared"))
+
+    go_equipment_rank = run(["go", "run", "./examples/equipment_rank", str(save_path)], repo_root, env)
+    private["go"]["equipment_rank"] = {
+        "exit_code": go_equipment_rank.returncode,
+        "stdout": go_equipment_rank.stdout,
+        "stderr": go_equipment_rank.stderr,
+    }
+    if go_equipment_rank.returncode != 0:
+        cases.append(CaseResult("equipment_rank", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_equipment_rank.stdout)
+        private["go"]["equipment_rank"]["parsed"] = got
+        stable_keys = ("best_rating", "crafted", "blueprints", "classes")
+        cases.append(CaseResult("equipment_rank", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_rank[key] for key in stable_keys} else "fail", "stable high-rating non-crafted equipment rank aggregates compared; count and average-stat parity remain open"))
 
     go_equipment_ascendant_weapon_bps = run(["go", "run", "./examples/equipment_ascendant_weapon_bps", str(save_path)], repo_root, env)
     private["go"]["equipment_ascendant_weapon_bps"] = {

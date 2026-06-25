@@ -228,6 +228,7 @@ go run ./examples/property_filter /path/to/Valguero_WP.ark TamerString Health
 go run ./examples/dino_best_stat --no-cryos /path/to/Valguero_WP.ark
 go run ./examples/stackable_count /path/to/Valguero_WP.ark /Game/Path/PrimalItemResource_Example.PrimalItemResource_Example_C
 go run ./examples/equipment_best /path/to/Valguero_WP.ark
+go run ./examples/equipment_rank /path/to/Valguero_WP.ark
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file

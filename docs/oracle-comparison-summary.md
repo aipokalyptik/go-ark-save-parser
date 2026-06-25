@@ -30,6 +30,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `domain_json_stackables`: `pass` (stackable domain JSON aggregate counts compared)
 - `equipment_longneck_blueprint_damage`: `pass` (longneck blueprint count and max damage compared)
 - `equipment_best`: `pass` (highest weapon damage and armor durability values compared)
+- `equipment_rank`: `pass` (stable high-rating non-crafted equipment rank aggregates compared; count and average-stat parity remain open)
 - `equipment_ascendant_weapon_bps`: `pass` (ascendant weapon blueprint count and max damage compared)
 - `equipment_saddles`: `pass` (direct saddle count compared; upstream cryopod saddle extraction blocked by malformed private cryopods and armor-value parity needs default armor tables)
 - `equipment_owned_by`: `pass` (owned advanced weapon blueprint count and max damage compared)
@@ -42,4 +43,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 33
+- `pass`: 34

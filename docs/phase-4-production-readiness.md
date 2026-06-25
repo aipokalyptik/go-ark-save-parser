@@ -40,10 +40,10 @@ offline parser without Python or private chat context.
       dino aggregate counts, no-cryopod dino best-stat selection,
       property-filtered object counts, player inventory item/location
       aggregates, stackable item/quantity counts, equipment longneck blueprint
-      damage aggregates, equipment best weapon/armor value aggregates, dino
-      domain JSON aggregate counts, structure map-coordinate/connected counts,
-      local cluster JSON aggregate counts, local tribute aggregate counts, and
-      tribute JSON aggregate counts.
+      damage aggregates, equipment best weapon/armor value aggregates,
+      stable equipment ranking aggregates, dino domain JSON aggregate counts,
+      structure map-coordinate/connected counts, local cluster JSON aggregate
+      counts, local tribute aggregate counts, and tribute JSON aggregate counts.
 - [ ] Private oracle comparison suite for every runnable Python example.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in

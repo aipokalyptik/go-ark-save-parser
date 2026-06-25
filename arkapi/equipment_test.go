@@ -54,13 +54,17 @@ func stringSet(values []string) map[string]struct{} {
 func TestUpstreamEquipmentBlueprintListsExposeCanonicalClasses(t *testing.T) {
 	weapons := UpstreamWeaponBlueprints()
 	armor := UpstreamArmorBlueprints()
+	shields := UpstreamShieldBlueprints()
 	if len(weapons) != 45 {
 		t.Fatalf("UpstreamWeaponBlueprints() length = %d, want 45", len(weapons))
 	}
 	if len(armor) != 77 {
 		t.Fatalf("UpstreamArmorBlueprints() length = %d, want 77", len(armor))
 	}
-	if !sortedStrings(weapons) || !sortedStrings(armor) {
+	if len(shields) != 6 {
+		t.Fatalf("UpstreamShieldBlueprints() length = %d, want 6", len(shields))
+	}
+	if !sortedStrings(weapons) || !sortedStrings(armor) || !sortedStrings(shields) {
 		t.Fatalf("upstream equipment blueprint lists must be sorted")
 	}
 	if _, ok := stringSet(weapons)["/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponShotgun.PrimalItem_WeaponShotgun_C"]; !ok {
@@ -68,6 +72,9 @@ func TestUpstreamEquipmentBlueprintListsExposeCanonicalClasses(t *testing.T) {
 	}
 	if _, ok := stringSet(armor)["/Game/PrimalEarth/CoreBlueprints/Items/Armor/Metal/PrimalItemArmor_MetalShirt.PrimalItemArmor_MetalShirt_C"]; !ok {
 		t.Fatalf("UpstreamArmorBlueprints() missing metal shirt")
+	}
+	if _, ok := stringSet(shields)["/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C"]; !ok {
+		t.Fatalf("UpstreamShieldBlueprints() missing wood shield")
 	}
 }
 

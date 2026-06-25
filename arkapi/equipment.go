@@ -100,6 +100,10 @@ func UpstreamSaddleBlueprints() []string {
 	return sortedBlueprintKeys(upstreamSaddleBlueprints)
 }
 
+func UpstreamShieldBlueprints() []string {
+	return sortedBlueprintKeys(upstreamShieldBlueprints)
+}
+
 func sortedBlueprintKeys(values map[string]struct{}) []string {
 	out := make([]string, 0, len(values))
 	for value := range values {

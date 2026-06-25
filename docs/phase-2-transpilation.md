@@ -370,6 +370,9 @@ enough that oracle-derived tests can run against translated packages.
       longneck blueprint max-damage workflow.
 - [x] Compare normalized Go `equipment_best` aggregate output with upstream
       highest weapon-damage and armor-durability workflows.
+- [x] Compare stable normalized Go `equipment_rank` aggregate fields with the
+      upstream high-rating non-crafted equipment ranking workflow; exact ranked
+      count and average-stat parity remain open under equipment stat parity.
 - [x] Compare normalized Go `equipment_ascendant_weapon_bps` aggregate output
       with upstream ascendant weapon-blueprint filtering.
 - [x] Compare normalized Go `equipment_saddles` direct item-saddle counts with

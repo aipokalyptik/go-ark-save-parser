@@ -129,3 +129,12 @@ var upstreamArmorBlueprints = map[string]struct{}{
 	"/Game/LostColony/CoreBlueprints/Items/CursedArmor/PrimalItemArmor_RiotPants_Cursed.PrimalItemArmor_RiotPants_Cursed_C":                {},
 	"/Game/LostColony/CoreBlueprints/Items/CursedArmor/PrimalItemArmor_RiotShirt_Cursed.PrimalItemArmor_RiotShirt_Cursed_C":                {},
 }
+
+var upstreamShieldBlueprints = map[string]struct{}{
+	"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_MetalShield.PrimalItemArmor_MetalShield_C":                                        {},
+	"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_TransparentRiotShield.PrimalItemArmor_TransparentRiotShield_C":                    {},
+	"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C":                                          {},
+	"/Game/LostColony/CoreBlueprints/Items/CursedArmor/Shields/PrimalItemArmor_MetalShield_Cursed.PrimalItemArmor_MetalShield_Cursed_C":                     {},
+	"/Game/LostColony/CoreBlueprints/Items/CursedArmor/Shields/PrimalItemArmor_TransparentRiotShield_Cursed.PrimalItemArmor_TransparentRiotShield_Cursed_C": {},
+	"/Game/LostColony/CoreBlueprints/Items/CursedArmor/Shields/PrimalItemArmor_WoodShield_Cursed.PrimalItemArmor_WoodShield_Cursed_C":                       {},
+}
