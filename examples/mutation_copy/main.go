@@ -70,6 +70,15 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Printf("imported dino rows: %d\nwrote copy: %s\n", imported, os.Args[3])
+	case "import-equipment-binary":
+		if len(os.Args) != 5 {
+			usage()
+		}
+		imported, err := arkmutation.ImportEquipmentBinary(os.Args[2], os.Args[3], os.Args[4])
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("imported equipment rows: %d\nwrote copy: %s\n", imported, os.Args[3])
 	case "put-custom":
 		if len(os.Args) != 6 {
 			usage()
@@ -115,6 +124,7 @@ func usage() {
   %s remove-class-contains <save.ark> <out.ark> <class-substring>
   %s import-base-binary <save.ark> <out.ark> <base-export-dir>
   %s import-dino-binary <save.ark> <out.ark> <dino-export-dir>
+  %s import-equipment-binary <save.ark> <out.ark> <equipment-export-dir>
   %s put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
-  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+  %s put-custom <save.ark> <out.ark> <key> <hex-value>`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }

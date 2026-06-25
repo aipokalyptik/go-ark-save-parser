@@ -124,6 +124,14 @@ func ImportDinoBinary(inputPath string, outputPath string, dinoExportDir string)
 	return putObjectRows(inputPath, outputPath, rows)
 }
 
+func ImportEquipmentBinary(inputPath string, outputPath string, equipmentExportDir string) (int, error) {
+	rows, err := readExportRows(equipmentExportDir, []string{"item_"})
+	if err != nil {
+		return 0, err
+	}
+	return putObjectRows(inputPath, outputPath, rows)
+}
+
 func putObjectRows(inputPath string, outputPath string, rows map[uuid.UUID][]byte) (int, error) {
 	err := mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
 		for id, value := range rows {

@@ -207,6 +207,42 @@ func TestImportDinoBinaryWritesCopyAndReopens(t *testing.T) {
 	_ = mutated.Close()
 }
 
+func TestImportEquipmentBinaryWritesCopyAndReopens(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	exportDir := filepath.Join(dir, "equipment-export")
+	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	createSyntheticSave(t, input, uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), testfixtures.GenericObjectBytes(0x10000001, 0x10000003))
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	want := testfixtures.GenericObjectBytes(0x10000002, 0x10000003)
+	if err := os.WriteFile(filepath.Join(exportDir, "item_"+itemID.String()+".bin"), want, 0o600); err != nil {
+		t.Fatalf("write equipment export row: %v", err)
+	}
+
+	imported, err := ImportEquipmentBinary(input, output, exportDir)
+	if err != nil {
+		t.Fatalf("ImportEquipmentBinary() error = %v", err)
+	}
+	if imported != 1 {
+		t.Fatalf("ImportEquipmentBinary() imported = %d, want 1", imported)
+	}
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	got, err := mutated.ObjectBinary(itemID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(imported) error = %v", err)
+	}
+	_ = mutated.Close()
+	if !bytes.Equal(got, want) {
+		t.Fatalf("imported ObjectBinary = % x, want % x", got, want)
+	}
+}
+
 func TestCopySaveRequiresDistinctNewOutputPath(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.ark")

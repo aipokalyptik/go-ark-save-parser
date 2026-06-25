@@ -25,6 +25,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
 	dinoExportPath := filepath.Join(dir, "dino-export")
+	equipmentExportPath := filepath.Join(dir, "equipment-export")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
 	baseExportPath := filepath.Join(dir, "base-export")
 	exportAllPath := filepath.Join(dir, "json-exports")
@@ -145,6 +146,15 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "equipment_ascendant_weapon_bps", "items=0 max_damage=0.0", savePath)
 	runExample(t, "equipment_saddles", "item_saddles=0 cryopod_saddles=0 total_saddles=0 max_armor=0.0", savePath)
 	runExample(t, "equipment_owned_by", "tribe_id=555 items=0 max_damage=0.0", savePath, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'", "555")
+	runExample(t, "equipment_export_from_save", "items=1 rows=1 faults=0 wrote=", savePath, equipmentExportPath)
+	for _, path := range []string{
+		filepath.Join(equipmentExportPath, "manifest.json"),
+		filepath.Join(equipmentExportPath, "item_"+equipmentID.String()+".bin"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("equipment_export_from_save output %s missing: %v", path, err)
+		}
+	}
 	runExample(t, "export_all_items", "exports=8 wrote=", savePath, exportAllPath)
 	if _, err := os.Stat(filepath.Join(exportAllPath, "manifest.json")); err != nil {
 		t.Fatalf("export_all_items manifest missing: %v", err)
@@ -211,6 +221,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	}
 	_ = baseImportCopy.Close()
 	runExample(t, "mutation_copy", "imported dino rows: 1", "import-dino-binary", savePath, baseImportCopyPath+"-dino", dinoExportPath)
+	runExample(t, "mutation_copy", "imported equipment rows: 1", "import-equipment-binary", savePath, baseImportCopyPath+"-equipment", equipmentExportPath)
 	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")
 	objectCopy, err := arksave.Open(objectCopyPath)
 	if err != nil {

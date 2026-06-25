@@ -188,7 +188,12 @@ correctness.
   live-server acceptance remain unverified.
 - `examples/dino_api/ex_14_boost_dino_stats.py`
 - `examples/dino_api/ex_15_force_grow_up_babies.py`
-- `examples/equipment_api/ex_07_generate_blueprint_and_insert_in_save.py`
+- `examples/equipment_api/ex_07_generate_blueprint_and_insert_in_save.py` is
+  partially structurally represented by `examples/equipment_export_from_save`
+  plus `arkmutation.ImportEquipmentBinary`, which can reinsert copied equipment
+  item rows into an explicit output save copy. Generated blueprint construction,
+  insertion into target inventories, and live-server acceptance remain
+  unverified.
 - `examples/structure_api/ex_05_modify_structures.py`
 - `examples/structure_api/ex_08_modify_structures_of_tribe.py`
 

@@ -357,10 +357,14 @@ For the cross-phase monitorable checklist, see
       direct-save dino rows plus linked status/inventory rows and reinserting
       them into an explicit copied save. Cryopod insertion, generated location
       changes, stat mutation, and live-server acceptance remain unverified.
+- [x] Add partial structural equipment insertion coverage by exporting
+      equipment item rows and reinserting them into an explicit copied save.
+      Generated blueprint construction, insertion into target inventories, and
+      live-server acceptance remain unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal by
-      UUID or class substring, base and dino binary row import, object hex-byte
-      upserts, and custom-table hex-byte upserts against explicit output
-      copies.
+      UUID or class substring, base/dino/equipment binary row import, object
+      hex-byte upserts, and custom-table hex-byte upserts against explicit
+      output copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.
@@ -428,6 +432,9 @@ For the cross-phase monitorable checklist, see
 - [x] Compare stable normalized Go `equipment_rank` aggregate fields with the
       upstream high-rating non-crafted equipment ranking workflow; exact ranked
       count and average-stat parity remain open under equipment stat parity.
+- [x] Add `equipment_export_from_save` as a read-only structural export for
+      equipment item rows. Private oracle comparison for generated blueprint
+      insertion remains mutation-copy-only and live-server-unverified.
 - [x] Compare normalized Go `equipment_ascendant_weapon_bps` aggregate output
       with upstream ascendant weapon-blueprint filtering.
 - [x] Compare normalized Go `equipment_saddles` direct item-saddle counts with

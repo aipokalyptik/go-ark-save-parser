@@ -77,6 +77,10 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   tribe through the structure inventory container relationship.
 - `equipment_history`: read a JSON manifest of local `.ark` snapshots, compare
   equipment snapshots by stable item content, and write a JSON change report.
+- `equipment_export_from_save`: write parsed equipment item rows to an
+  explicit output directory and print item/row/fault counts. Inventory
+  insertion, generated blueprint construction, and live-server validation
+  remain mutation-copy-only and unverified.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
 - `structure_owners`: summarize parsed structure owner fields without printing
@@ -142,7 +146,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `mutation_copy`: copy a `.ark` save to a new explicit output path, remove an
   object row or all objects whose class contains a substring from a copied save,
   import raw structure rows from `base_export_from_save`, import direct-save
-  dino/status/inventory rows from `dino_export_from_save`, upsert object bytes
-  from hex, or upsert a custom-table value from hex. Mutation helpers never
-  modify inputs in place and are structurally tested only; live Ark server
-  behavior remains unverified.
+  dino/status/inventory rows from `dino_export_from_save`, import equipment
+  item rows from `equipment_export_from_save`, upsert object bytes from hex, or
+  upsert a custom-table value from hex. Mutation helpers never modify inputs in
+  place and are structurally tested only; live Ark server behavior remains
+  unverified.

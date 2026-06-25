@@ -205,6 +205,7 @@ object bytes, or upsert a custom-table value from hex bytes:
 ./bin/arksave mutate remove-class-contains /path/to/Valguero_WP.ark /tmp/Valguero_no_spyglass.ark SuperSpyglass
 ./bin/arksave mutate import-base-binary /path/to/Valguero_WP.ark /tmp/Valguero_base_import.ark /tmp/base-export
 ./bin/arksave mutate import-dino-binary /path/to/Valguero_WP.ark /tmp/Valguero_dino_import.ark /tmp/dino-export
+./bin/arksave mutate import-equipment-binary /path/to/Valguero_WP.ark /tmp/Valguero_equipment_import.ark /tmp/equipment-export
 ./bin/arksave mutate put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
 ./bin/arksave mutate put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```
@@ -251,6 +252,7 @@ go run ./examples/player_unlocked_engrams /path/to/save-directory
 go run ./examples/equipment_rank /path/to/Valguero_WP.ark
 go run ./examples/base_export_from_save /path/to/Valguero_WP.ark /tmp/base-export
 go run ./examples/dino_export_from_save /path/to/Valguero_WP.ark /tmp/dino-export
+go run ./examples/equipment_export_from_save /path/to/Valguero_WP.ark /tmp/equipment-export
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file
@@ -259,6 +261,7 @@ go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark
 go run ./examples/mutation_copy remove-class-contains /path/to/Valguero_WP.ark /tmp/Valguero_no_spyglass.ark SuperSpyglass
 go run ./examples/mutation_copy import-base-binary /path/to/Valguero_WP.ark /tmp/Valguero_base_import.ark /tmp/base-export
 go run ./examples/mutation_copy import-dino-binary /path/to/Valguero_WP.ark /tmp/Valguero_dino_import.ark /tmp/dino-export
+go run ./examples/mutation_copy import-equipment-binary /path/to/Valguero_WP.ark /tmp/Valguero_equipment_import.ark /tmp/equipment-export
 go run ./examples/mutation_copy put-object-hex /path/to/Valguero_WP.ark /tmp/Valguero_object.ark 00112233-4455-6677-8899-aabbccddeeff 090807
 go run ./examples/mutation_copy put-custom /path/to/Valguero_WP.ark /tmp/Valguero_custom.ark Extra 090807
 ```

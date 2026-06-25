@@ -225,9 +225,14 @@ documented.
       `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
       into target inventories, generated location changes, stat mutation, and
       live-server acceptance remain unverified.
-- [ ] Add more structural mutation tests for upstream dino trait/stat/growth,
-      equipment insertion, and structure mutation examples where local-copy
-      behavior can be represented without claiming live-server safety.
+- [~] Upstream generated-blueprint/equipment insertion example has partial
+      structural coverage through exported equipment rows and
+      `ImportEquipmentBinary` reinsert into explicit copied saves. Generated
+      blueprint construction, insertion into target inventories, and
+      live-server acceptance remain unverified.
+- [ ] Add more structural mutation tests for upstream dino trait/stat/growth
+      and structure mutation examples where local-copy behavior can be
+      represented without claiming live-server safety.
 
 ### Examples And Oracle Comparisons
 
@@ -274,6 +279,10 @@ documented.
 - [x] `equipment_ascendant_weapon_bps`.
 - [x] `equipment_saddles` direct saddle fields.
 - [x] `equipment_owned_by`.
+- [x] `equipment_export_from_save`: represented as an explicit-output
+      structural export that writes copied equipment item rows. Generated
+      blueprint construction, inventory insertion, and live-server validation
+      remain mutation-copy-adjacent and unverified.
 - [x] `domain_json_equipment` longneck aggregate.
 - [x] `structure_owner_count`.
 - [x] `structure_owners`.

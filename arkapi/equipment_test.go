@@ -3,6 +3,8 @@ package arkapi
 import (
 	"bytes"
 	"encoding/binary"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -111,6 +113,35 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 	if len(weapons) != 1 {
 		t.Fatalf("Weapons() length = %d, want 1", len(weapons))
+	}
+}
+
+func TestEquipmentAPIExportBinaryWritesEquipmentRows(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	outDir := filepath.Join(t.TempDir(), "equipment-export")
+	exported, err := NewEquipment(save).ExportBinary(outDir)
+	if err != nil {
+		t.Fatalf("ExportBinary() error = %v", err)
+	}
+	if exported.ItemCount != 1 || exported.RowCount != 1 || exported.FaultCount != 0 {
+		t.Fatalf("ExportBinary() = %#v, want one equipment row", exported)
+	}
+	got, err := os.ReadFile(filepath.Join(outDir, "item_"+itemID.String()+".bin"))
+	if err != nil {
+		t.Fatalf("read exported item row: %v", err)
+	}
+	want, err := save.ObjectBinary(itemID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", itemID, err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("exported item row differs from save row")
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "manifest.json")); err != nil {
+		t.Fatalf("manifest missing: %v", err)
 	}
 }
 
