@@ -586,10 +586,10 @@ func TestJSONAPIExportPlayersAndTribesReportFaultCount(t *testing.T) {
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			playerID:       savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
-			brokenPlayerID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
-			tribeID:        saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{Name: "Porters", TribeID: 12345, OwnerID: 42}),
-			brokenTribeID:  saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{Name: "Broken", TribeID: 999})[:40],
+			playerID:       testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
+			brokenPlayerID: testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
+			tribeID:        testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{Name: "Porters", TribeID: 12345, OwnerID: 42}),
+			brokenTribeID:  testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{Name: "Broken", TribeID: 999})[:40],
 		},
 	})
 	save, err := arksave.Open(path)

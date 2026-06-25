@@ -69,6 +69,8 @@ For the cross-phase monitorable checklist, see
       integer, float, string, and compound custom-data test writers use shared
       helpers; API malformed class-only object row fixtures use a shared helper;
       API/benchmark actor-transform custom table fixtures use a shared helper;
+      save-contained player/tribe game object fixture payloads share archive
+      property builders while keeping game-object framing explicit;
       and modern cryopod embedded dino/saddle payload builders are shared by API
       and object-model tests. Remaining lower-level domain-specific parser
       fixtures and other malformed object-shape fixtures still need incremental

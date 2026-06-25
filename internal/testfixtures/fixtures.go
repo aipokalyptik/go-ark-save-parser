@@ -124,6 +124,27 @@ func WritePlayerArchiveWithOptions(tb testing.TB, path string, opts PlayerArchiv
 func PlayerArchiveBytes(tb testing.TB, opts PlayerArchiveOptions) []byte {
 	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+
+	var buf bytes.Buffer
+	WriteArchivePrefix(&buf, id, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C", []string{"PlayerData_0"})
+	offsetPos := buf.Len()
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	buf.Write(playerProperties(opts))
+	return buf.Bytes()
+}
+
+func PlayerGameObjectBytes(opts PlayerArchiveOptions) []byte {
+	return GameObjectBytesWithNames(
+		"/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C",
+		[]string{"PlayerData_0"},
+		playerProperties(opts),
+	)
+}
+
+func playerProperties(opts PlayerArchiveOptions) []byte {
 	var myData bytes.Buffer
 	WriteNameIntProperty(&myData, "PlayerDataID", opts.PlayerDataID)
 	WriteNameStringProperty(&myData, "PlayerCharacterName", opts.CharacterName)
@@ -137,29 +158,23 @@ func PlayerArchiveBytes(tb testing.TB, opts PlayerArchiveOptions) []byte {
 	}
 	WriteArkString(&myData, "None")
 
-	var buf bytes.Buffer
-	WriteArchivePrefix(&buf, id, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C", []string{"PlayerData_0"})
-	offsetPos := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	WriteNameIntProperty(&buf, "SavedPlayerDataVersion", 17)
+	var props bytes.Buffer
+	WriteNameIntProperty(&props, "SavedPlayerDataVersion", 17)
 	if opts.ExtraCharacterLevel != 0 {
-		WriteNameIntProperty(&buf, "CharacterStatusComponent_ExtraCharacterLevel", opts.ExtraCharacterLevel)
+		WriteNameIntProperty(&props, "CharacterStatusComponent_ExtraCharacterLevel", opts.ExtraCharacterLevel)
 	}
 	if opts.ExperiencePoints != 0 {
-		WriteNameFloatProperty(&buf, "CharacterStatusComponent_ExperiencePoints", opts.ExperiencePoints)
+		WriteNameFloatProperty(&props, "CharacterStatusComponent_ExperiencePoints", opts.ExperiencePoints)
 	}
 	if opts.TotalEngramPoints != 0 {
-		WriteNameIntProperty(&buf, "PlayerState_TotalEngramPoints", opts.TotalEngramPoints)
+		WriteNameIntProperty(&props, "PlayerState_TotalEngramPoints", opts.TotalEngramPoints)
 	}
 	if len(opts.UnlockedEngrams) > 0 {
-		WriteNameObjectPathArrayProperty(&buf, "PlayerState_EngramBlueprints", opts.UnlockedEngrams)
+		WriteNameObjectPathArrayProperty(&props, "PlayerState_EngramBlueprints", opts.UnlockedEngrams)
 	}
-	WriteNameStructProperty(&buf, "MyData", "PlayerDataStruct", myData.Bytes())
-	WriteArkString(&buf, "None")
-	return buf.Bytes()
+	WriteNameStructProperty(&props, "MyData", "PlayerDataStruct", myData.Bytes())
+	WriteArkString(&props, "None")
+	return props.Bytes()
 }
 
 func WriteTribeArchive(tb testing.TB, path string) {
@@ -190,6 +205,23 @@ func WriteTribeArchiveWithOptions(tb testing.TB, path string, opts TribeArchiveO
 func TribeArchiveBytes(tb testing.TB, opts TribeArchiveOptions) []byte {
 	tb.Helper()
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+
+	var buf bytes.Buffer
+	WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
+	offsetPos := buf.Len()
+	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
+	propertiesOffset := int32(buf.Len() - 1)
+	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
+	buf.Write(tribeProperties(opts))
+	return buf.Bytes()
+}
+
+func TribeGameObjectBytes(opts TribeArchiveOptions) []byte {
+	return GameObjectBytesWithNames("/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"}, tribeProperties(opts))
+}
+
+func tribeProperties(opts TribeArchiveOptions) []byte {
 	var tribeData bytes.Buffer
 	WriteNameStringProperty(&tribeData, "TribeName", opts.Name)
 	WriteNameIntProperty(&tribeData, "TribeID", opts.TribeID)
@@ -206,16 +238,10 @@ func TribeArchiveBytes(tb testing.TB, opts TribeArchiveOptions) []byte {
 	}
 	WriteArkString(&tribeData, "None")
 
-	var buf bytes.Buffer
-	WriteArchivePrefix(&buf, id, "/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"})
-	offsetPos := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	propertiesOffset := int32(buf.Len() - 1)
-	binary.LittleEndian.PutUint32(buf.Bytes()[offsetPos:offsetPos+4], uint32(propertiesOffset))
-	WriteNameStructProperty(&buf, "TribeData", "TribeDataStruct", tribeData.Bytes())
-	WriteArkString(&buf, "None")
-	return buf.Bytes()
+	var props bytes.Buffer
+	WriteNameStructProperty(&props, "TribeData", "TribeDataStruct", tribeData.Bytes())
+	WriteArkString(&props, "None")
+	return props.Bytes()
 }
 
 func WriteTributeFile(tb testing.TB, path string, playerIDs []uint64, tribeIDs []uint64) {
@@ -307,6 +333,20 @@ func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties
 	buf.Write(properties)
 	_ = binary.Write(&buf, binary.LittleEndian, noneNameID)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
+	return buf.Bytes()
+}
+
+func GameObjectBytesWithNames(className string, names []string, properties []byte) []byte {
+	var buf bytes.Buffer
+	WriteArkString(&buf, className)
+	WriteUInt32(&buf, 0)
+	WriteInt32(&buf, int32(len(names)))
+	for _, name := range names {
+		WriteArkString(&buf, name)
+	}
+	WriteInt32(&buf, -1)
+	WriteInt16(&buf, 0)
+	buf.Write(properties)
 	return buf.Bytes()
 }
 

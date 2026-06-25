@@ -211,14 +211,14 @@ func TestPlayerAPIPlayersWithFaultsKeepsValidSavePlayersAndReportsFaults(t *test
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			validID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{
+			validID: testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{
 				PlayerDataID:  42,
 				CharacterName: "Survivor",
 				PlayerName:    "PlatformName",
 				UniqueID:      "eos-survivor",
 				TribeID:       12345,
 			}),
-			faultyID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{
+			faultyID: testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{
 				PlayerDataID:  43,
 				CharacterName: "Broken",
 				PlayerName:    "BrokenPlatform",
@@ -251,12 +251,12 @@ func TestPlayerAPITribeDetailsWithFaultsKeepsValidSaveTribesAndReportsFaults(t *
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			validID: saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{
+			validID: testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{
 				Name:     "Porters",
 				TribeID:  12345,
 				NumDinos: 7,
 			}),
-			faultyID: saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{
+			faultyID: testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{
 				Name:     "Broken",
 				TribeID:  67890,
 				NumDinos: 3,
@@ -336,10 +336,10 @@ func TestPlayerAPIPlayerInventoryByDataIDIgnoresUnrelatedBrokenObjects(t *testin
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			playerID:    savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
+			playerID:    testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
 			pawnID:      savePlayerPawnObjectBytes(42, inventoryID),
 			inventoryID: saveInventoryObjectBytes(inventoryID, firstItemID),
-			faultyID:    savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
+			faultyID:    testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
 		},
 	})
 	save, err := arksave.Open(path)
@@ -401,37 +401,6 @@ func TestPlayerAPIFindsLocalPlayersByDataAndTribeID(t *testing.T) {
 	}
 }
 
-func savePlayerObjectBytes(t *testing.T, opts testfixtures.PlayerArchiveOptions) []byte {
-	t.Helper()
-	var myData bytes.Buffer
-	testfixtures.WriteNameIntProperty(&myData, "PlayerDataID", opts.PlayerDataID)
-	testfixtures.WriteNameStringProperty(&myData, "PlayerCharacterName", opts.CharacterName)
-	testfixtures.WriteNameStringProperty(&myData, "PlayerName", opts.PlayerName)
-	if opts.UniqueID != "" {
-		testfixtures.WriteNameStringProperty(&myData, "UniqueID", opts.UniqueID)
-	}
-	testfixtures.WriteNameIntProperty(&myData, "TribeID", opts.TribeID)
-	if opts.NumDeaths != 0 {
-		testfixtures.WriteNameIntProperty(&myData, "NumOfDeaths", opts.NumDeaths)
-	}
-	testfixtures.WriteArkString(&myData, "None")
-
-	var props bytes.Buffer
-	testfixtures.WriteNameIntProperty(&props, "SavedPlayerDataVersion", 17)
-	if opts.ExtraCharacterLevel != 0 {
-		testfixtures.WriteNameIntProperty(&props, "CharacterStatusComponent_ExtraCharacterLevel", opts.ExtraCharacterLevel)
-	}
-	if opts.ExperiencePoints != 0 {
-		testfixtures.WriteNameFloatProperty(&props, "CharacterStatusComponent_ExperiencePoints", opts.ExperiencePoints)
-	}
-	if opts.TotalEngramPoints != 0 {
-		testfixtures.WriteNameIntProperty(&props, "PlayerState_TotalEngramPoints", opts.TotalEngramPoints)
-	}
-	testfixtures.WriteNameStructProperty(&props, "MyData", "PlayerDataStruct", myData.Bytes())
-	testfixtures.WriteArkString(&props, "None")
-	return saveObjectBytes("/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C", []string{"PlayerData_0"}, props.Bytes())
-}
-
 func gameModeCustomBytesFixture(t *testing.T) []byte {
 	t.Helper()
 	player := testfixtures.PlayerArchiveBytes(t, testfixtures.PlayerArchiveOptions{
@@ -485,7 +454,7 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			playerID: savePlayerObjectBytes(t, testfixtures.PlayerArchiveOptions{
+			playerID: testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{
 				PlayerDataID:        42,
 				CharacterName:       "Survivor",
 				PlayerName:          "PlatformName",
@@ -496,7 +465,7 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 				ExperiencePoints:    123.5,
 				TotalEngramPoints:   12,
 			}),
-			tribeID: saveTribeObjectBytes(t, testfixtures.TribeArchiveOptions{
+			tribeID: testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{
 				Name:      "Porters",
 				TribeID:   12345,
 				OwnerID:   42,
@@ -550,39 +519,8 @@ func saveInventoryObjectBytes(inventoryID uuid.UUID, itemIDs ...uuid.UUID) []byt
 	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'", []string{inventoryID.String()}, props.Bytes())
 }
 
-func saveTribeObjectBytes(t *testing.T, opts testfixtures.TribeArchiveOptions) []byte {
-	t.Helper()
-	var tribeData bytes.Buffer
-	testfixtures.WriteNameStringProperty(&tribeData, "TribeName", opts.Name)
-	testfixtures.WriteNameIntProperty(&tribeData, "TribeID", opts.TribeID)
-	testfixtures.WriteNameIntProperty(&tribeData, "OwnerPlayerDataId", opts.OwnerID)
-	testfixtures.WriteNameIntProperty(&tribeData, "NumTribeDinos", opts.NumDinos)
-	if len(opts.Members) > 0 {
-		testfixtures.WriteNameStringArrayProperty(&tribeData, "MembersPlayerName", opts.Members)
-	}
-	if len(opts.MemberIDs) > 0 {
-		testfixtures.WriteNameIntArrayProperty(&tribeData, "MembersPlayerDataID", opts.MemberIDs)
-	}
-	testfixtures.WriteArkString(&tribeData, "None")
-
-	var props bytes.Buffer
-	testfixtures.WriteNameStructProperty(&props, "TribeData", "TribeDataStruct", tribeData.Bytes())
-	testfixtures.WriteArkString(&props, "None")
-	return saveObjectBytes("/Script/ShooterGame.PrimalTribeData", []string{"TribeData_0"}, props.Bytes())
-}
-
 func saveObjectBytes(className string, names []string, properties []byte) []byte {
-	var buf bytes.Buffer
-	testfixtures.WriteArkString(&buf, className)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(len(names)))
-	for _, name := range names {
-		testfixtures.WriteArkString(&buf, name)
-	}
-	_ = binary.Write(&buf, binary.LittleEndian, int32(-1))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	buf.Write(properties)
-	return buf.Bytes()
+	return testfixtures.GameObjectBytesWithNames(className, names, properties)
 }
 
 func TestPlayerAPIFiltersLocalPlayersByNamesAndUniqueID(t *testing.T) {

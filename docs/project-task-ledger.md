@@ -381,9 +381,11 @@ CLI tools, and reusable APIs without losing oracle parity.
         `arkobject` name-table-ID, integer, float, string, and compound
         custom-data test writers now use shared helpers; API malformed
         class-only object row fixtures and API/benchmark actor-transform custom
-        table fixtures now use shared helpers; remaining lower-level
-        dino/equipment parser payload builders and other malformed object-shape
-        fixtures still remain.
+        table fixtures now use shared helpers; save-contained player/tribe game
+        object fixture payloads now share the archive property builders while
+        keeping game-object framing explicit; remaining lower-level dino/equipment
+        parser payload builders and other malformed object-shape fixtures still
+        remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 
