@@ -21,13 +21,14 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers forty-two implemented aggregate
+  oracle comparison summary currently covers forty-five implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `object_summary`,
   `property_positions`,
   `export_json`, `class_lookup`, `class_property_summary`, `local_profiles`,
   `local_profile_player_aggregates`,
-  `player_unlocked_engrams`, `player_list`, `tribe_list`, `player_all`, `player_tribe_links`,
-  `player_inventory`, `dino_filter`,
+  `player_unlocked_engrams`, `player_list`, `tribe_list`, `player_all`,
+  `player_tribe_links`, `player_and_tribe_data`, `player_inventory`,
+  `player_inventories`, `dino_filter`,
   `dino_best_stat_no_cryos`, `dino_best_base_stat`, `dino_most_mutated`,
   `dino_babies`, `dino_wild_tamables`, `dino_wild_tamed`, `property_filter`,
   `stackable_count`, `stackable_owned_by`, `domain_json_stackables`,
@@ -35,8 +36,8 @@ Public verification reported by reviewers:
   `equipment_summary`, `equipment_rank`, `equipment_ascendant_weapon_bps`,
   `equipment_saddles`,
   `equipment_owned_by`, `structure_owner_count`, `structure_owners`,
-  `structure_at_location`, `base_components`, `domain_json_dinos`,
-  `cluster_json`, `local_tribute`, and `tribute_json`.
+  `structure_owner_locations`, `structure_at_location`, `base_components`,
+  `domain_json_dinos`, `cluster_json`, `local_tribute`, and `tribute_json`.
   Phase 4 still requires comparison
   coverage for every runnable offline Python example where a Go counterpart
   exists or is feasible.

@@ -122,6 +122,31 @@ func TestStructureAPIOwnerSummaryCountsOwnerFields(t *testing.T) {
 	}
 }
 
+func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *testing.T) {
+	save := openSyntheticStructureOwnerLocationSave(t)
+	defer save.Close()
+
+	export, faults, err := NewStructure(save).OwnerLocationsWithFaults("Valguero", 1, nil)
+	if err != nil {
+		t.Fatalf("OwnerLocationsWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("OwnerLocationsWithFaults() faults = %#v, want none", faults)
+	}
+	if export.Structures != 3 || export.Owners != 2 || export.Cells != 2 || export.NamedCells != 1 || export.MultiStructureCells != 1 {
+		t.Fatalf("OwnerLocationsWithFaults() = %#v, want 3 structures, 2 owners, 2 cells, 1 named, 1 multi", export)
+	}
+	if len(export.OwnersByLocation) != 2 {
+		t.Fatalf("OwnersByLocation length = %d, want 2", len(export.OwnersByLocation))
+	}
+	if export.OwnersByLocation[0].Owner != "555" || len(export.OwnersByLocation[0].Cells) != 1 || export.OwnersByLocation[0].Cells[0].Count != 2 || export.OwnersByLocation[0].Cells[0].Name != "" {
+		t.Fatalf("first owner bucket = %#v, want owner 555 with one multi-structure cell", export.OwnersByLocation[0])
+	}
+	if export.OwnersByLocation[1].Owner != "777" || len(export.OwnersByLocation[1].Cells) != 1 || export.OwnersByLocation[1].Cells[0].Count != 0 || export.OwnersByLocation[1].Cells[0].Name == "" {
+		t.Fatalf("second owner bucket = %#v, want owner 777 with one named singleton cell", export.OwnersByLocation[1])
+	}
+}
+
 func TestStructureAPIFilterByOwnerFiltersProvidedStructures(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()
@@ -573,6 +598,25 @@ func openSyntheticMixedOwnedStructureSave(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticStructureOwnerLocationSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	thirdID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
+			firstID:  {100000, 100000, 33},
+			secondID: {100000, 100000, 33},
+			thirdID:  {-100000, -100000, 66},
+		}),
+	}, map[uuid.UUID][]byte{
+		firstID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
+		secondID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 555),
+		thirdID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 777),
+	})
+}
+
 func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -652,10 +696,19 @@ func truncatedStructureObjectBytes() []byte {
 }
 
 func syntheticStructureActorTransforms(id uuid.UUID) []byte {
+	return syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
+		id: {11, 22, 33},
+	})
+}
+
+func syntheticStructureActorTransformsFor(locations map[uuid.UUID][3]float64) []byte {
 	var buf bytes.Buffer
-	buf.Write(id[:])
-	for _, value := range []float64{11, 22, 33, 0, 0, 0, 1} {
-		_ = binary.Write(&buf, binary.LittleEndian, value)
+	for _, id := range sortedUUIDKeys(locations) {
+		buf.Write(id[:])
+		location := locations[id]
+		for _, value := range []float64{location[0], location[1], location[2], 0, 0, 0, 1} {
+			_ = binary.Write(&buf, binary.LittleEndian, value)
+		}
 	}
 	buf.Write(uuid.Nil[:])
 	return buf.Bytes()

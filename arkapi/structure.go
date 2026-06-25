@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -27,6 +28,27 @@ type StructureOwnerSummary struct {
 	UniqueTribes          int
 	UniquePlayers         int
 	UniqueOriginalPlacers int
+}
+
+type StructureOwnerLocationExport struct {
+	Structures          int                          `json:"structures"`
+	Owners              int                          `json:"owners"`
+	Cells               int                          `json:"cells"`
+	NamedCells          int                          `json:"named_cells"`
+	MultiStructureCells int                          `json:"multi_structure_cells"`
+	FaultCount          int                          `json:"fault_count"`
+	OwnersByLocation    []StructureOwnerLocationData `json:"owners_by_location"`
+}
+
+type StructureOwnerLocationData struct {
+	Owner string                       `json:"owner"`
+	Cells []StructureOwnerLocationCell `json:"cells"`
+}
+
+type StructureOwnerLocationCell struct {
+	Coords string `json:"coords"`
+	Name   string `json:"name,omitempty"`
+	Count  int    `json:"count,omitempty"`
 }
 
 func NewStructure(save *arksave.Save) *StructureAPI {
@@ -233,6 +255,107 @@ func (s *StructureAPI) OwnerSummaryWithFaults() (StructureOwnerSummary, []arksav
 	summary.UniquePlayers = len(players)
 	summary.UniqueOriginalPlacers = len(placers)
 	return summary, faults, nil
+}
+
+func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, playerAPI *PlayerAPI) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.selectedStructureIndexWithFaults()
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	if mapName == "" && s.save != nil && s.save.Context != nil {
+		mapName = s.save.Context.MapName
+	}
+	if digits < 0 {
+		digits = 0
+	}
+	scale := math.Pow10(digits)
+	ownerNames, err := ownerLocationTribeNames(playerAPI)
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	byOwner := map[string]map[string]StructureOwnerLocationCell{}
+	export := StructureOwnerLocationExport{Structures: len(structures), FaultCount: len(faults)}
+	for _, id := range sortedUUIDKeys(structures) {
+		structure := structures[id]
+		if structure.Owner.TribeID == 0 || structure.Location == nil {
+			continue
+		}
+		owner := structure.Owner.TribeName
+		if owner == "" {
+			owner = ownerNames[structure.Owner.TribeID]
+		}
+		if owner == "" {
+			owner = fmt.Sprintf("%d", structure.Owner.TribeID)
+		}
+		coords := structure.Location.AsMapCoords(mapName)
+		lat := math.Round(coords.Lat*scale) / scale
+		lon := math.Round(coords.Long*scale) / scale
+		coordKey := fmt.Sprintf("%.*f,%.*f", digits, lat, digits, lon)
+		cells := byOwner[owner]
+		if cells == nil {
+			cells = map[string]StructureOwnerLocationCell{}
+			byOwner[owner] = cells
+		}
+		cell, ok := cells[coordKey]
+		if !ok {
+			cell = StructureOwnerLocationCell{Coords: coordKey, Name: arkobject.ShortNameFromBlueprint(structure.Blueprint)}
+		} else {
+			cell.Name = ""
+			if cell.Count == 0 {
+				cell.Count = 1
+			}
+			cell.Count++
+		}
+		cells[coordKey] = cell
+	}
+	owners := make([]string, 0, len(byOwner))
+	for owner := range byOwner {
+		owners = append(owners, owner)
+	}
+	sort.Strings(owners)
+	export.Owners = len(owners)
+	for _, owner := range owners {
+		cellMap := byOwner[owner]
+		coordKeys := make([]string, 0, len(cellMap))
+		for coord := range cellMap {
+			coordKeys = append(coordKeys, coord)
+		}
+		sort.Strings(coordKeys)
+		cells := make([]StructureOwnerLocationCell, 0, len(coordKeys))
+		for _, coord := range coordKeys {
+			cell := cellMap[coord]
+			if cell.Name != "" {
+				export.NamedCells++
+			}
+			if cell.Count > 1 {
+				export.MultiStructureCells++
+			}
+			cells = append(cells, cell)
+		}
+		export.Cells += len(cells)
+		export.OwnersByLocation = append(export.OwnersByLocation, StructureOwnerLocationData{Owner: owner, Cells: cells})
+	}
+	return export, faults, nil
+}
+
+func ownerLocationTribeNames(playerAPI *PlayerAPI) (map[int32]string, error) {
+	names := map[int32]string{}
+	if playerAPI == nil {
+		return names, nil
+	}
+	tribes, faults, err := playerAPI.TribeDetailsWithFaults()
+	if err != nil {
+		return nil, err
+	}
+	if len(faults) > 0 {
+		return nil, faults[0].Err
+	}
+	for _, tribe := range tribes {
+		if tribe.TribeID != 0 && tribe.Name != "" {
+			names[tribe.TribeID] = tribe.Name
+		}
+	}
+	return names, nil
 }
 
 func (s *StructureAPI) FilterByOwner(structures map[uuid.UUID]arkobject.Structure, owner *arkobject.ObjectOwner, tribeID int32, invert bool) (map[uuid.UUID]arkobject.Structure, error) {

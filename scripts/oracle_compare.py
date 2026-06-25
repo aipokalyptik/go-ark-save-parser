@@ -1120,6 +1120,69 @@ def python_structure_owners_oracle(save_path: Path, upstream_src: Path) -> dict[
                 save.close()
 
 
+def python_structure_owner_locations_oracle(save_path: Path, map_name: str, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api import PlayerApi, StructureApi  # type: ignore
+    from arkparse.enums import ArkMap  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    normalized = re.sub(r"[^a-z0-9]", "", map_name.lower().replace("_wp", ""))
+    map_aliases = {
+        "island": ArkMap.THE_ISLAND,
+        "theisland": ArkMap.THE_ISLAND,
+        "scorchedearth": ArkMap.SCORCHED_EARTH,
+        "aberration": ArkMap.ABERRATION,
+        "extinction": ArkMap.EXTINCTION,
+        "ragnarok": ArkMap.RAGNAROK,
+        "thecenter": ArkMap.THE_CENTER,
+        "valguero": ArkMap.VALGUERO,
+        "clubark": ArkMap.CLUB_ARK,
+        "lostcolony": ArkMap.LOST_COLONY,
+        "astraeos": ArkMap.ASTRAEOS,
+        "svartalfheim": ArkMap.SVARTALFHEIM,
+    }
+    ark_map = map_aliases.get(normalized)
+    if ark_map is None:
+        ark_map = ArkMap.RAGNAROK
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path, map=ark_map)
+            try:
+                structure_api = StructureApi(save)
+                player_api = PlayerApi(save)
+                structures = structure_api.get_all(max_workers=1)
+                grouped: dict[str, dict[str, dict[str, Any]]] = {}
+                for structure in structures.values():
+                    owner = getattr(structure, "owner", None)
+                    owner_id = getattr(owner, "tribe_id", None) if owner is not None else None
+                    if owner_id is None or getattr(structure, "location", None) is None:
+                        continue
+                    tribe_name = getattr(owner, "tribe_name", None)
+                    if tribe_name is None:
+                        tribe = player_api.get_tribe(owner_id)
+                        tribe_name = tribe.name if tribe is not None else str(owner_id)
+                    coords = structure.location.as_map_coords(ark_map)
+                    coords.round(1)
+                    coords_key = f"{coords.lat:.1f},{coords.long:.1f}"
+                    owner_group = grouped.setdefault(str(tribe_name), {})
+                    if coords_key not in owner_group:
+                        owner_group[coords_key] = {"name": structure.get_short_name()}
+                    else:
+                        owner_group[coords_key].pop("name", None)
+                        owner_group[coords_key]["count"] = owner_group[coords_key].get("count", 1) + 1
+                cells = [cell for owner_group in grouped.values() for cell in owner_group.values()]
+                return {
+                    "structures": len(structures),
+                    "owners": len(grouped),
+                    "cells": len(cells),
+                    "named_cells": sum(1 for cell in cells if "name" in cell),
+                    "multi_structure_cells": sum(1 for cell in cells if int(cell.get("count", 0)) > 1),
+                }
+            finally:
+                save.close()
+
+
 def python_structure_at_location_oracle(save_path: Path, map_name: str, upstream_src: Path) -> dict[str, Any] | None:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.structure_api import StructureApi  # type: ignore
@@ -1355,6 +1418,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_equipment_owned_by = python_equipment_owned_by_oracle(save_path, upstream_src)
     py_structure_owner_count = python_structure_owner_count_oracle(save_path, upstream_src)
     py_structure_owners = python_structure_owners_oracle(save_path, upstream_src)
+    py_structure_owner_locations = python_structure_owner_locations_oracle(save_path, py["map_name"], upstream_src)
     py_structure_at_location = python_structure_at_location_oracle(save_path, py["map_name"], upstream_src)
     py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
@@ -1391,6 +1455,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_equipment_owned_by": py_equipment_owned_by,
         "python_structure_owner_count": py_structure_owner_count,
         "python_structure_owners": py_structure_owners,
+        "python_structure_owner_locations": py_structure_owner_locations,
         "python_structure_at_location": py_structure_at_location,
         "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
@@ -2028,6 +2093,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         stable_keys = ("unique_tribes", "unique_players", "unique_original_placers")
         cases.append(CaseResult("structure_owners", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_structure_owners[key] for key in stable_keys} else "fail", "stable structure owner identity aggregates compared; selected row field counts can include extra inventory-bearing rows"))
 
+    go_structure_owner_locations = run(["go", "run", "./examples/structure_owner_locations", str(save_path), py["map_name"], "1"], repo_root, env)
+    private["go"]["structure_owner_locations"] = {
+        "exit_code": go_structure_owner_locations.returncode,
+        "stdout": go_structure_owner_locations.stdout,
+        "stderr": go_structure_owner_locations.stderr,
+    }
+    if go_structure_owner_locations.returncode != 0:
+        cases.append(CaseResult("structure_owner_locations", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_structure_owner_locations.stdout.splitlines()[0])
+        private["go"]["structure_owner_locations"]["parsed"] = got
+        stable_keys = ("multi_structure_cells",)
+        cases.append(CaseResult("structure_owner_locations", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_structure_owner_locations[key] for key in stable_keys} else "fail", "structure owner/location multi-structure cells compared; exact owner and cell counts remain open under full structure parse performance"))
+
     if py_structure_at_location is None:
         cases.append(CaseResult("structure_at_location", "skip", "oracle save has no supported map/location structure candidate"))
     else:
@@ -2212,6 +2291,21 @@ def compare_case(case_name: str, save_path: Path, repo_root: Path, upstream_src:
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["player_and_tribe_data"]["parse_error"] = str(exc)
             return [CaseResult("player_and_tribe_data", "fail", "Go player and tribe data JSON could not be parsed")], private
+    if case_name == "structure_owner_locations":
+        py_structure_owner_locations = python_structure_owner_locations_oracle(save_path, py["map_name"], upstream_src)
+        private["python_structure_owner_locations"] = py_structure_owner_locations
+        go_structure_owner_locations = run(["go", "run", "./examples/structure_owner_locations", str(save_path), py["map_name"], "1"], repo_root, env)
+        private["go"]["structure_owner_locations"] = {
+            "exit_code": go_structure_owner_locations.returncode,
+            "stdout": go_structure_owner_locations.stdout,
+            "stderr": go_structure_owner_locations.stderr,
+        }
+        if go_structure_owner_locations.returncode != 0:
+            return [CaseResult("structure_owner_locations", "fail", "Go example exited non-zero")], private
+        got = parse_key_value_lines(go_structure_owner_locations.stdout.splitlines()[0])
+        private["go"]["structure_owner_locations"]["parsed"] = got
+        stable_keys = ("multi_structure_cells",)
+        return [CaseResult("structure_owner_locations", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_structure_owner_locations[key] for key in stable_keys} else "fail", "structure owner/location multi-structure cells compared; exact owner and cell counts remain open under full structure parse performance")], private
     raise ValueError(f"unsupported focused oracle case {case_name!r}")
 
 
@@ -2244,7 +2338,7 @@ def main() -> int:
     parser.add_argument("--upstream-src", type=Path, default=Path(".oracle/upstream/src"))
     parser.add_argument("--out", type=Path, default=Path(".oracle/output/oracle-comparison.json"))
     parser.add_argument("--summary", type=Path, default=Path("docs/oracle-comparison-summary.md"))
-    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list", "player_inventories", "player_and_tribe_data"], default=None)
+    parser.add_argument("--case", choices=["dino_heatmap", "tribe_list", "player_inventories", "player_and_tribe_data", "structure_owner_locations"], default=None)
     args = parser.parse_args()
 
     repo_root = Path.cwd()

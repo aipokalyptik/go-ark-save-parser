@@ -75,6 +75,9 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   tribe ID.
 - `structure_owners`: summarize parsed structure owner fields without printing
   individual owner names or IDs.
+- `structure_owner_locations`: write an upstream-style owner/location JSON
+  grouping for owned structures with map coordinates. Output can include
+  save-derived owner labels and coordinates.
 - `structure_at_location`: count structures near map coordinates and expand
   the result with directly connected structures.
 - `structure_heatmap`: generate a compact JSON summary for a local structure

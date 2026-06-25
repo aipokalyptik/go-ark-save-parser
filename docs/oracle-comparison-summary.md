@@ -44,6 +44,7 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `equipment_owned_by`: `pass` (owned advanced weapon blueprint count and max damage compared)
 - `structure_owner_count`: `pass` (owned structure count compared)
 - `structure_owners`: `pass` (stable structure owner identity aggregates compared; selected row field counts can include extra inventory-bearing rows)
+- `structure_owner_locations`: `pass` (structure owner/location multi-structure cells compared; exact owner and cell counts remain open under full structure parse performance)
 - `structure_at_location`: `pass` (map-coordinate structure and connected counts compared)
 - `base_components`: `pass` (connected base component aggregate counts compared)
 - `domain_json_dinos`: `pass` (dino domain JSON aggregate counts compared)
@@ -53,4 +54,4 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 
 ## Counts
 
-- `pass`: 44
+- `pass`: 45

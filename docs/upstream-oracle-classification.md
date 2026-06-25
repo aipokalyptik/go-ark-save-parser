@@ -116,7 +116,12 @@ These are offline-compatible but produce files or images, so outputs stay under
   an image. Private oracle comparison is currently blocked because upstream
   raises `IndexError` on the supplied private save when a structure coordinate
   falls outside the fixed 100x100 heatmap grid.
-- `examples/structure_api/ex_07_extract_structures_per_owner.py`
+- `examples/structure_api/ex_07_extract_structures_per_owner.py` is implemented
+  as `examples/structure_owner_locations`. Oracle comparison covers the
+  stable multi-structure coordinate-cell aggregate; exact owner and cell counts
+  remain open because full Go structure parsing is currently too slow on the
+  supplied large private save, while the efficient selected-property scan finds
+  a few additional owner/location buckets.
 - `examples/json_api/ex_01_export_all_items.py` is implemented as
   `examples/export_all_items`, which writes save info plus all implemented
   domain JSON exports to an explicit output directory with a manifest.

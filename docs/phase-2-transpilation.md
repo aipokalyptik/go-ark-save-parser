@@ -425,6 +425,12 @@ enough that oracle-derived tests can run against translated packages.
       upstream structure-owner printing workflow using privacy-safe stable
       owner identity aggregates; selected row field counts can include extra
       inventory-bearing rows.
+- [x] Add `structure_owner_locations` as an owner/location JSON grouping
+      counterpart to upstream `extract_structures_per_owner`; compare the
+      stable multi-structure coordinate-cell aggregate. Exact owner and cell
+      count parity remains open because full Go structure parsing is too slow
+      on the supplied large private save and the selected-property scan finds
+      a few extra owner/location buckets.
 - [x] Compare normalized Go `structure_at_location` aggregate output with
       upstream map-coordinate structure lookup and connected-structure
       expansion.

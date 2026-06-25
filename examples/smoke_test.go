@@ -78,6 +78,15 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			firstItemID:  testfixtures.GenericObjectBytes(0x10000016, 0x10000002),
 			secondItemID: testfixtures.GenericObjectBytes(0x10000016, 0x10000002),
 		},
+		Custom: map[string][]byte{
+			"ActorTransforms": testfixtures.ActorTransforms(testfixtures.ActorTransform{
+				UUID:       structureID,
+				X:          11,
+				Y:          22,
+				Z:          33,
+				Quaternion: 1,
+			}),
+		},
 	})
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
@@ -136,8 +145,9 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	}
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "structure_owners", "structures=1 with_tribe_id=1 with_player_id=0 with_tribe_name=0 with_player_name=0 with_original_placer_id=0 unique_tribes=1", savePath)
+	runExample(t, "structure_owner_locations", "structures=1 owners=1 cells=1 named_cells=1 multi_structure_cells=0 faults=0", savePath, "Valguero", "1")
 	runExample(t, "base_components", "bases=1 total_structures=1 largest=1 min10=0 faults=0", savePath)
-	runExample(t, "structure_heatmap", "cells=0 total=0 max=0 faults=0 wrote=", savePath, heatmapPath)
+	runExample(t, "structure_heatmap", "cells=1 total=1 max=1 faults=0 wrote=", savePath, heatmapPath)
 	if _, err := os.Stat(heatmapPath); err != nil {
 		t.Fatalf("structure_heatmap output missing: %v", err)
 	}
