@@ -1,6 +1,9 @@
 package arkapi
 
-import "github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+import (
+	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+)
 
 type ClusterAPI struct {
 	data *arkcluster.Data
@@ -28,11 +31,37 @@ func (c *ClusterAPI) Items() []arkcluster.Item {
 	return append([]arkcluster.Item(nil), c.data.Items...)
 }
 
+func (c *ClusterAPI) ItemsTyped() []arkobject.ClusterItem {
+	if c == nil || c.data == nil {
+		return nil
+	}
+	out := make([]arkobject.ClusterItem, 0, len(c.data.Items))
+	for _, item := range c.data.Items {
+		out = append(out, arkobject.ClusterItemFromUpload(item, clusterItemType(item)))
+	}
+	return out
+}
+
 func (c *ClusterAPI) Dinos() []arkcluster.Dino {
 	if c == nil || c.data == nil {
 		return nil
 	}
 	return append([]arkcluster.Dino(nil), c.data.Dinos...)
+}
+
+func (c *ClusterAPI) DinosTyped() []arkobject.ClusterDino {
+	if c == nil || c.data == nil {
+		return nil
+	}
+	out := make([]arkobject.ClusterDino, 0, len(c.data.Dinos))
+	for _, dino := range c.data.Dinos {
+		var classNames []string
+		if dino.Archive != nil {
+			classNames = archiveClassNames(dino.Archive)
+		}
+		out = append(out, arkobject.ClusterDinoFromUpload(dino, classNames))
+	}
+	return out
 }
 
 func (c *ClusterAPI) ItemsByType(typeName string) []arkcluster.Item {
@@ -48,6 +77,20 @@ func (c *ClusterAPI) ItemsByType(typeName string) []arkcluster.Item {
 	return out
 }
 
+func (c *ClusterAPI) ItemsByTypeTyped(typeName string) []arkobject.ClusterItem {
+	if c == nil || c.data == nil {
+		return nil
+	}
+	var out []arkobject.ClusterItem
+	for _, item := range c.data.Items {
+		itemType := clusterItemType(item)
+		if itemType == typeName {
+			out = append(out, arkobject.ClusterItemFromUpload(item, itemType))
+		}
+	}
+	return out
+}
+
 func (c *ClusterAPI) DinosByParseStatus(ok bool) []arkcluster.Dino {
 	if c == nil || c.data == nil {
 		return nil
@@ -58,6 +101,25 @@ func (c *ClusterAPI) DinosByParseStatus(ok bool) []arkcluster.Dino {
 		if parsed == ok {
 			out = append(out, dino)
 		}
+	}
+	return out
+}
+
+func (c *ClusterAPI) DinosByParseStatusTyped(ok bool) []arkobject.ClusterDino {
+	if c == nil || c.data == nil {
+		return nil
+	}
+	var out []arkobject.ClusterDino
+	for _, dino := range c.data.Dinos {
+		parsed := dino.ParseError == ""
+		if parsed != ok {
+			continue
+		}
+		var classNames []string
+		if dino.Archive != nil {
+			classNames = archiveClassNames(dino.Archive)
+		}
+		out = append(out, arkobject.ClusterDinoFromUpload(dino, classNames))
 	}
 	return out
 }
