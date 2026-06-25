@@ -247,7 +247,7 @@ go run ./examples/player_and_tribe_data /path/to/save-directory
 go run ./examples/player_inventories /path/to/Valguero_WP.ark
 go run ./examples/player_unlocked_engrams /path/to/save-directory
 go run ./examples/equipment_rank /path/to/Valguero_WP.ark
-go run ./examples/base_export_from_save /path/to/Valguero_WP.ark /tmp/bases.json
+go run ./examples/base_export_from_save /path/to/Valguero_WP.ark /tmp/base-export
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file

@@ -268,9 +268,10 @@ documented.
 - [blocked] `structure_heatmap` oracle comparison: upstream out-of-range
       heatmap indexing on supplied private save.
 - [x] `base_components`.
-- [x] `base_export_from_save`: represented as an explicit-output JSON export of
-      the implemented base domain model; upstream binary base row export/import
-      remains mutation-copy-adjacent and live-server-unverified.
+- [x] `base_export_from_save`: represented as an explicit-output structural
+      export that writes base metadata, copied raw structure rows, and
+      structure location JSON. Inventory item expansion, binary import, and
+      live-server validation remain mutation-copy-adjacent and unverified.
 - [x] `cluster_json`.
 - [x] `local_tribute`.
 - [x] `tribute_json`.
