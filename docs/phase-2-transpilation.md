@@ -285,6 +285,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add optionized read-only Base API all-base discovery for upstream
       `get_all_bases` parity, including connected-only and default minimum
       structure filtering.
+- [x] Add fast selected-property base component scanning for large saves; full
+      structure parsing is too slow for private oracle comparison of connected
+      base aggregates.
 - [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
       Base, richer local cluster item/dino domain models, and remaining
       model-specific JSON API edge behavior.
@@ -322,12 +325,30 @@ enough that oracle-derived tests can run against translated packages.
       upstream property-name prefilter workflow.
 - [x] Compare normalized Go `stackable_count` aggregate counts with the
       upstream `StackableApi.get_by_class` and `get_count` workflow.
+- [x] Compare normalized Go `stackable_owned_by` aggregate counts with an
+      upstream `StackableApi` plus `StructureApi.get_container_of_inventory`
+      owner-filter workflow.
 - [x] Compare normalized Go equipment domain JSON aggregates with the upstream
       longneck blueprint max-damage workflow.
 - [x] Compare normalized Go `equipment_best` aggregate output with upstream
       highest weapon-damage and armor-durability workflows.
+- [x] Compare normalized Go `equipment_ascendant_weapon_bps` aggregate output
+      with upstream ascendant weapon-blueprint filtering.
+- [x] Compare normalized Go `equipment_saddles` direct item-saddle counts with
+      upstream saddle filtering; Go additionally reports tolerant cryopod
+      saddle counts and max armor, but armor-value parity still needs the
+      upstream default armor tables.
+- [x] Compare normalized Go `base_components` aggregate output with upstream
+      connected base grouping after a fast selected-property structure scan is
+      available for large private saves.
 - [x] Compare normalized Go `dino_best_stat --no-cryos` output with the
       upstream `DinoApi.get_all(include_cryos=False)` best-stat workflow.
+- [x] Compare normalized Go `dino_most_mutated` output with the upstream
+      tamed-dino total mutation workflow using privacy-safe aggregate fields.
+- [x] Compare normalized Go `dino_babies` output with upstream wild/tamed baby
+      dino counts using privacy-safe aggregate fields.
+- [x] Compare normalized Go `dino_wild_tamables` output with upstream wild and
+      wild-tamable dino counts using privacy-safe aggregate fields.
 - [x] Compare normalized Go `cluster_json` aggregate counts with the upstream
       Python `ClusterData` parser over upstream local cluster fixture files.
 - [x] Compare normalized Go `local_tribute` aggregate counts with private local

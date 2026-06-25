@@ -96,6 +96,10 @@ func UpstreamArmorBlueprints() []string {
 	return sortedBlueprintKeys(upstreamArmorBlueprints)
 }
 
+func UpstreamSaddleBlueprints() []string {
+	return sortedBlueprintKeys(upstreamSaddleBlueprints)
+}
+
 func sortedBlueprintKeys(values map[string]struct{}) []string {
 	out := make([]string, 0, len(values))
 	for value := range values {

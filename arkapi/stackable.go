@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -107,29 +108,90 @@ func (s *StackableAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 }
 
 func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
-	structures := NewStructure(s.save)
-	containers := map[uuid.UUID]*arkobject.Structure{}
+	containers, err := s.inventoryContainerOwners()
+	if err != nil {
+		return nil, err
+	}
 	out := map[uuid.UUID]arkobject.InventoryItem{}
 	for id, item := range items {
 		if item.OwnerInventory == nil {
 			continue
 		}
-		container, cached := containers[*item.OwnerInventory]
-		if !cached {
-			_, structure, ok, err := structures.ContainerOfInventory(*item.OwnerInventory)
-			if err != nil {
-				return nil, err
-			}
-			if ok {
-				container = &structure
-			}
-			containers[*item.OwnerInventory] = container
-		}
-		if container != nil && container.IsOwnedBy(owner) {
+		containerOwner, ok := containers[*item.OwnerInventory]
+		if ok && ownerMatches(containerOwner, owner) {
 			out[id] = item
 		}
 	}
 	return out, nil
+}
+
+func (s *StackableAPI) inventoryContainerOwners() (map[uuid.UUID]arkobject.ObjectOwner, error) {
+	infos, _, err := s.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
+	}, []string{"StructureID", "MyInventoryComponent", "OriginalPlacerPlayerID", "OwnerName", "OwningPlayerName", "OwningPlayerID", "TargetingTeam", "bIsEngram"})
+	if err != nil {
+		return nil, err
+	}
+	out := map[uuid.UUID]arkobject.ObjectOwner{}
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if _, ok := container.Value("bIsEngram"); ok {
+			continue
+		}
+		if !isStructureBlueprint(info.ClassName) {
+			if !isPotentialStructureContainer(info.ClassName) {
+				continue
+			}
+			if _, ok := container.Value("MyInventoryComponent"); !ok {
+				continue
+			}
+		}
+		inventoryID, ok := selectedObjectReferenceUUID(container, "MyInventoryComponent")
+		if !ok {
+			continue
+		}
+		out[inventoryID] = arkobject.ObjectOwnerFromContainer(container)
+	}
+	return out, nil
+}
+
+func selectedObjectReferenceUUID(container arkproperty.Container, name string) (uuid.UUID, bool) {
+	raw, ok := container.Value(name)
+	if !ok {
+		return uuid.Nil, false
+	}
+	ref, ok := raw.(arkproperty.ObjectReference)
+	if !ok || ref.Type != arkproperty.ObjectReferenceUUID {
+		return uuid.Nil, false
+	}
+	rawID, ok := ref.Value.(string)
+	if !ok {
+		return uuid.Nil, false
+	}
+	id, err := uuid.Parse(rawID)
+	return id, err == nil
+}
+
+func ownerMatches(candidate arkobject.ObjectOwner, target arkobject.ObjectOwner) bool {
+	if candidate.PlayerID != 0 && candidate.PlayerID == target.PlayerID {
+		return true
+	}
+	if candidate.PlayerName != "" && candidate.PlayerName == target.PlayerName {
+		return true
+	}
+	if candidate.TribeName != "" && candidate.TribeName == target.TribeName {
+		return true
+	}
+	if candidate.TribeID != 0 && candidate.TribeID == target.TribeID {
+		return true
+	}
+	if candidate.OriginalPlacerID != 0 && candidate.OriginalPlacerID == target.OriginalPlacerID {
+		return true
+	}
+	return false
 }
 
 func (s *StackableAPI) byBlueprintSubstring(substring string) (map[uuid.UUID]arkobject.InventoryItem, error) {

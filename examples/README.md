@@ -31,15 +31,32 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `dino_best_stat`: find the dino with the highest parsed stat points, or print
   `no_match` when no stat-bearing dino status components are present. Pass
   `--no-cryos` before the save path to skip cryopod payloads.
+- `dino_most_mutated`: find the tamed dino with the highest upstream-compatible
+  displayed mutation count and print only aggregate-safe values.
+- `dino_babies`: count wild and tamed baby dinos without printing individual
+  names, locations, or owners.
+- `dino_wild_tamables`: count wild dinos and upstream-compatible wild-tamable
+  dinos without printing class names or locations.
 - `stackable_count`: filter resource, consumable, or ammo stackables by one or
   more explicit blueprint paths and print aggregate item and quantity counts.
+- `stackable_owned_by`: filter stackables by blueprint and owning tribe through
+  the structure inventory container relationship.
 - `equipment_summary`: parse local equipment items and print aggregate counts
   for weapons, armor, direct saddles, modern cryopod saddles, and shields.
 - `equipment_best`: mirror upstream read-only equipment examples by printing
   highest weapon damage and highest armor durability values over upstream
   canonical weapon and armor class lists.
+- `equipment_ascendant_weapon_bps`: count ascendant weapon blueprints and print
+  the maximum parsed damage value.
+- `equipment_saddles`: count upstream-listed direct saddle items plus tolerant
+  modern cryopod saddle parses and print aggregate saddle counts and max armor.
 - `structure_owner_count`: count local structure objects owned by a specific
   tribe ID.
+- `structure_at_location`: count structures near map coordinates and expand
+  the result with directly connected structures.
+- `base_components`: group parsed structures into linked connected components
+  and print aggregate base counts using a selected-property scan over structure
+  IDs and linked-structure UUIDs.
 
 ## Profile, Tribe, And Cluster Examples
 

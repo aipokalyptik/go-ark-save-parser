@@ -306,12 +306,34 @@ func (d *DinoAPI) Wild() (map[uuid.UUID]arkobject.Dino, error) {
 	return out, nil
 }
 
+func (d *DinoAPI) WildWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	all, faults, err := d.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range all {
+		if !dino.IsTamed {
+			out[id] = dino
+		}
+	}
+	return out, faults, nil
+}
+
 func (d *DinoAPI) WildTamable() (map[uuid.UUID]arkobject.Dino, error) {
 	wild, err := d.Wild()
 	if err != nil {
 		return nil, err
 	}
 	return d.FilterWildTamable(wild), nil
+}
+
+func (d *DinoAPI) WildTamableWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	wild, faults, err := d.WildWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	return d.FilterWildTamable(wild), faults, nil
 }
 
 func (d *DinoAPI) FilterWildTamable(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
@@ -343,16 +365,42 @@ func (d *DinoAPI) Babies() (map[uuid.UUID]arkobject.Dino, error) {
 
 func (d *DinoAPI) BabiesFiltered(opts BabyFilterOptions) (map[uuid.UUID]arkobject.Dino, error) {
 	return d.filter(func(dino arkobject.Dino) bool {
-		if !dino.IsBaby {
-			return false
+		return babyFilterMatches(dino, opts)
+	})
+}
+
+func (d *DinoAPI) BabiesFilteredWithFaults(opts BabyFilterOptions) (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	all, faults, err := d.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for id, dino := range all {
+		if babyFilterMatches(dino, opts) {
+			out[id] = dino
 		}
-		if dino.IsCryopodded && !opts.IncludeCryopodded {
-			return false
-		}
-		if dino.IsTamed {
-			return opts.IncludeTamed
-		}
-		return opts.IncludeWild
+	}
+	return out, faults, nil
+}
+
+func babyFilterMatches(dino arkobject.Dino, opts BabyFilterOptions) bool {
+	if !dino.IsBaby {
+		return false
+	}
+	if dino.IsCryopodded && !opts.IncludeCryopodded {
+		return false
+	}
+	if dino.IsTamed {
+		return opts.IncludeTamed
+	}
+	return opts.IncludeWild
+}
+
+func (d *DinoAPI) BabiesWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	return d.BabiesFilteredWithFaults(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
 	})
 }
 
@@ -836,7 +884,7 @@ func bestDinoForStat(dinos map[uuid.UUID]arkobject.Dino, stats []arkobject.DinoS
 }
 
 func (d *DinoAPI) MostMutatedTamed() (uuid.UUID, arkobject.Dino, int32, bool, error) {
-	tamed, err := d.Tamed()
+	all, _, err := d.AllWithFaults()
 	if err != nil {
 		return uuid.Nil, arkobject.Dino{}, 0, false, err
 	}
@@ -844,8 +892,8 @@ func (d *DinoAPI) MostMutatedTamed() (uuid.UUID, arkobject.Dino, int32, bool, er
 	var bestDino arkobject.Dino
 	var bestTotal int32
 	found := false
-	for id, dino := range tamed {
-		if dino.Stats == nil {
+	for id, dino := range all {
+		if !dino.IsTamed || dino.Stats == nil {
 			continue
 		}
 		total := dino.Stats.TotalMutations()

@@ -154,6 +154,24 @@ func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T)
 	}
 }
 
+func TestStackableAPIFilterOwnedByIgnoresMalformedUnrelatedContainers(t *testing.T) {
+	save := openSyntheticStackableOwnedByStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStackable(save)
+	items, err := api.ByClass([]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"})
+	if err != nil {
+		t.Fatalf("ByClass() error = %v", err)
+	}
+	owned, err := api.FilterOwnedBy(items, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("FilterOwnedBy() error = %v", err)
+	}
+	if len(owned) != 1 || api.Count(owned) != 100 {
+		t.Fatalf("FilterOwnedBy() = len %d count %d, want one owned stack of 100", len(owned), api.Count(owned))
+	}
+}
+
 func openSyntheticStackableOwnedByStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -166,6 +184,20 @@ func openSyntheticStackableOwnedByStructureSave(t *testing.T) *arksave.Save {
 		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
 		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
 		otherItemID: syntheticStackableObjectBytesWithOwnerInventory(otherInventoryID),
+	})
+}
+
+func openSyntheticStackableOwnedByStructureSaveWithFault(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	faultyID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	ownedItemID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
+		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
+		faultyID:    truncatedStructureObjectBytes(),
+		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
 	})
 }
 

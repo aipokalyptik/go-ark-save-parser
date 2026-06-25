@@ -287,6 +287,37 @@ func TestStructureAPIGetAtLocationFiltersByMapCoordsAndClass(t *testing.T) {
 	}
 }
 
+func TestStructureAPIGetAtLocationWithFaultsKeepsValidStructures(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	all, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(faults) != 1 {
+		t.Fatalf("AllWithFaults() faults = %d, want 1", len(faults))
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structure := all[id]
+	coords := structure.Location.AsMapCoords("Valguero")
+
+	nearby, faults, err := api.AtLocationWithFaults("Valguero", coords, 0.01, nil)
+	if err != nil {
+		t.Fatalf("AtLocationWithFaults() error = %v", err)
+	}
+	if len(faults) != 1 {
+		t.Fatalf("AtLocationWithFaults() faults = %d, want 1", len(faults))
+	}
+	if len(nearby) != 1 {
+		t.Fatalf("AtLocationWithFaults() length = %d, want 1", len(nearby))
+	}
+	if _, ok := nearby[id]; !ok {
+		t.Fatalf("AtLocationWithFaults() missing valid structure %s", id)
+	}
+}
+
 func TestStructureAPIFilterByLocationFiltersProvidedStructures(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()

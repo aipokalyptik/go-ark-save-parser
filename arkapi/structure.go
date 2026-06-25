@@ -272,6 +272,35 @@ func (s *StructureAPI) AtLocation(mapName string, coords arkobject.MapCoords, ra
 	return out, nil
 }
 
+func (s *StructureAPI) AtLocationWithFaults(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {
+	all, faults, err := s.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	if mapName == "" && s.save.Context != nil {
+		mapName = s.save.Context.MapName
+	}
+	allowed := map[string]struct{}{}
+	for _, blueprint := range blueprints {
+		allowed[blueprint] = struct{}{}
+	}
+	out := map[uuid.UUID]arkobject.Structure{}
+	for id, structure := range all {
+		if structure.Location == nil {
+			continue
+		}
+		if len(allowed) > 0 {
+			if _, ok := allowed[structure.Blueprint]; !ok {
+				continue
+			}
+		}
+		if structure.Location.IsAtMapCoordinate(mapName, coords, radius) {
+			out[id] = structure
+		}
+	}
+	return out, faults, nil
+}
+
 func (s *StructureAPI) FilterByLocation(mapName string, coords arkobject.MapCoords, radius float64, structures map[uuid.UUID]arkobject.Structure) map[uuid.UUID]arkobject.Structure {
 	if mapName == "" && s.save.Context != nil {
 		mapName = s.save.Context.MapName

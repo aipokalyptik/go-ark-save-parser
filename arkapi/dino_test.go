@@ -890,6 +890,20 @@ func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {
 	}
 }
 
+func TestDinoAPIMostMutatedTamedIgnoresMalformedCryopods(t *testing.T) {
+	save := openSyntheticDinoStatsSaveWithMalformedCryopod(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	id, dino, total, ok, err := api.MostMutatedTamed()
+	if err != nil {
+		t.Fatalf("MostMutatedTamed() error = %v", err)
+	}
+	if !ok || id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || dino.ID1 != 1001 || total != 1 {
+		t.Fatalf("MostMutatedTamed() = %s, %#v, %d, %v; want direct tamed dino", id, dino, total, ok)
+	}
+}
+
 func TestDinoAPIStatSelectionReportsNoResultWhenStatsAreMissing(t *testing.T) {
 	save := openSyntheticDinoSave(t)
 	defer save.Close()
@@ -1129,7 +1143,7 @@ func openSyntheticDinoStatsSaveWithMalformedCryopod(t *testing.T) *arksave.Save 
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
 		statusID: syntheticDinoStatusObjectBytes(),
 		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
 	})

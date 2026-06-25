@@ -3,8 +3,10 @@ package arkapi
 import (
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -18,6 +20,14 @@ type BaseQueryOptions struct {
 	OnlyConnected bool
 	Radius        float64
 	MinStructures int
+}
+
+type BaseComponentStats struct {
+	Components          int
+	TotalStructures     int
+	LargestComponent    int
+	ComponentsAtLeast10 int
+	Faults              int
 }
 
 func NewBase(save *arksave.Save, mapName string) *BaseAPI {
@@ -74,6 +84,114 @@ func (b *BaseAPI) AllWithFaults() ([]arkobject.Base, []arksave.FaultyObjectInfo,
 		return nil, nil, err
 	}
 	return basesFromStructures(structures), faults, nil
+}
+
+func (b *BaseAPI) ComponentStats() (BaseComponentStats, error) {
+	infos, faults, err := b.structures.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
+	}, []string{"StructureID", "LinkedStructures", "MyInventoryComponent", "bIsEngram"})
+	if err != nil {
+		return BaseComponentStats{}, err
+	}
+	links := make(map[uuid.UUID][]uuid.UUID, len(infos))
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if isSkippedBaseComponentBlueprint(info.ClassName) {
+			continue
+		}
+		if !isStructureBlueprint(info.ClassName) {
+			if !isPotentialStructureContainer(info.ClassName) {
+				continue
+			}
+			if _, ok := container.Value("MyInventoryComponent"); !ok {
+				continue
+			}
+		}
+		links[info.UUID] = selectedLinkedStructureUUIDs(container)
+	}
+	stats := componentStatsFromLinks(links)
+	stats.Faults = len(faults)
+	return stats, nil
+}
+
+func isSkippedBaseComponentBlueprint(className string) bool {
+	return strings.Contains(className, "/LostColony/Structures/TekBunker/Structures/BP_Bunker_Base.")
+}
+
+func selectedLinkedStructureUUIDs(container arkproperty.Container) []uuid.UUID {
+	raw, ok := container.Value("LinkedStructures")
+	if !ok {
+		return nil
+	}
+	array, ok := raw.(arkproperty.Array)
+	if !ok {
+		return nil
+	}
+	out := make([]uuid.UUID, 0, len(array.Values))
+	for _, value := range array.Values {
+		ref, ok := value.(arkproperty.ObjectReference)
+		if !ok || ref.Type != arkproperty.ObjectReferenceUUID {
+			continue
+		}
+		rawID, ok := ref.Value.(string)
+		if !ok {
+			continue
+		}
+		id, err := uuid.Parse(rawID)
+		if err == nil {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+func componentStatsFromLinks(links map[uuid.UUID][]uuid.UUID) BaseComponentStats {
+	adjacent := make(map[uuid.UUID][]uuid.UUID, len(links))
+	for id, linkedIDs := range links {
+		if _, ok := adjacent[id]; !ok {
+			adjacent[id] = nil
+		}
+		for _, linkedID := range linkedIDs {
+			if _, ok := links[linkedID]; !ok {
+				continue
+			}
+			adjacent[id] = append(adjacent[id], linkedID)
+			adjacent[linkedID] = append(adjacent[linkedID], id)
+		}
+	}
+	visited := make(map[uuid.UUID]bool, len(links))
+	stats := BaseComponentStats{TotalStructures: len(links)}
+	for _, start := range sortedUUIDKeys(links) {
+		if visited[start] {
+			continue
+		}
+		stats.Components++
+		size := 0
+		stack := []uuid.UUID{start}
+		visited[start] = true
+		for len(stack) > 0 {
+			id := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			size++
+			for _, next := range adjacent[id] {
+				if visited[next] {
+					continue
+				}
+				visited[next] = true
+				stack = append(stack, next)
+			}
+		}
+		if size > stats.LargestComponent {
+			stats.LargestComponent = size
+		}
+		if size >= 10 {
+			stats.ComponentsAtLeast10++
+		}
+	}
+	return stats
 }
 
 func basesFromStructures(structures map[uuid.UUID]arkobject.Structure) []arkobject.Base {

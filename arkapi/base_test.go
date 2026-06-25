@@ -3,6 +3,7 @@ package arkapi
 import (
 	"bytes"
 	"encoding/binary"
+	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -167,6 +168,60 @@ func TestBaseAPIAllWithFaultsKeepsValidBasesAndReportsStructureParseFaults(t *te
 	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'" || faults[0].Err == nil {
 		t.Fatalf("AllWithFaults() faults = %#v, want one structure parse fault", faults)
 	}
+}
+
+func TestBaseAPIComponentStatsUsesLinkedStructures(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	stats, err := NewBase(save, "Valguero").ComponentStats()
+	if err != nil {
+		t.Fatalf("ComponentStats() error = %v", err)
+	}
+	if stats.Components != 1 || stats.TotalStructures != 2 || stats.LargestComponent != 2 || stats.ComponentsAtLeast10 != 0 {
+		t.Fatalf("ComponentStats() = %#v, want one two-structure component", stats)
+	}
+}
+
+func TestBaseAPIComponentStatsSkipsUpstreamUnparsedBunkerBase(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "base-bunker.ark")
+	normalID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	bunkerID := uuid.MustParse("99999999-bbbb-cccc-dddd-eeeeffffffff")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000000: "None",
+			0x10000001: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			0x10000002: "/Game/LostColony/Structures/TekBunker/Structures/BP_Bunker_Base.BP_Bunker_Base_C",
+			0x10000003: "IntProperty",
+			0x10000004: "StructureID",
+			0x10000005: "None",
+			0x10000006: "TargetingTeam",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			normalID: syntheticStructureObjectBytesForClass(0x10000001, 0x10000000, 0x10000004, 0x10000006, 555),
+			bunkerID: syntheticStructureObjectBytesForClass(0x10000002, 0x10000000, 0x10000004, 0x10000006, 555),
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	stats, err := NewBase(save, "Valguero").ComponentStats()
+	if err != nil {
+		t.Fatalf("ComponentStats() error = %v", err)
+	}
+	if stats.TotalStructures != 1 || stats.Components != 1 {
+		t.Fatalf("ComponentStats() = %#v, want bunker base excluded for upstream parity", stats)
+	}
+}
+
+func syntheticStructureObjectBytesForClass(classID uint32, noneID uint32, structureIDName uint32, tribeIDName uint32, tribeID int32) []byte {
+	var props bytes.Buffer
+	writeIntProperty(&props, structureIDName, 101)
+	writeIntProperty(&props, tribeIDName, tribeID)
+	return testfixtures.ObjectBytesWithProperties(classID, noneID, props.Bytes())
 }
 
 func openSyntheticBaseSave(t *testing.T) *arksave.Save {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -33,6 +34,12 @@ type ParsedObjectInfo struct {
 	UUID      uuid.UUID
 	ClassName string
 	Object    *arkobject.GameObject
+}
+
+type SelectedObjectPropertiesInfo struct {
+	UUID       uuid.UUID
+	ClassName  string
+	Properties []arkproperty.Property
 }
 
 type FaultyObjectInfo struct {
@@ -284,6 +291,105 @@ func (s *Save) ParsedObjectsWithFaults(match func(ObjectClassInfo) bool) ([]Pars
 		return faults[i].UUID.String() < faults[j].UUID.String()
 	})
 	return infos, faults, nil
+}
+
+func (s *Save) SelectedObjectPropertiesWithFaults(match func(ObjectClassInfo) bool, propertyNames []string) ([]SelectedObjectPropertiesInfo, []FaultyObjectInfo, error) {
+	patterns := s.selectedPropertyNamePatterns(propertyNames)
+	if len(patterns) == 0 {
+		return nil, nil, nil
+	}
+
+	rows, err := s.db.Query(`select key, value from game`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	var infos []SelectedObjectPropertiesInfo
+	var faults []FaultyObjectInfo
+	for rows.Next() {
+		var key []byte
+		var raw []byte
+		if err := rows.Scan(&key, &raw); err != nil {
+			return nil, nil, err
+		}
+		id, err := uuid.FromBytes(key)
+		if err != nil {
+			return nil, nil, err
+		}
+		className, props, err := s.selectedObjectProperties(raw, patterns)
+		if err != nil {
+			faults = append(faults, FaultyObjectInfo{UUID: id, Err: err})
+			continue
+		}
+		classInfo := ObjectClassInfo{UUID: id, ClassName: className}
+		if match != nil && !match(classInfo) {
+			continue
+		}
+		infos = append(infos, SelectedObjectPropertiesInfo{UUID: id, ClassName: className, Properties: props})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	sort.Slice(infos, func(i int, j int) bool {
+		return infos[i].UUID.String() < infos[j].UUID.String()
+	})
+	sort.Slice(faults, func(i int, j int) bool {
+		return faults[i].UUID.String() < faults[j].UUID.String()
+	})
+	return infos, faults, nil
+}
+
+func (s *Save) selectedObjectProperties(raw []byte, patterns map[string][]byte) (string, []arkproperty.Property, error) {
+	r := arkbinary.NewReader(raw, s.names)
+	blueprint, err := r.ReadName("")
+	if err != nil {
+		return "", nil, err
+	}
+	selected := make([]arkproperty.Property, 0, len(patterns))
+	for name, pattern := range patterns {
+		for offset := bytes.Index(raw, pattern); offset >= 0; {
+			if err := r.SetPosition(offset); err != nil {
+				return "", nil, err
+			}
+			prop, err := arkproperty.ParseOne(r, r.Size())
+			if err == nil && prop != nil && prop.Name == name {
+				selected = append(selected, *prop)
+			}
+			nextStart := offset + len(pattern)
+			if nextStart >= len(raw) {
+				break
+			}
+			next := bytes.Index(raw[nextStart:], pattern)
+			if next < 0 {
+				break
+			}
+			offset = nextStart + next
+		}
+	}
+	return blueprint, selected, nil
+}
+
+func (s *Save) selectedPropertyNamePatterns(names []string) map[string][]byte {
+	wanted := map[string]struct{}{}
+	for _, name := range names {
+		if name != "" {
+			wanted[name] = struct{}{}
+		}
+	}
+	if len(wanted) == 0 || s == nil || s.Context == nil {
+		return nil
+	}
+	patterns := map[string][]byte{}
+	for id, name := range s.Context.Names {
+		if _, ok := wanted[name]; !ok {
+			continue
+		}
+		pattern := make([]byte, 8)
+		binary.LittleEndian.PutUint32(pattern[:4], id)
+		patterns[name] = pattern
+	}
+	return patterns
 }
 
 func (s *Save) ParsedObject(id uuid.UUID) (*arkobject.GameObject, error) {

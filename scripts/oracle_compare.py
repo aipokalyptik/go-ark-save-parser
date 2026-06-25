@@ -113,6 +113,19 @@ def parse_go_dino_best_stat(output: str) -> dict[str, Any] | None:
     }
 
 
+def parse_go_dino_most_mutated(output: str) -> dict[str, Any] | None:
+    if output.strip() == "no_match":
+        return None
+    values = parse_key_value_lines(output)
+    if values.get("has_most_mutated") != 1 or "mutations" not in values:
+        raise ValueError("unexpected dino_most_mutated output")
+    return {
+        "has_most_mutated": values["has_most_mutated"],
+        "mutations": values["mutations"],
+        "level": values.get("level", 0),
+    }
+
+
 def python_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.saves.asa_save import AsaSave  # type: ignore
@@ -252,6 +265,76 @@ def python_dino_best_stat_no_cryos_oracle(save_path: Path, upstream_src: Path) -
                 save.close()
 
 
+def python_dino_most_mutated_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dino_api = DinoApi(save)
+                dinos = dino_api.get_all_tamed()
+                most_mutated = None
+                best_total = None
+                for dino in dinos.values():
+                    total = int(dino.stats.get_total_mutations())
+                    if most_mutated is None or total > best_total:
+                        most_mutated = dino
+                        best_total = total
+                if most_mutated is None:
+                    return None
+                return {
+                    "has_most_mutated": 1,
+                    "mutations": int(best_total),
+                    "level": int(most_mutated.stats.current_level),
+                }
+            finally:
+                save.close()
+
+
+def python_dino_babies_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.object_model.dinos import TamedBaby  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dino_api = DinoApi(save)
+                babies = dino_api.get_all_babies(include_wild=True)
+                tamed = sum(1 for dino in babies.values() if isinstance(dino, TamedBaby))
+                return {
+                    "wild_babies": len(babies) - tamed,
+                    "tamed_babies": tamed,
+                }
+            finally:
+                save.close()
+
+
+def python_dino_wild_tamables_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.dino_api import DinoApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            save = AsaSave(save_path)
+            try:
+                dino_api = DinoApi(save)
+                wild = dino_api.get_all_wild()
+                tamables = dino_api.get_all_wild_tamables()
+                return {
+                    "wild_dinos": len(wild),
+                    "wild_tamables": len(tamables),
+                }
+            finally:
+                save.close()
+
+
 def python_property_filter_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.parsing import GameObjectReaderConfiguration  # type: ignore
@@ -287,6 +370,64 @@ def python_stackable_count_oracle(save_path: Path, upstream_src: Path) -> dict[s
             "blueprint": blueprint,
             "items": len(items),
             "total": api.get_count(items),
+        }
+    finally:
+        save.close()
+
+
+def python_stackable_owned_by_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any] | None:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.stackable_api import StackableApi  # type: ignore
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.classes.equipment import Ammo  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    blueprint = Ammo.advanced_rifle_bullet
+    save = AsaSave(save_path)
+    try:
+        stackable_api = StackableApi(save)
+        structure_api = StructureApi(save)
+        containers: dict[Any, Any] = {}
+        by_blueprint_tribe: dict[tuple[str, int], dict[str, int]] = {}
+
+        def add_stack(stack: Any, forced_blueprint: str | None = None) -> None:
+            owner_inv_uuid = getattr(stack, "owner_inv_uuid", None)
+            if owner_inv_uuid is None:
+                return
+            if owner_inv_uuid not in containers:
+                containers[owner_inv_uuid] = structure_api.get_container_of_inventory(owner_inv_uuid)
+            container = containers[owner_inv_uuid]
+            if container is None:
+                return
+            raw_tribe_id = container.owner.tribe_id
+            if raw_tribe_id is None:
+                return
+            tribe_id = int(raw_tribe_id)
+            if tribe_id == 0:
+                return
+            stack_blueprint = forced_blueprint or getattr(getattr(stack, "object", None), "blueprint", "")
+            if not stack_blueprint:
+                return
+            values = by_blueprint_tribe.setdefault((stack_blueprint, tribe_id), {"items": 0, "total": 0})
+            values["items"] += 1
+            values["total"] += int(stack.quantity)
+
+        for stack in stackable_api.get_by_class(StackableApi.Classes.AMMO, blueprint).values():
+            add_stack(stack, blueprint)
+        if not by_blueprint_tribe:
+            for stack in stackable_api.get_all(StackableApi.Classes.RESOURCE, max_workers=1).values():
+                add_stack(stack)
+        if not by_blueprint_tribe:
+            return None
+        (blueprint, tribe_id), values = max(
+            by_blueprint_tribe.items(),
+            key=lambda item: (item[1]["total"], item[1]["items"], item[0][0], -item[0][1]),
+        )
+        return {
+            "blueprint": blueprint,
+            "tribe_id": tribe_id,
+            "items": values["items"],
+            "total": values["total"],
         }
     finally:
         save.close()
@@ -350,6 +491,76 @@ def python_equipment_best_oracle(save_path: Path, upstream_src: Path) -> dict[st
         else:
             result["armor"] = "no_match"
         return result
+    finally:
+        save.close()
+
+
+def python_equipment_ascendant_weapon_bps_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.enums import ArkItemQuality  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        api = EquipmentApi(save)
+        weapons = api.get_filtered(
+            EquipmentApi.Classes.WEAPON,
+            minimum_quality=ArkItemQuality.ASCENDANT,
+            only_blueprints=True,
+        )
+        return {
+            "items": len(weapons),
+            "max_damage": max((float(f"{weapon.damage:.1f}") for weapon in weapons.values()), default=0.0),
+        }
+    finally:
+        save.close()
+
+
+def python_equipment_saddles_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        saddles = EquipmentApi(save).get_saddles()
+        return {
+            "item_saddles": len(saddles),
+        }
+    finally:
+        save.close()
+
+
+def python_base_components_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.structure_api import StructureApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        structures = StructureApi(save).get_all(max_workers=1)
+        remaining = set(structures.keys())
+        sizes: list[int] = []
+        while remaining:
+            start = min(remaining, key=str)
+            remaining.remove(start)
+            stack = [start]
+            size = 0
+            while stack:
+                current = stack.pop()
+                size += 1
+                for linked in structures[current].linked_structure_uuids:
+                    if linked in remaining:
+                        remaining.remove(linked)
+                        stack.append(linked)
+            sizes.append(size)
+        return {
+            "bases": len(sizes),
+            "total_structures": sum(sizes),
+            "largest": max(sizes, default=0),
+            "min10": sum(1 for size in sizes if size >= 10),
+        }
     finally:
         save.close()
 
@@ -420,10 +631,17 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_local_profiles = python_local_profiles_oracle(save_path, repo_root, upstream_src)
     py_dino_filter = python_dino_filter_oracle(save_path, upstream_src)
     py_dino_best_stat_no_cryos = python_dino_best_stat_no_cryos_oracle(save_path, upstream_src)
+    py_dino_most_mutated = python_dino_most_mutated_oracle(save_path, upstream_src)
+    py_dino_babies = python_dino_babies_oracle(save_path, upstream_src)
+    py_dino_wild_tamables = python_dino_wild_tamables_oracle(save_path, upstream_src)
     py_property_filter = python_property_filter_oracle(save_path, upstream_src)
     py_stackable_count = python_stackable_count_oracle(save_path, upstream_src)
+    py_stackable_owned_by = python_stackable_owned_by_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
     py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
+    py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
+    py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
+    py_base_components = python_base_components_oracle(save_path, upstream_src)
     py_player_inventory = python_player_inventory_oracle(save_path, repo_root, upstream_src)
     py_cluster_data = python_cluster_data_oracle(upstream_src)
     py_local_tribute = python_local_tribute_oracle(save_path)
@@ -433,10 +651,17 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_local_profiles": py_local_profiles,
         "python_dino_filter": py_dino_filter,
         "python_dino_best_stat_no_cryos": py_dino_best_stat_no_cryos,
+        "python_dino_most_mutated": py_dino_most_mutated,
+        "python_dino_babies": py_dino_babies,
+        "python_dino_wild_tamables": py_dino_wild_tamables,
         "python_property_filter": py_property_filter,
         "python_stackable_count": py_stackable_count,
+        "python_stackable_owned_by": py_stackable_owned_by,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
         "python_equipment_best": py_equipment_best,
+        "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
+        "python_equipment_saddles": py_equipment_saddles,
+        "python_base_components": py_base_components,
         "python_player_inventory": py_player_inventory,
         "python_cluster_data": py_cluster_data,
         "python_local_tribute": py_local_tribute,
@@ -570,6 +795,52 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
                 private["go"]["dino_best_stat_no_cryos"]["parse_error"] = str(exc)
                 cases.append(CaseResult("dino_best_stat_no_cryos", "fail", "Go dino_best_stat output could not be parsed"))
 
+    if py_dino_most_mutated is None:
+        cases.append(CaseResult("dino_most_mutated", "skip", "oracle save has no tamed mutation-bearing dino candidate"))
+    else:
+        go_dino_most_mutated = run(["go", "run", "./examples/dino_most_mutated", str(save_path)], repo_root, env)
+        private["go"]["dino_most_mutated"] = {
+            "exit_code": go_dino_most_mutated.returncode,
+            "stdout": go_dino_most_mutated.stdout,
+            "stderr": go_dino_most_mutated.stderr,
+        }
+        if go_dino_most_mutated.returncode != 0:
+            cases.append(CaseResult("dino_most_mutated", "fail", "Go example exited non-zero"))
+        else:
+            try:
+                got = parse_go_dino_most_mutated(go_dino_most_mutated.stdout)
+                private["go"]["dino_most_mutated"]["parsed"] = got
+                cases.append(CaseResult("dino_most_mutated", "pass" if got == py_dino_most_mutated else "fail", "most mutated tamed dino aggregate compared"))
+            except Exception as exc:  # noqa: BLE001 - private report captures details
+                private["go"]["dino_most_mutated"]["parse_error"] = str(exc)
+                cases.append(CaseResult("dino_most_mutated", "fail", "Go dino_most_mutated output could not be parsed"))
+
+    go_dino_babies = run(["go", "run", "./examples/dino_babies", str(save_path)], repo_root, env)
+    private["go"]["dino_babies"] = {
+        "exit_code": go_dino_babies.returncode,
+        "stdout": go_dino_babies.stdout,
+        "stderr": go_dino_babies.stderr,
+    }
+    if go_dino_babies.returncode != 0:
+        cases.append(CaseResult("dino_babies", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_dino_babies.stdout)
+        private["go"]["dino_babies"]["parsed"] = got
+        cases.append(CaseResult("dino_babies", "pass" if {key: got.get(key) for key in py_dino_babies} == py_dino_babies else "fail", "wild and tamed baby dino counts compared"))
+
+    go_dino_wild_tamables = run(["go", "run", "./examples/dino_wild_tamables", str(save_path)], repo_root, env)
+    private["go"]["dino_wild_tamables"] = {
+        "exit_code": go_dino_wild_tamables.returncode,
+        "stdout": go_dino_wild_tamables.stdout,
+        "stderr": go_dino_wild_tamables.stderr,
+    }
+    if go_dino_wild_tamables.returncode != 0:
+        cases.append(CaseResult("dino_wild_tamables", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_dino_wild_tamables.stdout)
+        private["go"]["dino_wild_tamables"]["parsed"] = got
+        cases.append(CaseResult("dino_wild_tamables", "pass" if {key: got.get(key) for key in py_dino_wild_tamables} == py_dino_wild_tamables else "fail", "wild and tameable dino counts compared"))
+
     go_property_filter = run(["go", "run", "./examples/property_filter", str(save_path), "TamerString", "Health"], repo_root, env)
     private["go"]["property_filter"] = {
         "exit_code": go_property_filter.returncode,
@@ -596,6 +867,34 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["stackable_count"]["parsed"] = got
         want = {key: py_stackable_count[key] for key in ("items", "total")}
         cases.append(CaseResult("stackable_count", "pass" if {key: got.get(key) for key in want} == want else "fail", "stackable item count and total quantity compared"))
+
+    if py_stackable_owned_by is None:
+        cases.append(CaseResult("stackable_owned_by", "skip", "oracle save has no owned advanced rifle bullet stacks"))
+    else:
+        go_stackable_owned_by = run(
+            [
+                "go",
+                "run",
+                "./examples/stackable_owned_by",
+                str(save_path),
+                py_stackable_owned_by["blueprint"],
+                str(py_stackable_owned_by["tribe_id"]),
+            ],
+            repo_root,
+            env,
+        )
+        private["go"]["stackable_owned_by"] = {
+            "exit_code": go_stackable_owned_by.returncode,
+            "stdout": go_stackable_owned_by.stdout,
+            "stderr": go_stackable_owned_by.stderr,
+        }
+        if go_stackable_owned_by.returncode != 0:
+            cases.append(CaseResult("stackable_owned_by", "fail", "Go example exited non-zero"))
+        else:
+            got = parse_key_value_lines(go_stackable_owned_by.stdout)
+            private["go"]["stackable_owned_by"]["parsed"] = got
+            want = {key: py_stackable_owned_by[key] for key in ("tribe_id", "items", "total")}
+            cases.append(CaseResult("stackable_owned_by", "pass" if {key: got.get(key) for key in want} == want else "fail", "owned advanced rifle bullet count and total compared"))
 
     equipment_json_path = repo_root / ".oracle" / "output" / "export-domain-equipment.json"
     go_equipment_json = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "equipment", str(equipment_json_path)], repo_root, env)
@@ -644,6 +943,46 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["equipment_best"]["parsed"] = got
         stable_keys = [key for key in py_equipment_best if key not in {"weapon", "armor"}]
         cases.append(CaseResult("equipment_best", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_best[key] for key in stable_keys} else "fail", "highest weapon damage and armor durability values compared"))
+
+    go_equipment_ascendant_weapon_bps = run(["go", "run", "./examples/equipment_ascendant_weapon_bps", str(save_path)], repo_root, env)
+    private["go"]["equipment_ascendant_weapon_bps"] = {
+        "exit_code": go_equipment_ascendant_weapon_bps.returncode,
+        "stdout": go_equipment_ascendant_weapon_bps.stdout,
+        "stderr": go_equipment_ascendant_weapon_bps.stderr,
+    }
+    if go_equipment_ascendant_weapon_bps.returncode != 0:
+        cases.append(CaseResult("equipment_ascendant_weapon_bps", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_equipment_ascendant_weapon_bps.stdout)
+        private["go"]["equipment_ascendant_weapon_bps"]["parsed"] = got
+        cases.append(CaseResult("equipment_ascendant_weapon_bps", "pass" if {key: got.get(key) for key in py_equipment_ascendant_weapon_bps} == py_equipment_ascendant_weapon_bps else "fail", "ascendant weapon blueprint count and max damage compared"))
+
+    go_equipment_saddles = run(["go", "run", "./examples/equipment_saddles", str(save_path)], repo_root, env)
+    private["go"]["equipment_saddles"] = {
+        "exit_code": go_equipment_saddles.returncode,
+        "stdout": go_equipment_saddles.stdout,
+        "stderr": go_equipment_saddles.stderr,
+    }
+    if go_equipment_saddles.returncode != 0:
+        cases.append(CaseResult("equipment_saddles", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_equipment_saddles.stdout)
+        private["go"]["equipment_saddles"]["parsed"] = got
+        cases.append(CaseResult("equipment_saddles", "pass" if {key: got.get(key) for key in py_equipment_saddles} == py_equipment_saddles else "fail", "direct saddle count compared; upstream cryopod saddle extraction blocked by malformed private cryopods and armor-value parity needs default armor tables"))
+
+    go_base_components = run(["go", "run", "./examples/base_components", str(save_path)], repo_root, env)
+    private["go"]["base_components"] = {
+        "exit_code": go_base_components.returncode,
+        "stdout": go_base_components.stdout,
+        "stderr": go_base_components.stderr,
+    }
+    if go_base_components.returncode != 0:
+        cases.append(CaseResult("base_components", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_base_components.stdout)
+        private["go"]["base_components"]["parsed"] = got
+        want = {key: py_base_components[key] for key in ("bases", "total_structures", "largest", "min10")}
+        cases.append(CaseResult("base_components", "pass" if {key: got.get(key) for key in want} == want else "fail", "connected base component aggregate counts compared"))
 
     domain_dinos_path = repo_root / ".oracle" / "output" / "export-domain-dinos.json"
     go_domain_dinos = run(["go", "run", "./cmd/arksave", "export-domain-json", str(save_path), "dinos", str(domain_dinos_path)], repo_root, env)
