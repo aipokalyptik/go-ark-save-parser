@@ -45,9 +45,11 @@ Public verification reported by reviewers:
 
 - Dynamic property parity remains incomplete, but several previously high-risk
   compound encodings are now covered: enum-keyed maps, struct-keyed map body
-  skipping with reader realignment, and fixed-layout `Rotator`, `Quat`, `Color`,
-  and `LinearColor` structs. Unknown top-level property types and remaining
-  unsupported compound value encodings can still fail full object parsing.
+  skipping with reader realignment, unsupported map value/set element body
+  skipping, raw preservation for unknown top-level property payloads, and
+  fixed-layout `Rotator`, `Quat`, `Color`, and `LinearColor` structs. Remaining
+  unsupported compound value encodings and dedicated struct readers can still
+  fail full object parsing.
 - Legacy archive and legacy/modded embedded cryopod paths remain unsupported
   outside modern archive and compact tribute-index formats. Modern cryopod
   dino/status payloads now have a parsed API path, but broad upstream parity
