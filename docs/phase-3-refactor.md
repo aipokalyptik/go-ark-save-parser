@@ -29,6 +29,8 @@ Go packages without losing oracle parity.
       scope, and level-cap options.
 - [x] Add typed structure inventory-container lookup and stackable owner filter
       helpers for upstream owner-count example flows.
+- [x] Add explicit typed stackable item model and compatibility API wrappers
+      over the existing inventory-item stackable behavior.
 - [x] Add typed equipment owner filter helpers through structure inventory
       containers for upstream owner-of-items workflows.
 - [x] Add typed equipment crafted and average-stat ranking helpers for upstream

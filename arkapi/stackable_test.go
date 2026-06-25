@@ -86,6 +86,27 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	if len(consumables) != 0 {
 		t.Fatalf("Consumables() length = %d, want 0", len(consumables))
 	}
+
+	typedAll, err := api.AllStackables()
+	if err != nil {
+		t.Fatalf("AllStackables() error = %v", err)
+	}
+	if len(typedAll) != len(items) || api.CountStackables(typedAll) != api.Count(items) {
+		t.Fatalf("AllStackables() = len %d count %d, want len %d count %d", len(typedAll), api.CountStackables(typedAll), len(items), api.Count(items))
+	}
+	for id, item := range typedAll {
+		if item.UUID != id || item.Blueprint == "" || item.Quantity != items[id].Quantity {
+			t.Fatalf("typed stackable %s = %#v, source %#v", id, item, items[id])
+		}
+	}
+
+	typedFiltered, err := api.ByClassStackables([]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"})
+	if err != nil {
+		t.Fatalf("ByClassStackables() error = %v", err)
+	}
+	if len(typedFiltered) != 1 || api.CountStackables(typedFiltered) != 100 {
+		t.Fatalf("ByClassStackables() = len %d count %d, want one stack of 100", len(typedFiltered), api.CountStackables(typedFiltered))
+	}
 }
 
 func TestStackableAPIByClassCanReadExactModdedResourceWithoutBroadeningDefaultScan(t *testing.T) {
@@ -126,6 +147,13 @@ func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	if len(faults) != 1 || faults[0].ClassName != "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'" || faults[0].Err == nil {
 		t.Fatalf("AllWithFaults() faults = %#v, want one stackable parse fault", faults)
 	}
+	typed, typedFaults, err := api.AllStackablesWithFaults()
+	if err != nil {
+		t.Fatalf("AllStackablesWithFaults() error = %v", err)
+	}
+	if len(typed) != len(items) || api.CountStackables(typed) != api.Count(items) || len(typedFaults) != len(faults) {
+		t.Fatalf("AllStackablesWithFaults() items=%#v faults=%#v, want parity with InventoryItem path", typed, typedFaults)
+	}
 }
 
 func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T) {
@@ -151,6 +179,25 @@ func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T)
 	}
 	if len(allOwned) != 1 || api.Count(allOwned) != 100 {
 		t.Fatalf("OwnedBy() = len %d count %d, want one owned stack of 100", len(allOwned), api.Count(allOwned))
+	}
+
+	typedItems, err := api.ByClassStackables([]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"})
+	if err != nil {
+		t.Fatalf("ByClassStackables() error = %v", err)
+	}
+	typedOwned, err := api.FilterOwnedByStackables(typedItems, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("FilterOwnedByStackables() error = %v", err)
+	}
+	if len(typedOwned) != 1 || api.CountStackables(typedOwned) != 100 {
+		t.Fatalf("FilterOwnedByStackables() = len %d count %d, want one owned stack of 100", len(typedOwned), api.CountStackables(typedOwned))
+	}
+	allTypedOwned, err := api.OwnedByStackables(arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("OwnedByStackables() error = %v", err)
+	}
+	if len(allTypedOwned) != 1 || api.CountStackables(allTypedOwned) != 100 {
+		t.Fatalf("OwnedByStackables() = len %d count %d, want one owned stack of 100", len(allTypedOwned), api.CountStackables(allTypedOwned))
 	}
 }
 

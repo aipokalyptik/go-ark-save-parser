@@ -31,6 +31,14 @@ func (s *StackableAPI) Count(items map[uuid.UUID]arkobject.InventoryItem) int32 
 	return count
 }
 
+func (s *StackableAPI) CountStackables(items map[uuid.UUID]arkobject.StackableItem) int32 {
+	var count int32
+	for _, item := range items {
+		count += item.Quantity
+	}
+	return count
+}
+
 func (s *StackableAPI) All() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
 		return s.IsApplicableBlueprint(info.ClassName)
@@ -48,6 +56,14 @@ func (s *StackableAPI) All() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	return out, nil
 }
 
+func (s *StackableAPI) AllStackables() (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.All()
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
+}
+
 func (s *StackableAPI) AllWithFaults() (map[uuid.UUID]arkobject.InventoryItem, []arksave.FaultyObjectInfo, error) {
 	objects, faults, err := s.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
 		return s.IsApplicableBlueprint(info.ClassName)
@@ -63,6 +79,14 @@ func (s *StackableAPI) AllWithFaults() (map[uuid.UUID]arkobject.InventoryItem, [
 		out[info.UUID] = arkobject.InventoryItemFromObject(info.Object)
 	}
 	return out, faults, nil
+}
+
+func (s *StackableAPI) AllStackablesWithFaults() (map[uuid.UUID]arkobject.StackableItem, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := s.AllWithFaults()
+	if err != nil {
+		return nil, nil, err
+	}
+	return stackableItemsFromInventoryItems(items), faults, nil
 }
 
 func (s *StackableAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.InventoryItem, error) {
@@ -87,16 +111,48 @@ func (s *StackableAPI) ByClass(blueprints []string) (map[uuid.UUID]arkobject.Inv
 	return out, nil
 }
 
+func (s *StackableAPI) ByClassStackables(blueprints []string) (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.ByClass(blueprints)
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
+}
+
 func (s *StackableAPI) Resources() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	return s.byBlueprintSubstring("Resources/PrimalItemResource")
+}
+
+func (s *StackableAPI) ResourcesStackables() (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.Resources()
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
 }
 
 func (s *StackableAPI) Ammo() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	return s.byBlueprintSubstring("PrimalItemAmmo")
 }
 
+func (s *StackableAPI) AmmoStackables() (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.Ammo()
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
+}
+
 func (s *StackableAPI) Consumables() (map[uuid.UUID]arkobject.InventoryItem, error) {
 	return s.byBlueprintSubstring("/PrimalItemConsumable")
+}
+
+func (s *StackableAPI) ConsumablesStackables() (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.Consumables()
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
 }
 
 func (s *StackableAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
@@ -105,6 +161,14 @@ func (s *StackableAPI) OwnedBy(owner arkobject.ObjectOwner) (map[uuid.UUID]arkob
 		return nil, err
 	}
 	return s.FilterOwnedBy(all, owner)
+}
+
+func (s *StackableAPI) OwnedByStackables(owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.StackableItem, error) {
+	items, err := s.OwnedBy(owner)
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(items), nil
 }
 
 func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.InventoryItem, error) {
@@ -123,6 +187,25 @@ func (s *StackableAPI) FilterOwnedBy(items map[uuid.UUID]arkobject.InventoryItem
 		}
 	}
 	return out, nil
+}
+
+func (s *StackableAPI) FilterOwnedByStackables(items map[uuid.UUID]arkobject.StackableItem, owner arkobject.ObjectOwner) (map[uuid.UUID]arkobject.StackableItem, error) {
+	inventoryItems := make(map[uuid.UUID]arkobject.InventoryItem, len(items))
+	for id, item := range items {
+		inventoryItems[id] = arkobject.InventoryItem{
+			UUID:           item.UUID,
+			Blueprint:      item.Blueprint,
+			Object:         item.Object,
+			Quantity:       item.Quantity,
+			OwnerInventory: item.OwnerInventory,
+			Crafter:        item.Crafter,
+		}
+	}
+	filtered, err := s.FilterOwnedBy(inventoryItems, owner)
+	if err != nil {
+		return nil, err
+	}
+	return stackableItemsFromInventoryItems(filtered), nil
 }
 
 func selectedInventoryContainerOwners(save *arksave.Save) (map[uuid.UUID]arkobject.ObjectOwner, error) {
@@ -173,6 +256,14 @@ func selectedObjectReferenceUUID(container arkproperty.Container, name string) (
 	}
 	id, err := uuid.Parse(rawID)
 	return id, err == nil
+}
+
+func stackableItemsFromInventoryItems(items map[uuid.UUID]arkobject.InventoryItem) map[uuid.UUID]arkobject.StackableItem {
+	out := make(map[uuid.UUID]arkobject.StackableItem, len(items))
+	for id, item := range items {
+		out[id] = arkobject.StackableItemFromInventoryItem(item)
+	}
+	return out
 }
 
 func ownerMatches(candidate arkobject.ObjectOwner, target arkobject.ObjectOwner) bool {

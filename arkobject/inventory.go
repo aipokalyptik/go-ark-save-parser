@@ -51,6 +51,15 @@ type InventoryItem struct {
 	Crafter        *ObjectCrafter
 }
 
+type StackableItem struct {
+	UUID           uuid.UUID
+	Blueprint      string
+	Object         *GameObject
+	Quantity       int32
+	OwnerInventory *uuid.UUID
+	Crafter        *ObjectCrafter
+}
+
 type ObjectCrafter struct {
 	CharacterName string
 	TribeName     string
@@ -94,6 +103,21 @@ func InventoryItemFromObject(object *GameObject) InventoryItem {
 		item.Crafter = &crafter
 	}
 	return item
+}
+
+func StackableItemFromInventoryItem(item InventoryItem) StackableItem {
+	return StackableItem{
+		UUID:           item.UUID,
+		Blueprint:      item.Blueprint,
+		Object:         item.Object,
+		Quantity:       item.Quantity,
+		OwnerInventory: item.OwnerInventory,
+		Crafter:        item.Crafter,
+	}
+}
+
+func StackableItemFromObject(object *GameObject) StackableItem {
+	return StackableItemFromInventoryItem(InventoryItemFromObject(object))
 }
 
 func uuidFromReferenceValue(value any) (uuid.UUID, bool) {
