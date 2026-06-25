@@ -133,6 +133,7 @@ func usage(out io.Writer) error {
   arksave [--redact] mutate remove-object <save.ark> <out.ark> <uuid>
   arksave [--redact] mutate remove-class-contains <save.ark> <out.ark> <class-substring>
   arksave [--redact] mutate import-base-binary <save.ark> <out.ark> <base-export-dir>
+  arksave [--redact] mutate import-dino-binary <save.ark> <out.ark> <dino-export-dir>
   arksave [--redact] mutate put-object-hex <save.ark> <out.ark> <uuid> <hex-value>
   arksave [--redact] mutate put-custom <save.ark> <out.ark> <key> <hex-value>
 
@@ -444,6 +445,16 @@ func mutate(args []string, out io.Writer, opts runOptions) error {
 			return err
 		}
 		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with imported base rows=%d: %s\n", imported, displayString(args[2], opts))
+		return err
+	case "import-dino-binary":
+		if len(args) != 4 {
+			return fmt.Errorf("mutate import-dino-binary requires a local .ark path, explicit output path, and dino export directory")
+		}
+		imported, err := arkmutation.ImportDinoBinary(args[1], args[2], args[3])
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(out, "Wrote experimental live-server-unverified mutation copy with imported dino rows=%d: %s\n", imported, displayString(args[2], opts))
 		return err
 	case "put-custom":
 		if len(args) != 5 {

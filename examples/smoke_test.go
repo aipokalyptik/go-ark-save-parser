@@ -24,6 +24,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	objectCopyPath := filepath.Join(dir, "object-copy.ark")
 	customCopyPath := filepath.Join(dir, "custom-copy.ark")
 	dinoHeatmapPath := filepath.Join(dir, "dino-heatmap.json")
+	dinoExportPath := filepath.Join(dir, "dino-export")
 	heatmapPath := filepath.Join(dir, "structure-heatmap.json")
 	baseExportPath := filepath.Join(dir, "base-export")
 	exportAllPath := filepath.Join(dir, "json-exports")
@@ -122,6 +123,15 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "dino_babies", "wild_babies=0 tamed_babies=0", savePath)
 	runExample(t, "dino_wild_tamables", "wild_dinos=1 wild_tamables=1", savePath)
 	runExample(t, "dino_wild_tamed", "wild_tamed=0 max_level=0", savePath)
+	runExample(t, "dino_export_from_save", "dinos=1 rows=1 faults=0 wrote=", savePath, dinoExportPath)
+	for _, path := range []string{
+		filepath.Join(dinoExportPath, "manifest.json"),
+		filepath.Join(dinoExportPath, "dino_"+dinoID.String(), "dino_"+dinoID.String()+".bin"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("dino_export_from_save output %s missing: %v", path, err)
+		}
+	}
 	runExample(t, "dino_heatmap", "cells=0 total=0 max=0 faults=0 wrote=", savePath, dinoHeatmapPath)
 	if _, err := os.Stat(dinoHeatmapPath); err != nil {
 		t.Fatalf("dino_heatmap output missing: %v", err)
@@ -200,6 +210,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 		t.Fatalf("ObjectBinary(imported structure %s) error = %v", structureID, err)
 	}
 	_ = baseImportCopy.Close()
+	runExample(t, "mutation_copy", "imported dino rows: 1", "import-dino-binary", savePath, baseImportCopyPath+"-dino", dinoExportPath)
 	runExample(t, "mutation_copy", "wrote object bytes:", "put-object-hex", savePath, objectCopyPath, objectID.String(), "090807")
 	objectCopy, err := arksave.Open(objectCopyPath)
 	if err != nil {

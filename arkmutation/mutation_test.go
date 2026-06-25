@@ -164,6 +164,49 @@ func TestImportBaseBinaryWritesCopyAndReopens(t *testing.T) {
 	}
 }
 
+func TestImportDinoBinaryWritesCopyAndReopens(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input.ark")
+	output := filepath.Join(dir, "output.ark")
+	exportDir := filepath.Join(dir, "dino-export", "dino_aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	createSyntheticSave(t, input, uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), testfixtures.GenericObjectBytes(0x10000001, 0x10000003))
+	if err := os.MkdirAll(exportDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll(exportDir) error = %v", err)
+	}
+	dinoBytes := testfixtures.GenericObjectBytes(0x10000002, 0x10000003)
+	statusBytes := testfixtures.GenericObjectBytes(0x10000004, 0x10000003)
+	if err := os.WriteFile(filepath.Join(exportDir, "dino_"+dinoID.String()+".bin"), dinoBytes, 0o600); err != nil {
+		t.Fatalf("write dino export row: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(exportDir, "status_"+statusID.String()+".bin"), statusBytes, 0o600); err != nil {
+		t.Fatalf("write status export row: %v", err)
+	}
+
+	imported, err := ImportDinoBinary(input, output, filepath.Join(dir, "dino-export"))
+	if err != nil {
+		t.Fatalf("ImportDinoBinary() error = %v", err)
+	}
+	if imported != 2 {
+		t.Fatalf("ImportDinoBinary() imported = %d, want 2", imported)
+	}
+	mutated, err := arksave.Open(output)
+	if err != nil {
+		t.Fatalf("Open(output) error = %v", err)
+	}
+	for id, want := range map[uuid.UUID][]byte{dinoID: dinoBytes, statusID: statusBytes} {
+		got, err := mutated.ObjectBinary(id)
+		if err != nil {
+			t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatalf("imported ObjectBinary(%s) = % x, want % x", id, got, want)
+		}
+	}
+	_ = mutated.Close()
+}
+
 func TestCopySaveRequiresDistinctNewOutputPath(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.ark")

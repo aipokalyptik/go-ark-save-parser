@@ -53,6 +53,10 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   dinos without printing class names or locations.
 - `dino_wild_tamed`: count tamed dinos with no parsed ancestors and report the
   highest current level without printing names, classes, or owners.
+- `dino_export_from_save`: write direct-save dino rows plus linked status and
+  inventory rows, when present, to an explicit output directory and print
+  dino/row/fault counts. Cryopod insertion, stat mutation, and live-server
+  validation remain mutation-copy-only and unverified.
 - `dino_heatmap`: generate a compact JSON summary for a local dino heatmap
   using an explicit output path, optional resolution, and optional `--no-cryos`
   mode for oracle comparisons that avoid malformed embedded cryopod payloads.
@@ -137,7 +141,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 
 - `mutation_copy`: copy a `.ark` save to a new explicit output path, remove an
   object row or all objects whose class contains a substring from a copied save,
-  import raw structure rows from `base_export_from_save`, upsert object bytes
+  import raw structure rows from `base_export_from_save`, import direct-save
+  dino/status/inventory rows from `dino_export_from_save`, upsert object bytes
   from hex, or upsert a custom-table value from hex. Mutation helpers never
   modify inputs in place and are structurally tested only; live Ark server
   behavior remains unverified.

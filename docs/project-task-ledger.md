@@ -220,9 +220,14 @@ documented.
       explicit copied saves. Moving structures, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
-- [ ] Add more structural mutation tests for upstream dino, equipment, and
-      structure mutation examples where local-copy behavior can be represented
-      without claiming live-server safety.
+- [~] Upstream dino extract/reinsert examples have partial structural coverage
+      through exported direct-save dino, status, and inventory rows plus
+      `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
+      into target inventories, generated location changes, stat mutation, and
+      live-server acceptance remain unverified.
+- [ ] Add more structural mutation tests for upstream dino trait/stat/growth,
+      equipment insertion, and structure mutation examples where local-copy
+      behavior can be represented without claiming live-server safety.
 
 ### Examples And Oracle Comparisons
 
@@ -251,6 +256,10 @@ documented.
 - [x] `dino_babies`.
 - [x] `dino_wild_tamables`.
 - [x] `dino_wild_tamed`.
+- [x] `dino_export_from_save`: represented as an explicit-output structural
+      export that writes copied direct-save dino rows plus linked status and
+      inventory rows when present. Cryopod insertion and live-server validation
+      remain mutation-copy-adjacent and unverified.
 - [x] `dino_heatmap`.
 - [blocked] `dino_cryopod_location`: upstream/private malformed cryopod path
       blocks stable oracle output.

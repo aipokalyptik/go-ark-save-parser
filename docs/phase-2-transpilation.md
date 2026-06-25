@@ -353,9 +353,14 @@ For the cross-phase monitorable checklist, see
       explicit copied save. Location movement, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
+- [x] Add partial structural dino extract/reinsert coverage by exporting
+      direct-save dino rows plus linked status/inventory rows and reinserting
+      them into an explicit copied save. Cryopod insertion, generated location
+      changes, stat mutation, and live-server acceptance remain unverified.
 - [x] Expose experimental CLI mutation commands for copy, object removal by
-      UUID or class substring, base binary row import, object hex-byte upserts,
-      and custom-table hex-byte upserts against explicit output copies.
+      UUID or class substring, base and dino binary row import, object hex-byte
+      upserts, and custom-table hex-byte upserts against explicit output
+      copies.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests only.
 - [x] Document live-server validation as out of scope.
@@ -468,6 +473,10 @@ For the cross-phase monitorable checklist, see
       wild-tamable dino counts using privacy-safe aggregate fields.
 - [x] Compare normalized Go `dino_wild_tamed` output with upstream
       ancestorless tamed-dino detection using privacy-safe aggregate fields.
+- [x] Add `dino_export_from_save` as a read-only structural export for
+      direct-save dino rows and linked status/inventory rows. Private oracle
+      comparison for full extract/reinsert remains mutation-copy-only and
+      live-server-unverified.
 - [x] Probe upstream `dino_api/ex_10_get_cryopod_location.py` and
       `dino_api/ex_11_get_dino_pedigrees.py`; both are offline-compatible in
       principle but blocked as oracle cases on the supplied private save by

@@ -109,11 +109,23 @@ func PutCustomValue(inputPath string, outputPath string, key string, value []byt
 }
 
 func ImportBaseBinary(inputPath string, outputPath string, baseExportDir string) (int, error) {
-	rows, err := readBaseExportRows(baseExportDir)
+	rows, err := readExportRows(baseExportDir, []string{"str_"})
 	if err != nil {
 		return 0, err
 	}
-	err = mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
+	return putObjectRows(inputPath, outputPath, rows)
+}
+
+func ImportDinoBinary(inputPath string, outputPath string, dinoExportDir string) (int, error) {
+	rows, err := readExportRows(dinoExportDir, []string{"dino_", "status_", "inv_"})
+	if err != nil {
+		return 0, err
+	}
+	return putObjectRows(inputPath, outputPath, rows)
+}
+
+func putObjectRows(inputPath string, outputPath string, rows map[uuid.UUID][]byte) (int, error) {
+	err := mutateCopy(inputPath, outputPath, func(db *sql.DB) error {
 		for id, value := range rows {
 			if _, err := db.Exec(`insert into game (key, value) values (?, ?)
 				on conflict(key) do update set value = excluded.value`, id[:], value); err != nil {
@@ -128,12 +140,12 @@ func ImportBaseBinary(inputPath string, outputPath string, baseExportDir string)
 	return len(rows), nil
 }
 
-func readBaseExportRows(baseExportDir string) (map[uuid.UUID][]byte, error) {
-	if baseExportDir == "" {
-		return nil, errors.New("base export directory is required")
+func readExportRows(exportDir string, prefixes []string) (map[uuid.UUID][]byte, error) {
+	if exportDir == "" {
+		return nil, errors.New("export directory is required")
 	}
 	rows := map[uuid.UUID][]byte{}
-	err := filepath.WalkDir(baseExportDir, func(path string, entry os.DirEntry, err error) error {
+	err := filepath.WalkDir(exportDir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -141,13 +153,14 @@ func readBaseExportRows(baseExportDir string) (map[uuid.UUID][]byte, error) {
 			return nil
 		}
 		name := entry.Name()
-		if !strings.HasPrefix(name, "str_") || !strings.HasSuffix(name, ".bin") {
+		prefix, ok := matchingExportPrefix(name, prefixes)
+		if !ok || !strings.HasSuffix(name, ".bin") {
 			return nil
 		}
-		rawID := strings.TrimSuffix(strings.TrimPrefix(name, "str_"), ".bin")
+		rawID := strings.TrimSuffix(strings.TrimPrefix(name, prefix), ".bin")
 		id, err := uuid.Parse(rawID)
 		if err != nil {
-			return fmt.Errorf("parse base export structure filename %s: %w", name, err)
+			return fmt.Errorf("parse export row filename %s: %w", name, err)
 		}
 		value, err := os.ReadFile(path)
 		if err != nil {
@@ -160,9 +173,18 @@ func readBaseExportRows(baseExportDir string) (map[uuid.UUID][]byte, error) {
 		return nil, err
 	}
 	if len(rows) == 0 {
-		return nil, fmt.Errorf("base export directory %s contains no str_<uuid>.bin files", baseExportDir)
+		return nil, fmt.Errorf("export directory %s contains no supported row files", exportDir)
 	}
 	return rows, nil
+}
+
+func matchingExportPrefix(name string, prefixes []string) (string, bool) {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(name, prefix) {
+			return prefix, true
+		}
+	}
+	return "", false
 }
 
 func matchingObjectIDsByClassContains(inputPath string, substring string) ([]uuid.UUID, error) {

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
@@ -158,6 +160,43 @@ func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {
 	}
 	if len(filtered) != 1 {
 		t.Fatalf("ByClass() length = %d, want 1", len(filtered))
+	}
+}
+
+func TestDinoAPIExportBinaryWritesDinoAndLinkedRows(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	outDir := filepath.Join(t.TempDir(), "dino-export")
+	exported, err := NewDino(save).ExportBinary(outDir)
+	if err != nil {
+		t.Fatalf("ExportBinary() error = %v", err)
+	}
+	if exported.DinoCount != 1 || exported.RowCount != 2 || exported.FaultCount != 0 {
+		t.Fatalf("ExportBinary() = %#v, want one dino and two rows", exported)
+	}
+	dinoDir := filepath.Join(outDir, "dino_"+dinoID.String())
+	for _, id := range []uuid.UUID{dinoID, statusID} {
+		prefix := "dino_"
+		if id == statusID {
+			prefix = "status_"
+		}
+		got, err := os.ReadFile(filepath.Join(dinoDir, prefix+id.String()+".bin"))
+		if err != nil {
+			t.Fatalf("read exported row %s: %v", id, err)
+		}
+		want, err := save.ObjectBinary(id)
+		if err != nil {
+			t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatalf("exported row %s bytes differ from save row", id)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "manifest.json")); err != nil {
+		t.Fatalf("manifest missing: %v", err)
 	}
 }
 

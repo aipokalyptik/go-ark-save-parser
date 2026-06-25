@@ -180,7 +180,12 @@ correctness.
   generated fuel/ammo contents, and live-server acceptance remain unverified.
 - `examples/dino_api/ex_06_change_dino_traits.py`
 - `examples/dino_api/ex_12_remove_tamed_dino_from_save.py`
-- `examples/dino_api/ex_13_extract_and_reinsert_dino.py`
+- `examples/dino_api/ex_13_extract_and_reinsert_dino.py` is partially
+  structurally represented by `examples/dino_export_from_save` plus
+  `arkmutation.ImportDinoBinary`, which can reinsert copied direct-save dino,
+  status, and inventory rows into an explicit output save copy. Cryopod
+  insertion into target inventories, generated location changes, and
+  live-server acceptance remain unverified.
 - `examples/dino_api/ex_14_boost_dino_stats.py`
 - `examples/dino_api/ex_15_force_grow_up_babies.py`
 - `examples/equipment_api/ex_07_generate_blueprint_and_insert_in_save.py`
