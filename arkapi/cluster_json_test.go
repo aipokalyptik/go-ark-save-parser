@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
@@ -53,6 +54,33 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	}
 	if info.Dinos[0].ParseError != "unsupported archive version" {
 		t.Fatalf("ClusterDataInfo dino ParseError = %q", info.Dinos[0].ParseError)
+	}
+}
+
+func TestExportClusterDataIncludesUploadedDinoClassNames(t *testing.T) {
+	data := &arkcluster.Data{
+		ID:   "EOS_abc123",
+		Path: "/tmp/EOS_abc123",
+		Dinos: []arkcluster.Dino{{
+			Index: 0,
+			Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+				{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"},
+				{ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"},
+				{ClassName: ""},
+			}},
+		}},
+	}
+
+	info := ExportClusterData(data)
+	if len(info.Dinos) != 1 {
+		t.Fatalf("Dinos length = %d, want 1", len(info.Dinos))
+	}
+	want := []string{
+		"/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+		"/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C",
+	}
+	if !reflect.DeepEqual(info.Dinos[0].ClassNames, want) {
+		t.Fatalf("ClassNames = %#v, want %#v", info.Dinos[0].ClassNames, want)
 	}
 }
 

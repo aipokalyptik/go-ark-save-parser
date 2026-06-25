@@ -3,6 +3,7 @@ package arkapi
 import (
 	"encoding/json"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
@@ -37,12 +38,13 @@ type ClusterItemInfo struct {
 }
 
 type ClusterDinoInfo struct {
-	Index       int     `json:"index"`
-	Version     float64 `json:"version"`
-	UploadTime  float64 `json:"upload_time"`
-	RawSize     int     `json:"raw_size"`
-	ObjectCount int     `json:"object_count"`
-	ParseError  string  `json:"parse_error,omitempty"`
+	Index       int      `json:"index"`
+	Version     float64  `json:"version"`
+	UploadTime  float64  `json:"upload_time"`
+	RawSize     int      `json:"raw_size"`
+	ObjectCount int      `json:"object_count"`
+	ClassNames  []string `json:"class_names,omitempty"`
+	ParseError  string   `json:"parse_error,omitempty"`
 }
 
 func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
@@ -74,8 +76,10 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 	}
 	for _, dino := range data.Dinos {
 		objectCount := 0
+		var classNames []string
 		if dino.Archive != nil {
 			objectCount = len(dino.Archive.Objects)
+			classNames = archiveClassNames(dino.Archive)
 		}
 		info.Dinos = append(info.Dinos, ClusterDinoInfo{
 			Index:       dino.Index,
@@ -83,10 +87,24 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			UploadTime:  dino.UploadTime,
 			RawSize:     dino.RawSize,
 			ObjectCount: objectCount,
+			ClassNames:  classNames,
 			ParseError:  dino.ParseError,
 		})
 	}
 	return info
+}
+
+func archiveClassNames(archive *arkarchive.Archive) []string {
+	if archive == nil {
+		return nil
+	}
+	names := make([]string, 0, len(archive.Objects))
+	for _, object := range archive.Objects {
+		if object.ClassName != "" {
+			names = append(names, object.ClassName)
+		}
+	}
+	return names
 }
 
 func clusterItemType(item arkcluster.Item) string {
