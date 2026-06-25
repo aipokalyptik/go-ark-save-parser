@@ -642,6 +642,23 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 	if _, err := r.ReadUInt32(); err != nil {
 		return Map{}, err
 	}
+	enumKeyed := false
+	if keyType == TypeByte {
+		enumKeyed = true
+		if _, err := r.ReadName(""); err != nil {
+			return Map{}, err
+		}
+		if _, err := r.ReadInt32(); err != nil {
+			return Map{}, err
+		}
+		if _, err := r.ReadName(""); err != nil {
+			return Map{}, err
+		}
+		if _, err := r.ReadInt32(); err != nil {
+			return Map{}, err
+		}
+		keyType = TypeEnum
+	}
 	valueTypeName, err := r.ReadName("")
 	if err != nil {
 		return Map{}, err
@@ -674,7 +691,7 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 	}
 	entries := make([]MapEntry, 0, count)
 	for i := uint32(0); i < count; i++ {
-		key, err := readValue(keyType, r)
+		key, err := readMapKey(keyType, enumKeyed, r)
 		if err != nil {
 			return Map{}, err
 		}
@@ -688,6 +705,17 @@ func readMap(r *arkbinary.Reader) (Map, error) {
 		return Map{}, err
 	}
 	return Map{KeyType: keyType, ValueType: valueType, Entries: entries}, nil
+}
+
+func readMapKey(t Type, enumKeyed bool, r *arkbinary.Reader) (any, error) {
+	if enumKeyed {
+		name, err := r.ReadName("")
+		if err != nil {
+			return nil, err
+		}
+		return EnumValue{Name: name}, nil
+	}
+	return readValue(t, r)
 }
 
 func readMapValue(t Type, r *arkbinary.Reader, bodyEnd int) (any, error) {

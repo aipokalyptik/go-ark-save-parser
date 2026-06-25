@@ -54,6 +54,9 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add tests and generic property-list parsing for struct properties.
 - [x] Add tests and parsing for simple value maps and sets.
 - [x] Add tests and parsing for map entries with generic struct values.
+- [x] Add tests and parsing for enum-keyed map entries with generic struct
+      values, including the serialized enum descriptor block used by
+      `TMap<TEnumAsByte<...>, ...>` payloads.
 - [x] Add tests and parsing for nested map/set property-list edge cases seen in
       structure wireless exchange references.
 - [x] Add raw fallback preservation for packed unknown structs.
