@@ -37,7 +37,8 @@ offline parser without Python or private chat context.
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local
       profile/tribe aggregate counts, local player deaths and unlocked engram
-      set aggregates, save-level player and tribe relation aggregates,
+      set aggregates, player list aggregates, save-level player and tribe
+      relation aggregates,
       dino aggregate counts, no-cryopod dino best-stat selection,
       property-filtered object counts, player inventory item/location
       aggregates, stackable item/quantity counts, equipment longneck blueprint

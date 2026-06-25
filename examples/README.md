@@ -82,6 +82,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `player_all`: accept a save path or save directory and print player/tribe
   aggregate counts, falling back to sibling local profile files when a save has
   no embedded player store.
+- `player_list`: accept a save path or save directory and print privacy-safe
+  player list aggregates for the upstream all-players iteration workflow.
 - `player_unlocked_engrams`: accept a save path or save directory and print the
   sorted distinct unlocked engram blueprint set plus aggregate boundary values.
 - `player_tribe_links`: accept a save path or save directory and print active

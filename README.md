@@ -56,7 +56,7 @@ Implemented:
   `export-tribute-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering thirty-eight aggregate read-only cases.
+  covering thirty-nine aggregate read-only cases.
 
 Still in progress:
 
@@ -228,6 +228,7 @@ go run ./examples/property_filter /path/to/Valguero_WP.ark TamerString Health
 go run ./examples/dino_best_stat --no-cryos /path/to/Valguero_WP.ark
 go run ./examples/stackable_count /path/to/Valguero_WP.ark /Game/Path/PrimalItemResource_Example.PrimalItemResource_Example_C
 go run ./examples/equipment_best /path/to/Valguero_WP.ark
+go run ./examples/player_list /path/to/save-directory
 go run ./examples/player_unlocked_engrams /path/to/save-directory
 go run ./examples/equipment_rank /path/to/Valguero_WP.ark
 go run ./examples/local_profiles /path/to/save-directory

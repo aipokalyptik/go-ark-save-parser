@@ -317,6 +317,7 @@ def python_local_profiles_oracle(save_path: Path, repo_root: Path, upstream_src:
             "tribe_player_links": sum(len(players) for players in player_api.tribe_to_player_map.values()),
             "total_deaths": sum(player.nr_of_deaths for player in player_api.players),
             "highest_level": max((player.stats.level for player in player_api.players), default=0),
+            "players_with_names": sum(1 for player in player_api.players if getattr(player, "name", None) or getattr(player, "char_name", None)),
             "unlocked_engrams": len(unlocked_engrams),
             "first_unlocked_engram": unlocked_engrams[0] if unlocked_engrams else "",
             "last_unlocked_engram": unlocked_engrams[-1] if unlocked_engrams else "",
@@ -1309,6 +1310,24 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
             "last": py_local_profiles["last_unlocked_engram"],
         }
         cases.append(CaseResult("player_unlocked_engrams", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path unlocked-engram set compared"))
+
+    go_player_list = run(["go", "run", "./examples/player_list", str(save_path)], repo_root, env)
+    private["go"]["player_list"] = {
+        "exit_code": go_player_list.returncode,
+        "stdout": go_player_list.stdout,
+        "stderr": go_player_list.stderr,
+    }
+    if go_player_list.returncode != 0:
+        cases.append(CaseResult("player_list", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_player_list.stdout)
+        private["go"]["player_list"]["parsed"] = got
+        want = {
+            "players": py_local_profiles["parsed_players"],
+            "with_names": py_local_profiles["players_with_names"],
+            "highest_level": py_local_profiles["highest_level"],
+        }
+        cases.append(CaseResult("player_list", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path player list aggregates compared"))
 
     go_player_all = run(["go", "run", "./examples/player_all", str(save_path)], repo_root, env)
     private["go"]["player_all"] = {
