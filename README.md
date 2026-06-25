@@ -23,6 +23,9 @@ Implemented:
   and simple sets.
 - Read-only General, Player/Tribe local-file, local tribute, Dino, Structure,
   Base, Stackable, Equipment, save-info JSON, and domain JSON API wrappers.
+- Save-contained player and tribe parsing for game-table
+  `PrimalPlayerDataBP`/`PrimalTribeData` objects and embedded
+  `GameModeCustomBytes` player/tribe archives.
 - Fault-tolerant read paths for dino, structure, equipment, stackable, and base
   scans that preserve valid parsed objects while reporting per-object parse
   failures.
@@ -44,7 +47,7 @@ Implemented:
   `export-json`, `export-domain-json`, and `export-cluster-json` commands.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
-  covering twenty-six aggregate read-only cases.
+  covering thirty-two aggregate read-only cases.
 
 Still in progress:
 
@@ -52,8 +55,8 @@ Still in progress:
   data.
 - Full domain models and APIs for legacy/modded cryopod variants, legacy/modded
   saddle payloads and cosmetics inside cryopods, full pedigree rendering/tree
-  exports, save-contained player/tribe data, richer local cluster item/dino
-  domain models, and remaining model-specific JSON export edges.
+  exports, richer local cluster item/dino domain models, and remaining
+  model-specific JSON export edges.
 - Mutation APIs beyond copy/remove/upsert structural helpers. All mutation
   helpers remain experimental and live-server-unverified.
 
