@@ -369,7 +369,10 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Experimental `mutate`.
 - [~] Test fixture cleanup:
   - [x] Centralize many public fixtures in `internal/testfixtures`.
-  - [ ] Continue migrating remaining domain-specific parser fixtures as touched.
+  - [~] Continue migrating remaining domain-specific parser fixtures as touched;
+        `arkapi` general/core synthetic save helpers now delegate header and
+        object wrapping to `internal/testfixtures`, with lower-level
+        dino/equipment/profile parser payload builders still remaining.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

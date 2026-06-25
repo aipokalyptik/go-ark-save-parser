@@ -774,7 +774,7 @@ func writeStringProperty(buf *bytes.Buffer, name uint32, value string) {
 	_ = binary.Write(buf, binary.LittleEndian, int32(len(value)+5))
 	_ = binary.Write(buf, binary.LittleEndian, int32(0))
 	buf.WriteByte(0)
-	writeArkString(buf, value)
+	testfixtures.WriteArkString(buf, value)
 }
 
 func writePositionedUInt16Property(buf *bytes.Buffer, name uint32, position int32, value uint16) {

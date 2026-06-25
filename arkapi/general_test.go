@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"path/filepath"
 	"testing"
 
@@ -157,213 +156,93 @@ func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, 
 
 func syntheticObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(4))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	buf.WriteByte(0)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(250))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
+	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
 }
 
 func syntheticHeader() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, int16(12))
-	nameOffsetPosition := buf.Len()
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, float64(1234.5))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(77))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))
-	for buf.Len() < 30 {
-		buf.WriteByte(0)
-	}
-	writeArkString(&buf, "Valguero_WP")
-	nameOffset := int32(buf.Len())
-	binary.LittleEndian.PutUint32(buf.Bytes()[nameOffsetPosition:nameOffsetPosition+4], uint32(nameOffset))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(82))
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000000))
-	writeArkString(&buf, "None")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000001))
-	writeArkString(&buf, "Blueprint'/Game/Test.Test_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000002))
-	writeArkString(&buf, "Health")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000003))
-	writeArkString(&buf, "IntProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	writeArkString(&buf, "None")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000005))
-	writeArkString(&buf, "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000006))
-	writeArkString(&buf, "StructureID")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000007))
-	writeArkString(&buf, "MaxHealth")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000008))
-	writeArkString(&buf, "Health")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000009))
-	writeArkString(&buf, "TargetingTeam")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000a))
-	writeArkString(&buf, "FloatProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000b))
-	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000c))
-	writeArkString(&buf, "ItemQuantity")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000d))
-	writeArkString(&buf, "bIsBlueprint")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000e))
-	writeArkString(&buf, "BoolProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000000f))
-	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000010))
-	writeArkString(&buf, "ItemRating")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000011))
-	writeArkString(&buf, "ItemQualityIndex")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000012))
-	writeArkString(&buf, "SavedDurability")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000013))
-	writeArkString(&buf, "bIsEngram")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
-	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000015))
-	writeArkString(&buf, "DinoID1")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000016))
-	writeArkString(&buf, "DinoID2")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000017))
-	writeArkString(&buf, "bIsFemale")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000018))
-	writeArkString(&buf, "TamedTimeStamp")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000019))
-	writeArkString(&buf, "DoubleProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001a))
-	writeArkString(&buf, "StrProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001b))
-	writeArkString(&buf, "CrafterCharacterName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001c))
-	writeArkString(&buf, "CrafterTribeName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001d))
-	writeArkString(&buf, "LinkedStructures")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001e))
-	writeArkString(&buf, "ArrayProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000001f))
-	writeArkString(&buf, "ObjectProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000020))
-	writeArkString(&buf, "bIsDead")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000021))
-	writeArkString(&buf, "bIsBaby")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000022))
-	writeArkString(&buf, "bEquippedItem")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000023))
-	writeArkString(&buf, "MyInventoryComponent")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000024))
-	writeArkString(&buf, "TamedName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000025))
-	writeArkString(&buf, "bNeutered")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000026))
-	writeArkString(&buf, "TribeName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000027))
-	writeArkString(&buf, "TamingTeamID")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000028))
-	writeArkString(&buf, "TamerString")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000029))
-	writeArkString(&buf, "OwningPlayerName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002a))
-	writeArkString(&buf, "ImprinterName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002b))
-	writeArkString(&buf, "ImprinterPlayerUniqueNetId")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002c))
-	writeArkString(&buf, "OwningPlayerID")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002d))
-	writeArkString(&buf, "BabyAge")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002e))
-	writeArkString(&buf, "ColorSetIndices")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000002f))
-	writeArkString(&buf, "ColorSetNames")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000030))
-	writeArkString(&buf, "UploadedFromServerName")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000031))
-	writeArkString(&buf, "Black")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000032))
-	writeArkString(&buf, "Int8Property")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000033))
-	writeArkString(&buf, "NameProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000034))
-	writeArkString(&buf, "Blue")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000035))
-	writeArkString(&buf, "MyCharacterStatusComponent")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000036))
-	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatusComponent_BP.DinoCharacterStatusComponent_BP_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000037))
-	writeArkString(&buf, "BaseCharacterLevel")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000038))
-	writeArkString(&buf, "NumberOfLevelUpPointsApplied")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000039))
-	writeArkString(&buf, "NumberOfLevelUpPointsAppliedTamed")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003a))
-	writeArkString(&buf, "NumberOfMutationsAppliedTamed")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003b))
-	writeArkString(&buf, "CurrentStatusValues")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003c))
-	writeArkString(&buf, "DinoImprintingQuality")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003d))
-	writeArkString(&buf, "GeneTraits")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003e))
-	writeArkString(&buf, "MutableMelee[2]")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000003f))
-	writeArkString(&buf, "Robust")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000040))
-	writeArkString(&buf, "ItemStatValues")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000041))
-	writeArkString(&buf, "UInt16Property")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000042))
-	writeArkString(&buf, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000043))
-	writeArkString(&buf, "/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000044))
-	writeArkString(&buf, "OwnerInventory")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000045))
-	writeArkString(&buf, "CurrentItemCount")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000046))
-	writeArkString(&buf, "MaxItemCount")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000047))
-	writeArkString(&buf, "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000048))
-	writeArkString(&buf, "CustomItemDatas")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000049))
-	writeArkString(&buf, "StructProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004a))
-	writeArkString(&buf, "CustomItemData")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004b))
-	writeArkString(&buf, "CustomDataBytes")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004c))
-	writeArkString(&buf, "CustomItemByteArrays")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004d))
-	writeArkString(&buf, "ByteArrays")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004e))
-	writeArkString(&buf, "CustomItemByteArray")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x1000004f))
-	writeArkString(&buf, "Bytes")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000050))
-	writeArkString(&buf, "ByteProperty")
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000051))
-	writeArkString(&buf, "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'")
-	return buf.Bytes()
-}
-
-func writeArkString(buf *bytes.Buffer, s string) {
-	if s == "" {
-		_ = binary.Write(buf, binary.LittleEndian, int32(0))
-		return
-	}
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(s)+1))
-	buf.WriteString(s)
-	buf.WriteByte(0)
+	return testfixtures.Header("Valguero_WP", map[uint32]string{
+		0x10000000: "None",
+		0x10000001: "Blueprint'/Game/Test.Test_C'",
+		0x10000002: "Health",
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x10000005: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+		0x10000006: "StructureID",
+		0x10000007: "MaxHealth",
+		0x10000008: "Health",
+		0x10000009: "TargetingTeam",
+		0x1000000a: "FloatProperty",
+		0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		0x1000000c: "ItemQuantity",
+		0x1000000d: "bIsBlueprint",
+		0x1000000e: "BoolProperty",
+		0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+		0x10000010: "ItemRating",
+		0x10000011: "ItemQualityIndex",
+		0x10000012: "SavedDurability",
+		0x10000013: "bIsEngram",
+		0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+		0x10000015: "DinoID1",
+		0x10000016: "DinoID2",
+		0x10000017: "bIsFemale",
+		0x10000018: "TamedTimeStamp",
+		0x10000019: "DoubleProperty",
+		0x1000001a: "StrProperty",
+		0x1000001b: "CrafterCharacterName",
+		0x1000001c: "CrafterTribeName",
+		0x1000001d: "LinkedStructures",
+		0x1000001e: "ArrayProperty",
+		0x1000001f: "ObjectProperty",
+		0x10000020: "bIsDead",
+		0x10000021: "bIsBaby",
+		0x10000022: "bEquippedItem",
+		0x10000023: "MyInventoryComponent",
+		0x10000024: "TamedName",
+		0x10000025: "bNeutered",
+		0x10000026: "TribeName",
+		0x10000027: "TamingTeamID",
+		0x10000028: "TamerString",
+		0x10000029: "OwningPlayerName",
+		0x1000002a: "ImprinterName",
+		0x1000002b: "ImprinterPlayerUniqueNetId",
+		0x1000002c: "OwningPlayerID",
+		0x1000002d: "BabyAge",
+		0x1000002e: "ColorSetIndices",
+		0x1000002f: "ColorSetNames",
+		0x10000030: "UploadedFromServerName",
+		0x10000031: "Black",
+		0x10000032: "Int8Property",
+		0x10000033: "NameProperty",
+		0x10000034: "Blue",
+		0x10000035: "MyCharacterStatusComponent",
+		0x10000036: "Blueprint'/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatusComponent_BP.DinoCharacterStatusComponent_BP_C'",
+		0x10000037: "BaseCharacterLevel",
+		0x10000038: "NumberOfLevelUpPointsApplied",
+		0x10000039: "NumberOfLevelUpPointsAppliedTamed",
+		0x1000003a: "NumberOfMutationsAppliedTamed",
+		0x1000003b: "CurrentStatusValues",
+		0x1000003c: "DinoImprintingQuality",
+		0x1000003d: "GeneTraits",
+		0x1000003e: "MutableMelee[2]",
+		0x1000003f: "Robust",
+		0x10000040: "ItemStatValues",
+		0x10000041: "UInt16Property",
+		0x10000042: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'",
+		0x10000043: "/ArkOmega/Buffs/Variants/Other/PrimalItemResource_Crystal_Poop.PrimalItemResource_Crystal_Poop_C",
+		0x10000044: "OwnerInventory",
+		0x10000045: "CurrentItemCount",
+		0x10000046: "MaxItemCount",
+		0x10000047: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
+		0x10000048: "CustomItemDatas",
+		0x10000049: "StructProperty",
+		0x1000004a: "CustomItemData",
+		0x1000004b: "CustomDataBytes",
+		0x1000004c: "CustomItemByteArrays",
+		0x1000004d: "ByteArrays",
+		0x1000004e: "CustomItemByteArray",
+		0x1000004f: "Bytes",
+		0x10000050: "ByteProperty",
+		0x10000051: "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'",
+	})
 }
