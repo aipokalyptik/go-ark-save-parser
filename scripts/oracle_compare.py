@@ -1388,6 +1388,7 @@ def compare_tribe_list_case(
     return CaseResult("tribe_list", "pass" if {key: got.get(key) for key in want} == want else "fail", "save path tribe list aggregates compared")
 
 
+
 def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[CaseResult], dict[str, Any]]:
     env = oracle_env(repo_root)
     py = python_oracle(save_path, upstream_src)
@@ -1586,6 +1587,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["export_json"]["parse_error"] = str(exc)
             cases.append(CaseResult("export_json", "fail", "Go JSON export could not be parsed"))
+
 
     go_local_profiles = run(["go", "run", "./examples/local_profiles", str(save_path.parent)], repo_root, env)
     private["go"]["local_profiles"] = {
@@ -2234,6 +2236,31 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         except Exception as exc:  # noqa: BLE001 - private report captures details
             private["go"]["tribute_json"]["parse_error"] = str(exc)
             cases.append(CaseResult("tribute_json", "fail", "Go tribute JSON could not be parsed"))
+
+    go_logging_config = run(["go", "run", "./examples/logging_config"], repo_root, env)
+    private["go"]["logging_config"] = {
+        "exit_code": go_logging_config.returncode,
+        "stdout": go_logging_config.stdout,
+        "stderr": go_logging_config.stderr,
+    }
+    if go_logging_config.returncode != 0:
+        cases.append(CaseResult("logging_config", "fail", "Go example exited non-zero"))
+    else:
+        expected_lines = [
+            "API logging enabled.",
+            "[api] This is an API log.",
+            "Error log level enabled.",
+            "[error] This is an error log.",
+            "All log levels enabled.",
+            "[info] This is an info log.",
+            "[save] This is a save log.",
+            "[debug] This is a debug log.",
+            "[warning] This is a warning log.",
+            "[parser] This is a parser log.",
+        ]
+        got_lines = [line for line in go_logging_config.stdout.splitlines() if line]
+        private["go"]["logging_config"]["parsed"] = {"lines": len(got_lines)}
+        cases.append(CaseResult("logging_config", "pass" if all(line in got_lines for line in expected_lines) else "fail", "standalone logging configuration output compared"))
 
     return cases, private
 

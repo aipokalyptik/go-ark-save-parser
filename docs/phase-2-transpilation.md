@@ -458,6 +458,8 @@ enough that oracle-derived tests can run against translated packages.
 - [x] Add a standalone Go `logging_config` example for the upstream logging
       configuration demonstration. The Go helper keeps state process-local and
       avoids upstream's persistent global config-file side effect.
+- [x] Compare deterministic Go `logging_config` output lines as the standalone
+      logging-helper counterpart.
 - [x] Compare normalized Go `class_lookup` output with upstream storage class
       substring filtering using privacy-safe aggregate fields.
 - [x] Compare normalized Go `class_property_summary` output with upstream

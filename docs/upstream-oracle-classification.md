@@ -95,7 +95,7 @@ hard-coded placeholder paths with local `.ark` paths:
 - `examples/other/ex_01_logging_configuration.py` is covered by
   `examples/logging_config` as a standalone logging-helper demonstration. The
   Go version keeps logging state process-local and does not persist global
-  config files.
+  config files. Oracle comparison checks the deterministic Go output lines.
 
 ## Export And Heatmap Examples
 

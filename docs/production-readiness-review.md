@@ -21,7 +21,7 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers forty-five implemented aggregate
+  oracle comparison summary currently covers forty-six implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `object_summary`,
   `property_positions`,
   `export_json`, `class_lookup`, `class_property_summary`, `local_profiles`,
@@ -37,7 +37,8 @@ Public verification reported by reviewers:
   `equipment_saddles`,
   `equipment_owned_by`, `structure_owner_count`, `structure_owners`,
   `structure_owner_locations`, `structure_at_location`, `base_components`,
-  `domain_json_dinos`, `cluster_json`, `local_tribute`, and `tribute_json`.
+  `domain_json_dinos`, `cluster_json`, `local_tribute`, `tribute_json`, and
+  `logging_config`.
   Phase 4 still requires comparison
   coverage for every runnable offline Python example where a Go counterpart
   exists or is feasible.

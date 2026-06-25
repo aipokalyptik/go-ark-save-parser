@@ -51,7 +51,8 @@ class names, stdout, and stderr stay in `.oracle/output/oracle-comparison.json`.
 - `cluster_json`: `pass` (local cluster upload counts compared)
 - `local_tribute`: `pass` (local tribute aggregate counts compared)
 - `tribute_json`: `pass` (local tribute JSON aggregate counts compared)
+- `logging_config`: `pass` (standalone logging configuration output compared)
 
 ## Counts
 
-- `pass`: 45
+- `pass`: 46
