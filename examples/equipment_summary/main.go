@@ -23,9 +23,24 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewEquipment(save)
-	items, err := api.All()
+	weapons, err := countCanonical(api, arkobject.EquipmentWeapon, arkapi.UpstreamWeaponBlueprints())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
+		fmt.Fprintf(os.Stderr, "read weapons: %v\n", err)
+		os.Exit(1)
+	}
+	armor, err := countCanonical(api, arkobject.EquipmentArmor, arkapi.UpstreamArmorBlueprints())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read armor: %v\n", err)
+		os.Exit(1)
+	}
+	saddles, err := countCanonical(api, arkobject.EquipmentSaddle, arkapi.UpstreamSaddleBlueprints())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read saddles: %v\n", err)
+		os.Exit(1)
+	}
+	shields, err := countCanonical(api, arkobject.EquipmentShield, arkapi.UpstreamShieldBlueprints())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read shields: %v\n", err)
 		os.Exit(1)
 	}
 	cryopodSaddles, _, err := arkapi.NewDino(save).SaddlesFromCryopodsWithFaults()
@@ -34,27 +49,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	var weapons, armor, saddles, shields int
-	for _, item := range items {
-		switch item.Kind {
-		case arkobject.EquipmentWeapon:
-			weapons++
-		case arkobject.EquipmentArmor:
-			armor++
-		case arkobject.EquipmentSaddle:
-			saddles++
-		case arkobject.EquipmentShield:
-			shields++
-		}
-	}
-
 	fmt.Printf(
 		"items=%d weapons=%d armor=%d saddles=%d cryopod_saddles=%d shields=%d\n",
-		len(items),
+		weapons+armor+saddles+shields,
 		weapons,
 		armor,
 		saddles,
 		len(cryopodSaddles),
 		shields,
 	)
+}
+
+func countCanonical(api *arkapi.EquipmentAPI, kind arkobject.EquipmentKind, blueprints []string) (int, error) {
+	items, _, err := api.FilteredWithFaults(arkapi.EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{kind},
+		Blueprints: blueprints,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(items), nil
 }

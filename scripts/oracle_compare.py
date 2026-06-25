@@ -729,6 +729,31 @@ def python_equipment_best_oracle(save_path: Path, upstream_src: Path) -> dict[st
         save.close()
 
 
+def python_equipment_summary_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(upstream_src))
+    from arkparse.api.equipment_api import EquipmentApi  # type: ignore
+    from arkparse.saves.asa_save import AsaSave  # type: ignore
+
+    save = AsaSave(save_path)
+    try:
+        api = EquipmentApi(save)
+        counts: dict[str, int] = {}
+        total = 0
+        for name, equipment_class in (
+            ("weapons", EquipmentApi.Classes.WEAPON),
+            ("armor", EquipmentApi.Classes.ARMOR),
+            ("saddles", EquipmentApi.Classes.SADDLE),
+            ("shields", EquipmentApi.Classes.SHIELD),
+        ):
+            count = len(api.get_all(equipment_class, max_workers=1))
+            counts[name] = count
+            total += count
+        counts["items"] = total
+        return counts
+    finally:
+        save.close()
+
+
 def python_equipment_rank_oracle(save_path: Path, upstream_src: Path) -> dict[str, Any]:
     sys.path.insert(0, str(upstream_src))
     from arkparse.api.equipment_api import EquipmentApi  # type: ignore
@@ -1043,6 +1068,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
     py_domain_stackables = python_domain_stackables_oracle(save_path, upstream_src)
     py_equipment_longneck_blueprint = python_equipment_longneck_blueprint_oracle(save_path, upstream_src)
     py_equipment_best = python_equipment_best_oracle(save_path, upstream_src)
+    py_equipment_summary = python_equipment_summary_oracle(save_path, upstream_src)
     py_equipment_rank = python_equipment_rank_oracle(save_path, upstream_src)
     py_equipment_ascendant_weapon_bps = python_equipment_ascendant_weapon_bps_oracle(save_path, upstream_src)
     py_equipment_saddles = python_equipment_saddles_oracle(save_path, upstream_src)
@@ -1074,6 +1100,7 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         "python_domain_stackables": py_domain_stackables,
         "python_equipment_longneck_blueprint": py_equipment_longneck_blueprint,
         "python_equipment_best": py_equipment_best,
+        "python_equipment_summary": py_equipment_summary,
         "python_equipment_rank": py_equipment_rank,
         "python_equipment_ascendant_weapon_bps": py_equipment_ascendant_weapon_bps,
         "python_equipment_saddles": py_equipment_saddles,
@@ -1529,6 +1556,20 @@ def compare(save_path: Path, repo_root: Path, upstream_src: Path) -> tuple[list[
         private["go"]["equipment_best"]["parsed"] = got
         stable_keys = [key for key in py_equipment_best if key not in {"weapon", "armor"}]
         cases.append(CaseResult("equipment_best", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_best[key] for key in stable_keys} else "fail", "highest weapon damage and armor durability values compared"))
+
+    go_equipment_summary = run(["go", "run", "./examples/equipment_summary", str(save_path)], repo_root, env)
+    private["go"]["equipment_summary"] = {
+        "exit_code": go_equipment_summary.returncode,
+        "stdout": go_equipment_summary.stdout,
+        "stderr": go_equipment_summary.stderr,
+    }
+    if go_equipment_summary.returncode != 0:
+        cases.append(CaseResult("equipment_summary", "fail", "Go example exited non-zero"))
+    else:
+        got = parse_key_value_lines(go_equipment_summary.stdout)
+        private["go"]["equipment_summary"]["parsed"] = got
+        stable_keys = ("items", "weapons", "armor", "saddles", "shields")
+        cases.append(CaseResult("equipment_summary", "pass" if {key: got.get(key) for key in stable_keys} == {key: py_equipment_summary[key] for key in stable_keys} else "fail", "canonical direct equipment class counts compared"))
 
     go_equipment_rank = run(["go", "run", "./examples/equipment_rank", str(save_path)], repo_root, env)
     private["go"]["equipment_rank"] = {

@@ -21,7 +21,7 @@ Public verification reported by reviewers:
 ## Blockers
 
 - Oracle parity evidence has expanded but is still incomplete. The committed
-  oracle comparison summary currently covers thirty-five implemented aggregate
+  oracle comparison summary currently covers thirty-six implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `object_summary`,
   `export_json`, `class_lookup`, `class_property_summary`, `local_profiles`,
   `local_profile_player_aggregates`,
@@ -31,7 +31,8 @@ Public verification reported by reviewers:
   `dino_babies`, `dino_wild_tamables`, `dino_wild_tamed`, `property_filter`,
   `stackable_count`, `stackable_owned_by`, `domain_json_stackables`,
   `equipment_longneck_blueprint_damage`, `equipment_best`,
-  `equipment_rank`, `equipment_ascendant_weapon_bps`, `equipment_saddles`,
+  `equipment_summary`, `equipment_rank`, `equipment_ascendant_weapon_bps`,
+  `equipment_saddles`,
   `equipment_owned_by`, `structure_owner_count`, `structure_at_location`,
   `base_components`, `domain_json_dinos`, `cluster_json`, `local_tribute`,
   and `tribute_json`.
