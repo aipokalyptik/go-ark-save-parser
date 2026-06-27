@@ -40,6 +40,18 @@ func TestStackableAPICountSumsQuantities(t *testing.T) {
 	}
 }
 
+func TestStackableAPISummaryForStackablesCountsItemsAndQuantity(t *testing.T) {
+	api := StackableAPI{}
+	summary := api.StackableSummaryForItems(map[uuid.UUID]arkobject.StackableItem{
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): {Quantity: 100},
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): {Quantity: 25},
+	})
+	want := StackableSummary{Items: 2, TotalQuantity: 125}
+	if summary != want {
+		t.Fatalf("StackableSummaryForItems() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	save := openSyntheticStackableSave(t)
 	defer save.Close()
@@ -105,6 +117,24 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	}
 	if len(typedFiltered) != 1 || api.CountStackables(typedFiltered) != 100 {
 		t.Fatalf("ByClassStackables() = len %d count %d, want one stack of 100", len(typedFiltered), api.CountStackables(typedFiltered))
+	}
+
+	summary, err := api.ByClassSummary([]string{
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Wood.PrimalItemResource_Wood_C'",
+	})
+	if err != nil {
+		t.Fatalf("ByClassSummary() error = %v", err)
+	}
+	if summary != (StackableSummary{Items: 1, TotalQuantity: 100}) {
+		t.Fatalf("ByClassSummary() = %#v, want one stack of 100", summary)
+	}
+	emptySummary, err := api.ByClassSummary([]string{"Blueprint'/Game/Missing.Missing_C'"})
+	if err != nil {
+		t.Fatalf("ByClassSummary(missing) error = %v", err)
+	}
+	if emptySummary != (StackableSummary{}) {
+		t.Fatalf("ByClassSummary(missing) = %#v, want zero summary", emptySummary)
 	}
 }
 
@@ -197,6 +227,22 @@ func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T)
 	}
 	if len(allTypedOwned) != 1 || api.CountStackables(allTypedOwned) != 100 {
 		t.Fatalf("OwnedByStackables() = len %d count %d, want one owned stack of 100", len(allTypedOwned), api.CountStackables(allTypedOwned))
+	}
+}
+
+func TestStackableAPIByClassOwnedSummaryUsesTypedStackables(t *testing.T) {
+	save := openSyntheticStackableOwnedByStructureSave(t)
+	defer save.Close()
+
+	api := NewStackable(save)
+	blueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"
+	summary, err := api.ByClassOwnedSummary([]string{blueprint}, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("ByClassOwnedSummary() error = %v", err)
+	}
+	want := StackableSummary{Items: 1, TotalQuantity: 100}
+	if summary != want {
+		t.Fatalf("ByClassOwnedSummary() = %#v, want %#v", summary, want)
 	}
 }
 

@@ -13,6 +13,11 @@ type StackableAPI struct {
 	save *arksave.Save
 }
 
+type StackableSummary struct {
+	Items         int
+	TotalQuantity int32
+}
+
 func NewStackable(save *arksave.Save) *StackableAPI {
 	return &StackableAPI{save: save}
 }
@@ -37,6 +42,10 @@ func (s *StackableAPI) CountStackables(items map[uuid.UUID]arkobject.StackableIt
 		count += item.Quantity
 	}
 	return count
+}
+
+func (s *StackableAPI) StackableSummaryForItems(items map[uuid.UUID]arkobject.StackableItem) StackableSummary {
+	return StackableSummary{Items: len(items), TotalQuantity: s.CountStackables(items)}
 }
 
 func (s *StackableAPI) All() (map[uuid.UUID]arkobject.InventoryItem, error) {
@@ -117,6 +126,14 @@ func (s *StackableAPI) ByClassStackables(blueprints []string) (map[uuid.UUID]ark
 		return nil, err
 	}
 	return stackableItemsFromInventoryItems(items), nil
+}
+
+func (s *StackableAPI) ByClassSummary(blueprints []string) (StackableSummary, error) {
+	items, err := s.ByClassStackables(blueprints)
+	if err != nil {
+		return StackableSummary{}, err
+	}
+	return s.StackableSummaryForItems(items), nil
 }
 
 func (s *StackableAPI) Resources() (map[uuid.UUID]arkobject.InventoryItem, error) {
@@ -206,6 +223,18 @@ func (s *StackableAPI) FilterOwnedByStackables(items map[uuid.UUID]arkobject.Sta
 		return nil, err
 	}
 	return stackableItemsFromInventoryItems(filtered), nil
+}
+
+func (s *StackableAPI) ByClassOwnedSummary(blueprints []string, owner arkobject.ObjectOwner) (StackableSummary, error) {
+	items, err := s.ByClassStackables(blueprints)
+	if err != nil {
+		return StackableSummary{}, err
+	}
+	owned, err := s.FilterOwnedByStackables(items, owner)
+	if err != nil {
+		return StackableSummary{}, err
+	}
+	return s.StackableSummaryForItems(owned), nil
 }
 
 func selectedInventoryContainerOwners(save *arksave.Save) (map[uuid.UUID]arkobject.ObjectOwner, error) {

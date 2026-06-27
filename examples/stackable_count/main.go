@@ -22,11 +22,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStackable(save)
-	items, err := api.ByClass(os.Args[2:])
+	summary, err := api.ByClassSummary(os.Args[2:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read stackables: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("items=%d total=%d\n", len(items), api.Count(items))
+	fmt.Printf("items=%d total=%d\n", summary.Items, summary.TotalQuantity)
 }

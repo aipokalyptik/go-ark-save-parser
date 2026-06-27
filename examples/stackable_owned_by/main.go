@@ -29,16 +29,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStackable(save)
-	items, err := api.ByClass([]string{os.Args[2]})
+	summary, err := api.ByClassOwnedSummary([]string{os.Args[2]}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read stackables: %v\n", err)
 		os.Exit(1)
 	}
-	owned, err := api.FilterOwnedBy(items, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "filter owner: %v\n", err)
-		os.Exit(1)
-	}
 
-	fmt.Printf("tribe_id=%d items=%d total=%d\n", tribeID64, len(owned), api.Count(owned))
+	fmt.Printf("tribe_id=%d items=%d total=%d\n", tribeID64, summary.Items, summary.TotalQuantity)
 }
