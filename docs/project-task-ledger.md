@@ -518,9 +518,12 @@ CLI tools, and reusable APIs without losing oracle parity.
         keeping game-object framing explicit; embedded `GameModeCustomBytes`
         player/tribe fixture assembly and minimal embedded cryopod archive test
         payloads now live in shared testfixtures; save-layer malformed
-        full-object truncation fixtures now use a shared helper; remaining
-        lower-level dino/equipment parser payload builders and non-save
-        malformed object-shape fixtures still remain.
+        full-object truncation fixtures now use a shared helper; parsed
+        `CustomItemDatas` cryopod/custom-data fixtures now live in
+        `internal/propertyfixtures`, and binary `CustomItemDatas` writers now
+        live in shared testfixtures; remaining lower-level dino/equipment
+        parser payload builders and non-save malformed object-shape fixtures
+        still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

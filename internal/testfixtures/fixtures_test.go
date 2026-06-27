@@ -173,6 +173,36 @@ func TestCryopodSaddlePayloadWritesSupportedNoHeaderPayload(t *testing.T) {
 	}
 }
 
+func TestWriteCustomItemDatasPropertyIDWritesParseablePayloadBytes(t *testing.T) {
+	payload := []byte{7, 8, 9}
+	var props bytes.Buffer
+	WriteCustomItemDatasPropertyID(&props, payload)
+
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000004: "None",
+		0x1000001e: "ArrayProperty",
+		0x10000047: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
+		0x10000048: "CustomItemDatas",
+		0x10000049: "StructProperty",
+		0x1000004a: "CustomItemData",
+		0x1000004b: "CustomDataBytes",
+		0x1000004c: "CustomItemByteArrays",
+		0x1000004d: "ByteArrays",
+		0x1000004e: "CustomItemByteArray",
+		0x1000004f: "Bytes",
+		0x10000050: "ByteProperty",
+	})
+	object, err := arkobject.ParseGameObject(uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), ObjectBytesWithProperties(0x10000047, 0x10000004, props.Bytes()), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject() error = %v", err)
+	}
+	payloads := arkobject.CryopodPayloadsFromObject(object)
+	if len(payloads) != 1 || !bytes.Equal(payloads[0], payload) {
+		t.Fatalf("CryopodPayloadsFromObject() = %#v, want written payload", payloads)
+	}
+}
+
 func TestPlayerPawnGameObjectBytesWritesParseablePawnObject(t *testing.T) {
 	inventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 	pawnID := uuid.MustParse("11112222-3333-4444-5555-666677778888")

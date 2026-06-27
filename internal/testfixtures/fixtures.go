@@ -901,6 +901,32 @@ func CryopodSaddlePayload() []byte {
 	return payload.Bytes()
 }
 
+func WriteCustomItemDatasPropertyID(buf *bytes.Buffer, payloads ...[]byte) {
+	elements := make([][]byte, 0, len(payloads))
+	for _, payload := range payloads {
+		byteValues := make([]byte, len(payload))
+		copy(byteValues, payload)
+
+		var bytesElement bytes.Buffer
+		WriteByteArrayPropertyID(&bytesElement, 0x1000004f, 0x1000001e, 0x10000050, byteValues)
+		WriteUInt32(&bytesElement, 0x10000004)
+		WriteInt32(&bytesElement, 0)
+		elements = append(elements, bytesElement.Bytes())
+	}
+
+	var customDataBytes bytes.Buffer
+	WriteStructArrayPropertyID(&customDataBytes, 0x1000004d, 0x1000001e, 0x10000049, 0x1000004e, elements)
+	WriteUInt32(&customDataBytes, 0x10000004)
+	WriteInt32(&customDataBytes, 0)
+
+	var customItemData bytes.Buffer
+	WriteStructPropertyID(&customItemData, 0x1000004b, 0x10000049, 0x1000004c, customDataBytes.Bytes())
+	WriteUInt32(&customItemData, 0x10000004)
+	WriteInt32(&customItemData, 0)
+
+	WriteStructArrayPropertyID(buf, 0x10000048, 0x1000001e, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
+}
+
 func MinimalEmbeddedCryopodPayload(tb testing.TB, dinoID uuid.UUID, statusID uuid.UUID) []byte {
 	tb.Helper()
 

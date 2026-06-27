@@ -83,7 +83,7 @@ Status markers:
 | P3-PERF-001 | `[x]` | Add benchmarks for full save open/object enumeration, object parse, query filters, and JSON export. | Benchmarks are committed. |
 | P3-PERF-002 | `[x]` | Add object cache controls and prove safe concurrency only where tested. | `arksave.Save` object row cache and concurrent raw read tests exist. |
 | P3-CLI-001 | `[x]` | Implement offline CLI commands. | `inspect`, `parse`, `structure-health`, `players`, `tribes`, `cluster`, `tribute`, JSON export commands, and experimental mutate commands exist. |
-| P3-FIX-001 | `[~]` | Replace duplicated synthetic fixture builders with internal helpers. | `internal/testfixtures` centralizes many shared fixtures, including player pawn, inventory, structure, equipment, stackable, and basic dino save-object builders; specialized status, cryopod, and malformed parser fixtures remain. |
+| P3-FIX-001 | `[~]` | Replace duplicated synthetic fixture builders with internal helpers. | `internal/testfixtures` centralizes many shared fixtures, including player pawn, inventory, structure, equipment, stackable, basic dino save-object builders, and binary `CustomItemDatas` writers; `internal/propertyfixtures` centralizes parsed `CustomItemDatas` cryopod/custom-data builders; specialized status and malformed parser fixtures remain. |
 | P3-REG-001 | `[x]` | Re-run regression tests after refactor slices. | `make verify` is the committed verification gate. |
 
 ## Phase 4: Documentation And Production Readiness

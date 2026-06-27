@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/propertyfixtures"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
@@ -152,7 +153,7 @@ func TestDinoFromCryopodObjectParsesEmbeddedDinoAndStatus(t *testing.T) {
 		UUID:      uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
 		Blueprint: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
 		Properties: []arkproperty.Property{
-			customItemDatasProperty(payload),
+			propertyfixtures.CryopodCustomItemDatasProperty(payload),
 		},
 	}
 
@@ -183,7 +184,7 @@ func TestDinoFromCryopodObjectFindsReversedEmbeddedDinoAndStatus(t *testing.T) {
 	payload := syntheticCryopodDinoPayloadWithOrder(t, dinoID, statusID, true)
 	cryopod := &GameObject{
 		UUID:       uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
-		Properties: []arkproperty.Property{customItemDatasProperty(payload)},
+		Properties: []arkproperty.Property{propertyfixtures.CryopodCustomItemDatasProperty(payload)},
 	}
 
 	dino, ok, err := DinoFromCryopodObject(cryopod, 1<<20)
@@ -205,7 +206,7 @@ func TestSaddleFromCryopodObjectParsesModernEmbeddedSaddle(t *testing.T) {
 		UUID:      cryopodID,
 		Blueprint: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
 		Properties: []arkproperty.Property{
-			customItemDatasProperty(dinoPayload, saddlePayload),
+			propertyfixtures.CryopodCustomItemDatasProperty(dinoPayload, saddlePayload),
 		},
 	}
 
@@ -238,47 +239,6 @@ func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	}
 	if ok || dino.UUID != uuid.Nil {
 		t.Fatalf("DinoFromCryopodObject() = %#v, %v; want no dino", dino, ok)
-	}
-}
-
-func customItemDatasProperty(payloads ...[]byte) arkproperty.Property {
-	byteArrayValues := make([]any, 0, len(payloads))
-	for _, payload := range payloads {
-		values := make([]any, 0, len(payload))
-		for _, value := range payload {
-			values = append(values, value)
-		}
-		byteArrayValues = append(byteArrayValues, arkproperty.Container{Properties: []arkproperty.Property{{
-			Name: "Bytes",
-			Type: arkproperty.TypeArray,
-			Value: arkproperty.Array{
-				ElementType: arkproperty.TypeByte,
-				Values:      values,
-			},
-		}}})
-	}
-	return arkproperty.Property{
-		Name: "CustomItemDatas",
-		Type: arkproperty.TypeArray,
-		Value: arkproperty.Array{
-			ElementType: arkproperty.TypeStruct,
-			StructType:  "CustomItemData",
-			Values: []any{
-				arkproperty.Container{Properties: []arkproperty.Property{{
-					Name: "CustomDataBytes",
-					Type: arkproperty.TypeStruct,
-					Value: arkproperty.Container{Properties: []arkproperty.Property{{
-						Name: "ByteArrays",
-						Type: arkproperty.TypeArray,
-						Value: arkproperty.Array{
-							ElementType: arkproperty.TypeStruct,
-							StructType:  "CustomItemByteArray",
-							Values:      byteArrayValues,
-						},
-					}}},
-				}}},
-			},
-		},
 	}
 }
 

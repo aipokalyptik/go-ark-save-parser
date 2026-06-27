@@ -1818,7 +1818,7 @@ func syntheticCryopodItemObjectBytesWithPayloads(payloads ...[]byte) []byte {
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeCustomItemDatasProperty(&buf, payloads...)
+	testfixtures.WriteCustomItemDatasPropertyID(&buf, payloads...)
 	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
 	return buf.Bytes()
@@ -1905,30 +1905,4 @@ func syntheticDinoObjectBytesWithFlags(id1 int32, id2 int32, isFemale bool, isDe
 		IsBaby:   boolPtr(isBaby),
 		Tamed:    isTamed,
 	})
-}
-
-func writeCustomItemDatasProperty(buf *bytes.Buffer, payloads ...[]byte) {
-	elements := make([][]byte, 0, len(payloads))
-	for _, payload := range payloads {
-		byteValues := make([]byte, len(payload))
-		copy(byteValues, payload)
-
-		var bytesElement bytes.Buffer
-		testfixtures.WriteByteArrayPropertyID(&bytesElement, 0x1000004f, 0x1000001e, 0x10000050, byteValues)
-		_ = binary.Write(&bytesElement, binary.LittleEndian, uint32(0x10000004))
-		_ = binary.Write(&bytesElement, binary.LittleEndian, int32(0))
-		elements = append(elements, bytesElement.Bytes())
-	}
-
-	var customDataBytes bytes.Buffer
-	testfixtures.WriteStructArrayPropertyID(&customDataBytes, 0x1000004d, 0x1000001e, 0x10000049, 0x1000004e, elements)
-	_ = binary.Write(&customDataBytes, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&customDataBytes, binary.LittleEndian, int32(0))
-
-	var customItemData bytes.Buffer
-	testfixtures.WriteStructPropertyID(&customItemData, 0x1000004b, 0x10000049, 0x1000004c, customDataBytes.Bytes())
-	_ = binary.Write(&customItemData, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&customItemData, binary.LittleEndian, int32(0))
-
-	testfixtures.WriteStructArrayPropertyID(buf, 0x10000048, 0x1000001e, 0x10000049, 0x1000004a, [][]byte{customItemData.Bytes()})
 }

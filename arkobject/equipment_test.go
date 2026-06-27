@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/propertyfixtures"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +19,7 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 			{Name: "ItemRating", Type: arkproperty.TypeFloat, Value: float32(7.5)},
 			{Name: "ItemQualityIndex", Type: arkproperty.TypeByte, Value: byte(3)},
 			{Name: "SavedDurability", Type: arkproperty.TypeFloat, Value: float32(0.75)},
-			equipmentCustomItemDatasProperty(2),
+			propertyfixtures.CustomItemDatasProperty(2),
 			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDurability), Value: uint16(1000)},
 			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDamage), Value: uint16(1234)},
 			{Name: "CrafterCharacterName", Type: arkproperty.TypeString, Value: "Survivor"},
@@ -57,22 +58,6 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	}
 	if stats := item.ImplementedStats(); len(stats) != 2 || stats[0] != EquipmentStatDurability || stats[1] != EquipmentStatDamage {
 		t.Fatalf("EquipmentItem.ImplementedStats() = %#v, want durability and damage", stats)
-	}
-}
-
-func equipmentCustomItemDatasProperty(entries int) arkproperty.Property {
-	values := make([]any, 0, entries)
-	for i := 0; i < entries; i++ {
-		values = append(values, arkproperty.Container{})
-	}
-	return arkproperty.Property{
-		Name: "CustomItemDatas",
-		Type: arkproperty.TypeArray,
-		Value: arkproperty.Array{
-			ElementType: arkproperty.TypeStruct,
-			StructType:  "CustomItemData",
-			Values:      values,
-		},
 	}
 }
 
