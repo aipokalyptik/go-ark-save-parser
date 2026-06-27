@@ -258,6 +258,69 @@ func TestGeneralClassLookupSummaryReturnsEmptyForNoSubstrings(t *testing.T) {
 	}
 }
 
+func TestGeneralPropertyFilterSummaryCountsObjectsAndClasses(t *testing.T) {
+	firstID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	secondID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	missingID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		firstID:   syntheticObjectBytes(0x10000001),
+		secondID:  syntheticObjectBytesWithExtraProperty(0x10000005),
+		missingID: testfixtures.ObjectBytesWithProperties(0x1000000b, 0x10000004, nil),
+	})
+	defer save.Close()
+
+	summary, err := NewGeneral(save).PropertyFilterSummary([]string{"Health", "MaxHealth"})
+	if err != nil {
+		t.Fatalf("PropertyFilterSummary() error = %v", err)
+	}
+	if summary.Objects != 2 || summary.Classes != 2 {
+		t.Fatalf("PropertyFilterSummary() = %#v, want 2 objects and 2 classes", summary)
+	}
+}
+
+func TestGeneralPropertyFilterSummaryReturnsEmptyForNoMatch(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	summary, err := NewGeneral(save).PropertyFilterSummary([]string{"DoesNotExist"})
+	if err != nil {
+		t.Fatalf("PropertyFilterSummary(no match) error = %v", err)
+	}
+	if summary.Objects != 0 || summary.Classes != 0 {
+		t.Fatalf("PropertyFilterSummary(no match) = %#v, want empty", summary)
+	}
+}
+
+func TestGeneralPropertyPositionSummaryCountsMetadata(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	summary, err := NewGeneral(save).PropertyPositionSummary(id)
+	if err != nil {
+		t.Fatalf("PropertyPositionSummary() error = %v", err)
+	}
+	if !summary.Exists {
+		t.Fatalf("PropertyPositionSummary().Exists = false, want true")
+	}
+	if summary.Properties != 1 || summary.NameOffsets != 1 || summary.ValueOffsets != 1 || summary.Encoded != 1 || summary.OffsetsOK != 1 {
+		t.Fatalf("PropertyPositionSummary() = %#v, want one fully positioned property", summary)
+	}
+}
+
+func TestGeneralPropertyPositionSummaryReportsMissingObject(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	summary, err := NewGeneral(save).PropertyPositionSummary(uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"))
+	if err != nil {
+		t.Fatalf("PropertyPositionSummary(missing) error = %v", err)
+	}
+	if summary.Exists || summary.Properties != 0 || summary.Encoded != 0 {
+		t.Fatalf("PropertyPositionSummary(missing) = %#v, want empty missing summary", summary)
+	}
+}
+
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -18,13 +19,9 @@ func main() {
 	}
 	defer save.Close()
 
-	objects, err := save.ObjectClassInfosWithAnyProperty(os.Args[2:])
+	summary, err := arkapi.NewGeneral(save).PropertyFilterSummary(os.Args[2:])
 	if err != nil {
 		log.Fatal(err)
 	}
-	classes := map[string]struct{}{}
-	for _, object := range objects {
-		classes[object.ClassName] = struct{}{}
-	}
-	fmt.Printf("objects=%d classes=%d\n", len(objects), len(classes))
+	fmt.Printf("objects=%d classes=%d\n", summary.Objects, summary.Classes)
 }

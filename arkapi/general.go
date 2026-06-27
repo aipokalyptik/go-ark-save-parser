@@ -31,6 +31,21 @@ type ClassLookupSummary struct {
 	Classes int
 }
 
+type PropertyFilterSummary struct {
+	Objects int
+	Classes int
+}
+
+type PropertyPositionSummary struct {
+	Exists       bool
+	Properties   int
+	NameOffsets  int
+	ValueOffsets int
+	Encoded      int
+	Positioned   int
+	OffsetsOK    int
+}
+
 func NewGeneral(save *arksave.Save) *GeneralAPI {
 	return &GeneralAPI{save: save}
 }
@@ -125,6 +140,47 @@ func (g *GeneralAPI) ClassLookupSummaryWithFaults(classSubstrings []string) (Cla
 		classes[info.ClassName] = struct{}{}
 	}
 	return ClassLookupSummary{Objects: objects, Classes: len(classes)}, faults, nil
+}
+
+func (g *GeneralAPI) PropertyFilterSummary(propertyNames []string) (PropertyFilterSummary, error) {
+	objects, err := g.save.ObjectClassInfosWithAnyProperty(propertyNames)
+	if err != nil {
+		return PropertyFilterSummary{}, err
+	}
+	classes := map[string]struct{}{}
+	for _, object := range objects {
+		classes[object.ClassName] = struct{}{}
+	}
+	return PropertyFilterSummary{Objects: len(objects), Classes: len(classes)}, nil
+}
+
+func (g *GeneralAPI) PropertyPositionSummary(id uuid.UUID) (PropertyPositionSummary, error) {
+	object, err := g.save.Object(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return PropertyPositionSummary{}, nil
+	}
+	if err != nil {
+		return PropertyPositionSummary{}, err
+	}
+	summary := PropertyPositionSummary{Exists: true, Properties: len(object.Properties)}
+	for _, property := range object.Properties {
+		if property.NameOffset > 0 {
+			summary.NameOffsets++
+		}
+		if property.ValueOffset > 0 {
+			summary.ValueOffsets++
+		}
+		if len(property.EncodedBytes) > 0 {
+			summary.Encoded++
+		}
+		if property.Position != 0 {
+			summary.Positioned++
+		}
+		if property.NameOffset >= 0 && property.ValueOffset > property.NameOffset && len(property.EncodedBytes) > 0 {
+			summary.OffsetsOK++
+		}
+	}
+	return summary, nil
 }
 
 func (g *GeneralAPI) ObjectsWithAnyProperty(names []string) ([]*arkobject.GameObject, error) {
