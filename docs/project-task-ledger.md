@@ -392,6 +392,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.GeneralAPI` summary helpers.
     - [x] Move `parse_all` and `object_classes` save-level counting/listing
           behind typed `arkapi.GeneralAPI` helpers.
+    - [x] Move repeated player/tribe save-or-directory fallback logic behind
+          typed `arkapi.NewPlayerFromPath`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

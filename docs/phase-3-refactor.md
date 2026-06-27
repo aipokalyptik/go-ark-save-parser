@@ -50,6 +50,9 @@ For the cross-phase monitorable checklist, see
       helpers, and embedded dino component class summaries for Go callers.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
+- [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can
+      open either save files or local save directories with explicit player or
+      tribe fallback behavior.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

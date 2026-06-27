@@ -54,6 +54,95 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 	}
 }
 
+func TestNewPlayerFromPathOpensDirectory(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
+
+	api, closeAPI, err := NewPlayerFromPath(dir, PlayerPathOptions{})
+	if err != nil {
+		t.Fatalf("NewPlayerFromPath(directory) error = %v", err)
+	}
+	defer closeAPI()
+
+	players, err := api.Players()
+	if err != nil {
+		t.Fatalf("Players() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("Players() = %#v, want directory profile player", players)
+	}
+}
+
+func TestNewPlayerFromPathOpensSave(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	path := save.Path()
+	if err := save.Close(); err != nil {
+		t.Fatalf("Close(save) error = %v", err)
+	}
+
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{})
+	if err != nil {
+		t.Fatalf("NewPlayerFromPath(save) error = %v", err)
+	}
+	defer closeAPI()
+
+	players, err := api.Players()
+	if err != nil {
+		t.Fatalf("Players() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("Players() = %#v, want save-contained player", players)
+	}
+}
+
+func TestNewPlayerFromPathFallsBackToDirectoryProfilesWhenSaveHasNoPlayers(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "empty.ark")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{Header: testfixtures.Header("Valguero_WP", map[uint32]string{})})
+	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
+
+	api, closeAPI, err := NewPlayerFromPath(savePath, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		t.Fatalf("NewPlayerFromPath(fallback players) error = %v", err)
+	}
+	defer closeAPI()
+
+	players, err := api.Players()
+	if err != nil {
+		t.Fatalf("Players() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("Players() = %#v, want directory fallback player", players)
+	}
+	if len(api.ProfilePaths()) != 1 {
+		t.Fatalf("ProfilePaths() = %#v, want directory fallback API", api.ProfilePaths())
+	}
+}
+
+func TestNewPlayerFromPathFallsBackToDirectoryTribesWhenSaveHasNoTribes(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "empty.ark")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{Header: testfixtures.Header("Valguero_WP", map[uint32]string{})})
+	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
+
+	api, closeAPI, err := NewPlayerFromPath(savePath, PlayerPathOptions{Fallback: PlayerPathFallbackTribes})
+	if err != nil {
+		t.Fatalf("NewPlayerFromPath(fallback tribes) error = %v", err)
+	}
+	defer closeAPI()
+
+	tribes, err := api.TribeDetails()
+	if err != nil {
+		t.Fatalf("TribeDetails() error = %v", err)
+	}
+	if len(tribes) != 1 || tribes[0].TribeID != 12345 {
+		t.Fatalf("TribeDetails() = %#v, want directory fallback tribe", tribes)
+	}
+	if len(api.TribePaths()) != 1 {
+		t.Fatalf("TribePaths() = %#v, want directory fallback API", api.TribePaths())
+	}
+}
+
 func TestPlayerAPILoadsLocalProfileAndTribeArchives(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteArchive(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")

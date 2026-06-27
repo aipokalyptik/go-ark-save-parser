@@ -3,6 +3,7 @@ package arkapi
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -33,6 +34,62 @@ type TribePlayerRelation struct {
 
 func NewPlayer(save *arksave.Save) *PlayerAPI {
 	return &PlayerAPI{save: save}
+}
+
+type PlayerPathFallback int
+
+const (
+	PlayerPathFallbackNone PlayerPathFallback = iota
+	PlayerPathFallbackPlayers
+	PlayerPathFallbackTribes
+)
+
+type PlayerPathOptions struct {
+	Fallback PlayerPathFallback
+}
+
+func NewPlayerFromPath(path string, opts PlayerPathOptions) (*PlayerAPI, func() error, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, noopPlayerClose, err
+	}
+	if info.IsDir() {
+		api, err := NewPlayerFromDirectory(path)
+		return api, noopPlayerClose, err
+	}
+
+	save, err := arksave.Open(path)
+	if err != nil {
+		return nil, noopPlayerClose, err
+	}
+	api := NewPlayer(save)
+	useDirectory := false
+	switch opts.Fallback {
+	case PlayerPathFallbackPlayers:
+		players, _, err := api.PlayersWithFaults()
+		if err != nil {
+			_ = save.Close()
+			return nil, noopPlayerClose, err
+		}
+		useDirectory = len(players) == 0
+	case PlayerPathFallbackTribes:
+		tribes, _, err := api.TribeDetailsWithFaults()
+		if err != nil {
+			_ = save.Close()
+			return nil, noopPlayerClose, err
+		}
+		useDirectory = len(tribes) == 0
+	}
+	if useDirectory {
+		_ = save.Close()
+		api, err := NewPlayerFromDirectory(filepath.Dir(path))
+		return api, noopPlayerClose, err
+	}
+	return api, save.Close, nil
+}
+
+func noopPlayerClose() error {
+	return nil
 }
 
 func NewPlayerFromDirectory(dir string) (*PlayerAPI, error) {
