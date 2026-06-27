@@ -432,6 +432,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           aggregation onto typed `arkapi.EquipmentAPI.SaddleSummaryWithFaults`.
     - [x] Move `equipment_summary` canonical kind/blueprint counting onto
           typed `arkapi.EquipmentAPI.SummaryIncludingCryopodSaddlesWithFaults`.
+    - [x] Move `dino_babies` wild/tamed counting onto typed
+          `arkapi.DinoAPI.BabySummaryWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

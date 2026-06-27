@@ -1192,6 +1192,42 @@ func TestDinoAPICountsBabiesByTamedState(t *testing.T) {
 	}
 }
 
+func TestDinoAPIBabySummaryWithFaultsUsesFilteredBabyCounts(t *testing.T) {
+	save := openSyntheticDinoBabyFilterSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	summary, faults, err := api.BabySummaryWithFaults(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
+	})
+	if err != nil {
+		t.Fatalf("BabySummaryWithFaults(all) error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("BabySummaryWithFaults(all) faults length = %d, want 0", len(faults))
+	}
+	if summary.Tamed != 1 || summary.Wild != 1 {
+		t.Fatalf("BabySummaryWithFaults(all) = %#v, want 1 tamed and 1 wild", summary)
+	}
+
+	tamedOnly, faults, err := api.BabySummaryWithFaults(BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       false,
+	})
+	if err != nil {
+		t.Fatalf("BabySummaryWithFaults(tamed) error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("BabySummaryWithFaults(tamed) faults length = %d, want 0", len(faults))
+	}
+	if tamedOnly.Tamed != 1 || tamedOnly.Wild != 0 {
+		t.Fatalf("BabySummaryWithFaults(tamed) = %#v, want 1 tamed and 0 wild", tamedOnly)
+	}
+}
+
 func TestDinoAPIFilterChildlessTamedDinosUsesAncestorIDsAndSkipsBabiesAsParents(t *testing.T) {
 	api := NewDino(nil)
 	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")

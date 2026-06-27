@@ -446,6 +446,14 @@ func (d *DinoAPI) BabiesWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fa
 	})
 }
 
+func (d *DinoAPI) BabySummaryWithFaults(opts BabyFilterOptions) (BabyCounts, []arksave.FaultyObjectInfo, error) {
+	babies, faults, err := d.BabiesFilteredWithFaults(opts)
+	if err != nil {
+		return BabyCounts{}, nil, err
+	}
+	return d.CountBabiesByTamed(babies), faults, nil
+}
+
 func (d *DinoAPI) InCryopods() (map[uuid.UUID]arkobject.Dino, error) {
 	return d.filter(func(dino arkobject.Dino) bool {
 		return dino.IsCryopodded

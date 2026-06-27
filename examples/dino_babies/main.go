@@ -22,7 +22,7 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	babies, _, err := api.BabiesFilteredWithFaults(arkapi.BabyFilterOptions{
+	counts, _, err := api.BabySummaryWithFaults(arkapi.BabyFilterOptions{
 		IncludeTamed:      true,
 		IncludeCryopodded: true,
 		IncludeWild:       true,
@@ -32,6 +32,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	counts := api.CountBabiesByTamed(babies)
 	fmt.Printf("wild_babies=%d tamed_babies=%d\n", counts.Wild, counts.Tamed)
 }
