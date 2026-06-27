@@ -267,6 +267,47 @@ func TestObjectCacheControlsRawObjectRows(t *testing.T) {
 	}
 }
 
+func TestSelectedObjectPropertiesHandlesDuplicateNameIDs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "duplicate-health.ark")
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 9000)
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000001: "Blueprint'/Game/Test.Test_C'",
+			0x10000002: "Health",
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000006: "Health",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			objectID: testfixtures.ObjectBytesWithProperties(0x10000001, 0x10000004, props.Bytes()),
+		},
+	})
+
+	save, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	infos, faults, err := save.SelectedObjectPropertiesWithFaults(nil, []string{"Health"})
+	if err != nil {
+		t.Fatalf("SelectedObjectPropertiesWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("SelectedObjectPropertiesWithFaults() faults = %#v, want none", faults)
+	}
+	if len(infos) != 1 || infos[0].UUID != objectID {
+		t.Fatalf("SelectedObjectPropertiesWithFaults() infos = %#v, want object %s", infos, objectID)
+	}
+	values := arkproperty.Container{Properties: infos[0].Properties}
+	got, ok := values.Value("Health")
+	if !ok || got != int32(9000) {
+		t.Fatalf("selected Health = %#v, %v; want int32(9000)", got, ok)
+	}
+}
+
 func TestObjectCacheReturnsDefensiveCopies(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")

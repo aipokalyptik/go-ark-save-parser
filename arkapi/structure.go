@@ -284,40 +284,74 @@ func (s *StructureAPI) OwnerSummaryWithFaults() (StructureOwnerSummary, []arksav
 }
 
 func (s *StructureAPI) HealthSummaryWithFaults() (StructureHealthSummary, []arksave.FaultyObjectInfo, error) {
-	structures, faults, err := s.AllWithFaults()
+	infos, faults, err := s.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return isStructureBlueprint(info.ClassName) || isPotentialStructureContainer(info.ClassName)
+	}, []string{"StructureID", "MyInventoryComponent", "MaxHealth", "Health", "bIsEngram"})
 	if err != nil {
 		return StructureHealthSummary{}, nil, err
 	}
-	return s.HealthSummaryForStructures(structures), faults, nil
+	summary := StructureHealthSummary{Structures: len(infos)}
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			summary.Structures--
+			continue
+		}
+		if selectedBoolProperty(container, "bIsEngram") {
+			summary.Structures--
+			continue
+		}
+		if !isStructureBlueprint(info.ClassName) {
+			if !isPotentialStructureContainer(info.ClassName) {
+				summary.Structures--
+				continue
+			}
+			if _, ok := container.Value("MyInventoryComponent"); !ok {
+				summary.Structures--
+				continue
+			}
+		}
+		maxHealth := selectedFloat64(container, "MaxHealth")
+		currentHealth := selectedFloat64(container, "Health")
+		if currentHealth == 0 {
+			currentHealth = maxHealth
+		}
+		summary.addHealth(maxHealth, currentHealth)
+	}
+	return summary, faults, nil
 }
 
 func (s *StructureAPI) HealthSummaryForStructures(structures map[uuid.UUID]arkobject.Structure) StructureHealthSummary {
 	summary := StructureHealthSummary{Structures: len(structures)}
 	for _, structure := range structures {
-		if structure.MaxHealth <= 0 {
-			summary.WithoutMaxHealth++
-			continue
-		}
-		summary.WithHealth++
-		summary.TotalMaxHealth += structure.MaxHealth
-		summary.TotalCurrentHealth += structure.CurrentHealth
-		healthPercent := structure.CurrentHealth / structure.MaxHealth * 100
-		if summary.WithHealth == 1 || healthPercent < summary.MinimumHealthPercent {
-			summary.MinimumHealthPercent = healthPercent
-		}
-		if summary.WithHealth == 1 || healthPercent > summary.MaximumHealthPercent {
-			summary.MaximumHealthPercent = healthPercent
-		}
-		if structure.CurrentHealth < structure.MaxHealth {
-			summary.Damaged++
-		} else {
-			summary.FullyRepaired++
-		}
-	}
-	if summary.TotalMaxHealth > 0 {
-		summary.AverageHealthPercent = summary.TotalCurrentHealth / summary.TotalMaxHealth * 100
+		summary.addHealth(structure.MaxHealth, structure.CurrentHealth)
 	}
 	return summary
+}
+
+func (s *StructureHealthSummary) addHealth(maxHealth float64, currentHealth float64) {
+	if maxHealth <= 0 {
+		s.WithoutMaxHealth++
+		return
+	}
+	s.WithHealth++
+	s.TotalMaxHealth += maxHealth
+	s.TotalCurrentHealth += currentHealth
+	healthPercent := currentHealth / maxHealth * 100
+	if s.WithHealth == 1 || healthPercent < s.MinimumHealthPercent {
+		s.MinimumHealthPercent = healthPercent
+	}
+	if s.WithHealth == 1 || healthPercent > s.MaximumHealthPercent {
+		s.MaximumHealthPercent = healthPercent
+	}
+	if currentHealth < maxHealth {
+		s.Damaged++
+	} else {
+		s.FullyRepaired++
+	}
+	if s.TotalMaxHealth > 0 {
+		s.AverageHealthPercent = s.TotalCurrentHealth / s.TotalMaxHealth * 100
+	}
 }
 
 func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, playerAPI *PlayerAPI) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
@@ -806,6 +840,27 @@ func selectedInt32(properties arkproperty.Container, name string) int32 {
 		return int32(v)
 	case float64:
 		return int32(v)
+	default:
+		return 0
+	}
+}
+
+func selectedFloat64(properties arkproperty.Container, name string) float64 {
+	value, ok := properties.Value(name)
+	if !ok {
+		return 0
+	}
+	switch v := value.(type) {
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case uint32:
+		return float64(v)
+	case int:
+		return float64(v)
 	default:
 		return 0
 	}

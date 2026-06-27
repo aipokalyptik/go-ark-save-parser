@@ -413,37 +413,39 @@ func (s *Save) SelectedObjectPropertiesWithFaults(match func(ObjectClassInfo) bo
 	return infos, faults, nil
 }
 
-func (s *Save) selectedObjectProperties(raw []byte, patterns map[string][]byte) (string, []arkproperty.Property, error) {
+func (s *Save) selectedObjectProperties(raw []byte, patterns map[string][][]byte) (string, []arkproperty.Property, error) {
 	r := arkbinary.NewReader(raw, s.names)
 	blueprint, err := r.ReadName("")
 	if err != nil {
 		return "", nil, err
 	}
 	selected := make([]arkproperty.Property, 0, len(patterns))
-	for name, pattern := range patterns {
-		for offset := bytes.Index(raw, pattern); offset >= 0; {
-			if err := r.SetPosition(offset); err != nil {
-				return "", nil, err
+	for name, namePatterns := range patterns {
+		for _, pattern := range namePatterns {
+			for offset := bytes.Index(raw, pattern); offset >= 0; {
+				if err := r.SetPosition(offset); err != nil {
+					return "", nil, err
+				}
+				prop, err := arkproperty.ParseOne(r, r.Size())
+				if err == nil && prop != nil && prop.Name == name {
+					selected = append(selected, *prop)
+				}
+				nextStart := offset + len(pattern)
+				if nextStart >= len(raw) {
+					break
+				}
+				next := bytes.Index(raw[nextStart:], pattern)
+				if next < 0 {
+					break
+				}
+				offset = nextStart + next
 			}
-			prop, err := arkproperty.ParseOne(r, r.Size())
-			if err == nil && prop != nil && prop.Name == name {
-				selected = append(selected, *prop)
-			}
-			nextStart := offset + len(pattern)
-			if nextStart >= len(raw) {
-				break
-			}
-			next := bytes.Index(raw[nextStart:], pattern)
-			if next < 0 {
-				break
-			}
-			offset = nextStart + next
 		}
 	}
 	return blueprint, selected, nil
 }
 
-func (s *Save) selectedPropertyNamePatterns(names []string) map[string][]byte {
+func (s *Save) selectedPropertyNamePatterns(names []string) map[string][][]byte {
 	wanted := map[string]struct{}{}
 	for _, name := range names {
 		if name != "" {
@@ -453,14 +455,14 @@ func (s *Save) selectedPropertyNamePatterns(names []string) map[string][]byte {
 	if len(wanted) == 0 || s == nil || s.Context == nil {
 		return nil
 	}
-	patterns := map[string][]byte{}
+	patterns := map[string][][]byte{}
 	for id, name := range s.Context.Names {
 		if _, ok := wanted[name]; !ok {
 			continue
 		}
 		pattern := make([]byte, 8)
 		binary.LittleEndian.PutUint32(pattern[:4], id)
-		patterns[name] = pattern
+		patterns[name] = append(patterns[name], pattern)
 	}
 	return patterns
 }

@@ -85,6 +85,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
   tribe ID.
 - `structure_owners`: summarize parsed structure owner fields without printing
   individual owner names or IDs.
+- `structure_health`: summarize parsed structure health aggregates, including
+  damaged/repaired counts and average/min/max health percentages.
 - `structure_owner_locations`: write an upstream-style owner/location JSON
   grouping for owned structures with map coordinates. Output can include
   save-derived owner labels and coordinates.

@@ -75,13 +75,16 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 			0x10000015: "TargetingTeam",
 			0x10000016: "Blueprint'/Game/Test/InventoryItem.InventoryItem_C'",
 			0x10000017: "DinoID1",
+			0x10000018: "MaxHealth",
+			0x10000019: "FloatProperty",
+			0x1000001a: "Health",
 		}),
 		Objects: map[uuid.UUID][]byte{
 			objectID:     smokePatchableObjectBytes(0x10000001, 0x10000002, 0x10000017, 0x10000006, 1001),
 			dinoID:       testfixtures.GenericObjectBytes(0x10000003, 0x10000002),
 			stackableID:  stackableObjectBytes(0x10000004, 0x10000002, 0x10000005, 0x10000006, 250),
 			equipmentID:  testfixtures.GenericObjectBytes(0x10000012, 0x10000002),
-			structureID:  syntheticSmokeStructureObjectBytes(0x10000013, 0x10000002, 0x10000014, 0x10000006, 0x10000015, 555),
+			structureID:  syntheticSmokeStructureObjectBytes(0x10000013, 0x10000002, 0x10000014, 0x10000006, 0x10000015, 555, 0x10000018, 0x10000019, 0x1000001a),
 			pawnID:       playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, 0x1000000e, 0x1000000f, 0x10000010, 0x10000011, inventoryID),
 			inventoryID:  inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
 			firstItemID:  testfixtures.GenericObjectBytes(0x10000016, 0x10000002),
@@ -173,6 +176,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	}
 	runExample(t, "structure_owner_count", "tribe_id=555 structures=1", savePath, "555")
 	runExample(t, "structure_owners", "structures=1 with_tribe_id=1 with_player_id=0 with_tribe_name=0 with_player_name=0 with_original_placer_id=0 unique_tribes=1", savePath)
+	runExample(t, "structure_health", "structures=1 with_health=1 damaged=1 repaired=0 without_max_health=0 avg_health=90.0 min_health=90.0 max_health=90.0 faults=0", savePath)
 	runExample(t, "structure_owner_locations", "structures=1 owners=1 cells=1 named_cells=1 multi_structure_cells=0 faults=0", savePath, "Valguero", "1")
 	runExample(t, "structure_export_from_save", "structures=1 rows=1 faults=0 wrote=", savePath, structureExportPath)
 	for _, path := range []string{
@@ -376,6 +380,7 @@ func TestExamplesRunAgainstProvidedData(t *testing.T) {
 
 	if data.SavePath != "" {
 		runProvidedExample(t, "map_summary", "map=", data.SavePath)
+		runProvidedExample(t, "structure_health", "structures=", data.SavePath)
 	}
 
 	if data.Dir == "" {
@@ -490,9 +495,11 @@ func stackableObjectBytes(classNameID uint32, noneNameID uint32, quantityNameID 
 	return buf.Bytes()
 }
 
-func syntheticSmokeStructureObjectBytes(classNameID uint32, noneNameID uint32, structureIDName uint32, intPropertyID uint32, tribeIDName uint32, tribeID int32) []byte {
+func syntheticSmokeStructureObjectBytes(classNameID uint32, noneNameID uint32, structureIDName uint32, intPropertyID uint32, tribeIDName uint32, tribeID int32, maxHealthName uint32, floatPropertyID uint32, currentHealthName uint32) []byte {
 	var props bytes.Buffer
 	testfixtures.WriteIntPropertyID(&props, structureIDName, intPropertyID, 101)
+	testfixtures.WriteFloatPropertyID(&props, maxHealthName, floatPropertyID, 10000)
+	testfixtures.WriteFloatPropertyID(&props, currentHealthName, floatPropertyID, 9000)
 	testfixtures.WriteIntPropertyID(&props, tribeIDName, intPropertyID, tribeID)
 	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
 }
