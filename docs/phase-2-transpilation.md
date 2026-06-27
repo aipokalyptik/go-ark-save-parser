@@ -355,6 +355,8 @@ For the cross-phase monitorable checklist, see
       explicit copied save. Location movement, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
+- [x] Add generated binary export-to-import round-trip tests for base,
+      structure, dino, and equipment workflows against reopenable copied saves.
 - [x] Add partial structural structure modification coverage by reading
       `structure_export_from_save` raw structure rows and reinserting them into
       an explicit copied save. Health/owner edits and live-server acceptance

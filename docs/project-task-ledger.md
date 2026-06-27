@@ -200,8 +200,8 @@ documented.
         prohibitive full-parse runtime.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
-  - [ ] Base export/import read/write parity where local-copy structural tests
-        are feasible.
+  - [x] Base export/import read/write parity where local-copy structural tests
+        are feasible, including generated export-to-import row checks.
 - [~] Finish full equipment edge behavior:
   - [x] Move high-rating equipment ranking candidate selection and aggregate
         stats into typed `arkapi` helpers used by the example.
@@ -241,15 +241,21 @@ documented.
       explicit copied saves. Moving structures, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
+  - [x] Generated base binary exports round-trip through `ImportBaseBinary`
+        into reopenable copied saves with byte-for-byte row checks.
 - [~] Upstream structure modification examples have partial structural
       coverage through standalone `structure_export_from_save` raw structure
       rows and `ImportStructureBinary` reinsert into explicit copied saves.
       Health/owner mutation and live-server acceptance remain unverified.
+  - [x] Generated structure binary exports round-trip through
+        `ImportStructureBinary` into reopenable copied saves.
 - [~] Upstream dino extract/reinsert examples have partial structural coverage
       through exported direct-save dino, status, and inventory rows plus
       `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
       into target inventories and generated location changes remain
       unverified.
+  - [x] Generated dino binary exports round-trip through `ImportDinoBinary`
+        into reopenable copied saves.
 - [~] Upstream dino trait/stat/growth mutation examples have partial
       structural coverage through `ReplaceObjectPropertyBinary`, which can
       replace a parsed object's full encoded property record by name and
@@ -261,6 +267,8 @@ documented.
       `ImportEquipmentBinary` reinsert into explicit copied saves. Generated
       blueprint construction, insertion into target inventories, and
       live-server acceptance remain unverified.
+  - [x] Generated equipment binary exports round-trip through
+        `ImportEquipmentBinary` into reopenable copied saves.
 - [x] Add structural mutation tests for upstream dino trait/stat/growth
       examples where local-copy behavior can be represented without claiming
       live-server safety.
@@ -325,11 +333,15 @@ documented.
       structural export that writes copied raw structure rows and structure
       location JSON. Health/owner mutation, binary editing, and live-server
       validation remain mutation-copy-adjacent and unverified.
+  - [x] Generated structure exports are covered by export-to-import copied-save
+        round-trip tests.
 - [x] `base_components`.
 - [x] `base_export_from_save`: represented as an explicit-output structural
       export that writes base metadata, copied raw structure rows, and
       structure location JSON. Inventory item expansion, binary import, and
       live-server validation remain mutation-copy-adjacent and unverified.
+  - [x] Generated base exports are covered by export-to-import copied-save
+        round-trip tests.
 - [x] `cluster_json`.
 - [x] `cluster_typed`.
 - [x] `local_tribute`.

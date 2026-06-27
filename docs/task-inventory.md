@@ -62,12 +62,12 @@ Status markers:
 | P2-API-003 | `[x]` | Port save-contained player and tribe parsing, including embedded `GameModeCustomBytes`. | `arkapi` player/tribe tests. |
 | P2-API-004 | `[x]` | Port Dino, Structure, Equipment, Stackable, Base, and JSON read APIs for implemented offline workflows. | Domain tests, examples, and CLI/domain JSON tests. |
 | P2-API-005 | `[ ]` | Finish full dino edge behavior. | Legacy/modded cryopods, cryopod-location parity, and full pedigree tree rendering remain. |
-| P2-API-006 | `[~]` | Finish full structure/base edge behavior. | Exact owner/cell parity and base import/customize write parity remain; structure heatmap oracle is blocked by upstream private-save cell indexing. |
+| P2-API-006 | `[~]` | Finish full structure/base edge behavior. | Generated base/structure binary exports round-trip through mutation imports; exact owner/cell parity, base customization write parity, and live-server acceptance remain. Structure heatmap oracle is blocked by upstream private-save cell indexing. |
 | P2-API-007 | `[~]` | Finish full equipment edge behavior. | Ranking candidate selection and high-rating aggregate stats now have typed API helpers; exact default stat-table parity, legacy/modded cryopod saddle payloads, and cosmetics remain. |
 | P2-API-008 | `[~]` | Finish richer local cluster item/dino domain models. | Uploaded item type has typed constants/accessors, enum filters, version/parse helpers, and embedded dino component class summaries; add deeper item/dino fields only when chosen local-file fixtures expose them. |
 | P2-API-009 | `[~]` | Finish remaining Player/Tribe edge behavior. | Typed player pawn inventory indexing and upstream-style inventory item counting now live in `arkapi`; remaining upstream edge cases beyond parsed local archives, save objects, and embedded `GameModeCustomBytes` remain. |
 | P2-MUT-001 | `[x]` | Port copy-based DB modification, object removal, object upsert, and custom-table upsert. | `arkmutation` tests and CLI mutate commands. |
-| P2-MUT-002 | `[~]` | Translate higher-level mutation examples where feasible. | Structural copied-save coverage exists; generated blueprint/base customization live-server acceptance is unverified. |
+| P2-MUT-002 | `[~]` | Translate higher-level mutation examples where feasible. | Generated base/structure/dino/equipment binary exports round-trip through mutation imports into reopenable copied saves; generated blueprint/base customization live-server acceptance is unverified. |
 | P2-EX-001 | `[x]` | Create Go equivalents for runnable offline Python examples that currently have implemented API support. | `examples/` contains committed Go examples and smoke tests. |
 | P2-EX-002 | `[x]` | Compare Go example output to Python oracle output for selected implemented examples. | Forty-six aggregate cases pass; expanding Python/oracle coverage for every feasible upstream example is no longer a project goal. |
 
