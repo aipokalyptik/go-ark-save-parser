@@ -36,6 +36,103 @@ type CryopodDinoPayloadOptions struct {
 	Reversed bool
 }
 
+type StructureGameObjectOptions struct {
+	ClassID          uint32
+	NoneID           uint32
+	IntPropertyID    uint32
+	FloatPropertyID  uint32
+	BoolPropertyID   uint32
+	ObjectPropertyID uint32
+
+	StructureIDNameID   uint32
+	MaxHealthNameID     uint32
+	CurrentHealthNameID uint32
+	TribeIDNameID       uint32
+	EngramNameID        uint32
+	InventoryNameID     uint32
+	ItemCountNameID     uint32
+	MaxItemCountNameID  uint32
+	StructureID         int32
+	TribeID             int32
+	MaxHealth           float32
+	CurrentHealth       float32
+	IsEngram            *bool
+	InventoryID         uuid.UUID
+	ItemCount           int32
+	MaxItemCount        int32
+}
+
+func StructureGameObjectBytes(opts StructureGameObjectOptions) []byte {
+	defaultStructureGameObjectOptions(&opts)
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, opts.StructureIDNameID, opts.IntPropertyID, opts.StructureID)
+	if opts.MaxHealth != 0 {
+		WriteFloatPropertyID(&props, opts.MaxHealthNameID, opts.FloatPropertyID, opts.MaxHealth)
+	}
+	if opts.CurrentHealth != 0 {
+		WriteFloatPropertyID(&props, opts.CurrentHealthNameID, opts.FloatPropertyID, opts.CurrentHealth)
+	}
+	WriteIntPropertyID(&props, opts.TribeIDNameID, opts.IntPropertyID, opts.TribeID)
+	if opts.IsEngram != nil {
+		WriteBoolPropertyID(&props, opts.EngramNameID, opts.BoolPropertyID, *opts.IsEngram)
+	}
+	if opts.InventoryID != uuid.Nil {
+		WriteObjectReferencePropertyID(&props, opts.InventoryNameID, opts.ObjectPropertyID, opts.InventoryID)
+	}
+	if opts.ItemCount != 0 {
+		WriteIntPropertyID(&props, opts.ItemCountNameID, opts.IntPropertyID, opts.ItemCount)
+	}
+	if opts.MaxItemCount != 0 {
+		WriteIntPropertyID(&props, opts.MaxItemCountNameID, opts.IntPropertyID, opts.MaxItemCount)
+	}
+	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
+}
+
+func defaultStructureGameObjectOptions(opts *StructureGameObjectOptions) {
+	if opts.ClassID == 0 {
+		opts.ClassID = 0x10000005
+	}
+	if opts.NoneID == 0 {
+		opts.NoneID = 0x10000004
+	}
+	if opts.IntPropertyID == 0 {
+		opts.IntPropertyID = 0x10000003
+	}
+	if opts.FloatPropertyID == 0 {
+		opts.FloatPropertyID = 0x1000000a
+	}
+	if opts.BoolPropertyID == 0 {
+		opts.BoolPropertyID = 0x1000000e
+	}
+	if opts.ObjectPropertyID == 0 {
+		opts.ObjectPropertyID = 0x1000001f
+	}
+	if opts.StructureIDNameID == 0 {
+		opts.StructureIDNameID = 0x10000006
+	}
+	if opts.MaxHealthNameID == 0 {
+		opts.MaxHealthNameID = 0x10000007
+	}
+	if opts.CurrentHealthNameID == 0 {
+		opts.CurrentHealthNameID = 0x10000008
+	}
+	if opts.TribeIDNameID == 0 {
+		opts.TribeIDNameID = 0x10000009
+	}
+	if opts.EngramNameID == 0 {
+		opts.EngramNameID = 0x10000013
+	}
+	if opts.InventoryNameID == 0 {
+		opts.InventoryNameID = 0x10000023
+	}
+	if opts.ItemCountNameID == 0 {
+		opts.ItemCountNameID = 0x10000045
+	}
+	if opts.MaxItemCountNameID == 0 {
+		opts.MaxItemCountNameID = 0x10000046
+	}
+}
+
 func WriteSave(tb testing.TB, path string, opts SaveOptions) {
 	tb.Helper()
 	db, err := sql.Open("sqlite", path)

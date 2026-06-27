@@ -259,10 +259,14 @@ func TestBaseAPIComponentStatsSkipsUpstreamUnparsedBunkerBase(t *testing.T) {
 }
 
 func syntheticStructureObjectBytesForClass(classID uint32, noneID uint32, structureIDName uint32, tribeIDName uint32, tribeID int32) []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, structureIDName, 101)
-	writeIntProperty(&props, tribeIDName, tribeID)
-	return testfixtures.ObjectBytesWithProperties(classID, noneID, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		ClassID:           classID,
+		NoneID:            noneID,
+		StructureIDNameID: structureIDName,
+		TribeIDNameID:     tribeIDName,
+		StructureID:       101,
+		TribeID:           tribeID,
+	})
 }
 
 func openSyntheticBaseSave(t *testing.T) *arksave.Save {

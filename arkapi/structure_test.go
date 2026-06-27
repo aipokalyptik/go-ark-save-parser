@@ -746,60 +746,63 @@ func openSyntheticStructureWithInventorySave(t *testing.T) *arksave.Save {
 }
 
 func syntheticStructureObjectBytes() []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
-	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		StructureID:   123,
+		TribeID:       555,
+		MaxHealth:     10000,
+		CurrentHealth: 9000,
+	})
 }
 
 func syntheticStructureObjectBytesWithEngramFlag(isEngram bool) []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
-	testfixtures.WriteBoolPropertyID(&props, 0x10000013, 0x1000000e, isEngram)
-	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		StructureID:   123,
+		TribeID:       555,
+		MaxHealth:     10000,
+		CurrentHealth: 9000,
+		IsEngram:      &isEngram,
+	})
 }
 
 func syntheticStructureObjectBytesWithClassAndOwner(classID uint32, structureID int32, tribeID int32) []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, structureID)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, tribeID)
-	return testfixtures.ObjectBytesWithProperties(classID, 0x10000004, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		ClassID:       classID,
+		StructureID:   structureID,
+		TribeID:       tribeID,
+		MaxHealth:     10000,
+		CurrentHealth: 9000,
+	})
 }
 
 func syntheticStructureWithInventoryObjectBytes(inventoryID uuid.UUID) []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
-	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000023, 0x1000001f, inventoryID)
-	testfixtures.WriteIntPropertyID(&props, 0x10000045, 0x10000003, 12)
-	testfixtures.WriteIntPropertyID(&props, 0x10000046, 0x10000003, 300)
-	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		StructureID:   123,
+		TribeID:       555,
+		MaxHealth:     10000,
+		CurrentHealth: 9000,
+		InventoryID:   inventoryID,
+		ItemCount:     12,
+		MaxItemCount:  300,
+	})
 }
 
 func syntheticStructureContainerObjectBytes(structureID int32, inventoryID uuid.UUID) []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, structureID)
-	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
-	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000023, 0x1000001f, inventoryID)
-	return testfixtures.ObjectBytesWithProperties(0x10000043, 0x10000004, props.Bytes())
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		ClassID:     0x10000043,
+		StructureID: structureID,
+		TribeID:     555,
+		MaxHealth:   10000,
+		InventoryID: inventoryID,
+	})
 }
 
 func syntheticStructureEngramObjectBytes() []byte {
-	var props bytes.Buffer
-	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 789)
-	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
-	testfixtures.WriteBoolPropertyID(&props, 0x10000013, 0x1000000e, true)
-	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+	isEngram := true
+	return testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+		StructureID: 789,
+		TribeID:     555,
+		IsEngram:    &isEngram,
+	})
 }
 
 func syntheticStructureActorTransforms(id uuid.UUID) []byte {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
@@ -222,6 +223,56 @@ func TestInventoryGameObjectBytesWritesParseableInventoryObject(t *testing.T) {
 		if !inventoryHasItem(inventory, want) {
 			t.Fatalf("inventory item UUIDs = %#v, missing %s", inventory.ItemUUIDs, want)
 		}
+	}
+}
+
+func TestStructureGameObjectBytesWritesParseableStructureObject(t *testing.T) {
+	inventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	objectID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	isEngram := false
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x10000005: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+		0x10000006: "StructureID",
+		0x10000007: "MaxHealth",
+		0x10000008: "Health",
+		0x10000009: "TargetingTeam",
+		0x1000000a: "FloatProperty",
+		0x1000000e: "BoolProperty",
+		0x10000013: "bIsEngram",
+		0x1000001f: "ObjectProperty",
+		0x10000023: "MyInventoryComponent",
+		0x10000045: "CurrentItemCount",
+		0x10000046: "MaxItemCount",
+	})
+
+	object, err := arkobject.ParseGameObject(objectID, StructureGameObjectBytes(StructureGameObjectOptions{
+		StructureID:   123,
+		TribeID:       555,
+		MaxHealth:     10000,
+		CurrentHealth: 9000,
+		IsEngram:      &isEngram,
+		InventoryID:   inventoryID,
+		ItemCount:     12,
+		MaxItemCount:  300,
+	}), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(structure) error = %v", err)
+	}
+	structure := arkobject.StructureFromObject(object, nil)
+	if structure.ID != 123 || structure.Owner.TribeID != 555 {
+		t.Fatalf("Structure identity/owner = %#v", structure)
+	}
+	if structure.MaxHealth != 10000 || structure.CurrentHealth != 9000 {
+		t.Fatalf("Structure health = %#v", structure)
+	}
+	if structure.InventoryUUID == nil || *structure.InventoryUUID != inventoryID {
+		t.Fatalf("InventoryUUID = %v, want %s", structure.InventoryUUID, inventoryID)
+	}
+	if structure.ItemCount != 12 || structure.MaxItemCount != 300 {
+		t.Fatalf("inventory counts = current %d max %d", structure.ItemCount, structure.MaxItemCount)
 	}
 }
 
