@@ -446,6 +446,24 @@ func (e *EquipmentAPI) BestActualDurability(items map[uuid.UUID]arkobject.Equipm
 	})
 }
 
+func (e *EquipmentAPI) BestWeaponDamageWithFaults(opts EquipmentFilterOptions) (uuid.UUID, arkobject.EquipmentItem, bool, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := e.FilteredWithFaults(opts)
+	if err != nil {
+		return uuid.Nil, arkobject.EquipmentItem{}, false, nil, err
+	}
+	id, item, ok := e.BestWeaponDamage(items)
+	return id, item, ok, faults, nil
+}
+
+func (e *EquipmentAPI) BestActualDurabilityWithFaults(opts EquipmentFilterOptions) (uuid.UUID, arkobject.EquipmentItem, bool, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := e.FilteredWithFaults(opts)
+	if err != nil {
+		return uuid.Nil, arkobject.EquipmentItem{}, false, nil, err
+	}
+	id, item, ok := e.BestActualDurability(items)
+	return id, item, ok, faults, nil
+}
+
 func (e *EquipmentAPI) FilterAscendantWeaponBlueprints(items map[uuid.UUID]arkobject.EquipmentItem) map[uuid.UUID]arkobject.EquipmentItem {
 	out := map[uuid.UUID]arkobject.EquipmentItem{}
 	for id, item := range items {

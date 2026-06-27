@@ -23,7 +23,7 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewEquipment(save)
-	weapons, _, err := api.FilteredWithFaults(arkapi.EquipmentFilterOptions{
+	_, weapon, ok, _, err := api.BestWeaponDamageWithFaults(arkapi.EquipmentFilterOptions{
 		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:   arkapi.UpstreamWeaponBlueprints(),
 		NoBlueprints: true,
@@ -32,7 +32,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "read weapons: %v\n", err)
 		os.Exit(1)
 	}
-	_, weapon, ok := api.BestWeaponDamage(weapons)
 	if ok {
 		fmt.Printf(
 			"weapon_damage=%.1f weapon=%s weapon_crafted=%t\n",
@@ -44,7 +43,7 @@ func main() {
 		fmt.Println("weapon=no_match")
 	}
 
-	armor, _, err := api.FilteredWithFaults(arkapi.EquipmentFilterOptions{
+	_, armorItem, ok, _, err := api.BestActualDurabilityWithFaults(arkapi.EquipmentFilterOptions{
 		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
 		Blueprints:   arkapi.UpstreamArmorBlueprints(),
 		NoBlueprints: true,
@@ -53,7 +52,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "read armor: %v\n", err)
 		os.Exit(1)
 	}
-	_, armorItem, ok := api.BestActualDurability(armor)
 	if ok {
 		fmt.Printf(
 			"armor_durability=%.1f armor=%s armor_crafted=%t\n",

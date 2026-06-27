@@ -670,6 +670,42 @@ func TestEquipmentAPITopItemHelpersMirrorExampleSelections(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIBestItemWithFaultsAppliesFilters(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	id, item, ok, faults, err := api.BestWeaponDamageWithFaults(EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:   UpstreamWeaponBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		t.Fatalf("BestWeaponDamageWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("BestWeaponDamageWithFaults() faults = %#v, want none", faults)
+	}
+	if !ok || id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || item.Kind != arkobject.EquipmentWeapon {
+		t.Fatalf("BestWeaponDamageWithFaults() = %s %#v, %v; want synthetic weapon", id, item, ok)
+	}
+
+	id, item, ok, faults, err = api.BestActualDurabilityWithFaults(EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
+		Blueprints:   UpstreamArmorBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		t.Fatalf("BestActualDurabilityWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("BestActualDurabilityWithFaults() faults = %#v, want none", faults)
+	}
+	if !ok || id != uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff") || item.Kind != arkobject.EquipmentArmor {
+		t.Fatalf("BestActualDurabilityWithFaults() = %s %#v, %v; want synthetic armor", id, item, ok)
+	}
+}
+
 func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
 	api := EquipmentAPI{}
 	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
@@ -1045,7 +1081,7 @@ func openSyntheticEquipmentOwnedBlueprintSave(t *testing.T) *arksave.Save {
 	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
-		structureID:  syntheticStructureWithInventoryObjectBytes(inventoryID),
+		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
 		ownedItemID: syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(ownerInventoryBlueprintOptions{OwnerInventory: inventoryID, IsBlueprint: true}),
 		otherItemID: syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(ownerInventoryBlueprintOptions{OwnerInventory: otherInventoryID, IsBlueprint: true}),
 	})
