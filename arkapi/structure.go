@@ -35,6 +35,11 @@ type StructureTribeOwnershipSummary struct {
 	Structures int
 }
 
+type StructureLocationSummary struct {
+	Structures int
+	Connected  int
+}
+
 type StructureHealthSummary struct {
 	Structures           int
 	WithHealth           int
@@ -614,6 +619,18 @@ func (s *StructureAPI) AtLocationWithFaults(mapName string, coords arkobject.Map
 		}
 	}
 	return out, faults, nil
+}
+
+func (s *StructureAPI) AtLocationSummaryWithFaults(mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (StructureLocationSummary, []arksave.FaultyObjectInfo, error) {
+	found, faults, err := s.AtLocationWithFaults(mapName, coords, radius, blueprints)
+	if err != nil {
+		return StructureLocationSummary{}, nil, err
+	}
+	connected, err := s.ConnectedStructures(found)
+	if err != nil {
+		return StructureLocationSummary{}, faults, err
+	}
+	return StructureLocationSummary{Structures: len(found), Connected: len(connected)}, faults, nil
 }
 
 func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {

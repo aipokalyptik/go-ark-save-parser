@@ -447,6 +447,33 @@ func TestStructureAPIGetAtLocationWithFaultsKeepsValidStructures(t *testing.T) {
 	}
 }
 
+func TestStructureAPIAtLocationSummaryWithFaultsCountsNearbyAndConnected(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	first, ok, err := api.ByID(firstID)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+	coords := first.Location.AsMapCoords("Valguero")
+
+	summary, faults, err := api.AtLocationSummaryWithFaults("Valguero", coords, 0.01, nil)
+	if err != nil {
+		t.Fatalf("AtLocationSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("AtLocationSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.Structures != 1 || summary.Connected != 2 {
+		t.Fatalf("AtLocationSummaryWithFaults() = %#v, want 1 structure and 2 connected", summary)
+	}
+}
+
 func TestStructureAPIFilterByLocationFiltersProvidedStructures(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()

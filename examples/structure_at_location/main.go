@@ -43,16 +43,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStructure(save)
-	found, err := api.AtLocation(os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
+	summary, _, err := api.AtLocationSummaryWithFaults(os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "find structures: %v\n", err)
 		os.Exit(1)
 	}
-	connected, err := api.ConnectedStructures(found)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "find connected structures: %v\n", err)
-		os.Exit(1)
-	}
 
-	fmt.Printf("structures=%d connected=%d\n", len(found), len(connected))
+	fmt.Printf("structures=%d connected=%d\n", summary.Structures, summary.Connected)
 }
