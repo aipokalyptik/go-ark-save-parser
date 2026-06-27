@@ -214,3 +214,54 @@ func TestExportClusterDataJSONIsDeterministic(t *testing.T) {
 		t.Fatalf("decoded ClusterDataInfo = %#v", decoded)
 	}
 }
+
+func TestExportClusterDirectoryDataIncludesAggregateSummary(t *testing.T) {
+	entries := []*arkcluster.Data{
+		{
+			ID:      "EOS_one",
+			Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+			Items: []arkcluster.Item{{
+				Index:     0,
+				Version:   7,
+				Quantity:  2,
+				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
+					Name:  "CustomItemDatas",
+					Type:  arkproperty.TypeArray,
+					Value: arkproperty.Array{Values: []any{arkproperty.Container{}}},
+				}}},
+			}},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{ClassName: "/Game/Test/Dino.Dino_C"}}}}},
+		},
+		{
+			ID:    "EOS_two",
+			Items: []arkcluster.Item{{Index: 0, Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C", Quantity: 5}},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, ParseError: "unsupported embedded archive"}},
+		},
+	}
+
+	info := ExportClusterDirectoryData(entries)
+	if info.Count != 2 || len(info.Files) != 2 {
+		t.Fatalf("ClusterDirectoryInfo = %#v, want two files", info)
+	}
+	if info.Summary.Files != 2 || info.Summary.Items != 2 || info.Summary.Dinos != 2 || info.Summary.ParseErrors != 1 || info.Summary.Objects != 1 {
+		t.Fatalf("ClusterDirectoryInfo.Summary totals = %#v", info.Summary)
+	}
+	if info.Summary.ItemSummary.TotalQuantity != 7 || info.Summary.ItemSummary.DinoItems != 1 || info.Summary.ItemSummary.OtherItems != 1 {
+		t.Fatalf("ClusterDirectoryInfo.Summary item summary = %#v", info.Summary.ItemSummary)
+	}
+	if info.Summary.DinoSummary.ParsedDinos != 1 || info.Summary.DinoSummary.ParseErrorDinos != 1 {
+		t.Fatalf("ClusterDirectoryInfo.Summary dino summary = %#v", info.Summary.DinoSummary)
+	}
+	raw, err := ExportClusterDirectoryDataJSON(entries)
+	if err != nil {
+		t.Fatalf("ExportClusterDirectoryDataJSON() error = %v", err)
+	}
+	var decoded ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.Summary.ItemSummary.TotalQuantity != 7 {
+		t.Fatalf("decoded summary = %#v, want total quantity 7", decoded.Summary)
+	}
+}

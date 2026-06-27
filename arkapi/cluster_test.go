@@ -207,3 +207,39 @@ func TestClusterAPIDinoParseStatusCounts(t *testing.T) {
 		}
 	}
 }
+
+func TestClusterDirectorySummaryAggregatesFiles(t *testing.T) {
+	entries := []*arkcluster.Data{
+		{
+			ID:      "EOS_one",
+			Path:    "/tmp/EOS_one",
+			Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+			Items: []arkcluster.Item{
+				{Index: 0, Version: 7, Quantity: 3, Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C", Properties: arkproperty.Container{Properties: []arkproperty.Property{{
+					Name:  "CustomItemDatas",
+					Type:  arkproperty.TypeArray,
+					Value: arkproperty.Array{Values: []any{arkproperty.Container{}}},
+				}}}},
+				{Index: 1, Version: 6, Quantity: 2, Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C", CrafterCharacterName: "Survivor"},
+			},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{ClassName: "/Game/Test/Dino.Dino_C"}}}}},
+		},
+		{
+			ID:    "EOS_two",
+			Path:  "/tmp/EOS_two",
+			Items: []arkcluster.Item{{Index: 0, Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C", Quantity: 4}},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, ParseError: "unsupported embedded archive"}},
+		},
+	}
+
+	summary := ClusterDirectorySummary(entries)
+	if summary.Files != 2 || summary.Items != 3 || summary.Dinos != 2 || summary.ParseErrors != 1 || summary.Objects != 1 {
+		t.Fatalf("ClusterDirectorySummary() totals = %#v", summary)
+	}
+	if summary.ItemSummary.DinoItems != 1 || summary.ItemSummary.EquipmentItems != 1 || summary.ItemSummary.OtherItems != 1 || summary.ItemSummary.TotalQuantity != 9 || summary.ItemSummary.CraftedItems != 1 {
+		t.Fatalf("ClusterDirectorySummary() item summary = %#v", summary.ItemSummary)
+	}
+	if summary.DinoSummary.ParsedDinos != 1 || summary.DinoSummary.ParseErrorDinos != 1 || summary.DinoSummary.TotalEmbeddedObjects != 1 {
+		t.Fatalf("ClusterDirectorySummary() dino summary = %#v", summary.DinoSummary)
+	}
+}

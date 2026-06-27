@@ -253,6 +253,9 @@ documented.
   - [x] Include uploaded item version support and uploaded dino parse status,
         version support, parsed-archive state, and component class summaries in
         cluster JSON exports.
+  - [x] Add directory-level local cluster aggregate summaries for total files,
+        objects, items, dinos, parse errors, uploaded-item summaries, and
+        uploaded-dino summaries, and include them in directory JSON exports.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local

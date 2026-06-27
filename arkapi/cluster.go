@@ -46,6 +46,16 @@ type ClusterDinoSummary struct {
 	MaxEmbeddedObjects      int
 }
 
+type ClusterDirectoryAggregate struct {
+	Files       int
+	Objects     int
+	Items       int
+	Dinos       int
+	ParseErrors int
+	ItemSummary ClusterItemSummary
+	DinoSummary ClusterDinoSummary
+}
+
 func NewCluster(data *arkcluster.Data) *ClusterAPI {
 	return &ClusterAPI{data: data}
 }
@@ -279,4 +289,51 @@ func (c *ClusterAPI) Summary() ClusterSummary {
 		summary.ObjectCount = len(c.data.Archive.Objects)
 	}
 	return summary
+}
+
+func ClusterDirectorySummary(entries []*arkcluster.Data) ClusterDirectoryAggregate {
+	summary := ClusterDirectoryAggregate{Files: len(entries)}
+	for _, entry := range entries {
+		api := NewCluster(entry)
+		fileSummary := api.Summary()
+		summary.Objects += fileSummary.ObjectCount
+		summary.Items += fileSummary.ItemCount
+		summary.Dinos += fileSummary.DinoCount
+		summary.ParseErrors += fileSummary.ParseErrorCount
+		addClusterItemSummary(&summary.ItemSummary, api.ItemSummary())
+		addClusterDinoSummary(&summary.DinoSummary, api.DinoSummary())
+	}
+	return summary
+}
+
+func addClusterItemSummary(total *ClusterItemSummary, next ClusterItemSummary) {
+	total.Items += next.Items
+	total.DinoItems += next.DinoItems
+	total.EquipmentItems += next.EquipmentItems
+	total.OtherItems += next.OtherItems
+	total.SupportedVersionItems += next.SupportedVersionItems
+	total.UnsupportedVersionItems += next.UnsupportedVersionItems
+	total.CraftedItems += next.CraftedItems
+	total.TotalQuantity += next.TotalQuantity
+	if next.MaxRating > total.MaxRating {
+		total.MaxRating = next.MaxRating
+	}
+	if next.MaxQuality > total.MaxQuality {
+		total.MaxQuality = next.MaxQuality
+	}
+}
+
+func addClusterDinoSummary(total *ClusterDinoSummary, next ClusterDinoSummary) {
+	total.Dinos += next.Dinos
+	total.ParsedDinos += next.ParsedDinos
+	total.ParseErrorDinos += next.ParseErrorDinos
+	total.SupportedVersionDinos += next.SupportedVersionDinos
+	total.UnsupportedVersionDinos += next.UnsupportedVersionDinos
+	total.WithStatusComponent += next.WithStatusComponent
+	total.WithAIController += next.WithAIController
+	total.WithInventoryComponent += next.WithInventoryComponent
+	total.TotalEmbeddedObjects += next.TotalEmbeddedObjects
+	if next.MaxEmbeddedObjects > total.MaxEmbeddedObjects {
+		total.MaxEmbeddedObjects = next.MaxEmbeddedObjects
+	}
 }

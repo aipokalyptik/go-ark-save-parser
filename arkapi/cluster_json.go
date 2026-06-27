@@ -21,8 +21,9 @@ type ClusterDataInfo struct {
 }
 
 type ClusterDirectoryInfo struct {
-	Count int               `json:"count"`
-	Files []ClusterDataInfo `json:"files"`
+	Count   int                       `json:"count"`
+	Summary ClusterDirectoryAggregate `json:"summary"`
+	Files   []ClusterDataInfo         `json:"files"`
 }
 
 type ClusterItemInfo struct {
@@ -158,8 +159,9 @@ func ExportClusterDataJSON(data *arkcluster.Data) ([]byte, error) {
 
 func ExportClusterDirectoryData(entries []*arkcluster.Data) ClusterDirectoryInfo {
 	info := ClusterDirectoryInfo{
-		Count: len(entries),
-		Files: make([]ClusterDataInfo, 0, len(entries)),
+		Count:   len(entries),
+		Summary: ClusterDirectorySummary(entries),
+		Files:   make([]ClusterDataInfo, 0, len(entries)),
 	}
 	for _, entry := range entries {
 		info.Files = append(info.Files, ExportClusterData(entry))
