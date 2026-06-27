@@ -77,6 +77,16 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	if got := api.ItemsByTypeTyped("dino"); len(got) != 1 || got[0].Index != 0 || got[0].Type != "dino" {
 		t.Fatalf("ItemsByTypeTyped(dino) = %#v, want typed item index 0", got)
 	}
+	summary := api.ItemSummary()
+	if summary.Items != 3 || summary.DinoItems != 1 || summary.EquipmentItems != 1 || summary.OtherItems != 1 {
+		t.Fatalf("ItemSummary() counts = %#v, want one dino/equipment/other across 3 items", summary)
+	}
+	if summary.SupportedVersionItems != 1 || summary.UnsupportedVersionItems != 1 {
+		t.Fatalf("ItemSummary() version counts = %#v, want one supported and one unsupported", summary)
+	}
+	if summary.CraftedItems != 1 || summary.TotalQuantity != 0 || summary.MaxRating != 0 || summary.MaxQuality != 0 {
+		t.Fatalf("ItemSummary() aggregates = %#v, want one crafted item and zero quantity/rating/quality", summary)
+	}
 }
 
 func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {

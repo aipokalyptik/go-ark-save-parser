@@ -7,7 +7,6 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
-	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 )
 
 func main() {
@@ -20,12 +19,16 @@ func main() {
 	}
 	api := arkapi.NewCluster(cluster)
 	summary := api.Summary()
-	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d parse_errors=%d\n",
+	items := api.ItemSummary()
+	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d other_items=%d crafted=%d unsupported_items=%d parse_errors=%d\n",
 		summary.ID,
 		summary.ItemCount,
 		summary.DinoCount,
-		len(api.ItemsByTypedType(arkobject.ClusterItemTypeEquipment)),
-		len(api.ItemsByTypedType(arkobject.ClusterItemTypeDino)),
+		items.EquipmentItems,
+		items.DinoItems,
+		items.OtherItems,
+		items.CraftedItems,
+		items.UnsupportedVersionItems,
 		summary.ParseErrorCount,
 	)
 }

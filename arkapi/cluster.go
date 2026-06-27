@@ -20,6 +20,19 @@ type ClusterSummary struct {
 	ParseErrorCount  int
 }
 
+type ClusterItemSummary struct {
+	Items                   int
+	DinoItems               int
+	EquipmentItems          int
+	OtherItems              int
+	SupportedVersionItems   int
+	UnsupportedVersionItems int
+	CraftedItems            int
+	TotalQuantity           int64
+	MaxRating               float64
+	MaxQuality              int32
+}
+
 func NewCluster(data *arkcluster.Data) *ClusterAPI {
 	return &ClusterAPI{data: data}
 }
@@ -147,6 +160,37 @@ func (c *ClusterAPI) ItemCountsByType() map[string]int {
 		counts[clusterItemType(item).String()]++
 	}
 	return counts
+}
+
+func (c *ClusterAPI) ItemSummary() ClusterItemSummary {
+	items := c.ItemsTyped()
+	summary := ClusterItemSummary{Items: len(items)}
+	for _, item := range items {
+		switch item.ItemType() {
+		case arkobject.ClusterItemTypeDino:
+			summary.DinoItems++
+		case arkobject.ClusterItemTypeEquipment:
+			summary.EquipmentItems++
+		default:
+			summary.OtherItems++
+		}
+		if item.SupportedVersion() {
+			summary.SupportedVersionItems++
+		} else if item.UnsupportedVersion() {
+			summary.UnsupportedVersionItems++
+		}
+		if item.IsCrafted() {
+			summary.CraftedItems++
+		}
+		summary.TotalQuantity += int64(item.Quantity)
+		if item.Rating > summary.MaxRating {
+			summary.MaxRating = item.Rating
+		}
+		if item.Quality > summary.MaxQuality {
+			summary.MaxQuality = item.Quality
+		}
+	}
+	return summary
 }
 
 func (c *ClusterAPI) ParseErrorCount() int {
