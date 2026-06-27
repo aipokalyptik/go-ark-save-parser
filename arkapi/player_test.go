@@ -470,6 +470,51 @@ func TestPlayerAPIPlayerInventoriesWithFaultsKeepsMissingInventoryFault(t *testi
 	}
 }
 
+func TestPlayerAPIPlayerInventorySummaryForPlayers(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewPlayer(save)
+	players, err := api.Players()
+	if err != nil {
+		t.Fatalf("Players() error = %v", err)
+	}
+	summary, faults, err := api.PlayerInventorySummaryForPlayers(players)
+	if err != nil {
+		t.Fatalf("PlayerInventorySummaryForPlayers() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerInventorySummaryForPlayers() faults = %#v, want none", faults)
+	}
+	want := PlayerInventorySummary{
+		Players:       1,
+		WithInventory: 1,
+		TotalItems:    2,
+		MaxItems:      2,
+		MinItems:      2,
+		AverageItems:  2,
+	}
+	if summary != want {
+		t.Fatalf("PlayerInventorySummaryForPlayers() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestPlayerAPIPlayerInventorySummaryForPlayersEmpty(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewPlayer(save).PlayerInventorySummaryForPlayers(nil)
+	if err != nil {
+		t.Fatalf("PlayerInventorySummaryForPlayers(nil) error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerInventorySummaryForPlayers(nil) faults = %#v, want none", faults)
+	}
+	if summary != (PlayerInventorySummary{}) {
+		t.Fatalf("PlayerInventorySummaryForPlayers(nil) = %#v, want zero summary", summary)
+	}
+}
+
 func TestPlayerAPIPlayerInventoryByDataIDIgnoresUnrelatedBrokenObjects(t *testing.T) {
 	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")

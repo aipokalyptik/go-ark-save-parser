@@ -32,6 +32,16 @@ type TribePlayerRelation struct {
 	InactiveMemberNames []string
 }
 
+type PlayerInventorySummary struct {
+	Players          int
+	WithInventory    int
+	WithoutInventory int
+	TotalItems       int
+	MaxItems         int
+	MinItems         int
+	AverageItems     float64
+}
+
 func NewPlayer(save *arksave.Save) *PlayerAPI {
 	return &PlayerAPI{save: save}
 }
@@ -354,6 +364,35 @@ func (p *PlayerAPI) PlayerInventoriesWithFaults() (map[uint64]arkobject.Inventor
 
 func (p *PlayerAPI) InventoryItemCount(inventory arkobject.Inventory) int {
 	return inventory.NumberOfItems()
+}
+
+func (p *PlayerAPI) PlayerInventorySummaryForPlayers(players []arkobject.Player) (PlayerInventorySummary, []arksave.FaultyObjectInfo, error) {
+	inventories, faults, err := p.PlayerInventoriesWithFaults()
+	if err != nil {
+		return PlayerInventorySummary{}, nil, err
+	}
+	out := PlayerInventorySummary{Players: len(players)}
+	for i, player := range players {
+		items := 0
+		inventory, ok := inventories[player.PlayerDataID]
+		if ok {
+			out.WithInventory++
+			items = p.InventoryItemCount(inventory)
+		} else {
+			out.WithoutInventory++
+		}
+		if i == 0 || items < out.MinItems {
+			out.MinItems = items
+		}
+		if items > out.MaxItems {
+			out.MaxItems = items
+		}
+		out.TotalItems += items
+	}
+	if len(players) > 0 {
+		out.AverageItems = float64(out.TotalItems) / float64(len(players))
+	}
+	return out, faults, nil
 }
 
 func (p *PlayerAPI) PlayerLocationByDataID(id uint64) (*arkobject.ActorTransform, bool, error) {
