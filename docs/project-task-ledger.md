@@ -421,6 +421,7 @@ CLI tools, and reusable APIs without losing oracle parity.
 - [x] CLI:
   - [x] `inspect`.
   - [x] `parse`.
+  - [x] `structure-health`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.
