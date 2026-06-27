@@ -50,6 +50,8 @@ type EquipmentSummary struct {
 	Blueprints           int
 	Crafted              int
 	Equipped             int
+	WithCustomData       int
+	CustomDataEntries    int
 	Classes              int
 	MaxQuality           int32
 	MaxRating            float64
@@ -570,6 +572,10 @@ func (e *EquipmentAPI) Summary(items map[uuid.UUID]arkobject.EquipmentItem) Equi
 		if item.IsEquipped {
 			summary.Equipped++
 		}
+		if item.HasCustomData() {
+			summary.WithCustomData++
+			summary.CustomDataEntries += item.CustomDataCount
+		}
 		if item.Quality > summary.MaxQuality {
 			summary.MaxQuality = item.Quality
 		}
@@ -634,6 +640,8 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 	summary.Blueprints += cryopodSummary.Blueprints
 	summary.Crafted += cryopodSummary.Crafted
 	summary.Equipped += cryopodSummary.Equipped
+	summary.WithCustomData += cryopodSummary.WithCustomData
+	summary.CustomDataEntries += cryopodSummary.CustomDataEntries
 	if cryopodSummary.MaxQuality > summary.MaxQuality {
 		summary.MaxQuality = cryopodSummary.MaxQuality
 	}

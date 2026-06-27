@@ -32,13 +32,15 @@ func main() {
 	}
 
 	fmt.Printf(
-		"items=%d weapons=%d armor=%d saddles=%d cryopod_saddles=%d shields=%d\n",
+		"items=%d weapons=%d armor=%d saddles=%d cryopod_saddles=%d shields=%d with_custom_data=%d custom_data_entries=%d\n",
 		summary.Items,
 		summary.ByKind[arkobject.EquipmentWeapon],
 		summary.ByKind[arkobject.EquipmentArmor],
 		summary.ByKind[arkobject.EquipmentSaddle],
 		summary.CryopodSaddles,
 		summary.ByKind[arkobject.EquipmentShield],
+		summary.WithCustomData,
+		summary.CustomDataEntries,
 	)
 }
 

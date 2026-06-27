@@ -843,11 +843,12 @@ func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
 				Crafter:   &arkobject.ObjectCrafter{CharacterName: "Survivor"},
 				Quantity:  1,
 			},
-			Kind:        arkobject.EquipmentSaddle,
-			Rating:      5.5,
-			Quality:     5,
-			IsBlueprint: true,
-			Stats:       arkobject.EquipmentStats{Armor: 80, Durability: 60},
+			Kind:            arkobject.EquipmentSaddle,
+			Rating:          5.5,
+			Quality:         5,
+			IsBlueprint:     true,
+			CustomDataCount: 2,
+			Stats:           arkobject.EquipmentStats{Armor: 80, Durability: 60},
 		},
 		thirdID: {
 			InventoryItem: arkobject.InventoryItem{
@@ -868,7 +869,7 @@ func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
 	if summary.ByKind[arkobject.EquipmentWeapon] != 1 || summary.ByKind[arkobject.EquipmentSaddle] != 1 || summary.ByKind[arkobject.EquipmentArmor] != 1 {
 		t.Fatalf("Summary() ByKind = %#v, want one weapon, saddle, and armor", summary.ByKind)
 	}
-	if summary.Blueprints != 1 || summary.Crafted != 1 || summary.Equipped != 1 || summary.Classes != 2 {
+	if summary.Blueprints != 1 || summary.Crafted != 1 || summary.Equipped != 1 || summary.WithCustomData != 1 || summary.CustomDataEntries != 2 || summary.Classes != 2 {
 		t.Fatalf("Summary() state fields = %#v", summary)
 	}
 	if summary.MaxQuality != 5 || summary.MaxRating != 5.5 || summary.MaxDamage != 112.3 || summary.MaxArmor != 80 || summary.MaxStatDurability != 90 || summary.MaxCurrentDurability != 0.75 {

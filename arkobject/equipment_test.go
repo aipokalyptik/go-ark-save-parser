@@ -18,6 +18,7 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 			{Name: "ItemRating", Type: arkproperty.TypeFloat, Value: float32(7.5)},
 			{Name: "ItemQualityIndex", Type: arkproperty.TypeByte, Value: byte(3)},
 			{Name: "SavedDurability", Type: arkproperty.TypeFloat, Value: float32(0.75)},
+			equipmentCustomItemDatasProperty(2),
 			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDurability), Value: uint16(1000)},
 			{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDamage), Value: uint16(1234)},
 			{Name: "CrafterCharacterName", Type: arkproperty.TypeString, Value: "Survivor"},
@@ -36,6 +37,9 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	if item.Rating != 7.5 || item.Quality != 3 || item.CurrentDurability != 0.75 {
 		t.Fatalf("EquipmentItem equipment fields = %#v", item)
 	}
+	if item.CustomDataCount != 2 || !item.HasCustomData() {
+		t.Fatalf("EquipmentItem custom data = count:%d has:%v, want 2/true", item.CustomDataCount, item.HasCustomData())
+	}
 	if item.Stats.Internal[EquipmentStatDamage] != 1234 || item.Stats.Internal[EquipmentStatDurability] != 1000 {
 		t.Fatalf("EquipmentItem internal stats = %#v", item.Stats.Internal)
 	}
@@ -53,6 +57,22 @@ func TestEquipmentItemFromObjectReadsBaseEquipmentFields(t *testing.T) {
 	}
 	if stats := item.ImplementedStats(); len(stats) != 2 || stats[0] != EquipmentStatDurability || stats[1] != EquipmentStatDamage {
 		t.Fatalf("EquipmentItem.ImplementedStats() = %#v, want durability and damage", stats)
+	}
+}
+
+func equipmentCustomItemDatasProperty(entries int) arkproperty.Property {
+	values := make([]any, 0, entries)
+	for i := 0; i < entries; i++ {
+		values = append(values, arkproperty.Container{})
+	}
+	return arkproperty.Property{
+		Name: "CustomItemDatas",
+		Type: arkproperty.TypeArray,
+		Value: arkproperty.Array{
+			ElementType: arkproperty.TypeStruct,
+			StructType:  "CustomItemData",
+			Values:      values,
+		},
 	}
 }
 

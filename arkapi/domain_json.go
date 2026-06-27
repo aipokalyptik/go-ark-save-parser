@@ -92,6 +92,8 @@ type EquipmentInfo struct {
 	Rating             float64             `json:"rating"`
 	Quality            int32               `json:"quality"`
 	CurrentDurability  float64             `json:"current_durability"`
+	HasCustomData      bool                `json:"has_custom_data"`
+	CustomDataCount    int                 `json:"custom_data_count,omitempty"`
 	IsCrafted          bool                `json:"is_crafted"`
 	AverageStat        float64             `json:"average_stat,omitempty"`
 	ImplementedStats   []string            `json:"implemented_stats,omitempty"`
@@ -497,6 +499,8 @@ func equipmentInfo(id uuid.UUID, item arkobject.EquipmentItem, inCryopod bool) E
 		Rating:             item.Rating,
 		Quality:            item.Quality,
 		CurrentDurability:  item.CurrentDurability,
+		HasCustomData:      item.HasCustomData(),
+		CustomDataCount:    item.CustomDataCount,
 		IsCrafted:          item.IsCrafted(),
 		AverageStat:        item.AverageStat(),
 		ImplementedStats:   equipmentStatNames(item.ImplementedStats()),

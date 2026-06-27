@@ -32,6 +32,7 @@ type EquipmentItem struct {
 	Kind              EquipmentKind
 	IsEquipped        bool
 	IsBlueprint       bool
+	CustomDataCount   int
 	Rating            float64
 	Quality           int32
 	CurrentDurability float64
@@ -70,8 +71,13 @@ func EquipmentItemFromObject(object *GameObject, kind EquipmentKind) EquipmentIt
 	if value, ok := numericFloat64(properties, "SavedDurability"); ok {
 		item.CurrentDurability = value
 	}
+	item.CustomDataCount = customItemDataCount(properties)
 	item.Stats = equipmentStats(properties, kind, object.Blueprint)
 	return item
+}
+
+func (e EquipmentItem) HasCustomData() bool {
+	return e.CustomDataCount > 0
 }
 
 func (e EquipmentItem) IsCrafted() bool {
@@ -140,6 +146,21 @@ func equipmentStats(properties arkproperty.Container, kind EquipmentKind, bluepr
 		stats.HyperthermalResistance = round1(defaultEquipmentHyperthermal(blueprint) * (0.0002*float64(value) + 1))
 	}
 	return stats
+}
+
+func customItemDataCount(properties arkproperty.Container) int {
+	value, ok := properties.Value("CustomItemDatas")
+	if !ok {
+		return 0
+	}
+	switch customData := value.(type) {
+	case arkproperty.Array:
+		return len(customData.Values)
+	case []any:
+		return len(customData)
+	default:
+		return 0
+	}
 }
 
 func defaultEquipmentDurability(blueprint string) float64 {

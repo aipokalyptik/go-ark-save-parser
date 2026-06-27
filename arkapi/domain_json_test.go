@@ -369,6 +369,22 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	}
 }
 
+func TestEquipmentInfoIncludesCustomItemDataMetadata(t *testing.T) {
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	info := equipmentInfo(id, arkobject.EquipmentItem{
+		InventoryItem: arkobject.InventoryItem{
+			Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C'",
+			Quantity:  1,
+		},
+		Kind:            arkobject.EquipmentWeapon,
+		CustomDataCount: 3,
+	}, false)
+
+	if info.CustomDataCount != 3 || !info.HasCustomData {
+		t.Fatalf("EquipmentInfo custom data = count:%d has:%v, want 3/true", info.CustomDataCount, info.HasCustomData)
+	}
+}
+
 func TestJSONAPIExportEquipmentIncludesOwnerInventory(t *testing.T) {
 	save := openSyntheticEquipmentOwnedByStructureSave(t)
 	defer save.Close()

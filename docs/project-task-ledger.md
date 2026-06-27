@@ -223,6 +223,9 @@ documented.
         tests.
   - [x] Skip unsupported embedded cryopod saddle payloads in the plain read API
         while reporting them through the fault-collecting API.
+  - [x] Model generic equipment `CustomItemDatas` presence/count metadata,
+        include it in equipment summaries, JSON export rows, and the
+        `equipment_summary` example output.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
         long-tail default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
