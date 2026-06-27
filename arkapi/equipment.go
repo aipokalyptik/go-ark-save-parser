@@ -26,6 +26,21 @@ type EquipmentFilterOptions struct {
 	Crafter        *arkobject.ObjectCrafter
 }
 
+type EquipmentRankOptions struct {
+	MinRating        float64
+	ExcludeCrafted   bool
+	IgnoredNameParts []string
+}
+
+type EquipmentRankStats struct {
+	Ranked          int
+	BestRating      float64
+	BestAverageStat float64
+	Crafted         int
+	Blueprints      int
+	Classes         int
+}
+
 const AscendantQualityIndex int32 = 5
 
 var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
@@ -399,6 +414,84 @@ func (e *EquipmentAPI) FilterAscendantWeaponBlueprints(items map[uuid.UUID]arkob
 		}
 	}
 	return out
+}
+
+func (e *EquipmentAPI) RankedCandidatesWithFaults() (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	allowedKinds := map[string]arkobject.EquipmentKind{}
+	for _, group := range []struct {
+		kind       arkobject.EquipmentKind
+		blueprints []string
+	}{
+		{kind: arkobject.EquipmentWeapon, blueprints: UpstreamWeaponBlueprints()},
+		{kind: arkobject.EquipmentArmor, blueprints: UpstreamArmorBlueprints()},
+		{kind: arkobject.EquipmentShield, blueprints: UpstreamShieldBlueprints()},
+		{kind: arkobject.EquipmentSaddle, blueprints: UpstreamSaddleBlueprints()},
+	} {
+		for _, blueprint := range group.blueprints {
+			allowedKinds[blueprint] = group.kind
+		}
+	}
+	objects, faults, err := e.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		_, ok := allowedKinds[canonicalBlueprintPath(info.ClassName)]
+		return ok
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.EquipmentItem{}
+	for _, info := range objects {
+		kind, ok := allowedKinds[canonicalBlueprintPath(info.Object.Blueprint)]
+		if !ok {
+			continue
+		}
+		if boolProperty(info.Object, "bIsEngram") {
+			continue
+		}
+		out[info.UUID] = arkobject.EquipmentItemFromObject(info.Object, kind)
+	}
+	return out, faults, nil
+}
+
+func (e *EquipmentAPI) RankStats(items map[uuid.UUID]arkobject.EquipmentItem, opts EquipmentRankOptions) EquipmentRankStats {
+	stats := EquipmentRankStats{}
+	classes := map[string]struct{}{}
+	for _, item := range items {
+		if opts.MinRating != 0 && item.Rating < opts.MinRating {
+			continue
+		}
+		if opts.ExcludeCrafted && item.IsCrafted() {
+			continue
+		}
+		if ignoredEquipmentNamePart(item, opts.IgnoredNameParts) {
+			continue
+		}
+		stats.Ranked++
+		if item.Rating > stats.BestRating {
+			stats.BestRating = item.Rating
+		}
+		if average := item.AverageStat(); average > stats.BestAverageStat {
+			stats.BestAverageStat = average
+		}
+		if item.IsCrafted() {
+			stats.Crafted++
+		}
+		if item.IsBlueprint {
+			stats.Blueprints++
+		}
+		classes[item.Blueprint] = struct{}{}
+	}
+	stats.Classes = len(classes)
+	return stats
+}
+
+func ignoredEquipmentNamePart(item arkobject.EquipmentItem, parts []string) bool {
+	shortName := arkobject.ShortNameFromBlueprint(item.Blueprint)
+	for _, part := range parts {
+		if strings.Contains(shortName, part) {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *EquipmentAPI) best(items map[uuid.UUID]arkobject.EquipmentItem, value func(arkobject.EquipmentItem) (float64, bool)) (uuid.UUID, arkobject.EquipmentItem, bool) {

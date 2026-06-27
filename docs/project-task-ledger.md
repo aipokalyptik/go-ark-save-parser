@@ -202,8 +202,11 @@ documented.
         indexes out-of-range cells on the supplied private save.
   - [ ] Base export/import read/write parity where local-copy structural tests
         are feasible.
-- [ ] Finish full equipment edge behavior:
-  - [ ] Exact equipment ranking count and average-stat parity.
+- [~] Finish full equipment edge behavior:
+  - [x] Move high-rating equipment ranking candidate selection and aggregate
+        stats into typed `arkapi` helpers used by the example.
+  - [ ] Exact equipment ranking count and average-stat parity, still limited by
+        remaining default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
   - [ ] Remaining default armor/stat table parity.
 - [~] Finish richer local cluster item/dino domain models:

@@ -584,6 +584,109 @@ func TestEquipmentAPITopItemHelpersMirrorExampleSelections(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
+	api := EquipmentAPI{}
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	boundaryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	craftedID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	blueprintID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	ignoredID := uuid.MustParse("eeeeeeee-ffff-0000-1111-222222222222")
+	items := map[uuid.UUID]arkobject.EquipmentItem{
+		firstID: {
+			InventoryItem: arkobject.InventoryItem{Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C'"},
+			Kind:          arkobject.EquipmentWeapon,
+			Rating:        4.2,
+			Stats: arkobject.EquipmentStats{Internal: map[arkobject.EquipmentStat]uint16{
+				arkobject.EquipmentStatDamage:     200,
+				arkobject.EquipmentStatDurability: 100,
+			}},
+		},
+		secondID: {
+			InventoryItem: arkobject.InventoryItem{Blueprint: "Blueprint'/Game/Test/PrimalItemArmor_GoodSaddle.PrimalItemArmor_GoodSaddle_C'"},
+			Kind:          arkobject.EquipmentSaddle,
+			Rating:        5.5,
+			IsBlueprint:   true,
+			Stats: arkobject.EquipmentStats{Internal: map[arkobject.EquipmentStat]uint16{
+				arkobject.EquipmentStatArmor:      800,
+				arkobject.EquipmentStatDurability: 600,
+			}},
+		},
+		boundaryID: {
+			InventoryItem: arkobject.InventoryItem{Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponBoundary.PrimalItem_WeaponBoundary_C'"},
+			Kind:          arkobject.EquipmentWeapon,
+			Rating:        3,
+		},
+		craftedID: {
+			InventoryItem: arkobject.InventoryItem{
+				Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponCrafted.PrimalItem_WeaponCrafted_C'",
+				Crafter:   &arkobject.ObjectCrafter{CharacterName: "Survivor"},
+			},
+			Kind:   arkobject.EquipmentWeapon,
+			Rating: 9.9,
+		},
+		blueprintID: {
+			InventoryItem: arkobject.InventoryItem{Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponLow.PrimalItem_WeaponLow_C'"},
+			Kind:          arkobject.EquipmentWeapon,
+			Rating:        2.9,
+			IsBlueprint:   true,
+		},
+		ignoredID: {
+			InventoryItem: arkobject.InventoryItem{Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+			Kind:          arkobject.EquipmentWeapon,
+			Rating:        8.8,
+		},
+	}
+
+	stats := api.RankStats(items, EquipmentRankOptions{
+		MinRating:        3,
+		ExcludeCrafted:   true,
+		IgnoredNameParts: []string{"WeaponBow"},
+	})
+	if stats.Ranked != 3 {
+		t.Fatalf("RankStats() Ranked = %d, want 3", stats.Ranked)
+	}
+	if stats.BestRating != 5.5 {
+		t.Fatalf("RankStats() BestRating = %f, want 5.5", stats.BestRating)
+	}
+	if stats.BestAverageStat != 700 {
+		t.Fatalf("RankStats() BestAverageStat = %f, want 700", stats.BestAverageStat)
+	}
+	if stats.Crafted != 0 {
+		t.Fatalf("RankStats() Crafted = %d, want 0 after excluding crafted items", stats.Crafted)
+	}
+	if stats.Blueprints != 1 {
+		t.Fatalf("RankStats() Blueprints = %d, want 1", stats.Blueprints)
+	}
+	if stats.Classes != 3 {
+		t.Fatalf("RankStats() Classes = %d, want 3", stats.Classes)
+	}
+}
+
+func TestEquipmentAPIRankedCandidatesWithFaultsUsesCanonicalEquipmentBlueprintLists(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	items, faults, err := api.RankedCandidatesWithFaults()
+	if err != nil {
+		t.Fatalf("RankedCandidatesWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("RankedCandidatesWithFaults() faults = %#v, want none", faults)
+	}
+	if len(items) != 4 {
+		t.Fatalf("RankedCandidatesWithFaults() items length = %d, want 4", len(items))
+	}
+	kinds := map[arkobject.EquipmentKind]int{}
+	for _, item := range items {
+		kinds[item.Kind]++
+	}
+	if kinds[arkobject.EquipmentWeapon] != 1 || kinds[arkobject.EquipmentArmor] != 1 || kinds[arkobject.EquipmentShield] != 1 || kinds[arkobject.EquipmentSaddle] != 1 {
+		t.Fatalf("RankedCandidatesWithFaults() kinds = %#v, want one of each canonical equipment kind", kinds)
+	}
+}
+
 func TestEquipmentAPIFilterAscendantWeaponBlueprints(t *testing.T) {
 	api := EquipmentAPI{}
 	ascendantID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
@@ -660,9 +763,13 @@ func openSyntheticMixedEquipmentSave(t *testing.T) *arksave.Save {
 
 	weaponID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	armorID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	shieldID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	saddleID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
 		weaponID: syntheticEquipmentObjectBytes(false),
 		armorID:  syntheticArmorEquipmentObjectBytes(),
+		shieldID: testfixtures.GenericObjectBytes(0x10000052, 0x10000004),
+		saddleID: testfixtures.GenericObjectBytes(0x10000053, 0x10000004),
 	})
 }
 

@@ -244,5 +244,7 @@ func syntheticHeader() []byte {
 		0x1000004f: "Bytes",
 		0x10000050: "ByteProperty",
 		0x10000051: "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'",
+		0x10000052: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C'",
+		0x10000053: "Blueprint'/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C'",
 	})
 }
