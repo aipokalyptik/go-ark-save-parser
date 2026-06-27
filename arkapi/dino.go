@@ -463,7 +463,7 @@ func (d *DinoAPI) SaddlesFromCryopods() (map[uuid.UUID]arkobject.EquipmentItem, 
 	for _, info := range objects {
 		saddle, ok, err := arkobject.SaddleFromCryopodObject(info.Object)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		if ok {
 			out[info.UUID] = saddle

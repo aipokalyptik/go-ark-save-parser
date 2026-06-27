@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
@@ -106,6 +107,37 @@ func TestDinoAPISaddlesFromCryopodsParsesModernEmbeddedSaddles(t *testing.T) {
 	wantBlueprint := "/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C"
 	if saddle.Blueprint != wantBlueprint {
 		t.Fatalf("saddle blueprint = %q, want %q", saddle.Blueprint, wantBlueprint)
+	}
+}
+
+func TestDinoAPISaddlesFromCryopodsSkipsUnsupportedEmbeddedSaddle(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	saddles, err := api.SaddlesFromCryopods()
+	if err != nil {
+		t.Fatalf("SaddlesFromCryopods() error = %v, want unsupported saddle skipped", err)
+	}
+	if len(saddles) != 0 {
+		t.Fatalf("SaddlesFromCryopods() length = %d, want unsupported saddle skipped: %#v", len(saddles), saddles)
+	}
+}
+
+func TestDinoAPISaddlesFromCryopodsWithFaultsReportsUnsupportedEmbeddedSaddle(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	saddles, faults, err := api.SaddlesFromCryopodsWithFaults()
+	if err != nil {
+		t.Fatalf("SaddlesFromCryopodsWithFaults() error = %v", err)
+	}
+	if len(saddles) != 0 {
+		t.Fatalf("SaddlesFromCryopodsWithFaults() length = %d, want unsupported saddle skipped: %#v", len(saddles), saddles)
+	}
+	if len(faults) != 1 || !strings.Contains(faults[0].Err.Error(), "unsupported embedded cryopod saddle data version") {
+		t.Fatalf("SaddlesFromCryopodsWithFaults() faults = %#v, want unsupported saddle version fault", faults)
 	}
 }
 
@@ -1553,6 +1585,18 @@ func openSyntheticCryopoddedDinoSaveWithSaddle(t *testing.T) *arksave.Save {
 	saddlePayload := syntheticCryopodSaddlePayload()
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		podID: syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, saddlePayload),
+	})
+}
+
+func openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		podID: syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, syntheticLegacyCryopodPayload()),
 	})
 }
 

@@ -218,6 +218,8 @@ documented.
         tests.
   - [x] Cover base and cursed Tek sword durability defaults in Go stat table
         tests.
+  - [x] Skip unsupported embedded cryopod saddle payloads in the plain read API
+        while reporting them through the fault-collecting API.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
         long-tail default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
