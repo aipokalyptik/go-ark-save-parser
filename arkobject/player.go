@@ -24,6 +24,21 @@ type Player struct {
 	UnlockedEngrams   []string
 }
 
+func (p Player) DisplayName() string {
+	if p.CharacterName != "" {
+		return p.CharacterName
+	}
+	return p.PlayerName
+}
+
+func (p Player) HasName() bool {
+	return p.DisplayName() != ""
+}
+
+func (p Player) InTribe() bool {
+	return p.TribeID != 0
+}
+
 func PlayerFromContainer(properties arkproperty.Container) (Player, error) {
 	var player Player
 	player.PlayerDataVersion = int32Value(properties, "SavedPlayerDataVersion")
@@ -107,6 +122,17 @@ type Tribe struct {
 	TribeLog  []string
 	LogIndex  int32
 	NumDinos  int32
+}
+
+func (t Tribe) HasName() bool {
+	return t.Name != ""
+}
+
+func (t Tribe) MemberCount() int {
+	if len(t.MemberIDs) > len(t.Members) {
+		return len(t.MemberIDs)
+	}
+	return len(t.Members)
 }
 
 func TribeFromContainer(properties arkproperty.Container) (Tribe, error) {

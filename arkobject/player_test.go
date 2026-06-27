@@ -138,3 +138,43 @@ func TestTribeFromContainerReadsTribeDataFields(t *testing.T) {
 		t.Fatalf("TribeLog = %#v", tribe.TribeLog)
 	}
 }
+
+func TestPlayerNameHelpersPreferCharacterThenPlatformName(t *testing.T) {
+	player := Player{CharacterName: "Survivor", PlayerName: "PlatformName"}
+	if !player.HasName() {
+		t.Fatalf("HasName() = false, want true")
+	}
+	if player.DisplayName() != "Survivor" {
+		t.Fatalf("DisplayName() = %q, want Survivor", player.DisplayName())
+	}
+
+	player.CharacterName = ""
+	if player.DisplayName() != "PlatformName" {
+		t.Fatalf("DisplayName() fallback = %q, want PlatformName", player.DisplayName())
+	}
+
+	player.PlayerName = ""
+	if player.HasName() || player.DisplayName() != "" {
+		t.Fatalf("empty names HasName=%v DisplayName=%q, want false/empty", player.HasName(), player.DisplayName())
+	}
+}
+
+func TestPlayerAndTribeMembershipHelpers(t *testing.T) {
+	if !(Player{TribeID: 123}).InTribe() {
+		t.Fatalf("Player.InTribe() = false, want true")
+	}
+	if (Player{}).InTribe() {
+		t.Fatalf("zero Player.InTribe() = true, want false")
+	}
+
+	tribe := Tribe{Name: "Porters", Members: []string{"Survivor", "Builder"}, MemberIDs: []int32{42, 43, 44}}
+	if !tribe.HasName() {
+		t.Fatalf("Tribe.HasName() = false, want true")
+	}
+	if tribe.MemberCount() != 3 {
+		t.Fatalf("Tribe.MemberCount() = %d, want max of member names/ids", tribe.MemberCount())
+	}
+	if (Tribe{}).HasName() || (Tribe{}).MemberCount() != 0 {
+		t.Fatalf("zero Tribe helpers = %v/%d, want false/0", (Tribe{}).HasName(), (Tribe{}).MemberCount())
+	}
+}

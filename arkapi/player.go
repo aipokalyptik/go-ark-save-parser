@@ -298,7 +298,7 @@ func (p *PlayerAPI) PlayerRosterSummary() (PlayerRosterSummary, error) {
 func (p *PlayerAPI) PlayerRosterSummaryForPlayers(players []arkobject.Player) PlayerRosterSummary {
 	summary := PlayerRosterSummary{Players: len(players)}
 	for _, player := range players {
-		if player.CharacterName != "" || player.PlayerName != "" {
+		if player.HasName() {
 			summary.WithNames++
 		}
 		if player.Level > summary.HighestLevel {
@@ -1011,10 +1011,10 @@ func (p *PlayerAPI) TribeRosterSummary() (TribeRosterSummary, error) {
 func (p *PlayerAPI) TribeRosterSummaryForTribes(tribes []arkobject.Tribe) TribeRosterSummary {
 	summary := TribeRosterSummary{Tribes: len(tribes)}
 	for _, tribe := range tribes {
-		if tribe.Name != "" {
+		if tribe.HasName() {
 			summary.WithNames++
 		}
-		summary.Members += len(tribe.MemberIDs)
+		summary.Members += tribe.MemberCount()
 		summary.Dinos += tribe.NumDinos
 	}
 	return summary
@@ -1282,7 +1282,7 @@ func (p *PlayerAPI) PlayerAndTribeDataSummaryForData(players []arkobject.Player,
 	tribeIDs := map[int32]struct{}{}
 	for _, tribe := range tribes {
 		tribeIDs[tribe.TribeID] = struct{}{}
-		row := TribeDataRow{HasName: tribe.Name != "", Members: len(tribe.MemberIDs), Dinos: tribe.NumDinos}
+		row := TribeDataRow{HasName: tribe.HasName(), Members: tribe.MemberCount(), Dinos: tribe.NumDinos}
 		if row.HasName {
 			out.TribesWithNames++
 		}
@@ -1295,10 +1295,12 @@ func (p *PlayerAPI) PlayerAndTribeDataSummaryForData(players []arkobject.Player,
 			Level:            player.Level,
 			TribeID:          player.TribeID,
 		}
-		if row.HasCharacterName || row.HasPlayerName {
+		if player.HasName() {
 			out.PlayersWithNames++
 		}
-		if _, ok := tribeIDs[player.TribeID]; !ok {
+		if !player.InTribe() {
+			out.PlayersWithoutTribe++
+		} else if _, ok := tribeIDs[player.TribeID]; !ok {
 			out.PlayersWithoutTribe++
 		}
 		out.PlayerRows = append(out.PlayerRows, row)
