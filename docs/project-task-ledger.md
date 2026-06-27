@@ -210,6 +210,8 @@ documented.
         stats into typed `arkapi` helpers used by the example.
   - [x] Add upstream family/slot default stat tables for equipment durability,
         armor, hypothermal resistance, and hyperthermal resistance.
+  - [x] Cover cursed shield durability and shield armor defaults in Go stat
+        table tests.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
         long-tail default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.

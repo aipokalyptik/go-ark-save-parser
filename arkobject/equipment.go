@@ -144,6 +144,9 @@ func equipmentStats(properties arkproperty.Container, kind EquipmentKind, bluepr
 
 func defaultEquipmentDurability(blueprint string) float64 {
 	blueprint = canonicalEquipmentBlueprintPath(blueprint)
+	if value, ok := shieldDefaultDurability(blueprint); ok {
+		return value
+	}
 	switch {
 	case armorFamily(blueprint, "/Chitin/", "Chitin"):
 		return 50
@@ -166,12 +169,6 @@ func defaultEquipmentDurability(blueprint string) float64 {
 		return 50
 	case strings.Contains(blueprint, "/HazardSuit/"):
 		return 85.5
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_MetalShield.PrimalItemArmor_MetalShield_C":
-		return 1250
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_TransparentRiotShield.PrimalItemArmor_TransparentRiotShield_C":
-		return 2300
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C":
-		return 350
 	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Metal/PrimalItemArmor_MinersHelmet.PrimalItemArmor_MinersHelmet_C",
 		tekSaddleBlueprint(blueprint),
 		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponCrossbow.PrimalItem_WeaponCrossbow_C",
@@ -214,6 +211,9 @@ func defaultEquipmentDurability(blueprint string) float64 {
 
 func defaultEquipmentArmor(blueprint string) float64 {
 	blueprint = canonicalEquipmentBlueprintPath(blueprint)
+	if _, ok := shieldDefaultDurability(blueprint); ok {
+		return 1
+	}
 	switch {
 	case armorFamily(blueprint, "/Chitin/", "Chitin"):
 		return 50
@@ -254,6 +254,19 @@ func defaultEquipmentArmor(blueprint string) float64 {
 		return 25
 	default:
 		return 1
+	}
+}
+
+func shieldDefaultDurability(blueprint string) (float64, bool) {
+	switch {
+	case strings.Contains(blueprint, "PrimalItemArmor_MetalShield"):
+		return 1250, true
+	case strings.Contains(blueprint, "PrimalItemArmor_TransparentRiotShield"):
+		return 2300, true
+	case strings.Contains(blueprint, "PrimalItemArmor_WoodShield"):
+		return 350, true
+	default:
+		return 0, false
 	}
 }
 
