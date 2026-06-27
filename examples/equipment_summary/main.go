@@ -23,24 +23,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewEquipment(save)
-	weapons, _, err := api.CanonicalCountWithFaults(arkobject.EquipmentWeapon, arkapi.UpstreamWeaponBlueprints())
+	summary, _, err := api.SummaryWithFaults(arkapi.EquipmentFilterOptions{
+		Blueprints: canonicalEquipmentBlueprints(),
+	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "read weapons: %v\n", err)
-		os.Exit(1)
-	}
-	armor, _, err := api.CanonicalCountWithFaults(arkobject.EquipmentArmor, arkapi.UpstreamArmorBlueprints())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read armor: %v\n", err)
-		os.Exit(1)
-	}
-	saddles, _, err := api.CanonicalCountWithFaults(arkobject.EquipmentSaddle, arkapi.UpstreamSaddleBlueprints())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read saddles: %v\n", err)
-		os.Exit(1)
-	}
-	shields, _, err := api.CanonicalCountWithFaults(arkobject.EquipmentShield, arkapi.UpstreamShieldBlueprints())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read shields: %v\n", err)
+		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
 		os.Exit(1)
 	}
 	cryopodSaddles, _, err := arkapi.NewDino(save).SaddlesFromCryopodsWithFaults()
@@ -51,11 +38,20 @@ func main() {
 
 	fmt.Printf(
 		"items=%d weapons=%d armor=%d saddles=%d cryopod_saddles=%d shields=%d\n",
-		weapons+armor+saddles+shields,
-		weapons,
-		armor,
-		saddles,
+		summary.Items,
+		summary.ByKind[arkobject.EquipmentWeapon],
+		summary.ByKind[arkobject.EquipmentArmor],
+		summary.ByKind[arkobject.EquipmentSaddle],
 		len(cryopodSaddles),
-		shields,
+		summary.ByKind[arkobject.EquipmentShield],
 	)
+}
+
+func canonicalEquipmentBlueprints() []string {
+	blueprints := []string{}
+	blueprints = append(blueprints, arkapi.UpstreamWeaponBlueprints()...)
+	blueprints = append(blueprints, arkapi.UpstreamArmorBlueprints()...)
+	blueprints = append(blueprints, arkapi.UpstreamSaddleBlueprints()...)
+	blueprints = append(blueprints, arkapi.UpstreamShieldBlueprints()...)
+	return blueprints
 }

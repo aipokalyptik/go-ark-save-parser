@@ -41,6 +41,22 @@ type EquipmentRankStats struct {
 	Classes         int
 }
 
+type EquipmentSummary struct {
+	Items                int
+	TotalQuantity        int32
+	ByKind               map[arkobject.EquipmentKind]int
+	Blueprints           int
+	Crafted              int
+	Equipped             int
+	Classes              int
+	MaxQuality           int32
+	MaxRating            float64
+	MaxDamage            float64
+	MaxArmor             float64
+	MaxStatDurability    float64
+	MaxCurrentDurability float64
+}
+
 const AscendantQualityIndex int32 = 5
 
 var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
@@ -493,6 +509,56 @@ func (e *EquipmentAPI) RankStats(items map[uuid.UUID]arkobject.EquipmentItem, op
 	}
 	stats.Classes = len(classes)
 	return stats
+}
+
+func (e *EquipmentAPI) Summary(items map[uuid.UUID]arkobject.EquipmentItem) EquipmentSummary {
+	summary := EquipmentSummary{ByKind: map[arkobject.EquipmentKind]int{}}
+	classes := map[string]struct{}{}
+	for _, item := range items {
+		summary.Items++
+		summary.TotalQuantity += item.Quantity
+		summary.ByKind[item.Kind]++
+		if item.IsBlueprint {
+			summary.Blueprints++
+		}
+		if item.IsCrafted() {
+			summary.Crafted++
+		}
+		if item.IsEquipped {
+			summary.Equipped++
+		}
+		if item.Quality > summary.MaxQuality {
+			summary.MaxQuality = item.Quality
+		}
+		if item.Rating > summary.MaxRating {
+			summary.MaxRating = item.Rating
+		}
+		if item.Stats.Damage > summary.MaxDamage {
+			summary.MaxDamage = item.Stats.Damage
+		}
+		if item.Stats.Armor > summary.MaxArmor {
+			summary.MaxArmor = item.Stats.Armor
+		}
+		if item.Stats.Durability > summary.MaxStatDurability {
+			summary.MaxStatDurability = item.Stats.Durability
+		}
+		if item.CurrentDurability > summary.MaxCurrentDurability {
+			summary.MaxCurrentDurability = item.CurrentDurability
+		}
+		if item.Blueprint != "" {
+			classes[canonicalBlueprintPath(item.Blueprint)] = struct{}{}
+		}
+	}
+	summary.Classes = len(classes)
+	return summary
+}
+
+func (e *EquipmentAPI) SummaryWithFaults(opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := e.FilteredWithFaults(opts)
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	return e.Summary(items), faults, nil
 }
 
 func ignoredEquipmentNamePart(item arkobject.EquipmentItem, parts []string) bool {

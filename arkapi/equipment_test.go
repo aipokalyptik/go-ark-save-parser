@@ -701,6 +701,63 @@ func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
+	api := EquipmentAPI{}
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	thirdID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	items := map[uuid.UUID]arkobject.EquipmentItem{
+		firstID: {
+			InventoryItem: arkobject.InventoryItem{
+				Blueprint: "Blueprint'/Game/Test/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C'",
+				Quantity:  2,
+			},
+			Kind:              arkobject.EquipmentWeapon,
+			Rating:            4.2,
+			Quality:           3,
+			CurrentDurability: 0.75,
+			IsEquipped:        true,
+			Stats:             arkobject.EquipmentStats{Damage: 112.3, Durability: 20},
+		},
+		secondID: {
+			InventoryItem: arkobject.InventoryItem{
+				Blueprint: "Blueprint'/Game/Test/PrimalItemArmor_GoodSaddle.PrimalItemArmor_GoodSaddle_C'",
+				Crafter:   &arkobject.ObjectCrafter{CharacterName: "Survivor"},
+				Quantity:  1,
+			},
+			Kind:        arkobject.EquipmentSaddle,
+			Rating:      5.5,
+			Quality:     5,
+			IsBlueprint: true,
+			Stats:       arkobject.EquipmentStats{Armor: 80, Durability: 60},
+		},
+		thirdID: {
+			InventoryItem: arkobject.InventoryItem{
+				Blueprint: "Blueprint'/Game/Test/PrimalItemArmor_GoodSaddle.PrimalItemArmor_GoodSaddle_C'",
+				Quantity:  4,
+			},
+			Kind:    arkobject.EquipmentArmor,
+			Rating:  2.5,
+			Quality: 1,
+			Stats:   arkobject.EquipmentStats{Armor: 45, Durability: 90},
+		},
+	}
+
+	summary := api.Summary(items)
+	if summary.Items != 3 || summary.TotalQuantity != 7 {
+		t.Fatalf("Summary() counts = %#v, want 3 items and quantity 7", summary)
+	}
+	if summary.ByKind[arkobject.EquipmentWeapon] != 1 || summary.ByKind[arkobject.EquipmentSaddle] != 1 || summary.ByKind[arkobject.EquipmentArmor] != 1 {
+		t.Fatalf("Summary() ByKind = %#v, want one weapon, saddle, and armor", summary.ByKind)
+	}
+	if summary.Blueprints != 1 || summary.Crafted != 1 || summary.Equipped != 1 || summary.Classes != 2 {
+		t.Fatalf("Summary() state fields = %#v", summary)
+	}
+	if summary.MaxQuality != 5 || summary.MaxRating != 5.5 || summary.MaxDamage != 112.3 || summary.MaxArmor != 80 || summary.MaxStatDurability != 90 || summary.MaxCurrentDurability != 0.75 {
+		t.Fatalf("Summary() maxima = %#v", summary)
+	}
+}
+
 func TestEquipmentAPIRankedCandidatesWithFaultsUsesCanonicalEquipmentBlueprintLists(t *testing.T) {
 	save := openSyntheticMixedEquipmentSave(t)
 	defer save.Close()

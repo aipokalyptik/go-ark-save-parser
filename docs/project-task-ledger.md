@@ -181,7 +181,8 @@ documented.
 - [x] Port Stackable API counts, categories, owner filtering, and JSON export.
 - [x] Port Equipment API weapon/armor/saddle/shield queries, owner filtering,
       crafted state, quality/rating/durability filters, stat calculations,
-      ranking helpers, and modern cryopod saddle extraction.
+      ranking helpers, inventory-state summaries, and modern cryopod saddle
+      extraction.
 - [x] Port Dino API class/tamed/wild/baby/stat/mutation/trait/ownership/
       ancestry/pedigree-base/heatmap/filter helpers and modern cryopod
       dino/status extraction.
@@ -410,7 +411,7 @@ CLI tools, and reusable APIs without losing oracle parity.
           onto typed `arkapi.EquipmentAPI.BestArmor` and
           `arkapi.DinoAPI.MaxCurrentLevel`.
     - [x] Move `equipment_summary` canonical kind/blueprint counting onto
-          typed `arkapi.EquipmentAPI.CanonicalCountWithFaults`.
+          typed `arkapi.EquipmentAPI.SummaryWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.
