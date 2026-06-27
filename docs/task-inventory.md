@@ -24,7 +24,7 @@ Status markers:
 | SCOPE-005 | `[~]` | Mutation APIs are translated only as explicit copied-save workflows. | `arkmutation` requires output paths and has structural tests; live-server acceptance remains unverified by design. |
 | SCOPE-006 | `[x]` | Private saves, raw oracle output, debug dumps, extracted saves, and snapshots never enter git. | `.gitignore`, development docs, and sanitized oracle docs define the privacy boundary. |
 | SCOPE-007 | `[x]` | Do not expand the Python codebase or oracle suite beyond selected-feature parity needs. | Existing oracle artifacts remain reference evidence only; new work should target Go offline feature parity and chosen examples. |
-| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs a Go-only read-only smoke path against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
+| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs Go-only read-only API and CLI smoke paths against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
 
 ## Phase 1: Oracle Setup
 
@@ -98,7 +98,7 @@ Status markers:
 | P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests. |
-| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs against configured private/provided data and skips without env vars. |
+| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs and CLI commands against configured private/provided data and skips without env vars. |
 | P4-VERIFY-005 | `[x]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
 

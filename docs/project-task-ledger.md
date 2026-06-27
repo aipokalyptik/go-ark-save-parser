@@ -427,8 +427,8 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
-- [x] Go-only provided-data E2E smoke test is available through
-      `make e2e-test`; it skips without `ARK_E2E_SAVE` or
+- [x] Go-only provided-data E2E smoke tests cover selected read-only APIs and
+      CLI commands through `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
 - [x] Private oracle comparison suite exists and currently records forty-six
       passing sanitized comparison cases for selected implemented features.
