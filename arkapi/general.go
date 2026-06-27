@@ -1,6 +1,10 @@
 package arkapi
 
 import (
+	"database/sql"
+	"errors"
+	"strings"
+
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
@@ -8,6 +12,17 @@ import (
 
 type GeneralAPI struct {
 	save *arksave.Save
+}
+
+type ObjectSummary struct {
+	Exists     bool
+	Bytes      int
+	Properties int
+}
+
+type ClassPropertySummary struct {
+	Objects    int
+	Properties int
 }
 
 func NewGeneral(save *arksave.Save) *GeneralAPI {
@@ -45,6 +60,37 @@ func (g *GeneralAPI) ObjectsWithFaults() ([]*arkobject.GameObject, []arksave.Fau
 
 func (g *GeneralAPI) Object(id uuid.UUID) (*arkobject.GameObject, error) {
 	return g.save.Object(id)
+}
+
+func (g *GeneralAPI) ObjectSummary(id uuid.UUID) (ObjectSummary, error) {
+	raw, err := g.save.ObjectBinary(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ObjectSummary{}, nil
+	}
+	if err != nil {
+		return ObjectSummary{}, err
+	}
+	object, err := g.save.Object(id)
+	if err != nil {
+		return ObjectSummary{}, err
+	}
+	return ObjectSummary{Exists: true, Bytes: len(raw), Properties: len(object.Properties)}, nil
+}
+
+func (g *GeneralAPI) ClassPropertySummaryWithFaults(classSubstring string) (ClassPropertySummary, []arksave.FaultyObjectInfo, error) {
+	objects, faults, err := g.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return strings.Contains(info.ClassName, classSubstring)
+	})
+	if err != nil {
+		return ClassPropertySummary{}, nil, err
+	}
+	properties := map[string]struct{}{}
+	for _, info := range objects {
+		for _, property := range info.Object.Properties {
+			properties[property.Name] = struct{}{}
+		}
+	}
+	return ClassPropertySummary{Objects: len(objects), Properties: len(properties)}, faults, nil
 }
 
 func (g *GeneralAPI) ObjectsWithAnyProperty(names []string) ([]*arkobject.GameObject, error) {

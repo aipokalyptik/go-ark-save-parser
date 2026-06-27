@@ -1,12 +1,11 @@
 package main
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -25,17 +24,13 @@ func main() {
 	}
 	defer save.Close()
 
-	raw, err := save.ObjectBinary(id)
-	if errors.Is(err, sql.ErrNoRows) {
+	summary, err := arkapi.NewGeneral(save).ObjectSummary(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !summary.Exists {
 		fmt.Println("has_object=0")
 		return
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	object, err := save.Object(id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("has_object=1 bytes=%d properties=%d\n", len(raw), len(object.Properties))
+	fmt.Printf("has_object=1 bytes=%d properties=%d\n", summary.Bytes, summary.Properties)
 }

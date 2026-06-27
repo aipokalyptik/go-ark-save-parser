@@ -2,6 +2,8 @@ package arkapi
 
 import (
 	"bytes"
+	"database/sql"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -130,6 +132,91 @@ func TestGeneralObjectsWithFaultsReportsParseFaults(t *testing.T) {
 	}
 }
 
+func TestGeneralObjectSummaryReportsBytesAndProperties(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	summary, err := NewGeneral(save).ObjectSummary(id)
+	if err != nil {
+		t.Fatalf("ObjectSummary() error = %v", err)
+	}
+	if !summary.Exists {
+		t.Fatalf("ObjectSummary().Exists = false, want true")
+	}
+	if summary.Bytes == 0 {
+		t.Fatalf("ObjectSummary().Bytes = 0, want raw byte count")
+	}
+	if summary.Properties != 1 {
+		t.Fatalf("ObjectSummary().Properties = %d, want 1", summary.Properties)
+	}
+}
+
+func TestGeneralObjectSummaryReportsMissingObject(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	summary, err := NewGeneral(save).ObjectSummary(uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"))
+	if err != nil {
+		t.Fatalf("ObjectSummary(missing) error = %v", err)
+	}
+	if summary.Exists || summary.Bytes != 0 || summary.Properties != 0 {
+		t.Fatalf("ObjectSummary(missing) = %#v, want empty missing summary", summary)
+	}
+}
+
+func TestGeneralObjectSummaryReturnsParseErrors(t *testing.T) {
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		id: syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	_, err := NewGeneral(save).ObjectSummary(id)
+	if err == nil || errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("ObjectSummary(broken) error = %v, want parse error", err)
+	}
+}
+
+func TestGeneralClassPropertySummaryCountsUniquePropertiesAndFaults(t *testing.T) {
+	firstID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	secondID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		firstID:  syntheticObjectBytes(0x10000001),
+		secondID: syntheticObjectBytesWithExtraProperty(0x10000001),
+		faultyID: syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	summary, faults, err := NewGeneral(save).ClassPropertySummaryWithFaults("Test_C")
+	if err != nil {
+		t.Fatalf("ClassPropertySummaryWithFaults() error = %v", err)
+	}
+	if summary.Objects != 2 || summary.Properties != 2 {
+		t.Fatalf("ClassPropertySummaryWithFaults() summary = %#v, want 2 objects and 2 unique properties", summary)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
+		t.Fatalf("ClassPropertySummaryWithFaults() faults = %#v, want faulty object", faults)
+	}
+}
+
+func TestGeneralClassPropertySummaryReturnsEmptyForNoMatch(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewGeneral(save).ClassPropertySummaryWithFaults("DoesNotExist")
+	if err != nil {
+		t.Fatalf("ClassPropertySummaryWithFaults(no match) error = %v", err)
+	}
+	if summary.Objects != 0 || summary.Properties != 0 {
+		t.Fatalf("ClassPropertySummaryWithFaults(no match) summary = %#v, want empty", summary)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("ClassPropertySummaryWithFaults(no match) faults = %#v, want none", faults)
+	}
+}
+
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
@@ -157,6 +244,13 @@ func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, 
 func syntheticObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
 	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
+	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
+}
+
+func syntheticObjectBytesWithExtraProperty(classNameID uint32) []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
+	testfixtures.WriteFloatPropertyID(&buf, 0x10000007, 0x1000000a, 123.5)
 	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
 }
 

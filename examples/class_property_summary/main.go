@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -20,17 +20,9 @@ func main() {
 	}
 	defer save.Close()
 
-	objects, faults, err := save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
-		return strings.Contains(info.ClassName, classSubstring)
-	})
+	summary, faults, err := arkapi.NewGeneral(save).ClassPropertySummaryWithFaults(classSubstring)
 	if err != nil {
 		log.Fatal(err)
 	}
-	properties := map[string]struct{}{}
-	for _, info := range objects {
-		for _, property := range info.Object.Properties {
-			properties[property.Name] = struct{}{}
-		}
-	}
-	fmt.Printf("objects=%d properties=%d faults=%d\n", len(objects), len(properties), len(faults))
+	fmt.Printf("objects=%d properties=%d faults=%d\n", summary.Objects, summary.Properties, len(faults))
 }
