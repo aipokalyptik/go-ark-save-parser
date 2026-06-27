@@ -594,6 +594,40 @@ func TestPlayerAPIPlayerRosterSummaryForPlayers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerAllSummaryForData(t *testing.T) {
+	api := NewPlayer(nil)
+	players := []arkobject.Player{
+		{
+			CharacterName:   "Ada",
+			Level:           5,
+			NumDeaths:       2,
+			UnlockedEngrams: []string{"EngramA", "EngramB", "EngramB"},
+		},
+		{
+			PlayerName:      "Grace",
+			Level:           12,
+			NumDeaths:       3,
+			UnlockedEngrams: []string{"EngramD", "EngramA"},
+		},
+	}
+	tribes := []arkobject.Tribe{
+		{Name: "Porters"},
+		{},
+	}
+
+	summary := api.PlayerAllSummaryForData(players, tribes)
+	want := PlayerAllSummary{
+		Players:         2,
+		Tribes:          2,
+		HighestLevel:    12,
+		TotalDeaths:     5,
+		UnlockedEngrams: 3,
+	}
+	if summary != want {
+		t.Fatalf("PlayerAllSummaryForData() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{

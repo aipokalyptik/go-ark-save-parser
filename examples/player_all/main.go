@@ -22,28 +22,9 @@ func main() {
 		}
 	}()
 
-	players, err := api.Players()
+	summary, err := api.PlayerAllSummary()
 	if err != nil {
 		log.Fatal(err)
 	}
-	tribes, err := api.TribeDetails()
-	if err != nil {
-		log.Fatal(err)
-	}
-	totalDeaths, err := api.TotalDeaths()
-	if err != nil {
-		log.Fatal(err)
-	}
-	unlockedEngrams, err := api.UnlockedEngrams()
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, highestLevel, hasLevel, err := api.PlayerWithHighestLevel()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if !hasLevel {
-		highestLevel = 0
-	}
-	fmt.Printf("players=%d tribes=%d highest_level=%d total_deaths=%d unlocked_engrams=%d\n", len(players), len(tribes), highestLevel, totalDeaths, len(unlockedEngrams))
+	fmt.Printf("players=%d tribes=%d highest_level=%d total_deaths=%d unlocked_engrams=%d\n", summary.Players, summary.Tribes, summary.HighestLevel, summary.TotalDeaths, summary.UnlockedEngrams)
 }

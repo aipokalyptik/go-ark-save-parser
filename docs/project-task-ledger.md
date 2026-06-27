@@ -231,6 +231,8 @@ documented.
   - [x] Move player inventory aggregate summary calculations into typed
         `arkapi.PlayerInventorySummaryForPlayers` and
         `arkapi.PlayerInventorySummaryFromPath`.
+  - [x] Move the `player_all` example aggregate into typed
+        `arkapi.PlayerAllSummary`.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.
@@ -403,6 +405,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.GeneralAPI` helpers.
     - [x] Move repeated player/tribe save-or-directory fallback logic behind
           typed `arkapi.NewPlayerFromPath`.
+    - [x] Move `player_all` aggregate counting behind typed
+          `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed
           `arkapi.PlayerInventorySummaryFromPath`.
     - [x] Move equipment max-damage example aggregation onto existing typed

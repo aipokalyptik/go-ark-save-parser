@@ -96,6 +96,14 @@ type PlayerRosterSummary struct {
 	HighestLevel int32
 }
 
+type PlayerAllSummary struct {
+	Players         int
+	Tribes          int
+	HighestLevel    int32
+	TotalDeaths     int32
+	UnlockedEngrams int
+}
+
 type TribeRosterSummary struct {
 	Tribes    int
 	WithNames int
@@ -305,6 +313,37 @@ func (p *PlayerAPI) PlayerRosterSummaryForPlayers(players []arkobject.Player) Pl
 			summary.HighestLevel = player.Level
 		}
 	}
+	return summary
+}
+
+func (p *PlayerAPI) PlayerAllSummary() (PlayerAllSummary, error) {
+	players, err := p.Players()
+	if err != nil {
+		return PlayerAllSummary{}, err
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return PlayerAllSummary{}, err
+	}
+	return p.PlayerAllSummaryForData(players, tribes), nil
+}
+
+func (p *PlayerAPI) PlayerAllSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe) PlayerAllSummary {
+	summary := PlayerAllSummary{
+		Players: len(players),
+		Tribes:  len(tribes),
+	}
+	engrams := map[string]struct{}{}
+	for _, player := range players {
+		if player.Level > summary.HighestLevel {
+			summary.HighestLevel = player.Level
+		}
+		summary.TotalDeaths += player.NumDeaths
+		for _, engram := range player.UnlockedEngrams {
+			engrams[engram] = struct{}{}
+		}
+	}
+	summary.UnlockedEngrams = len(engrams)
 	return summary
 }
 
