@@ -62,6 +62,138 @@ type StructureGameObjectOptions struct {
 	MaxItemCount        int32
 }
 
+type EquipmentGameObjectOptions struct {
+	ClassID          uint32
+	NoneID           uint32
+	IntPropertyID    uint32
+	FloatPropertyID  uint32
+	BoolPropertyID   uint32
+	StringPropertyID uint32
+	ObjectPropertyID uint32
+	UInt16PropertyID uint32
+
+	QuantityNameID       uint32
+	BlueprintNameID      uint32
+	EngramNameID         uint32
+	EquippedNameID       uint32
+	RatingNameID         uint32
+	QualityNameID        uint32
+	DurabilityNameID     uint32
+	StatsNameID          uint32
+	CrafterNameID        uint32
+	CrafterTribeNameID   uint32
+	OwnerInventoryNameID uint32
+
+	Quantity             int32
+	Rating               float32
+	Quality              int32
+	Durability           float32
+	IsBlueprint          *bool
+	IsEngram             *bool
+	IsEquipped           *bool
+	Stats                map[int32]uint16
+	CrafterCharacterName string
+	CrafterTribeName     string
+	OwnerInventoryID     uuid.UUID
+}
+
+func EquipmentGameObjectBytes(opts EquipmentGameObjectOptions) []byte {
+	defaultEquipmentGameObjectOptions(&opts)
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, opts.QuantityNameID, opts.IntPropertyID, opts.Quantity)
+	if opts.Rating != 0 {
+		WriteFloatPropertyID(&props, opts.RatingNameID, opts.FloatPropertyID, opts.Rating)
+	}
+	if opts.Quality != 0 {
+		WriteIntPropertyID(&props, opts.QualityNameID, opts.IntPropertyID, opts.Quality)
+	}
+	if opts.Durability != 0 {
+		WriteFloatPropertyID(&props, opts.DurabilityNameID, opts.FloatPropertyID, opts.Durability)
+	}
+	for _, position := range sortedInt32Keys(opts.Stats) {
+		WritePositionedUInt16PropertyID(&props, opts.StatsNameID, opts.UInt16PropertyID, position, opts.Stats[position])
+	}
+	if opts.CrafterCharacterName != "" {
+		WriteStringPropertyID(&props, opts.CrafterNameID, opts.StringPropertyID, opts.CrafterCharacterName)
+	}
+	if opts.CrafterTribeName != "" {
+		WriteStringPropertyID(&props, opts.CrafterTribeNameID, opts.StringPropertyID, opts.CrafterTribeName)
+	}
+	if opts.IsEngram != nil {
+		WriteBoolPropertyID(&props, opts.EngramNameID, opts.BoolPropertyID, *opts.IsEngram)
+	}
+	if opts.IsEquipped != nil {
+		WriteBoolPropertyID(&props, opts.EquippedNameID, opts.BoolPropertyID, *opts.IsEquipped)
+	}
+	if opts.IsBlueprint != nil {
+		WriteBoolPropertyID(&props, opts.BlueprintNameID, opts.BoolPropertyID, *opts.IsBlueprint)
+	}
+	if opts.OwnerInventoryID != uuid.Nil {
+		WriteObjectReferencePropertyID(&props, opts.OwnerInventoryNameID, opts.ObjectPropertyID, opts.OwnerInventoryID)
+	}
+	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
+}
+
+func defaultEquipmentGameObjectOptions(opts *EquipmentGameObjectOptions) {
+	if opts.ClassID == 0 {
+		opts.ClassID = 0x1000000f
+	}
+	if opts.NoneID == 0 {
+		opts.NoneID = 0x10000004
+	}
+	if opts.IntPropertyID == 0 {
+		opts.IntPropertyID = 0x10000003
+	}
+	if opts.FloatPropertyID == 0 {
+		opts.FloatPropertyID = 0x1000000a
+	}
+	if opts.BoolPropertyID == 0 {
+		opts.BoolPropertyID = 0x1000000e
+	}
+	if opts.StringPropertyID == 0 {
+		opts.StringPropertyID = 0x1000001a
+	}
+	if opts.ObjectPropertyID == 0 {
+		opts.ObjectPropertyID = 0x1000001f
+	}
+	if opts.UInt16PropertyID == 0 {
+		opts.UInt16PropertyID = 0x10000041
+	}
+	if opts.QuantityNameID == 0 {
+		opts.QuantityNameID = 0x1000000c
+	}
+	if opts.BlueprintNameID == 0 {
+		opts.BlueprintNameID = 0x1000000d
+	}
+	if opts.EngramNameID == 0 {
+		opts.EngramNameID = 0x10000013
+	}
+	if opts.EquippedNameID == 0 {
+		opts.EquippedNameID = 0x10000022
+	}
+	if opts.RatingNameID == 0 {
+		opts.RatingNameID = 0x10000010
+	}
+	if opts.QualityNameID == 0 {
+		opts.QualityNameID = 0x10000011
+	}
+	if opts.DurabilityNameID == 0 {
+		opts.DurabilityNameID = 0x10000012
+	}
+	if opts.StatsNameID == 0 {
+		opts.StatsNameID = 0x10000040
+	}
+	if opts.CrafterNameID == 0 {
+		opts.CrafterNameID = 0x1000001b
+	}
+	if opts.CrafterTribeNameID == 0 {
+		opts.CrafterTribeNameID = 0x1000001c
+	}
+	if opts.OwnerInventoryNameID == 0 {
+		opts.OwnerInventoryNameID = 0x10000044
+	}
+}
+
 func StructureGameObjectBytes(opts StructureGameObjectOptions) []byte {
 	defaultStructureGameObjectOptions(&opts)
 	var props bytes.Buffer
@@ -131,6 +263,17 @@ func defaultStructureGameObjectOptions(opts *StructureGameObjectOptions) {
 	if opts.MaxItemCountNameID == 0 {
 		opts.MaxItemCountNameID = 0x10000046
 	}
+}
+
+func sortedInt32Keys(values map[int32]uint16) []int32 {
+	keys := make([]int32, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
 }
 
 func WriteSave(tb testing.TB, path string, opts SaveOptions) {

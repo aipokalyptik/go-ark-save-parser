@@ -857,48 +857,56 @@ func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 }
 
 func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBlueprint bool, rating float32, quality int32, durability float32) []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, 0x1000000c, 1)
-	writeFloatProperty(&props, 0x10000010, rating)
-	writeIntProperty(&props, 0x10000011, quality)
-	writeFloatProperty(&props, 0x10000012, durability)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 2, 1000)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 3, 1234)
-	testfixtures.WriteStringPropertyID(&props, 0x1000001b, 0x1000001a, "Survivor")
-	testfixtures.WriteStringPropertyID(&props, 0x1000001c, 0x1000001a, "Porters")
-	if isEngram {
-		writeBoolProperty(&props, 0x10000013, true)
-	}
-	if isEquipped {
-		writeBoolProperty(&props, 0x10000022, true)
-	}
-	if isBlueprint {
-		writeBoolProperty(&props, 0x1000000d, true)
-	}
-	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
+	return testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+		Quantity:             1,
+		Rating:               rating,
+		Quality:              quality,
+		Durability:           durability,
+		IsEngram:             trueBoolPtr(isEngram),
+		IsEquipped:           trueBoolPtr(isEquipped),
+		IsBlueprint:          trueBoolPtr(isBlueprint),
+		CrafterCharacterName: "Survivor",
+		CrafterTribeName:     "Porters",
+		Stats: map[int32]uint16{
+			2: 1000,
+			3: 1234,
+		},
+	})
 }
 
 func syntheticEquipmentObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, 0x1000000c, 1)
-	writeFloatProperty(&props, 0x10000010, 7.5)
-	writeIntProperty(&props, 0x10000011, 3)
-	writeFloatProperty(&props, 0x10000012, 0.75)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 2, 1000)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 3, 1234)
-	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
-	return testfixtures.ObjectBytesWithProperties(0x1000000f, 0x10000004, props.Bytes())
+	return testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+		Quantity:         1,
+		Rating:           7.5,
+		Quality:          3,
+		Durability:       0.75,
+		OwnerInventoryID: ownerInventory,
+		Stats: map[int32]uint16{
+			2: 1000,
+			3: 1234,
+		},
+	})
 }
 
 func syntheticArmorEquipmentObjectBytes() []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, 0x1000000c, 1)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 1, 1000)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 5, 500)
-	testfixtures.WritePositionedUInt16PropertyID(&props, 0x10000040, 0x10000041, 7, 200)
-	return testfixtures.ObjectBytesWithProperties(0x10000042, 0x10000004, props.Bytes())
+	return testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+		ClassID:  0x10000042,
+		Quantity: 1,
+		Stats: map[int32]uint16{
+			1: 1000,
+			5: 500,
+			7: 200,
+		},
+	})
 }
 
 func boolPtr(value bool) *bool {
+	return &value
+}
+
+func trueBoolPtr(value bool) *bool {
+	if !value {
+		return nil
+	}
 	return &value
 }

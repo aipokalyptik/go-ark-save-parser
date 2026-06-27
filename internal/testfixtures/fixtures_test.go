@@ -276,6 +276,69 @@ func TestStructureGameObjectBytesWritesParseableStructureObject(t *testing.T) {
 	}
 }
 
+func TestEquipmentGameObjectBytesWritesParseableEquipmentObject(t *testing.T) {
+	ownerInventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	objectID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	isEquipped := true
+	isBlueprint := false
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x1000000c: "ItemQuantity",
+		0x1000000d: "bIsBlueprint",
+		0x1000000e: "BoolProperty",
+		0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+		0x1000000a: "FloatProperty",
+		0x10000010: "ItemRating",
+		0x10000011: "ItemQualityIndex",
+		0x10000012: "SavedDurability",
+		0x1000001a: "StrProperty",
+		0x1000001b: "CrafterCharacterName",
+		0x1000001c: "CrafterTribeName",
+		0x1000001f: "ObjectProperty",
+		0x10000022: "bEquippedItem",
+		0x10000040: "ItemStatValues",
+		0x10000041: "UInt16Property",
+		0x10000044: "OwnerInventory",
+	})
+
+	object, err := arkobject.ParseGameObject(objectID, EquipmentGameObjectBytes(EquipmentGameObjectOptions{
+		Quantity:             1,
+		Rating:               7.5,
+		Quality:              3,
+		Durability:           0.75,
+		IsEquipped:           &isEquipped,
+		IsBlueprint:          &isBlueprint,
+		OwnerInventoryID:     ownerInventoryID,
+		CrafterCharacterName: "Survivor",
+		CrafterTribeName:     "Porters",
+		Stats: map[int32]uint16{
+			2: 1000,
+			3: 1234,
+		},
+	}), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(equipment) error = %v", err)
+	}
+	item := arkobject.EquipmentItemFromObject(object, arkobject.EquipmentWeapon)
+	if item.Quantity != 1 || item.Rating != 7.5 || item.Quality != 3 || item.CurrentDurability != 0.75 {
+		t.Fatalf("Equipment fields = %#v", item)
+	}
+	if !item.IsEquipped || item.IsBlueprint {
+		t.Fatalf("equipment flags = equipped %v blueprint %v", item.IsEquipped, item.IsBlueprint)
+	}
+	if item.OwnerInventory == nil || *item.OwnerInventory != ownerInventoryID {
+		t.Fatalf("OwnerInventory = %v, want %s", item.OwnerInventory, ownerInventoryID)
+	}
+	if item.Stats.Internal[arkobject.EquipmentStatDurability] != 1000 || item.Stats.Internal[arkobject.EquipmentStatDamage] != 1234 {
+		t.Fatalf("equipment stats = %#v", item.Stats.Internal)
+	}
+	if item.Crafter == nil || item.Crafter.CharacterName != "Survivor" || item.Crafter.TribeName != "Porters" {
+		t.Fatalf("Crafter = %#v", item.Crafter)
+	}
+}
+
 func inventoryHasItem(inventory arkobject.Inventory, want uuid.UUID) bool {
 	for _, got := range inventory.ItemUUIDs {
 		if got == want {
