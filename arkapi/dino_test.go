@@ -1715,24 +1715,14 @@ func syntheticDinoBabyObjectBytes(age float32) []byte {
 }
 
 func syntheticDinoObjectBytesWithFlags(id1 int32, id2 int32, isFemale bool, isDead bool, isBaby bool, isTamed bool) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x10000015, id1)
-	writeIntProperty(&buf, 0x10000016, id2)
-	writeBoolProperty(&buf, 0x10000017, isFemale)
-	writeBoolProperty(&buf, 0x10000020, isDead)
-	writeBoolProperty(&buf, 0x10000021, isBaby)
-	if isTamed {
-		testfixtures.WriteDoublePropertyID(&buf, 0x10000018, 0x10000019, 42)
-	}
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
+	return testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+		ID1:      id1,
+		ID2:      id2,
+		IsFemale: boolPtr(isFemale),
+		IsDead:   boolPtr(isDead),
+		IsBaby:   boolPtr(isBaby),
+		Tamed:    isTamed,
+	})
 }
 
 func writeCustomItemDatasProperty(buf *bytes.Buffer, payloads ...[]byte) {

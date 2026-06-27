@@ -113,6 +113,87 @@ type StackableGameObjectOptions struct {
 	OwnerInventoryID uuid.UUID
 }
 
+type DinoGameObjectOptions struct {
+	ClassID          uint32
+	NoneID           uint32
+	IntPropertyID    uint32
+	BoolPropertyID   uint32
+	DoublePropertyID uint32
+
+	ID1NameID      uint32
+	ID2NameID      uint32
+	FemaleNameID   uint32
+	TamedNameID    uint32
+	DeadNameID     uint32
+	BabyNameID     uint32
+	ID1            int32
+	ID2            int32
+	IsFemale       *bool
+	IsDead         *bool
+	IsBaby         *bool
+	Tamed          bool
+	TamedTimestamp float64
+}
+
+func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
+	defaultDinoGameObjectOptions(&opts)
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, opts.ID1NameID, opts.IntPropertyID, opts.ID1)
+	WriteIntPropertyID(&props, opts.ID2NameID, opts.IntPropertyID, opts.ID2)
+	if opts.IsFemale != nil {
+		WriteBoolPropertyID(&props, opts.FemaleNameID, opts.BoolPropertyID, *opts.IsFemale)
+	}
+	if opts.IsDead != nil {
+		WriteBoolPropertyID(&props, opts.DeadNameID, opts.BoolPropertyID, *opts.IsDead)
+	}
+	if opts.IsBaby != nil {
+		WriteBoolPropertyID(&props, opts.BabyNameID, opts.BoolPropertyID, *opts.IsBaby)
+	}
+	if opts.Tamed {
+		WriteDoublePropertyID(&props, opts.TamedNameID, opts.DoublePropertyID, opts.TamedTimestamp)
+	}
+	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
+}
+
+func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
+	if opts.ClassID == 0 {
+		opts.ClassID = 0x10000014
+	}
+	if opts.NoneID == 0 {
+		opts.NoneID = 0x10000004
+	}
+	if opts.IntPropertyID == 0 {
+		opts.IntPropertyID = 0x10000003
+	}
+	if opts.BoolPropertyID == 0 {
+		opts.BoolPropertyID = 0x1000000e
+	}
+	if opts.DoublePropertyID == 0 {
+		opts.DoublePropertyID = 0x10000019
+	}
+	if opts.ID1NameID == 0 {
+		opts.ID1NameID = 0x10000015
+	}
+	if opts.ID2NameID == 0 {
+		opts.ID2NameID = 0x10000016
+	}
+	if opts.FemaleNameID == 0 {
+		opts.FemaleNameID = 0x10000017
+	}
+	if opts.TamedNameID == 0 {
+		opts.TamedNameID = 0x10000018
+	}
+	if opts.DeadNameID == 0 {
+		opts.DeadNameID = 0x10000020
+	}
+	if opts.BabyNameID == 0 {
+		opts.BabyNameID = 0x10000021
+	}
+	if opts.Tamed && opts.TamedTimestamp == 0 {
+		opts.TamedTimestamp = 42
+	}
+}
+
 func StackableGameObjectBytes(opts StackableGameObjectOptions) []byte {
 	defaultStackableGameObjectOptions(&opts)
 	var props bytes.Buffer

@@ -375,6 +375,46 @@ func TestStackableGameObjectBytesWritesParseableStackableObject(t *testing.T) {
 	}
 }
 
+func TestDinoGameObjectBytesWritesParseableDinoObject(t *testing.T) {
+	objectID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	isFemale := true
+	isDead := false
+	isBaby := true
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x1000000e: "BoolProperty",
+		0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+		0x10000015: "DinoID1",
+		0x10000016: "DinoID2",
+		0x10000017: "bIsFemale",
+		0x10000018: "TamedTimeStamp",
+		0x10000019: "DoubleProperty",
+		0x10000020: "bIsDead",
+		0x10000021: "bIsBaby",
+	})
+
+	object, err := arkobject.ParseGameObject(objectID, DinoGameObjectBytes(DinoGameObjectOptions{
+		ID1:      1001,
+		ID2:      2002,
+		IsFemale: &isFemale,
+		IsDead:   &isDead,
+		IsBaby:   &isBaby,
+		Tamed:    true,
+	}), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(dino) error = %v", err)
+	}
+	dino := arkobject.DinoFromObject(object, nil)
+	if dino.ID1 != 1001 || dino.ID2 != 2002 {
+		t.Fatalf("Dino IDs = %d/%d, want 1001/2002", dino.ID1, dino.ID2)
+	}
+	if !dino.IsFemale || dino.IsDead || !dino.IsBaby || !dino.IsTamed {
+		t.Fatalf("Dino flags = %#v", dino)
+	}
+}
+
 func inventoryHasItem(inventory arkobject.Inventory, want uuid.UUID) bool {
 	for _, got := range inventory.ItemUUIDs {
 		if got == want {
