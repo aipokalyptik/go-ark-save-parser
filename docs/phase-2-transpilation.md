@@ -530,7 +530,9 @@ For the cross-phase monitorable checklist, see
       compact tribute index files.
 - [x] Compare normalized Go `tribute_json` aggregate counts with private local
       compact tribute index files.
-- [ ] Compare normalized Go outputs with private Python oracle outputs where
-      available for the remaining runnable upstream examples.
+- [x] Compare normalized Go outputs with private Python oracle outputs for
+      selected implemented examples; further expansion should target Go
+      coverage and provided-data E2E instead of broadening the Python oracle
+      suite.
 - [x] Run subagent spec and quality reviews on parser parity and API coverage;
       current findings are recorded in `docs/production-readiness-review.md`.
