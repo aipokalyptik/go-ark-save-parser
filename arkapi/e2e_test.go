@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
@@ -46,6 +47,20 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 		if len(structures) == 0 {
 			t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) returned no objects")
+		}
+
+		jsonAPI := NewJSON(save)
+		for _, domain := range []string{"stackables"} {
+			export, err := jsonAPI.ExportDomain(domain)
+			if err != nil {
+				t.Fatalf("ExportDomain(%q) error = %v", domain, err)
+			}
+			if export.Domain != domain {
+				t.Fatalf("ExportDomain(%q).Domain = %q", domain, export.Domain)
+			}
+			if _, err := json.Marshal(export); err != nil {
+				t.Fatalf("json.Marshal(ExportDomain(%q)) error = %v", domain, err)
+			}
 		}
 	}
 

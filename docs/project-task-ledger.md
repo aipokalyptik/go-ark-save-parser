@@ -555,6 +555,11 @@ without Python or private chat context.
       commands, local tribute handling, and aggregate-output examples through
       `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
+- [x] Go-only provided-data E2E smoke tests cover stackable domain JSON export
+      through both `arkapi.JSONAPI.ExportDomain` and the CLI
+      `export-domain-json` path; heavier full dino/structure/base domain
+      exports remain outside the smoke target because they made E2E
+      impractically slow on the supplied save.
 - [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
 - [x] Private oracle comparison suite exists and currently records forty-six
