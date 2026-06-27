@@ -35,6 +35,19 @@ type StructureTribeOwnershipSummary struct {
 	Structures int
 }
 
+type StructureHealthSummary struct {
+	Structures           int
+	WithHealth           int
+	Damaged              int
+	FullyRepaired        int
+	WithoutMaxHealth     int
+	TotalMaxHealth       float64
+	TotalCurrentHealth   float64
+	AverageHealthPercent float64
+	MinimumHealthPercent float64
+	MaximumHealthPercent float64
+}
+
 type StructureOwnerLocationExport struct {
 	Structures          int                          `json:"structures"`
 	Owners              int                          `json:"owners"`
@@ -268,6 +281,43 @@ func (s *StructureAPI) OwnerSummaryWithFaults() (StructureOwnerSummary, []arksav
 	summary.UniquePlayers = len(players)
 	summary.UniqueOriginalPlacers = len(placers)
 	return summary, faults, nil
+}
+
+func (s *StructureAPI) HealthSummaryWithFaults() (StructureHealthSummary, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.AllWithFaults()
+	if err != nil {
+		return StructureHealthSummary{}, nil, err
+	}
+	return s.HealthSummaryForStructures(structures), faults, nil
+}
+
+func (s *StructureAPI) HealthSummaryForStructures(structures map[uuid.UUID]arkobject.Structure) StructureHealthSummary {
+	summary := StructureHealthSummary{Structures: len(structures)}
+	for _, structure := range structures {
+		if structure.MaxHealth <= 0 {
+			summary.WithoutMaxHealth++
+			continue
+		}
+		summary.WithHealth++
+		summary.TotalMaxHealth += structure.MaxHealth
+		summary.TotalCurrentHealth += structure.CurrentHealth
+		healthPercent := structure.CurrentHealth / structure.MaxHealth * 100
+		if summary.WithHealth == 1 || healthPercent < summary.MinimumHealthPercent {
+			summary.MinimumHealthPercent = healthPercent
+		}
+		if summary.WithHealth == 1 || healthPercent > summary.MaximumHealthPercent {
+			summary.MaximumHealthPercent = healthPercent
+		}
+		if structure.CurrentHealth < structure.MaxHealth {
+			summary.Damaged++
+		} else {
+			summary.FullyRepaired++
+		}
+	}
+	if summary.TotalMaxHealth > 0 {
+		summary.AverageHealthPercent = summary.TotalCurrentHealth / summary.TotalMaxHealth * 100
+	}
+	return summary
 }
 
 func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, playerAPI *PlayerAPI) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {

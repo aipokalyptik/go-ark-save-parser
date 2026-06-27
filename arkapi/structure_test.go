@@ -169,6 +169,35 @@ func TestStructureAPIOwnerSummaryCountsOwnerFields(t *testing.T) {
 	}
 }
 
+func TestStructureAPIHealthSummaryCountsDamagedStructures(t *testing.T) {
+	save := openSyntheticStructureHealthSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	summary, faults, err := api.HealthSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("HealthSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("HealthSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	want := StructureHealthSummary{
+		Structures:           3,
+		WithHealth:           2,
+		Damaged:              1,
+		TotalMaxHealth:       20000,
+		TotalCurrentHealth:   19000,
+		AverageHealthPercent: 95,
+		MinimumHealthPercent: 90,
+		MaximumHealthPercent: 100,
+		FullyRepaired:        1,
+		WithoutMaxHealth:     1,
+	}
+	if summary != want {
+		t.Fatalf("HealthSummaryWithFaults() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *testing.T) {
 	save := openSyntheticStructureOwnerLocationSave(t)
 	defer save.Close()
@@ -707,6 +736,32 @@ func openSyntheticStructureOwnerLocationSave(t *testing.T) *arksave.Save {
 		firstID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
 		secondID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 555),
 		thirdID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 777),
+	})
+}
+
+func openSyntheticStructureHealthSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	fullID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	damagedID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	noHealthID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", nil, map[uuid.UUID][]byte{
+		fullID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+			StructureID:   101,
+			TribeID:       555,
+			MaxHealth:     10000,
+			CurrentHealth: 10000,
+		}),
+		damagedID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+			StructureID:   102,
+			TribeID:       555,
+			MaxHealth:     10000,
+			CurrentHealth: 9000,
+		}),
+		noHealthID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+			StructureID: 103,
+			TribeID:     555,
+		}),
 	})
 }
 
