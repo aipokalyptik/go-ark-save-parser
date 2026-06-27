@@ -45,10 +45,8 @@ func main() {
 		os.Exit(1)
 	}
 	maxDamage := float64(0)
-	for _, item := range owned {
-		if item.Stats.Damage > maxDamage {
-			maxDamage = item.Stats.Damage
-		}
+	if _, item, ok := api.BestWeaponDamage(owned); ok {
+		maxDamage = item.Stats.Damage
 	}
 	fmt.Printf("tribe_id=%d items=%d max_damage=%.1f\n", tribeID64, len(owned), maxDamage)
 }

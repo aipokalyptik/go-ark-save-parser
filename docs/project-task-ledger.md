@@ -399,6 +399,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           typed `arkapi.NewPlayerFromPath`.
     - [x] Move `player_inventories` aggregation behind typed
           `arkapi.PlayerInventorySummaryFromPath`.
+    - [x] Move equipment max-damage example aggregation onto existing typed
+          `arkapi.EquipmentAPI.BestWeaponDamage`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

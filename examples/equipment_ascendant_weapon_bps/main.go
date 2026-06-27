@@ -35,10 +35,8 @@ func main() {
 	}
 
 	maxDamage := float64(0)
-	for _, item := range items {
-		if item.Stats.Damage > maxDamage {
-			maxDamage = item.Stats.Damage
-		}
+	if _, item, ok := api.BestWeaponDamage(items); ok {
+		maxDamage = item.Stats.Damage
 	}
 	fmt.Printf("items=%d max_damage=%.1f\n", len(items), maxDamage)
 }
