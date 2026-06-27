@@ -331,6 +331,43 @@ func TestPlayerInventoriesExampleCountsOnlyInventoryFaults(t *testing.T) {
 	runExample(t, "player_inventories", "players=1 with_inventory=1 without_inventory=0 total_items=2 max_items=2 min_items=2 avg_items=2.00 faults=0", savePath)
 }
 
+func TestPlayerInventoriesExampleFallsBackToDirectoryPlayers(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "player-inventories-fallback.ark")
+	inventoryID := uuid.MustParse("44444444-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("55555555-4455-6677-8899-aabbccddeeff")
+	secondItemID := uuid.MustParse("66666666-4455-6677-8899-aabbccddeeff")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000000: "None",
+			0x10000006: "IntProperty",
+			0x10000007: "Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'",
+			0x10000008: "LinkedPlayerDataID",
+			0x10000009: "MyInventoryComponent",
+			0x1000000a: "ObjectProperty",
+			0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'",
+			0x1000000c: "InventoryItems",
+			0x1000000d: "ArrayProperty",
+			0x1000000e: "SavedBaseWorldLocation",
+			0x1000000f: "StructProperty",
+			0x10000010: "Vector",
+			0x10000011: "/Script/CoreUObject",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff"): playerPawnObjectBytes(0x10000007, 0x10000000, 0x10000008, 0x10000006, 0x10000009, 0x1000000a, 0x1000000e, 0x1000000f, 0x10000010, 0x10000011, inventoryID),
+			inventoryID:  inventoryObjectBytes(0x1000000b, 0x10000000, 0x1000000c, 0x1000000d, 0x1000000a, firstItemID, secondItemID),
+			firstItemID:  testfixtures.GenericObjectBytes(0x1000000b, 0x10000000),
+			secondItemID: testfixtures.GenericObjectBytes(0x1000000b, 0x10000000),
+		},
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "42.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Fallback",
+	})
+
+	runExample(t, "player_inventories", "players=1 with_inventory=1 without_inventory=0 total_items=2 max_items=2 min_items=2 avg_items=2.00 faults=0", savePath)
+}
+
 func TestExamplesRunAgainstProvidedData(t *testing.T) {
 	data := e2etest.DiscoverProvidedData(t)
 	if data.SavePath == "" && data.ClusterPath == "" {

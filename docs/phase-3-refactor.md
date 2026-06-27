@@ -53,8 +53,9 @@ For the cross-phase monitorable checklist, see
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can
       open either save files or local save directories with explicit player or
       tribe fallback behavior.
-- [x] Add `arkapi.PlayerInventorySummaryForPlayers` so player inventory
-      examples use reusable typed aggregation instead of local counting logic.
+- [x] Add `arkapi.PlayerInventorySummaryForPlayers` and
+      `arkapi.PlayerInventorySummaryFromPath` so player inventory examples use
+      reusable typed aggregation instead of local counting logic.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

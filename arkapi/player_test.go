@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
@@ -512,6 +513,59 @@ func TestPlayerAPIPlayerInventorySummaryForPlayersEmpty(t *testing.T) {
 	}
 	if summary != (PlayerInventorySummary{}) {
 		t.Fatalf("PlayerInventorySummaryForPlayers(nil) = %#v, want zero summary", summary)
+	}
+}
+
+func TestPlayerAPIPlayerInventorySummaryForPlayersRequiresSave(t *testing.T) {
+	api, err := NewPlayerFromDirectory(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	_, _, err = api.PlayerInventorySummaryForPlayers(nil)
+	if err == nil || !strings.Contains(err.Error(), "save-backed") {
+		t.Fatalf("PlayerInventorySummaryForPlayers(directory) error = %v, want save-backed error", err)
+	}
+}
+
+func TestPlayerInventorySummaryFromPathFallsBackToDirectoryPlayers(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "inventory.ark")
+	inventoryID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("44444444-4455-6677-8899-aabbccddeeff")
+	secondItemID := uuid.MustParse("55555555-4455-6677-8899-aabbccddeeff")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff"): savePlayerPawnObjectBytes(42, inventoryID),
+			inventoryID: saveInventoryObjectBytes(
+				inventoryID,
+				firstItemID,
+				secondItemID,
+			),
+		},
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "42.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Fallback",
+	})
+
+	summary, faults, err := PlayerInventorySummaryFromPath(savePath)
+	if err != nil {
+		t.Fatalf("PlayerInventorySummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerInventorySummaryFromPath() faults = %#v, want none", faults)
+	}
+	want := PlayerInventorySummary{
+		Players:       1,
+		WithInventory: 1,
+		TotalItems:    2,
+		MaxItems:      2,
+		MinItems:      2,
+		AverageItems:  2,
+	}
+	if summary != want {
+		t.Fatalf("PlayerInventorySummaryFromPath() = %#v, want %#v", summary, want)
 	}
 }
 

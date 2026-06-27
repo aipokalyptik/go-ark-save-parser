@@ -6,35 +6,13 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <save.ark>", os.Args[0])
 	}
-	playerAPI, closePlayers, err := arkapi.NewPlayerFromPath(os.Args[1], arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackPlayers})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		if err := closePlayers(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	players, err := playerAPI.Players()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	save, err := arksave.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer save.Close()
-
-	inventoryAPI := arkapi.NewPlayer(save)
-	summary, inventoryFaults, err := inventoryAPI.PlayerInventorySummaryForPlayers(players)
+	summary, inventoryFaults, err := arkapi.PlayerInventorySummaryFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}

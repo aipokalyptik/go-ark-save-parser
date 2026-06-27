@@ -223,7 +223,8 @@ documented.
   - [x] Move save-contained player pawn inventory indexing and upstream-style
         inventory item counting from the example into typed `arkapi` helpers.
   - [x] Move player inventory aggregate summary calculations into typed
-        `arkapi.PlayerInventorySummaryForPlayers`.
+        `arkapi.PlayerInventorySummaryForPlayers` and
+        `arkapi.PlayerInventorySummaryFromPath`.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.
@@ -397,7 +398,7 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move repeated player/tribe save-or-directory fallback logic behind
           typed `arkapi.NewPlayerFromPath`.
     - [x] Move `player_inventories` aggregation behind typed
-          `arkapi.PlayerInventorySummaryForPlayers`.
+          `arkapi.PlayerInventorySummaryFromPath`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

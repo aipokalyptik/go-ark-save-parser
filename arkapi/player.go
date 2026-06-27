@@ -367,6 +367,9 @@ func (p *PlayerAPI) InventoryItemCount(inventory arkobject.Inventory) int {
 }
 
 func (p *PlayerAPI) PlayerInventorySummaryForPlayers(players []arkobject.Player) (PlayerInventorySummary, []arksave.FaultyObjectInfo, error) {
+	if p.save == nil {
+		return PlayerInventorySummary{}, nil, fmt.Errorf("player inventory summary requires a save-backed PlayerAPI")
+	}
 	inventories, faults, err := p.PlayerInventoriesWithFaults()
 	if err != nil {
 		return PlayerInventorySummary{}, nil, err
@@ -393,6 +396,31 @@ func (p *PlayerAPI) PlayerInventorySummaryForPlayers(players []arkobject.Player)
 		out.AverageItems = float64(out.TotalItems) / float64(len(players))
 	}
 	return out, faults, nil
+}
+
+func PlayerInventorySummaryFromPath(path string) (PlayerInventorySummary, []arksave.FaultyObjectInfo, error) {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return PlayerInventorySummary{}, nil, err
+	}
+	defer save.Close()
+
+	api := NewPlayer(save)
+	players, _, err := api.PlayersWithFaults()
+	if err != nil {
+		return PlayerInventorySummary{}, nil, err
+	}
+	if len(players) == 0 {
+		directoryAPI, err := NewPlayerFromDirectory(filepath.Dir(path))
+		if err != nil {
+			return PlayerInventorySummary{}, nil, err
+		}
+		players, err = directoryAPI.Players()
+		if err != nil {
+			return PlayerInventorySummary{}, nil, err
+		}
+	}
+	return api.PlayerInventorySummaryForPlayers(players)
 }
 
 func (p *PlayerAPI) PlayerLocationByDataID(id uint64) (*arkobject.ActorTransform, bool, error) {
