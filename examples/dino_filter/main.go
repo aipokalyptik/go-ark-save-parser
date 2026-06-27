@@ -29,31 +29,10 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	dinos, _, err := api.AllWithFaults()
+	summary, _, err := api.PopulationSummaryWithFaults(includeCryos)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !includeCryos {
-		for id, dino := range dinos {
-			if dino.IsCryopodded {
-				delete(dinos, id)
-			}
-		}
-	}
-	tamed := 0
-	wild := 0
-	cryopodded := 0
-	for _, dino := range dinos {
-		if dino.IsTamed {
-			tamed++
-		} else {
-			wild++
-		}
-		if dino.IsCryopodded {
-			cryopodded++
-		}
-	}
-	classes := api.CountByClass(dinos)
 
-	fmt.Printf("dinos=%d tamed=%d wild=%d cryopodded=%d classes=%d\n", len(dinos), tamed, wild, cryopodded, len(classes))
+	fmt.Printf("dinos=%d tamed=%d wild=%d cryopodded=%d classes=%d\n", summary.Dinos, summary.Tamed, summary.Wild, summary.Cryopodded, summary.Classes)
 }

@@ -45,6 +45,14 @@ type WildTamableSummary struct {
 	WildTamables int
 }
 
+type DinoPopulationSummary struct {
+	Dinos      int
+	Tamed      int
+	Wild       int
+	Cryopodded int
+	Classes    int
+}
+
 type DinoBestStatOptions struct {
 	Blueprints      []string
 	Stats           []arkobject.DinoStat
@@ -867,6 +875,33 @@ func (d *DinoAPI) MaxCurrentLevel(dinos map[uuid.UUID]arkobject.Dino) (int32, bo
 		}
 	}
 	return max, ok
+}
+
+func (d *DinoAPI) PopulationSummaryForDinos(dinos map[uuid.UUID]arkobject.Dino) DinoPopulationSummary {
+	byTamed := d.CountByTamed(dinos)
+	byCryopodded := d.CountByCryopodded(dinos)
+	return DinoPopulationSummary{
+		Dinos:      len(dinos),
+		Tamed:      byTamed[true],
+		Wild:       byTamed[false],
+		Cryopodded: byCryopodded[true],
+		Classes:    len(d.CountByClass(dinos)),
+	}
+}
+
+func (d *DinoAPI) PopulationSummaryWithFaults(includeCryopodded bool) (DinoPopulationSummary, []arksave.FaultyObjectInfo, error) {
+	dinos, faults, err := d.AllWithFaults()
+	if err != nil {
+		return DinoPopulationSummary{}, nil, err
+	}
+	if !includeCryopodded {
+		for id, dino := range dinos {
+			if dino.IsCryopodded {
+				delete(dinos, id)
+			}
+		}
+	}
+	return d.PopulationSummaryForDinos(dinos), faults, nil
 }
 
 func (d *DinoAPI) CountByClass(dinos map[uuid.UUID]arkobject.Dino) map[string]int {

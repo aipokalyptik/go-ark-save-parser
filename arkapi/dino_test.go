@@ -1165,6 +1165,36 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	}
 }
 
+func TestDinoAPIPopulationSummaryWithFaultsCountsFilteredDinos(t *testing.T) {
+	save := openSyntheticDinoPopulationSummarySave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	summary, faults, err := api.PopulationSummaryWithFaults(true)
+	if err != nil {
+		t.Fatalf("PopulationSummaryWithFaults(include cryos) error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PopulationSummaryWithFaults(include cryos) faults = %#v, want none", faults)
+	}
+	want := DinoPopulationSummary{Dinos: 3, Tamed: 2, Wild: 1, Cryopodded: 1, Classes: 2}
+	if summary != want {
+		t.Fatalf("PopulationSummaryWithFaults(include cryos) = %#v, want %#v", summary, want)
+	}
+
+	withoutCryos, faults, err := api.PopulationSummaryWithFaults(false)
+	if err != nil {
+		t.Fatalf("PopulationSummaryWithFaults(no cryos) error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PopulationSummaryWithFaults(no cryos) faults = %#v, want none", faults)
+	}
+	want = DinoPopulationSummary{Dinos: 2, Tamed: 1, Wild: 1, Cryopodded: 0, Classes: 1}
+	if withoutCryos != want {
+		t.Fatalf("PopulationSummaryWithFaults(no cryos) = %#v, want %#v", withoutCryos, want)
+	}
+}
+
 func TestDinoAPICountsBabiesByTamedState(t *testing.T) {
 	api := NewDino(nil)
 	dinos := map[uuid.UUID]arkobject.Dino{
@@ -1697,6 +1727,21 @@ func openSyntheticDinoBabyFilterSave(t *testing.T) *arksave.Save {
 		tamedBabyID: syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, true, true),
 		wildBabyID:  syntheticDinoObjectBytesWithFlags(3003, 4004, false, false, true, false),
 		adultID:     syntheticDinoObjectBytesWithFlags(5005, 6006, true, false, false, true),
+	})
+}
+
+func openSyntheticDinoPopulationSummarySave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	tamedDinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	wildDinoID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	cryopodDinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	cryopodStatusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		tamedDinoID: syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true),
+		wildDinoID:  syntheticDinoObjectBytesWithFlags(3003, 4004, false, false, false, false),
+		podID:       syntheticCryopodItemObjectBytes(syntheticCryopodDinoPayload(t, cryopodDinoID, cryopodStatusID)),
 	})
 }
 

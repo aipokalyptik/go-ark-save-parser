@@ -434,6 +434,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           typed `arkapi.EquipmentAPI.SummaryIncludingCryopodSaddlesWithFaults`.
     - [x] Move `dino_babies` wild/tamed counting onto typed
           `arkapi.DinoAPI.BabySummaryWithFaults`.
+    - [x] Move `dino_filter` total/tamed/wild/cryopodded/class counting onto
+          typed `arkapi.DinoAPI.PopulationSummaryWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.
