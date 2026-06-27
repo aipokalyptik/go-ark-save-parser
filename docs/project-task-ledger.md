@@ -417,6 +417,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.GeneralAPI` helpers.
     - [x] Move repeated player/tribe save-or-directory fallback logic behind
           typed `arkapi.NewPlayerFromPath`.
+    - [x] Move `local_tribute` file/directory aggregate counting behind typed
+          `arkapi` tribute summary helpers.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed

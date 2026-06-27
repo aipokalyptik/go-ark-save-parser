@@ -42,6 +42,22 @@ func ExportTributeDirectoryData(entries []*arktribute.Data) TributeDirectoryInfo
 	return info
 }
 
+func TributeSummaryFromPath(path string) (TributeDataInfo, error) {
+	data, err := arktribute.Open(path)
+	if err != nil {
+		return TributeDataInfo{}, err
+	}
+	return ExportTributeData(data), nil
+}
+
+func TributeDirectorySummaryFromPath(path string) (TributeDirectoryInfo, error) {
+	entries, err := arktribute.OpenDirectory(path)
+	if err != nil {
+		return TributeDirectoryInfo{}, err
+	}
+	return ExportTributeDirectoryData(entries), nil
+}
+
 func ExportTributeDataJSON(data *arktribute.Data) ([]byte, error) {
 	return json.MarshalIndent(ExportTributeData(data), "", "  ")
 }

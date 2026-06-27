@@ -2,10 +2,12 @@ package arkapi
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestExportTributeDataSummarizesTributeIDs(t *testing.T) {
@@ -40,6 +42,34 @@ func TestExportTributeDirectoryDataSummarizesFiles(t *testing.T) {
 	}
 	if info.Files[0].ID != "a" || info.Files[1].ID != "b" {
 		t.Fatalf("TributeDirectoryInfo files = %#v", info.Files)
+	}
+}
+
+func TestTributeSummaryFromPathReadsFileOrDirectory(t *testing.T) {
+	dir := t.TempDir()
+	first := filepath.Join(dir, "abc.arktributetribe")
+	second := filepath.Join(dir, "def.arktributetribetribe")
+	testfixtures.WriteTributeFile(t, first, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, second, []uint64{44}, []uint64{55, 66})
+
+	fileInfo, err := TributeSummaryFromPath(first)
+	if err != nil {
+		t.Fatalf("TributeSummaryFromPath(file) error = %v", err)
+	}
+	if fileInfo.ID != "abc" || fileInfo.PlayerDataCount != 2 || fileInfo.TribeDataCount != 1 {
+		t.Fatalf("TributeSummaryFromPath(file) = %#v", fileInfo)
+	}
+
+	dirInfo, err := TributeDirectorySummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("TributeDirectorySummaryFromPath() error = %v", err)
+	}
+	if dirInfo.Count != 2 || len(dirInfo.Files) != 2 {
+		t.Fatalf("TributeDirectorySummaryFromPath() = %#v, want two files", dirInfo)
+	}
+	if dirInfo.Files[0].PlayerDataCount+dirInfo.Files[1].PlayerDataCount != 3 ||
+		dirInfo.Files[0].TribeDataCount+dirInfo.Files[1].TribeDataCount != 3 {
+		t.Fatalf("TributeDirectorySummaryFromPath() counts = %#v", dirInfo)
 	}
 }
 
