@@ -88,6 +88,110 @@ func TestEquipmentItemFromObjectReadsArmorStats(t *testing.T) {
 	}
 }
 
+func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
+	tests := []struct {
+		name                   string
+		blueprint              string
+		kind                   EquipmentKind
+		wantDurability         float64
+		wantArmor              float64
+		wantHypothermal        float64
+		wantHyperthermal       float64
+		wantAverageStat        float64
+		wantImplementedStats   int
+		wantInternalDurability uint16
+	}{
+		{
+			name:                   "compound bow weapon",
+			blueprint:              "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponCompoundBow.PrimalItem_WeaponCompoundBow_C'",
+			kind:                   EquipmentWeapon,
+			wantDurability:         68.75,
+			wantAverageStat:        1000,
+			wantImplementedStats:   2,
+			wantInternalDurability: 1000,
+		},
+		{
+			name:                 "chitin armor",
+			blueprint:            "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Chitin/PrimalItemArmor_ChitinShirt.PrimalItemArmor_ChitinShirt_C'",
+			kind:                 EquipmentArmor,
+			wantDurability:       62.5,
+			wantArmor:            60,
+			wantHypothermal:      11,
+			wantHyperthermal:     -5.2,
+			wantAverageStat:      675,
+			wantImplementedStats: 4,
+		},
+		{
+			name:                 "desert armor",
+			blueprint:            "Blueprint'/Game/ScorchedEarth/Outfits/PrimalItemArmor_DesertClothGogglesHelmet.PrimalItemArmor_DesertClothGogglesHelmet_C'",
+			kind:                 EquipmentArmor,
+			wantDurability:       56.25,
+			wantArmor:            48,
+			wantHypothermal:      5.5,
+			wantHyperthermal:     31.2,
+			wantAverageStat:      675,
+			wantImplementedStats: 4,
+		},
+		{
+			name:                 "metal shield",
+			blueprint:            "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_MetalShield.PrimalItemArmor_MetalShield_C'",
+			kind:                 EquipmentShield,
+			wantDurability:       1562.5,
+			wantArmor:            1.2,
+			wantAverageStat:      1000,
+			wantImplementedStats: 1,
+		},
+		{
+			name:                 "tek saddle",
+			blueprint:            "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_RexSaddle_Tek.PrimalItemArmor_RexSaddle_Tek_C'",
+			kind:                 EquipmentSaddle,
+			wantDurability:       150,
+			wantArmor:            54,
+			wantAverageStat:      1000,
+			wantImplementedStats: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			object := &GameObject{
+				UUID:      uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"),
+				Blueprint: tt.blueprint,
+				Properties: []arkproperty.Property{
+					{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDurability), Value: uint16(1000)},
+					{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatArmor), Value: uint16(1000)},
+					{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatDamage), Value: uint16(1000)},
+					{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatHypothermalResistance), Value: uint16(500)},
+					{Name: "ItemStatValues", Type: arkproperty.TypeUInt16, Position: int32(EquipmentStatHyperthermalResistance), Value: uint16(200)},
+				},
+			}
+
+			item := EquipmentItemFromObject(object, tt.kind)
+			if item.Stats.Durability != tt.wantDurability {
+				t.Fatalf("Durability = %f, want %f", item.Stats.Durability, tt.wantDurability)
+			}
+			if item.Stats.Armor != tt.wantArmor {
+				t.Fatalf("Armor = %f, want %f", item.Stats.Armor, tt.wantArmor)
+			}
+			if item.Stats.HypothermalResistance != tt.wantHypothermal {
+				t.Fatalf("HypothermalResistance = %f, want %f", item.Stats.HypothermalResistance, tt.wantHypothermal)
+			}
+			if item.Stats.HyperthermalResistance != tt.wantHyperthermal {
+				t.Fatalf("HyperthermalResistance = %f, want %f", item.Stats.HyperthermalResistance, tt.wantHyperthermal)
+			}
+			if got := item.AverageStat(); got != tt.wantAverageStat {
+				t.Fatalf("AverageStat() = %f, want %f", got, tt.wantAverageStat)
+			}
+			if stats := item.ImplementedStats(); len(stats) != tt.wantImplementedStats {
+				t.Fatalf("ImplementedStats() = %#v, want %d stats", stats, tt.wantImplementedStats)
+			}
+			if tt.wantInternalDurability != 0 && item.Stats.Internal[EquipmentStatDurability] != tt.wantInternalDurability {
+				t.Fatalf("Internal durability = %d, want %d", item.Stats.Internal[EquipmentStatDurability], tt.wantInternalDurability)
+			}
+		})
+	}
+}
+
 func TestEquipmentItemAverageStatUsesKindSpecificInternalStats(t *testing.T) {
 	shield := EquipmentItem{
 		Kind: EquipmentShield,

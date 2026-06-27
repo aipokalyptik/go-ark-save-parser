@@ -208,10 +208,12 @@ documented.
 - [~] Finish full equipment edge behavior:
   - [x] Move high-rating equipment ranking candidate selection and aggregate
         stats into typed `arkapi` helpers used by the example.
+  - [x] Add representative upstream default stat tables for equipment
+        durability, armor, hypothermal resistance, and hyperthermal resistance.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
-        remaining default stat-table parity.
+        exhaustive default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
-  - [ ] Remaining default armor/stat table parity.
+  - [ ] Remaining exhaustive default armor/stat table parity.
 - [~] Finish richer local cluster item/dino domain models:
   - [x] Model uploaded item type with typed constants and helper methods while
         preserving string-based filters and JSON output.
