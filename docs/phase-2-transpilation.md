@@ -274,7 +274,7 @@ For the cross-phase monitorable checklist, see
       plus upstream-compatible weapon damage and durability JSON export.
 - [x] Add read-first armor `ItemStatValues` calculations for armor,
       hypothermal resistance, hyperthermal resistance, and JSON export.
-- [x] Add representative upstream default equipment stat tables for durability,
+- [x] Add upstream family/slot default equipment stat tables for durability,
       armor, hypothermal resistance, and hyperthermal resistance.
 - [x] Add typed Equipment API filters for parsed damage, armor, hypothermal
       resistance, and hyperthermal resistance thresholds.
@@ -449,7 +449,7 @@ For the cross-phase monitorable checklist, see
       direct canonical weapon, armor, saddle, and shield class counts.
 - [x] Compare stable normalized Go `equipment_rank` aggregate fields with the
       upstream high-rating non-crafted equipment ranking workflow; exact ranked
-      count and average-stat parity remain open under exhaustive equipment
+      count and average-stat parity remain open under long-tail equipment
       stat-table parity.
 - [x] Add `equipment_export_from_save` as a read-only structural export for
       equipment item rows. Private oracle comparison for generated blueprint

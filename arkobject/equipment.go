@@ -257,6 +257,9 @@ func defaultEquipmentArmor(blueprint string) float64 {
 
 func defaultEquipmentHypothermal(blueprint string) float64 {
 	blueprint = canonicalEquipmentBlueprintPath(blueprint)
+	if value, ok := armorThermalDefaultForBlueprint(blueprint); ok {
+		return value.hypothermal
+	}
 	if value, ok := armorThermalDefaults[blueprint]; ok {
 		return value.hypothermal
 	}
@@ -268,6 +271,9 @@ func defaultEquipmentHypothermal(blueprint string) float64 {
 
 func defaultEquipmentHyperthermal(blueprint string) float64 {
 	blueprint = canonicalEquipmentBlueprintPath(blueprint)
+	if value, ok := armorThermalDefaultForBlueprint(blueprint); ok {
+		return value.hyperthermal
+	}
 	if value, ok := armorThermalDefaults[blueprint]; ok {
 		return value.hyperthermal
 	}
@@ -327,6 +333,122 @@ func weaponDurability40Blueprint(blueprint string) bool {
 type armorThermalDefault struct {
 	hypothermal  float64
 	hyperthermal float64
+}
+
+func armorThermalDefaultForBlueprint(blueprint string) (armorThermalDefault, bool) {
+	slot := armorSlot(blueprint)
+	if slot == "" {
+		return armorThermalDefault{}, false
+	}
+	switch {
+	case armorFamily(blueprint, "/Cloth/", "Cloth"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 8, hyperthermal: 15}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 4, hyperthermal: 15}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 5, hyperthermal: 15}, true
+		}
+	case armorFamily(blueprint, "/Chitin/", "Chitin"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 10, hyperthermal: -5}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 6, hyperthermal: -5}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 7, hyperthermal: -5}, true
+		}
+	case strings.Contains(blueprint, "PrimalItemArmor_DesertCloth"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 8, hyperthermal: 25}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 5, hyperthermal: 30}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 5, hyperthermal: 25}, true
+		}
+	case armorFamily(blueprint, "/Fur/", "Fur"),
+		armorFamily(blueprint, "/Armor/", "Arctic") && strings.Contains(blueprint, "Arctic"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 65, hyperthermal: -30}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 52, hyperthermal: -25}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 34, hyperthermal: -10}, true
+		}
+	case armorFamily(blueprint, "/Leather/", "Hide"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 20, hyperthermal: -5}, true
+		case "helmet", "boots", "gloves":
+			return armorThermalDefault{hypothermal: 15, hyperthermal: -5}, true
+		}
+	case armorFamily(blueprint, "/Ghillie/", "Ghillie"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 8, hyperthermal: 30}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 4, hyperthermal: 35}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 2, hyperthermal: 30}, true
+		}
+	case armorFamily(blueprint, "/Riot/", "Riot"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 15, hyperthermal: -10}, true
+		case "helmet", "boots", "gloves":
+			return armorThermalDefault{hypothermal: 10, hyperthermal: -10}, true
+		}
+	case armorFamily(blueprint, "/Metal/", "Metal"):
+		switch slot {
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 15, hyperthermal: -7}, true
+		case "helmet":
+			return armorThermalDefault{hypothermal: 10, hyperthermal: -3}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 10, hyperthermal: -4}, true
+		}
+	case armorFamily(blueprint, "/TEK/", "Tek"):
+		switch slot {
+		case "helmet":
+			return armorThermalDefault{hypothermal: 5, hyperthermal: 30}, true
+		case "shirt", "pants":
+			return armorThermalDefault{hypothermal: 15, hyperthermal: -7}, true
+		case "boots", "gloves":
+			return armorThermalDefault{hypothermal: 10, hyperthermal: -4}, true
+		}
+	case strings.Contains(blueprint, "/SCUBA/"):
+		switch slot {
+		case "helmet", "boots":
+			return armorThermalDefault{hypothermal: 15, hyperthermal: -5}, true
+		case "shirt":
+			return armorThermalDefault{hypothermal: 40, hyperthermal: -5}, true
+		case "pants":
+			return armorThermalDefault{hypothermal: 200, hyperthermal: 0}, true
+		}
+	case strings.Contains(blueprint, "/HazardSuit/"):
+		return armorThermalDefault{hypothermal: 10, hyperthermal: 60}, true
+	}
+	return armorThermalDefault{}, false
+}
+
+func armorSlot(blueprint string) string {
+	switch {
+	case strings.Contains(blueprint, "Boots") || strings.Contains(blueprint, "Flippers"):
+		return "boots"
+	case strings.Contains(blueprint, "Gloves"):
+		return "gloves"
+	case strings.Contains(blueprint, "Helmet") || strings.Contains(blueprint, "Goggles"):
+		return "helmet"
+	case strings.Contains(blueprint, "Pants"):
+		return "pants"
+	case strings.Contains(blueprint, "Shirt"):
+		return "shirt"
+	default:
+		return ""
+	}
 }
 
 var armorThermalDefaults = map[string]armorThermalDefault{
