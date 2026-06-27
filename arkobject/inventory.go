@@ -64,15 +64,6 @@ type StackableItem struct {
 	Crafter        *ObjectCrafter
 }
 
-type ObjectCrafter struct {
-	CharacterName string
-	TribeName     string
-}
-
-func (c ObjectCrafter) Valid() bool {
-	return c.CharacterName != "" || c.TribeName != ""
-}
-
 func InventoryItemFromObject(object *GameObject) InventoryItem {
 	item := InventoryItem{Object: object, Quantity: 1}
 	if object == nil {
