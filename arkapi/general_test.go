@@ -132,6 +132,47 @@ func TestGeneralObjectsWithFaultsReportsParseFaults(t *testing.T) {
 	}
 }
 
+func TestGeneralClassesReturnsSortedSaveClasses(t *testing.T) {
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000005),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+	})
+	defer save.Close()
+
+	classes, err := NewGeneral(save).Classes()
+	if err != nil {
+		t.Fatalf("Classes() error = %v", err)
+	}
+	want := []string{
+		"Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+		"Blueprint'/Game/Test.Test_C'",
+	}
+	if len(classes) != len(want) || classes[0] != want[0] || classes[1] != want[1] {
+		t.Fatalf("Classes() = %#v, want %#v", classes, want)
+	}
+}
+
+func TestGeneralParseSummaryCountsObjectsParsedAndFaults(t *testing.T) {
+	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		validID:  syntheticObjectBytes(0x10000001),
+		faultyID: syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	summary, faults, err := NewGeneral(save).ParseSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("ParseSummaryWithFaults() error = %v", err)
+	}
+	if summary.Objects != 2 || summary.Parsed != 1 || summary.Faults != 1 {
+		t.Fatalf("ParseSummaryWithFaults() summary = %#v, want 2 objects, 1 parsed, 1 fault", summary)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
+		t.Fatalf("ParseSummaryWithFaults() faults = %#v, want faulty row", faults)
+	}
+}
+
 func TestGeneralObjectSummaryReportsBytesAndProperties(t *testing.T) {
 	save := openSyntheticSave(t)
 	defer save.Close()

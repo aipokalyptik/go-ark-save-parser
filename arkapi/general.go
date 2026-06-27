@@ -46,12 +46,34 @@ type PropertyPositionSummary struct {
 	OffsetsOK    int
 }
 
+type ParseSummary struct {
+	Objects int
+	Parsed  int
+	Faults  int
+}
+
 func NewGeneral(save *arksave.Save) *GeneralAPI {
 	return &GeneralAPI{save: save}
 }
 
 func (g *GeneralAPI) ObjectIDs() ([]uuid.UUID, error) {
 	return g.save.ObjectIDs()
+}
+
+func (g *GeneralAPI) Classes() ([]string, error) {
+	return g.save.Classes()
+}
+
+func (g *GeneralAPI) ParseSummaryWithFaults() (ParseSummary, []arksave.FaultyObjectInfo, error) {
+	ids, err := g.ObjectIDs()
+	if err != nil {
+		return ParseSummary{}, nil, err
+	}
+	objects, faults, err := g.ObjectsWithFaults()
+	if err != nil {
+		return ParseSummary{}, nil, err
+	}
+	return ParseSummary{Objects: len(ids), Parsed: len(objects), Faults: len(faults)}, faults, nil
 }
 
 func (g *GeneralAPI) Objects() ([]*arkobject.GameObject, error) {

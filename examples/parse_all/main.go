@@ -21,15 +21,10 @@ func main() {
 	}
 	defer save.Close()
 
-	ids, err := save.ObjectIDs()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "list objects: %v\n", err)
-		os.Exit(1)
-	}
-	objects, faults, err := arkapi.NewGeneral(save).ObjectsWithFaults()
+	summary, _, err := arkapi.NewGeneral(save).ParseSummaryWithFaults()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "parse objects: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("objects=%d parsed=%d faults=%d\n", len(ids), len(objects), len(faults))
+	fmt.Printf("objects=%d parsed=%d faults=%d\n", summary.Objects, summary.Parsed, summary.Faults)
 }

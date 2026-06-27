@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	}
 	defer save.Close()
 
-	classes, err := save.Classes()
+	classes, err := arkapi.NewGeneral(save).Classes()
 	if err != nil {
 		log.Fatal(err)
 	}

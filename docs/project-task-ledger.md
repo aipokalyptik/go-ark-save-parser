@@ -372,6 +372,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.GeneralAPI` summary helper.
     - [x] Move `property_filter` and `property_positions` aggregate counting
           behind typed `arkapi.GeneralAPI` summary helpers.
+    - [x] Move `parse_all` and `object_classes` save-level counting/listing
+          behind typed `arkapi.GeneralAPI` helpers.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.
