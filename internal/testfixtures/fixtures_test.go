@@ -339,6 +339,42 @@ func TestEquipmentGameObjectBytesWritesParseableEquipmentObject(t *testing.T) {
 	}
 }
 
+func TestStackableGameObjectBytesWritesParseableStackableObject(t *testing.T) {
+	ownerInventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	objectID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	isBlueprint := true
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000003: "IntProperty",
+		0x10000004: "None",
+		0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		0x1000000c: "ItemQuantity",
+		0x1000000d: "bIsBlueprint",
+		0x1000000e: "BoolProperty",
+		0x1000001f: "ObjectProperty",
+		0x10000044: "OwnerInventory",
+	})
+
+	object, err := arkobject.ParseGameObject(objectID, StackableGameObjectBytes(StackableGameObjectOptions{
+		Quantity:         100,
+		IsBlueprint:      &isBlueprint,
+		OwnerInventoryID: ownerInventoryID,
+	}), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(stackable) error = %v", err)
+	}
+	item := arkobject.StackableItemFromObject(object)
+	if item.Quantity != 100 {
+		t.Fatalf("Stackable quantity = %d, want 100", item.Quantity)
+	}
+	if item.OwnerInventory == nil || *item.OwnerInventory != ownerInventoryID {
+		t.Fatalf("OwnerInventory = %v, want %s", item.OwnerInventory, ownerInventoryID)
+	}
+	if got, ok := object.Value("bIsBlueprint"); !ok || got != true {
+		t.Fatalf("bIsBlueprint = %#v, %v; want true, true", got, ok)
+	}
+}
+
 func inventoryHasItem(inventory arkobject.Inventory, want uuid.UUID) bool {
 	for _, got := range inventory.ItemUUIDs {
 		if got == want {

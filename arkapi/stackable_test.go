@@ -1,7 +1,6 @@
 package arkapi
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -331,17 +330,16 @@ func syntheticStackableObjectBytes(isBlueprint bool) []byte {
 }
 
 func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, 0x1000000c, 100)
-	if isBlueprint {
-		testfixtures.WriteBoolPropertyID(&props, 0x1000000d, 0x1000000e, true)
-	}
-	return testfixtures.ObjectBytesWithProperties(className, 0x10000004, props.Bytes())
+	return testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+		ClassID:     className,
+		Quantity:    100,
+		IsBlueprint: trueBoolPtr(isBlueprint),
+	})
 }
 
 func syntheticStackableObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
-	var props bytes.Buffer
-	writeIntProperty(&props, 0x1000000c, 100)
-	testfixtures.WriteObjectReferencePropertyID(&props, 0x10000044, 0x1000001f, ownerInventory)
-	return testfixtures.ObjectBytesWithProperties(0x1000000b, 0x10000004, props.Bytes())
+	return testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+		Quantity:         100,
+		OwnerInventoryID: ownerInventory,
+	})
 }

@@ -97,6 +97,62 @@ type EquipmentGameObjectOptions struct {
 	OwnerInventoryID     uuid.UUID
 }
 
+type StackableGameObjectOptions struct {
+	ClassID          uint32
+	NoneID           uint32
+	IntPropertyID    uint32
+	BoolPropertyID   uint32
+	ObjectPropertyID uint32
+
+	QuantityNameID       uint32
+	BlueprintNameID      uint32
+	OwnerInventoryNameID uint32
+
+	Quantity         int32
+	IsBlueprint      *bool
+	OwnerInventoryID uuid.UUID
+}
+
+func StackableGameObjectBytes(opts StackableGameObjectOptions) []byte {
+	defaultStackableGameObjectOptions(&opts)
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, opts.QuantityNameID, opts.IntPropertyID, opts.Quantity)
+	if opts.IsBlueprint != nil {
+		WriteBoolPropertyID(&props, opts.BlueprintNameID, opts.BoolPropertyID, *opts.IsBlueprint)
+	}
+	if opts.OwnerInventoryID != uuid.Nil {
+		WriteObjectReferencePropertyID(&props, opts.OwnerInventoryNameID, opts.ObjectPropertyID, opts.OwnerInventoryID)
+	}
+	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
+}
+
+func defaultStackableGameObjectOptions(opts *StackableGameObjectOptions) {
+	if opts.ClassID == 0 {
+		opts.ClassID = 0x1000000b
+	}
+	if opts.NoneID == 0 {
+		opts.NoneID = 0x10000004
+	}
+	if opts.IntPropertyID == 0 {
+		opts.IntPropertyID = 0x10000003
+	}
+	if opts.BoolPropertyID == 0 {
+		opts.BoolPropertyID = 0x1000000e
+	}
+	if opts.ObjectPropertyID == 0 {
+		opts.ObjectPropertyID = 0x1000001f
+	}
+	if opts.QuantityNameID == 0 {
+		opts.QuantityNameID = 0x1000000c
+	}
+	if opts.BlueprintNameID == 0 {
+		opts.BlueprintNameID = 0x1000000d
+	}
+	if opts.OwnerInventoryNameID == 0 {
+		opts.OwnerInventoryNameID = 0x10000044
+	}
+}
+
 func EquipmentGameObjectBytes(opts EquipmentGameObjectOptions) []byte {
 	defaultEquipmentGameObjectOptions(&opts)
 	var props bytes.Buffer
