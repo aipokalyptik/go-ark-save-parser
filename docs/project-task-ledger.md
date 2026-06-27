@@ -404,6 +404,8 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move saddle max-armor and wild-tamed max-level example aggregation
           onto typed `arkapi.EquipmentAPI.BestArmor` and
           `arkapi.DinoAPI.MaxCurrentLevel`.
+    - [x] Move `equipment_summary` canonical kind/blueprint counting onto
+          typed `arkapi.EquipmentAPI.CanonicalCountWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

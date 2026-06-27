@@ -551,6 +551,17 @@ func (e *EquipmentAPI) FilteredWithFaults(opts EquipmentFilterOptions) (map[uuid
 	return out, faults, nil
 }
 
+func (e *EquipmentAPI) CanonicalCountWithFaults(kind arkobject.EquipmentKind, blueprints []string) (int, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := e.FilteredWithFaults(EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{kind},
+		Blueprints: blueprints,
+	})
+	if err != nil {
+		return 0, nil, err
+	}
+	return len(items), faults, nil
+}
+
 func equipmentFilterPredicate(opts EquipmentFilterOptions) (func(arkobject.EquipmentItem) bool, error) {
 	if opts.NoBlueprints && opts.OnlyBlueprints {
 		return nil, fmt.Errorf("cannot filter by both no blueprints and only blueprints")

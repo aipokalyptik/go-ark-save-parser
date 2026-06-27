@@ -266,6 +266,36 @@ func TestEquipmentAPIFilteredWithFaultsKeepsValidFilteredItemsAndReportsParseFau
 	}
 }
 
+func TestEquipmentAPICanonicalCountWithFaultsUsesKindAndBlueprints(t *testing.T) {
+	save := openSyntheticEquipmentSaveWithFault(t)
+	defer save.Close()
+
+	count, faults, err := NewEquipment(save).CanonicalCountWithFaults(
+		arkobject.EquipmentWeapon,
+		[]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+	)
+	if err != nil {
+		t.Fatalf("CanonicalCountWithFaults() error = %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("CanonicalCountWithFaults() count = %d, want 1", count)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("CanonicalCountWithFaults() faults = %#v, want one parse fault", faults)
+	}
+
+	count, faults, err = NewEquipment(save).CanonicalCountWithFaults(
+		arkobject.EquipmentArmor,
+		[]string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+	)
+	if err != nil {
+		t.Fatalf("CanonicalCountWithFaults(armor) error = %v", err)
+	}
+	if count != 0 || len(faults) != 1 {
+		t.Fatalf("CanonicalCountWithFaults(armor) = count %d faults %d, want 0 and one scan fault", count, len(faults))
+	}
+}
+
 func TestEquipmentAPIReadsArmorStatValues(t *testing.T) {
 	save := openSyntheticArmorEquipmentSave(t)
 	defer save.Close()
