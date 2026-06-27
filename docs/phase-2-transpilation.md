@@ -477,6 +477,8 @@ For the cross-phase monitorable checklist, see
       count parity remains open because full Go structure parsing is too slow
       on the supplied large private save and the selected-property scan finds
       a few extra owner/location buckets.
+- [x] Add explicit `structure_owner_locations` skipped-candidate counters for
+      selected structures without usable owner or location data.
 - [x] Compare normalized Go `structure_at_location` aggregate output with
       upstream map-coordinate structure lookup and connected-structure
       expansion.

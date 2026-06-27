@@ -42,12 +42,14 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf(
-		"structures=%d owners=%d cells=%d named_cells=%d multi_structure_cells=%d faults=%d\n",
+		"structures=%d owners=%d cells=%d named_cells=%d multi_structure_cells=%d skipped_without_owner=%d skipped_without_location=%d faults=%d\n",
 		export.Structures,
 		export.Owners,
 		export.Cells,
 		export.NamedCells,
 		export.MultiStructureCells,
+		export.SkippedWithoutOwner,
+		export.SkippedWithoutLocation,
 		export.FaultCount,
 	)
 	encoded, err := json.MarshalIndent(export.OwnersByLocation, "", "  ")

@@ -223,6 +223,28 @@ func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *test
 	}
 }
 
+func TestStructureAPIOwnerLocationsReportsSkippedCandidates(t *testing.T) {
+	save := openSyntheticStructureOwnerLocationSkippedSave(t)
+	defer save.Close()
+
+	export, faults, err := NewStructure(save).OwnerLocationsWithFaults("Valguero", 1, nil)
+	if err != nil {
+		t.Fatalf("OwnerLocationsWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 || export.FaultCount != 0 {
+		t.Fatalf("OwnerLocationsWithFaults() faults = %d / %#v, want no selected-property parse faults", len(faults), export)
+	}
+	if export.Structures != 3 || export.Owners != 1 || export.Cells != 1 || export.NamedCells != 1 || export.MultiStructureCells != 0 {
+		t.Fatalf("OwnerLocationsWithFaults() = %#v, want one valid owner/location cell plus skipped candidates", export)
+	}
+	if export.SkippedWithoutOwner != 1 || export.SkippedWithoutLocation != 1 {
+		t.Fatalf("OwnerLocationsWithFaults() skips = owner:%d location:%d, want 1/1", export.SkippedWithoutOwner, export.SkippedWithoutLocation)
+	}
+	if len(export.OwnersByLocation) != 1 || export.OwnersByLocation[0].Owner != "555" {
+		t.Fatalf("OwnersByLocation = %#v, want one owner 555 bucket", export.OwnersByLocation)
+	}
+}
+
 func TestStructureAPIFilterByOwnerFiltersProvidedStructures(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()
@@ -763,6 +785,24 @@ func openSyntheticStructureOwnerLocationSave(t *testing.T) *arksave.Save {
 		firstID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
 		secondID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 555),
 		thirdID:  syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 777),
+	})
+}
+
+func openSyntheticStructureOwnerLocationSkippedSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	validID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	noOwnerID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	noLocationID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
+			validID:   {100000, 100000, 33},
+			noOwnerID: {200000, 200000, 33},
+		}),
+	}, map[uuid.UUID][]byte{
+		validID:      syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
+		noOwnerID:    syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 0),
+		noLocationID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 777),
 	})
 }
 

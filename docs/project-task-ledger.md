@@ -201,6 +201,9 @@ documented.
 - [ ] Finish full structure/base edge behavior:
   - [ ] Exact `structure_owner_locations` owner/cell parity without
         prohibitive full-parse runtime.
+  - [x] `structure_owner_locations` reports skipped candidate counts for
+        structures without usable owner or location data while preserving valid
+        selected-property owner/location buckets.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests

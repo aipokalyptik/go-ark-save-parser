@@ -54,13 +54,15 @@ type StructureHealthSummary struct {
 }
 
 type StructureOwnerLocationExport struct {
-	Structures          int                          `json:"structures"`
-	Owners              int                          `json:"owners"`
-	Cells               int                          `json:"cells"`
-	NamedCells          int                          `json:"named_cells"`
-	MultiStructureCells int                          `json:"multi_structure_cells"`
-	FaultCount          int                          `json:"fault_count"`
-	OwnersByLocation    []StructureOwnerLocationData `json:"owners_by_location"`
+	Structures             int                          `json:"structures"`
+	Owners                 int                          `json:"owners"`
+	Cells                  int                          `json:"cells"`
+	NamedCells             int                          `json:"named_cells"`
+	MultiStructureCells    int                          `json:"multi_structure_cells"`
+	SkippedWithoutOwner    int                          `json:"skipped_without_owner"`
+	SkippedWithoutLocation int                          `json:"skipped_without_location"`
+	FaultCount             int                          `json:"fault_count"`
+	OwnersByLocation       []StructureOwnerLocationData `json:"owners_by_location"`
 }
 
 type StructureOwnerLocationData struct {
@@ -379,7 +381,12 @@ func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, play
 	export := StructureOwnerLocationExport{Structures: len(structures), FaultCount: len(faults)}
 	for _, id := range sortedUUIDKeys(structures) {
 		structure := structures[id]
-		if structure.Owner.TribeID == 0 || structure.Location == nil {
+		if structure.Owner.TribeID == 0 {
+			export.SkippedWithoutOwner++
+			continue
+		}
+		if structure.Location == nil {
+			export.SkippedWithoutLocation++
 			continue
 		}
 		owner := structure.Owner.TribeName
