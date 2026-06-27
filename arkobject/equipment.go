@@ -221,7 +221,9 @@ func defaultEquipmentArmor(blueprint string) float64 {
 		return 32
 	case armorFamily(blueprint, "/Leather/", "Hide"):
 		return 20
-	case strings.Contains(blueprint, "PrimalItemArmor_DesertCloth"), armorFamily(blueprint, "/Fur/", "Fur"):
+	case strings.Contains(blueprint, "PrimalItemArmor_DesertCloth"),
+		armorFamily(blueprint, "/Fur/", "Fur"),
+		strings.Contains(blueprint, "PrimalItemArmor_Arctic"):
 		return 40
 	case armorFamily(blueprint, "/Cloth/", "Cloth"):
 		return 10

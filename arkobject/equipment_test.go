@@ -183,6 +183,17 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			wantAverageStat:      675,
 			wantImplementedStats: 4,
 		},
+		{
+			name:                 "arctic gloves",
+			blueprint:            "Blueprint'/Game/LostColony/CoreBlueprints/Items/Armor/PrimalItemArmor_ArcticGloves.PrimalItemArmor_ArcticGloves_C'",
+			kind:                 EquipmentArmor,
+			wantDurability:       156.25,
+			wantArmor:            48,
+			wantHypothermal:      37.4,
+			wantHyperthermal:     -10.4,
+			wantAverageStat:      675,
+			wantImplementedStats: 4,
+		},
 	}
 
 	for _, tt := range tests {
