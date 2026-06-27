@@ -152,3 +152,58 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 		t.Fatalf("DinoSummary() component counts = %#v, want one component-bearing dino with four embedded objects", dinoSummary)
 	}
 }
+
+func TestClusterAPIDinoParseStatusCounts(t *testing.T) {
+	api := NewCluster(&arkcluster.Data{
+		Dinos: []arkcluster.Dino{
+			{
+				Index:   0,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					{ClassName: "/Game/Test/ParsedDino.ParsedDino_C"},
+				}},
+			},
+			{
+				Index:   1,
+				Version: 6,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					{ClassName: "/Game/Test/UnsupportedVersion.UnsupportedVersion_C"},
+				}},
+			},
+			{
+				Index:      2,
+				Version:    7,
+				ParseError: "unsupported embedded archive",
+			},
+			{
+				Index:   3,
+				Version: 7,
+			},
+		},
+	})
+
+	typed := api.DinosTyped()
+	if got := typed[0].ParseStatus(); got != arkobject.ClusterDinoParseStatusParsed {
+		t.Fatalf("typed[0].ParseStatus() = %q, want parsed", got)
+	}
+	if got := typed[1].ParseStatus(); got != arkobject.ClusterDinoParseStatusUnsupportedVersion {
+		t.Fatalf("typed[1].ParseStatus() = %q, want unsupported_version", got)
+	}
+	if got := typed[2].ParseStatus(); got != arkobject.ClusterDinoParseStatusParseError {
+		t.Fatalf("typed[2].ParseStatus() = %q, want parse_error", got)
+	}
+	if got := typed[3].ParseStatus(); got != arkobject.ClusterDinoParseStatusUnparsed {
+		t.Fatalf("typed[3].ParseStatus() = %q, want unparsed", got)
+	}
+	counts := api.DinoParseStatusCounts()
+	for status, want := range map[arkobject.ClusterDinoParseStatus]int{
+		arkobject.ClusterDinoParseStatusParsed:             1,
+		arkobject.ClusterDinoParseStatusUnsupportedVersion: 1,
+		arkobject.ClusterDinoParseStatusParseError:         1,
+		arkobject.ClusterDinoParseStatusUnparsed:           1,
+	} {
+		if got := counts[status.String()]; got != want {
+			t.Fatalf("DinoParseStatusCounts()[%q] = %d, want %d; all counts %#v", status, got, want, counts)
+		}
+	}
+}

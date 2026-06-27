@@ -62,7 +62,8 @@ func TestExportClusterDataIncludesUploadedDinoClassNames(t *testing.T) {
 		ID:   "EOS_abc123",
 		Path: "/tmp/EOS_abc123",
 		Dinos: []arkcluster.Dino{{
-			Index: 0,
+			Index:   0,
+			Version: 7,
 			Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
 				{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"},
 				{ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"},
@@ -81,6 +82,64 @@ func TestExportClusterDataIncludesUploadedDinoClassNames(t *testing.T) {
 	}
 	if !reflect.DeepEqual(info.Dinos[0].ClassNames, want) {
 		t.Fatalf("ClassNames = %#v, want %#v", info.Dinos[0].ClassNames, want)
+	}
+	if info.Dinos[0].ParseStatus != "parsed" || !info.Dinos[0].ParsedArchive || !info.Dinos[0].SupportedVersion || info.Dinos[0].UnsupportedVersion {
+		t.Fatalf("typed dino status fields = %#v, want parsed supported archive", info.Dinos[0])
+	}
+	if !reflect.DeepEqual(info.Dinos[0].StatusComponentClassNames, []string{"/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"}) {
+		t.Fatalf("StatusComponentClassNames = %#v, want status component class", info.Dinos[0].StatusComponentClassNames)
+	}
+}
+
+func TestExportClusterDataIncludesTypedDinoStatusFields(t *testing.T) {
+	data := &arkcluster.Data{
+		ID:   "EOS_abc123",
+		Path: "/tmp/EOS_abc123",
+		Items: []arkcluster.Item{{
+			Index:     0,
+			Version:   6,
+			Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+		}},
+		Dinos: []arkcluster.Dino{
+			{
+				Index:   0,
+				Version: 6,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					{ClassName: "/Game/Test/Dino.Dino_C"},
+					{ClassName: "/Game/Test/Dino_AIController_BP.Dino_AIController_BP_C"},
+					{ClassName: "/Game/Test/DinoInventoryComponent_BP.DinoInventoryComponent_BP_C"},
+				}},
+			},
+			{
+				Index:      1,
+				Version:    7,
+				ParseError: "unsupported embedded archive",
+			},
+			{
+				Index:   2,
+				Version: 7,
+			},
+		},
+	}
+
+	info := ExportClusterData(data)
+	if len(info.Items) != 1 || info.Items[0].Type != "equipment" || info.Items[0].SupportedVersion || !info.Items[0].UnsupportedVersion {
+		t.Fatalf("typed item status fields = %#v, want unsupported equipment item", info.Items)
+	}
+	if len(info.Dinos) != 3 {
+		t.Fatalf("Dinos length = %d, want 3", len(info.Dinos))
+	}
+	if info.Dinos[0].ParseStatus != "unsupported_version" || !info.Dinos[0].ParsedArchive || info.Dinos[0].SupportedVersion || !info.Dinos[0].UnsupportedVersion {
+		t.Fatalf("unsupported-version dino info = %#v", info.Dinos[0])
+	}
+	if len(info.Dinos[0].AIControllerClassNames) != 1 || len(info.Dinos[0].InventoryComponentClassNames) != 1 {
+		t.Fatalf("component summaries = %#v, want AI and inventory component classes", info.Dinos[0])
+	}
+	if info.Dinos[1].ParseStatus != "parse_error" || info.Dinos[1].ParsedArchive || info.Dinos[1].ParseError == "" {
+		t.Fatalf("parse-error dino info = %#v", info.Dinos[1])
+	}
+	if info.Dinos[2].ParseStatus != "unparsed" || info.Dinos[2].ParsedArchive || !info.Dinos[2].SupportedVersion {
+		t.Fatalf("unparsed dino info = %#v", info.Dinos[2])
 	}
 }
 

@@ -15,8 +15,21 @@ const (
 	ClusterItemTypeOther     ClusterItemType = "other"
 )
 
+type ClusterDinoParseStatus string
+
+const (
+	ClusterDinoParseStatusParsed             ClusterDinoParseStatus = "parsed"
+	ClusterDinoParseStatusUnsupportedVersion ClusterDinoParseStatus = "unsupported_version"
+	ClusterDinoParseStatusParseError         ClusterDinoParseStatus = "parse_error"
+	ClusterDinoParseStatusUnparsed           ClusterDinoParseStatus = "unparsed"
+)
+
 func (t ClusterItemType) String() string {
 	return string(t)
+}
+
+func (s ClusterDinoParseStatus) String() string {
+	return string(s)
 }
 
 type ClusterItem struct {
@@ -121,7 +134,7 @@ func ClusterDinoFromUpload(dino arkcluster.Dino, classNames []string) ClusterDin
 		ObjectCount:                  objectCount,
 		ParsedArchive:                dino.Archive != nil,
 		ClassNames:                   append([]string(nil), classNames...),
-		StatusComponentClassNames:    clusterClassNamesContaining(classNames, "CharacterStatusComponent"),
+		StatusComponentClassNames:    clusterClassNamesContainingAny(classNames, "CharacterStatusComponent", "DinoCharacterStatus", "CharacterStatus"),
 		AIControllerClassNames:       clusterClassNamesContaining(classNames, "AIController"),
 		InventoryComponentClassNames: clusterClassNamesContaining(classNames, "InventoryComponent"),
 		ParseError:                   dino.ParseError,
@@ -145,11 +158,37 @@ func (d ClusterDino) UnsupportedVersion() bool {
 	return d.Version != 0 && !d.SupportedVersion()
 }
 
+func (d ClusterDino) ParseStatus() ClusterDinoParseStatus {
+	switch {
+	case d.HasParseError():
+		return ClusterDinoParseStatusParseError
+	case d.UnsupportedVersion():
+		return ClusterDinoParseStatusUnsupportedVersion
+	case d.ParsedArchive:
+		return ClusterDinoParseStatusParsed
+	default:
+		return ClusterDinoParseStatusUnparsed
+	}
+}
+
 func clusterClassNamesContaining(classNames []string, token string) []string {
 	out := make([]string, 0)
 	for _, className := range classNames {
 		if strings.Contains(className, token) {
 			out = append(out, className)
+		}
+	}
+	return out
+}
+
+func clusterClassNamesContainingAny(classNames []string, tokens ...string) []string {
+	out := make([]string, 0)
+	for _, className := range classNames {
+		for _, token := range tokens {
+			if strings.Contains(className, token) {
+				out = append(out, className)
+				break
+			}
 		}
 	}
 	return out

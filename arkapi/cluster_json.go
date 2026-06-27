@@ -29,6 +29,8 @@ type ClusterItemInfo struct {
 	Index                int     `json:"index"`
 	Type                 string  `json:"type"`
 	Version              float64 `json:"version"`
+	SupportedVersion     bool    `json:"supported_version"`
+	UnsupportedVersion   bool    `json:"unsupported_version"`
 	UploadTime           float64 `json:"upload_time"`
 	Blueprint            string  `json:"blueprint,omitempty"`
 	Quantity             int32   `json:"quantity"`
@@ -39,13 +41,20 @@ type ClusterItemInfo struct {
 }
 
 type ClusterDinoInfo struct {
-	Index       int      `json:"index"`
-	Version     float64  `json:"version"`
-	UploadTime  float64  `json:"upload_time"`
-	RawSize     int      `json:"raw_size"`
-	ObjectCount int      `json:"object_count"`
-	ClassNames  []string `json:"class_names,omitempty"`
-	ParseError  string   `json:"parse_error,omitempty"`
+	Index                        int      `json:"index"`
+	Version                      float64  `json:"version"`
+	SupportedVersion             bool     `json:"supported_version"`
+	UnsupportedVersion           bool     `json:"unsupported_version"`
+	UploadTime                   float64  `json:"upload_time"`
+	RawSize                      int      `json:"raw_size"`
+	ObjectCount                  int      `json:"object_count"`
+	ParsedArchive                bool     `json:"parsed_archive"`
+	ParseStatus                  string   `json:"parse_status"`
+	ClassNames                   []string `json:"class_names,omitempty"`
+	StatusComponentClassNames    []string `json:"status_component_class_names,omitempty"`
+	AIControllerClassNames       []string `json:"ai_controller_class_names,omitempty"`
+	InventoryComponentClassNames []string `json:"inventory_component_class_names,omitempty"`
+	ParseError                   string   `json:"parse_error,omitempty"`
 }
 
 func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
@@ -62,34 +71,43 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 		info.ObjectCount = len(data.Archive.Objects)
 	}
 	for _, item := range data.Items {
+		typed := arkobject.ClusterItemFromUpload(item, clusterItemType(item))
 		info.Items = append(info.Items, ClusterItemInfo{
-			Index:                item.Index,
-			Type:                 clusterItemType(item).String(),
-			Version:              item.Version,
-			UploadTime:           item.UploadTime,
-			Blueprint:            item.Blueprint,
-			Quantity:             item.Quantity,
-			Rating:               item.Rating,
-			Quality:              item.Quality,
-			CrafterCharacterName: item.CrafterCharacterName,
-			CrafterTribeName:     item.CrafterTribeName,
+			Index:                typed.Index,
+			Type:                 typed.Type,
+			Version:              typed.Version,
+			SupportedVersion:     typed.SupportedVersion(),
+			UnsupportedVersion:   typed.UnsupportedVersion(),
+			UploadTime:           typed.UploadTime,
+			Blueprint:            typed.Blueprint,
+			Quantity:             typed.Quantity,
+			Rating:               typed.Rating,
+			Quality:              typed.Quality,
+			CrafterCharacterName: typed.CrafterCharacterName,
+			CrafterTribeName:     typed.CrafterTribeName,
 		})
 	}
 	for _, dino := range data.Dinos {
-		objectCount := 0
 		var classNames []string
 		if dino.Archive != nil {
-			objectCount = len(dino.Archive.Objects)
 			classNames = archiveClassNames(dino.Archive)
 		}
+		typed := arkobject.ClusterDinoFromUpload(dino, classNames)
 		info.Dinos = append(info.Dinos, ClusterDinoInfo{
-			Index:       dino.Index,
-			Version:     dino.Version,
-			UploadTime:  dino.UploadTime,
-			RawSize:     dino.RawSize,
-			ObjectCount: objectCount,
-			ClassNames:  classNames,
-			ParseError:  dino.ParseError,
+			Index:                        typed.Index,
+			Version:                      typed.Version,
+			SupportedVersion:             typed.SupportedVersion(),
+			UnsupportedVersion:           typed.UnsupportedVersion(),
+			UploadTime:                   typed.UploadTime,
+			RawSize:                      typed.RawSize,
+			ObjectCount:                  typed.ObjectCount,
+			ParsedArchive:                typed.ParsedArchive,
+			ParseStatus:                  typed.ParseStatus().String(),
+			ClassNames:                   typed.ClassNames,
+			StatusComponentClassNames:    typed.StatusComponentClassNames,
+			AIControllerClassNames:       typed.AIControllerClassNames,
+			InventoryComponentClassNames: typed.InventoryComponentClassNames,
+			ParseError:                   typed.ParseError,
 		})
 	}
 	return info

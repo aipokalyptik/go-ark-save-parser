@@ -219,6 +219,19 @@ func (c *ClusterAPI) ParseErrorCount() int {
 	return count
 }
 
+func (c *ClusterAPI) DinoParseStatusCounts() map[string]int {
+	counts := map[string]int{
+		arkobject.ClusterDinoParseStatusParsed.String():             0,
+		arkobject.ClusterDinoParseStatusUnsupportedVersion.String(): 0,
+		arkobject.ClusterDinoParseStatusParseError.String():         0,
+		arkobject.ClusterDinoParseStatusUnparsed.String():           0,
+	}
+	for _, dino := range c.DinosTyped() {
+		counts[dino.ParseStatus().String()]++
+	}
+	return counts
+}
+
 func (c *ClusterAPI) DinoSummary() ClusterDinoSummary {
 	dinos := c.DinosTyped()
 	summary := ClusterDinoSummary{Dinos: len(dinos)}

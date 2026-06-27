@@ -229,11 +229,16 @@ documented.
         preserving string-based filters and JSON output.
   - [x] Add enum-based uploaded item filters, version/parse helper methods, and
         embedded uploaded-dino component class-name summaries.
+  - [x] Add explicit uploaded-dino parse status helpers and counts for parsed,
+        unsupported-version, parse-error, and unparsed local cluster uploads.
   - [x] Add typed uploaded-item aggregate summaries for item type counts,
         version support counts, crafted item counts, total quantity, and max
         rating/quality.
   - [x] Add typed uploaded-dino aggregate summaries for parsed/error counts,
         version support counts, component presence, and embedded object totals.
+  - [x] Include uploaded item version support and uploaded dino parse status,
+        version support, parsed-archive state, and component class summaries in
+        cluster JSON exports.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local
