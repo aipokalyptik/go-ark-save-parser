@@ -94,9 +94,10 @@ For the cross-phase monitorable checklist, see
       fixtures use a shared helper; parsed `CustomItemDatas`
       cryopod/custom-data fixtures live in `internal/propertyfixtures`, and
       binary `CustomItemDatas` writers live in shared testfixtures for API and
-      object-model tests. Remaining lower-level domain-specific parser fixtures
-      and non-save malformed object-shape fixtures still need incremental
-      migration.
+      object-model tests; ID-table Vector struct property writers are shared by
+      example/player-location fixtures. Remaining lower-level domain-specific
+      parser fixtures and non-save malformed object-shape fixtures still need
+      incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query

@@ -1131,6 +1131,25 @@ func WriteStructPropertyID(buf *bytes.Buffer, name uint32, structPropertyType ui
 	buf.Write(body)
 }
 
+func WriteVectorPropertyID(buf *bytes.Buffer, name uint32, structPropertyType uint32, vectorType uint32, coreObjectName uint32, x float64, y float64, z float64) {
+	_ = binary.Write(buf, binary.LittleEndian, name)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, structPropertyType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, vectorType)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	_ = binary.Write(buf, binary.LittleEndian, coreObjectName)
+	_ = binary.Write(buf, binary.LittleEndian, int32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
+	buf.WriteByte(8)
+	_ = binary.Write(buf, binary.LittleEndian, x)
+	_ = binary.Write(buf, binary.LittleEndian, y)
+	_ = binary.Write(buf, binary.LittleEndian, z)
+}
+
 func WriteStructArrayPropertyID(buf *bytes.Buffer, name uint32, arrayPropertyType uint32, structPropertyType uint32, structType uint32, elements [][]byte) {
 	bodySize := 4
 	for _, element := range elements {

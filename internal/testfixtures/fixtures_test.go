@@ -203,6 +203,36 @@ func TestWriteCustomItemDatasPropertyIDWritesParseablePayloadBytes(t *testing.T)
 	}
 }
 
+func TestWriteVectorPropertyIDWritesParseableVectorStruct(t *testing.T) {
+	var props bytes.Buffer
+	WriteVectorPropertyID(&props, 0x10000048, 0x10000049, 0x1000004a, 0x1000004b, 11, 22, 33)
+
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		0x10000004: "None",
+		0x10000047: "Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'",
+		0x10000048: "SavedBaseWorldLocation",
+		0x10000049: "StructProperty",
+		0x1000004a: "Vector",
+		0x1000004b: "/Script/CoreUObject",
+	})
+	object, err := arkobject.ParseGameObject(uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"), ObjectBytesWithProperties(0x10000047, 0x10000004, props.Bytes()), ctx, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject() error = %v", err)
+	}
+	raw, ok := object.Value("SavedBaseWorldLocation")
+	if !ok {
+		t.Fatalf("SavedBaseWorldLocation missing")
+	}
+	got, ok := raw.(arkproperty.Vector)
+	if !ok {
+		t.Fatalf("SavedBaseWorldLocation type = %T, want Vector", raw)
+	}
+	if got.X != 11 || got.Y != 22 || got.Z != 33 {
+		t.Fatalf("SavedBaseWorldLocation = %#v, want 11/22/33", got)
+	}
+}
+
 func TestPlayerPawnGameObjectBytesWritesParseablePawnObject(t *testing.T) {
 	inventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 	pawnID := uuid.MustParse("11112222-3333-4444-5555-666677778888")

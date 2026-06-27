@@ -445,27 +445,8 @@ func playerPawnObjectBytes(classNameID uint32, noneNameID uint32, linkedPlayerDa
 	var props bytes.Buffer
 	testfixtures.WriteIntPropertyID(&props, linkedPlayerDataIDName, intPropertyID, 42)
 	testfixtures.WriteObjectReferencePropertyID(&props, inventoryNameID, objectPropertyID, inventoryID)
-	writeVectorPropertyID(&props, locationNameID, structPropertyID, vectorNameID, coreObjectNameID, 11, 22, 33)
+	testfixtures.WriteVectorPropertyID(&props, locationNameID, structPropertyID, vectorNameID, coreObjectNameID, 11, 22, 33)
 	return testfixtures.ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
-}
-
-func writeVectorPropertyID(buf *bytes.Buffer, name uint32, structProperty uint32, vectorName uint32, coreObjectName uint32, x float64, y float64, z float64) {
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, structProperty)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, vectorName)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	_ = binary.Write(buf, binary.LittleEndian, coreObjectName)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
-	buf.WriteByte(8)
-	_ = binary.Write(buf, binary.LittleEndian, x)
-	_ = binary.Write(buf, binary.LittleEndian, y)
-	_ = binary.Write(buf, binary.LittleEndian, z)
 }
 
 func inventoryObjectBytes(classNameID uint32, noneNameID uint32, itemsNameID uint32, arrayPropertyID uint32, objectPropertyID uint32, itemIDs ...uuid.UUID) []byte {
