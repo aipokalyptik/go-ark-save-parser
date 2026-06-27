@@ -253,6 +253,52 @@ func (p *PlayerAPI) PlayerInventoryByDataID(id uint64) (*arkobject.Inventory, bo
 	return &inventory, true, nil
 }
 
+func (p *PlayerAPI) PlayerInventoriesWithFaults() (map[uint64]arkobject.Inventory, []arksave.FaultyObjectInfo, error) {
+	out := map[uint64]arkobject.Inventory{}
+	if p.save == nil {
+		return out, nil, nil
+	}
+	pawns, _, err := p.save.ParsedObjectsWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return strings.Contains(info.ClassName, "PlayerPawn")
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	var faults []arksave.FaultyObjectInfo
+	for _, pawn := range pawns {
+		value, ok := pawn.Object.Value("LinkedPlayerDataID")
+		if !ok {
+			continue
+		}
+		dataID := numericPropertyAsUint64(value)
+		if dataID == 0 {
+			continue
+		}
+		if _, exists := out[dataID]; exists {
+			continue
+		}
+		inventoryValue, ok := pawn.Object.Value("MyInventoryComponent")
+		if !ok {
+			continue
+		}
+		inventoryID, ok := objectReferencePropertyUUID(inventoryValue)
+		if !ok {
+			continue
+		}
+		object, err := p.save.Object(inventoryID)
+		if err != nil {
+			faults = append(faults, arksave.FaultyObjectInfo{UUID: inventoryID, Err: err})
+			continue
+		}
+		out[dataID] = arkobject.InventoryFromObject(object)
+	}
+	return out, faults, nil
+}
+
+func (p *PlayerAPI) InventoryItemCount(inventory arkobject.Inventory) int {
+	return inventory.NumberOfItems()
+}
+
 func (p *PlayerAPI) PlayerLocationByDataID(id uint64) (*arkobject.ActorTransform, bool, error) {
 	pawn, ok, err := p.PlayerPawnByDataID(id)
 	if err != nil || !ok {

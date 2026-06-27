@@ -214,8 +214,12 @@ documented.
         preserving string-based filters and JSON output.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
-- [ ] Finish remaining Player/Tribe edge behavior not covered by parsed local
-      archives, game-table objects, or embedded `GameModeCustomBytes`.
+- [~] Finish remaining Player/Tribe edge behavior not covered by parsed local
+      archives, game-table objects, or embedded `GameModeCustomBytes`:
+  - [x] Move save-contained player pawn inventory indexing and upstream-style
+        inventory item counting from the example into typed `arkapi` helpers.
+  - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
+        offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.
 
 ### Mutation APIs

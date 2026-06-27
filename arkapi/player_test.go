@@ -326,6 +326,61 @@ func TestPlayerAPIPlayerInventoryByDataID(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerInventoriesWithFaultsIndexesSavePawns(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	api := NewPlayer(save)
+	inventories, faults, err := api.PlayerInventoriesWithFaults()
+	if err != nil {
+		t.Fatalf("PlayerInventoriesWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerInventoriesWithFaults() faults = %#v, want none", faults)
+	}
+	inventory, ok := inventories[42]
+	if !ok {
+		t.Fatalf("PlayerInventoriesWithFaults() missing player 42 inventory: %#v", inventories)
+	}
+	if inventory.UUID != uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff") {
+		t.Fatalf("PlayerInventoriesWithFaults()[42].UUID = %s", inventory.UUID)
+	}
+	if inventory.NumberOfItems() != 2 {
+		t.Fatalf("Inventory.NumberOfItems() = %d, want referenced item count 2", inventory.NumberOfItems())
+	}
+	if got := api.InventoryItemCount(inventory); got != 2 {
+		t.Fatalf("InventoryItemCount() = %d, want upstream-style referenced item count 2", got)
+	}
+}
+
+func TestPlayerAPIPlayerInventoriesWithFaultsKeepsMissingInventoryFault(t *testing.T) {
+	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	missingInventoryID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	path := filepath.Join(t.TempDir(), "missing-inventory.ark")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			pawnID: savePlayerPawnObjectBytes(42, missingInventoryID),
+		},
+	})
+	save, err := arksave.Open(path)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer save.Close()
+
+	inventories, faults, err := NewPlayer(save).PlayerInventoriesWithFaults()
+	if err != nil {
+		t.Fatalf("PlayerInventoriesWithFaults() error = %v", err)
+	}
+	if len(inventories) != 0 {
+		t.Fatalf("PlayerInventoriesWithFaults() inventories = %#v, want empty on missing inventory row", inventories)
+	}
+	if len(faults) != 1 || faults[0].UUID != missingInventoryID || faults[0].Err == nil {
+		t.Fatalf("PlayerInventoriesWithFaults() faults = %#v, want missing inventory fault", faults)
+	}
+}
+
 func TestPlayerAPIPlayerInventoryByDataIDIgnoresUnrelatedBrokenObjects(t *testing.T) {
 	playerID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	pawnID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
