@@ -2,7 +2,7 @@ GO_CACHE ?= $(CURDIR)/.cache/go-build
 GO_MOD_CACHE ?= $(CURDIR)/.cache/go-mod
 PY_CACHE ?= $(CURDIR)/.cache/pycache
 
-.PHONY: test verify oracle-test oracle-compare bench build
+.PHONY: test verify e2e-test oracle-test oracle-compare bench build
 
 test:
 	GOCACHE="$(GO_CACHE)" go test ./...
@@ -12,6 +12,9 @@ verify:
 	PYTHONPYCACHEPREFIX="$(PY_CACHE)" python3 -m py_compile scripts/*.py
 	PYTHONPYCACHEPREFIX="$(PY_CACHE)" python3 -m unittest discover -s scripts -p '*_test.py'
 	$(MAKE) build
+
+e2e-test:
+	GOCACHE="$(GO_CACHE)" go test ./arkapi -run TestProvidedDataReadOnlyE2E -count=1
 
 oracle-test:
 	test -n "$$ARK_ORACLE_SAVE"

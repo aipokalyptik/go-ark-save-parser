@@ -62,6 +62,8 @@ Implemented:
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
   `export-json`, `export-domain-json`, `export-cluster-json`, and
   `export-tribute-json` commands.
+- Go-only provided-data E2E smoke test for selected read-only APIs, runnable
+  with `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - Private Python oracle setup and gated private `.ark` integration test.
 - Private Python oracle comparison for implemented offline Go examples, currently
   covering forty-six aggregate read-only and utility cases.
@@ -221,6 +223,17 @@ Run tests:
 ```sh
 make test
 ```
+
+Run Go-only read-only E2E smoke tests against private/provided save data:
+
+```sh
+ARK_E2E_SAVE=/absolute/path/to/Valguero_WP.ark make e2e-test
+ARK_E2E_SAVE_DIR=/absolute/path/to/SavedArks make e2e-test
+```
+
+The E2E path opens local `.ark` data, exercises selected read-only APIs, and
+does not write private output. Python oracle expansion is not required for this
+validation path.
 
 Run the private oracle integration test:
 

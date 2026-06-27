@@ -44,6 +44,25 @@ compatibility guarantee unless a specific path has tests.
 The build target uses `CGO_ENABLED=0` so the CLI remains portable and does not
 depend on a system SQLite library.
 
+## Provided-Data Go E2E
+
+Prefer expanding Go tests, examples, and E2E coverage for chosen offline
+features. Do not add Python oracle cases first unless an existing oracle check
+is the narrowest way to answer a specific parity question.
+
+Run the Go-only provided-data smoke test with either a direct `.ark` path or a
+directory containing provided save files:
+
+```sh
+ARK_E2E_SAVE=/absolute/path/to/Valguero_WP.ark make e2e-test
+ARK_E2E_SAVE_DIR=/absolute/path/to/SavedArks make e2e-test
+```
+
+`make e2e-test` is read-only. It opens the map save, checks save metadata,
+exercises object enumeration and selected-property scans, and, when a directory
+is supplied, also exercises local player and tribe discovery. It skips cleanly
+when no provided data environment variables are set.
+
 ## Oracle Regeneration
 
 Private oracle files must stay under `.oracle/`, which is ignored by git.

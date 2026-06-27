@@ -37,6 +37,8 @@ Status markers:
       stay under `.oracle/output`.
 - [x] Do not expand the Python codebase or oracle suite beyond selected-feature
       parity needs; new work should target Go offline feature behavior.
+- [x] Prefer expanding Go code coverage, examples, and read-only provided-data
+      E2E tests for chosen offline features.
 - [ ] Update this ledger in the same commit whenever a new task, blocker, or
       completion status is discovered.
 
@@ -425,6 +427,9 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
+- [x] Go-only provided-data E2E smoke test is available through
+      `make e2e-test`; it skips without `ARK_E2E_SAVE` or
+      `ARK_E2E_SAVE_DIR`.
 - [x] Private oracle comparison suite exists and currently records forty-six
       passing sanitized comparison cases for selected implemented features.
 - [x] Expanding the private oracle comparison suite to every runnable upstream
