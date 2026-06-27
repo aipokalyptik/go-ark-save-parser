@@ -335,3 +335,40 @@ func TestDinoStatsTotalMutationsSumsAllStatMutationPoints(t *testing.T) {
 		t.Fatalf("TotalMutations() = %d, want 6", got)
 	}
 }
+
+func TestDinoStatStringRoundTripUsesCLITokens(t *testing.T) {
+	cases := []struct {
+		stat DinoStat
+		name string
+	}{
+		{DinoStatHealth, "health"},
+		{DinoStatStamina, "stamina"},
+		{DinoStatTorpidity, "torpidity"},
+		{DinoStatOxygen, "oxygen"},
+		{DinoStatFood, "food"},
+		{DinoStatWater, "water"},
+		{DinoStatTemperature, "temperature"},
+		{DinoStatWeight, "weight"},
+		{DinoStatMeleeDamage, "melee_damage"},
+		{DinoStatMovementSpeed, "movement_speed"},
+		{DinoStatFortitude, "fortitude"},
+		{DinoStatCraftingSpeed, "crafting_speed"},
+	}
+
+	for _, tc := range cases {
+		if got := tc.stat.String(); got != tc.name {
+			t.Fatalf("%v.String() = %q, want %q", int(tc.stat), got, tc.name)
+		}
+		parsed, ok := DinoStatFromString(tc.name)
+		if !ok || parsed != tc.stat {
+			t.Fatalf("DinoStatFromString(%q) = %v, %v; want %v, true", tc.name, parsed, ok, tc.stat)
+		}
+	}
+
+	if got := DinoStat(99).String(); got != "unknown" {
+		t.Fatalf("DinoStat(99).String() = %q, want unknown", got)
+	}
+	if _, ok := DinoStatFromString("unknown"); ok {
+		t.Fatalf("DinoStatFromString(unknown) ok = true, want false")
+	}
+}

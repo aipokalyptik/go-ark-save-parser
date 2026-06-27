@@ -82,6 +82,41 @@ var dinoStatOrder = []DinoStat{
 	DinoStatCraftingSpeed,
 }
 
+var dinoStatNames = map[DinoStat]string{
+	DinoStatHealth:        "health",
+	DinoStatStamina:       "stamina",
+	DinoStatTorpidity:     "torpidity",
+	DinoStatOxygen:        "oxygen",
+	DinoStatFood:          "food",
+	DinoStatWater:         "water",
+	DinoStatTemperature:   "temperature",
+	DinoStatWeight:        "weight",
+	DinoStatMeleeDamage:   "melee_damage",
+	DinoStatMovementSpeed: "movement_speed",
+	DinoStatFortitude:     "fortitude",
+	DinoStatCraftingSpeed: "crafting_speed",
+}
+
+var dinoStatsByName = func() map[string]DinoStat {
+	out := make(map[string]DinoStat, len(dinoStatNames))
+	for stat, name := range dinoStatNames {
+		out[name] = stat
+	}
+	return out
+}()
+
+func (s DinoStat) String() string {
+	if name, ok := dinoStatNames[s]; ok {
+		return name
+	}
+	return "unknown"
+}
+
+func DinoStatFromString(value string) (DinoStat, bool) {
+	stat, ok := dinoStatsByName[value]
+	return stat, ok
+}
+
 func DinoStatsFromObject(object *GameObject) DinoStats {
 	if object == nil {
 		return DinoStats{}

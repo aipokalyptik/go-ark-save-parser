@@ -440,6 +440,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.DinoAPI.BabySummaryWithFaults`.
     - [x] Move `dino_filter` total/tamed/wild/cryopodded/class counting onto
           typed `arkapi.DinoAPI.PopulationSummaryWithFaults`.
+    - [x] Move dino stat CLI token parsing/formatting for `dino_best_stat` and
+          `dino_best_base_stat` onto typed `arkobject.DinoStat` helpers.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
