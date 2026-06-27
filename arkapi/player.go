@@ -32,6 +32,16 @@ type TribePlayerRelation struct {
 	InactiveMemberNames []string
 }
 
+type TribePlayerRelationSummary struct {
+	Players             int
+	Tribes              int
+	ActiveLinks         int
+	InactiveMembers     int
+	PlayersWithoutTribe int
+	TribesWithInactive  int
+	TribesWithoutActive int
+}
+
 type PlayerInventorySummary struct {
 	Players          int
 	WithInventory    int
@@ -89,17 +99,25 @@ func NewPlayerFromPath(path string, opts PlayerPathOptions) (*PlayerAPI, func() 
 	useDirectory := false
 	switch opts.Fallback {
 	case PlayerPathFallbackPlayers:
-		players, _, err := api.PlayersWithFaults()
+		players, faults, err := api.PlayersWithFaults()
 		if err != nil {
 			_ = save.Close()
 			return nil, noopPlayerClose, err
 		}
+		if len(faults) > 0 {
+			_ = save.Close()
+			return nil, noopPlayerClose, faults[0].Err
+		}
 		useDirectory = len(players) == 0
 	case PlayerPathFallbackTribes:
-		tribes, _, err := api.TribeDetailsWithFaults()
+		tribes, faults, err := api.TribeDetailsWithFaults()
 		if err != nil {
 			_ = save.Close()
 			return nil, noopPlayerClose, err
+		}
+		if len(faults) > 0 {
+			_ = save.Close()
+			return nil, noopPlayerClose, faults[0].Err
 		}
 		useDirectory = len(tribes) == 0
 	}
@@ -1133,6 +1151,49 @@ func (p *PlayerAPI) TribePlayerRelations() ([]TribePlayerRelation, error) {
 		out = append(out, relation)
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) TribePlayerRelationSummary() (TribePlayerRelationSummary, error) {
+	players, err := p.Players()
+	if err != nil {
+		return TribePlayerRelationSummary{}, err
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return TribePlayerRelationSummary{}, err
+	}
+	relations, err := p.TribePlayerRelations()
+	if err != nil {
+		return TribePlayerRelationSummary{}, err
+	}
+	return p.TribePlayerRelationSummaryForData(players, tribes, relations), nil
+}
+
+func (p *PlayerAPI) TribePlayerRelationSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe, relations []TribePlayerRelation) TribePlayerRelationSummary {
+	summary := TribePlayerRelationSummary{
+		Players: len(players),
+		Tribes:  len(tribes),
+	}
+	tribeIDs := map[int32]struct{}{}
+	for _, tribe := range tribes {
+		tribeIDs[tribe.TribeID] = struct{}{}
+	}
+	for _, player := range players {
+		if _, ok := tribeIDs[player.TribeID]; !ok {
+			summary.PlayersWithoutTribe++
+		}
+	}
+	for _, relation := range relations {
+		summary.ActiveLinks += len(relation.ActivePlayers)
+		summary.InactiveMembers += len(relation.InactiveMemberIDs)
+		if len(relation.InactiveMemberIDs) > 0 {
+			summary.TribesWithInactive++
+		}
+		if len(relation.ActivePlayers) == 0 {
+			summary.TribesWithoutActive++
+		}
+	}
+	return summary
 }
 
 func (p *PlayerAPI) TribeOfPlayer(player arkobject.Player) (arkobject.Tribe, bool, error) {

@@ -145,6 +145,53 @@ func TestNewPlayerFromPathFallsBackToDirectoryTribesWhenSaveHasNoTribes(t *testi
 	}
 }
 
+func TestNewPlayerFromPathDoesNotFallbackWhenSavePlayersHaveFaults(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "faulty-players.ark")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			faultyID: testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{
+				PlayerDataID:  43,
+				CharacterName: "Broken",
+				PlayerName:    "BrokenPlatform",
+				TribeID:       12345,
+			})[:40],
+		},
+	})
+	testfixtures.WritePlayerArchive(t, filepath.Join(dir, "123.arkprofile"))
+
+	api, closeAPI, err := NewPlayerFromPath(savePath, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err == nil {
+		defer closeAPI()
+		t.Fatalf("NewPlayerFromPath(faulty player fallback) error = nil with api %#v, want save parse fault", api)
+	}
+}
+
+func TestNewPlayerFromPathDoesNotFallbackWhenSaveTribesHaveFaults(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "faulty-tribes.ark")
+	faultyID := uuid.MustParse("33112233-4455-6677-8899-aabbccddeeff")
+	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			faultyID: testfixtures.TribeGameObjectBytes(testfixtures.TribeArchiveOptions{
+				Name:     "Broken",
+				TribeID:  67890,
+				NumDinos: 3,
+			})[:40],
+		},
+	})
+	testfixtures.WriteTribeArchive(t, filepath.Join(dir, "456.arktribe"))
+
+	api, closeAPI, err := NewPlayerFromPath(savePath, PlayerPathOptions{Fallback: PlayerPathFallbackTribes})
+	if err == nil {
+		defer closeAPI()
+		t.Fatalf("NewPlayerFromPath(faulty tribe fallback) error = nil with api %#v, want save parse fault", api)
+	}
+}
+
 func TestPlayerAPILoadsLocalProfileAndTribeArchives(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteArchive(t, filepath.Join(dir, "123.arkprofile"), "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
@@ -1010,6 +1057,13 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 		UniqueID:      "eos-scout",
 		TribeID:       12345,
 	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "789.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  77,
+		CharacterName: "Nomad",
+		PlayerName:    "NoTribe",
+		UniqueID:      "eos-nomad",
+		TribeID:       77777,
+	})
 	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
 		Name:      "Porters",
 		TribeID:   12345,
@@ -1017,6 +1071,14 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 		NumDinos:  7,
 		Members:   []string{"Survivor", "Scout", "Inactive"},
 		MemberIDs: []int32{42, 43, 99},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Sleepers",
+		TribeID:   67890,
+		OwnerID:   88,
+		NumDinos:  0,
+		Members:   []string{"Gone"},
+		MemberIDs: []int32{88},
 	})
 
 	api, err := NewPlayerFromDirectory(dir)
@@ -1034,14 +1096,30 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TribePlayerRelations() error = %v", err)
 	}
-	if len(relations) != 1 {
-		t.Fatalf("TribePlayerRelations() length = %d, want 1", len(relations))
+	if len(relations) != 2 {
+		t.Fatalf("TribePlayerRelations() length = %d, want 2", len(relations))
 	}
 	if len(relations[0].ActivePlayers) != 2 || len(relations[0].InactiveMemberIDs) != 1 || relations[0].InactiveMemberIDs[0] != 99 {
 		t.Fatalf("TribePlayerRelations()[0] = %#v, want two active players and inactive member 99", relations[0])
 	}
 	if len(relations[0].InactiveMemberNames) != 1 || relations[0].InactiveMemberNames[0] != "Inactive" {
 		t.Fatalf("TribePlayerRelations()[0].InactiveMemberNames = %#v, want Inactive", relations[0].InactiveMemberNames)
+	}
+	summary, err := api.TribePlayerRelationSummary()
+	if err != nil {
+		t.Fatalf("TribePlayerRelationSummary() error = %v", err)
+	}
+	wantSummary := TribePlayerRelationSummary{
+		Players:             3,
+		Tribes:              2,
+		ActiveLinks:         2,
+		InactiveMembers:     2,
+		PlayersWithoutTribe: 1,
+		TribesWithInactive:  2,
+		TribesWithoutActive: 1,
+	}
+	if summary != wantSummary {
+		t.Fatalf("TribePlayerRelationSummary() = %#v, want %#v", summary, wantSummary)
 	}
 	player, ok, err := api.PlayerByDataID(42)
 	if err != nil || !ok {
