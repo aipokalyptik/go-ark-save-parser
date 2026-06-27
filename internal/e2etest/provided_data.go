@@ -13,6 +13,8 @@ type ProvidedData struct {
 	Dir          string
 	ProfileCount int
 	TribeCount   int
+	TributePath  string
+	TributeCount int
 }
 
 func DiscoverProvidedData(t *testing.T) ProvidedData {
@@ -23,6 +25,7 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 	}
 
 	var savePaths []string
+	var tributePaths []string
 	err := filepath.WalkDir(data.Dir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -37,6 +40,8 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 			data.ProfileCount++
 		case ".arktribe":
 			data.TribeCount++
+		case ".arktributetribe", ".arktributetribetribe":
+			tributePaths = append(tributePaths, path)
 		}
 		return nil
 	})
@@ -46,6 +51,11 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 	sort.Strings(savePaths)
 	if data.SavePath == "" && len(savePaths) > 0 {
 		data.SavePath = savePaths[0]
+	}
+	sort.Strings(tributePaths)
+	data.TributeCount = len(tributePaths)
+	if len(tributePaths) > 0 {
+		data.TributePath = tributePaths[0]
 	}
 	return data
 }

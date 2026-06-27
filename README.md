@@ -232,9 +232,9 @@ ARK_E2E_SAVE_DIR=/absolute/path/to/SavedArks make e2e-test
 ```
 
 The E2E path opens local `.ark` data, exercises selected read-only APIs, CLI
-commands, and aggregate-output examples, writes CLI JSON only to temporary test
-directories, and does not write private output. Python oracle expansion is not
-required for this validation path.
+commands, local tribute handling, and aggregate-output examples, writes CLI JSON
+only to temporary test directories, and does not write private output. Python
+oracle expansion is not required for this validation path.
 
 Run the private oracle integration test:
 

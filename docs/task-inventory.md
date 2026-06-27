@@ -98,7 +98,7 @@ Status markers:
 | P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests. |
-| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, CLI commands, and examples against configured private/provided data and skips without env vars. |
+| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, CLI commands, local tribute handling, and examples against configured private/provided data and skips without env vars. |
 | P4-VERIFY-005 | `[x]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
 

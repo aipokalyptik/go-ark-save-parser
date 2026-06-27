@@ -309,6 +309,14 @@ func TestExamplesRunAgainstProvidedData(t *testing.T) {
 	if data.TribeCount > 0 {
 		runProvidedExample(t, "tribe_list", "tribes=", data.Dir)
 	}
+	if data.TributeCount > 0 {
+		runProvidedExample(t, "local_tribute", "tribute_files=", data.Dir)
+		runProvidedExample(t, "tribute_json", `"count":`, data.Dir)
+		if data.TributePath != "" {
+			runProvidedExample(t, "local_tribute", "tribute_file=", data.TributePath)
+			runProvidedExample(t, "tribute_json", `"player_data_count":`, data.TributePath)
+		}
+	}
 }
 
 func runExample(t *testing.T, name string, want string, args ...string) {

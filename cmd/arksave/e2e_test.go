@@ -78,4 +78,37 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 			}
 		}
 	}
+	if data.TributeCount > 0 {
+		var tributeOut bytes.Buffer
+		if err := run([]string{"--redact", "tribute", data.Dir}, &tributeOut); err != nil {
+			t.Fatalf("run(tribute directory) error = %v", err)
+		}
+		for _, want := range []string{"Tribute file: [redacted]", "Player data IDs:", "Tribe data IDs:"} {
+			if !strings.Contains(tributeOut.String(), want) {
+				t.Fatalf("tribute directory output missing %q", want)
+			}
+		}
+
+		tributeExportPath := filepath.Join(t.TempDir(), "tribute.json")
+		var tributeExportOut bytes.Buffer
+		if err := run([]string{"--redact", "export-tribute-json", data.Dir, tributeExportPath}, &tributeExportOut); err != nil {
+			t.Fatalf("run(export-tribute-json directory) error = %v", err)
+		}
+		if !strings.Contains(tributeExportOut.String(), "Wrote tribute JSON export: [redacted]") {
+			t.Fatalf("export-tribute-json output was not redacted: %q", tributeExportOut.String())
+		}
+		exportData, err := os.ReadFile(tributeExportPath)
+		if err != nil {
+			t.Fatalf("read tribute JSON export: %v", err)
+		}
+		var info struct {
+			Count int `json:"count"`
+		}
+		if err := json.Unmarshal(exportData, &info); err != nil {
+			t.Fatalf("unmarshal tribute JSON export: %v", err)
+		}
+		if info.Count == 0 {
+			t.Fatalf("exported tribute JSON count = 0")
+		}
+	}
 }
