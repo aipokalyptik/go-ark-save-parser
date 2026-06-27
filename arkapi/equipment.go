@@ -65,6 +65,11 @@ type EquipmentSaddleSummary struct {
 	MaxArmor       float64
 }
 
+type EquipmentOwnedSummary struct {
+	Items     int
+	MaxDamage float64
+}
+
 const AscendantQualityIndex int32 = 5
 
 var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
@@ -657,6 +662,22 @@ func (e *EquipmentAPI) SaddleSummaryWithFaults() (EquipmentSaddleSummary, []arks
 		summary.MaxArmor = saddle.Stats.Armor
 	}
 	faults = append(faults, cryopodFaults...)
+	return summary, faults, nil
+}
+
+func (e *EquipmentAPI) OwnedSummaryWithFaults(opts EquipmentFilterOptions, owner arkobject.ObjectOwner) (EquipmentOwnedSummary, []arksave.FaultyObjectInfo, error) {
+	items, faults, err := e.FilteredWithFaults(opts)
+	if err != nil {
+		return EquipmentOwnedSummary{}, nil, err
+	}
+	owned, err := e.FilterOwnedBy(items, owner)
+	if err != nil {
+		return EquipmentOwnedSummary{}, faults, err
+	}
+	summary := EquipmentOwnedSummary{Items: len(owned)}
+	if _, item, ok := e.BestWeaponDamage(owned); ok {
+		summary.MaxDamage = item.Stats.Damage
+	}
 	return summary, faults, nil
 }
 

@@ -423,6 +423,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.PlayerInventorySummaryFromPath`.
     - [x] Move equipment max-damage example aggregation onto existing typed
           `arkapi.EquipmentAPI.BestWeaponDamage`.
+    - [x] Move `equipment_owned_by` owner filtering and max damage aggregation
+          onto typed `arkapi.EquipmentAPI.OwnedSummaryWithFaults`.
     - [x] Move saddle max-armor and wild-tamed max-level example aggregation
           onto typed `arkapi.EquipmentAPI.BestArmor` and
           `arkapi.DinoAPI.MaxCurrentLevel`.

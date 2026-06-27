@@ -29,24 +29,14 @@ func main() {
 	}
 	defer save.Close()
 
-	api := arkapi.NewEquipment(save)
-	items, _, err := api.FilteredWithFaults(arkapi.EquipmentFilterOptions{
+	summary, _, err := arkapi.NewEquipment(save).OwnedSummaryWithFaults(arkapi.EquipmentFilterOptions{
 		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:     []string{os.Args[2]},
 		OnlyBlueprints: true,
-	})
+	}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
+		fmt.Fprintf(os.Stderr, "read owned equipment: %v\n", err)
 		os.Exit(1)
 	}
-	owned, err := api.FilterOwnedBy(items, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "filter owner: %v\n", err)
-		os.Exit(1)
-	}
-	maxDamage := float64(0)
-	if _, item, ok := api.BestWeaponDamage(owned); ok {
-		maxDamage = item.Stats.Damage
-	}
-	fmt.Printf("tribe_id=%d items=%d max_damage=%.1f\n", tribeID64, len(owned), maxDamage)
+	fmt.Printf("tribe_id=%d items=%d max_damage=%.1f\n", tribeID64, summary.Items, summary.MaxDamage)
 }

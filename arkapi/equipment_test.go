@@ -505,6 +505,38 @@ func TestEquipmentAPIFilterOwnedByIgnoresMalformedUnrelatedContainers(t *testing
 	}
 }
 
+func TestEquipmentAPIOwnedSummaryWithFaultsAppliesFiltersAndOwnerLookup(t *testing.T) {
+	save := openSyntheticEquipmentOwnedBlueprintSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewEquipment(save).OwnedSummaryWithFaults(EquipmentFilterOptions{
+		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:     []string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+		OnlyBlueprints: true,
+	}, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("OwnedSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("OwnedSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.Items != 1 || summary.MaxDamage != 112.3 {
+		t.Fatalf("OwnedSummaryWithFaults() = %#v, want one owned blueprint with max damage 112.3", summary)
+	}
+
+	missing, _, err := NewEquipment(save).OwnedSummaryWithFaults(EquipmentFilterOptions{
+		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:     []string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+		OnlyBlueprints: true,
+	}, arkobject.ObjectOwner{TribeID: 777})
+	if err != nil {
+		t.Fatalf("OwnedSummaryWithFaults(missing owner) error = %v", err)
+	}
+	if missing != (EquipmentOwnedSummary{}) {
+		t.Fatalf("OwnedSummaryWithFaults(missing owner) = %#v, want zero summary", missing)
+	}
+}
+
 func TestEquipmentAPIFiltersByStateAndStats(t *testing.T) {
 	save := openSyntheticEquipmentFilterSave(t)
 	defer save.Close()
@@ -1004,6 +1036,26 @@ func openSyntheticEquipmentOwnedByStructureSaveWithFault(t *testing.T) *arksave.
 	})
 }
 
+func openSyntheticEquipmentOwnedBlueprintSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	structureID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	ownedItemID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	otherItemID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		structureID:  syntheticStructureWithInventoryObjectBytes(inventoryID),
+		ownedItemID: syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(ownerInventoryBlueprintOptions{OwnerInventory: inventoryID, IsBlueprint: true}),
+		otherItemID: syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(ownerInventoryBlueprintOptions{OwnerInventory: otherInventoryID, IsBlueprint: true}),
+	})
+}
+
+type ownerInventoryBlueprintOptions struct {
+	OwnerInventory uuid.UUID
+	IsBlueprint    bool
+}
+
 func syntheticEquipmentObjectBytes(isEngram bool) []byte {
 	return syntheticEquipmentObjectBytesWithFlags(isEngram, false, false, 7.5, 3, 0.75)
 }
@@ -1027,12 +1079,17 @@ func syntheticEquipmentObjectBytesWithFlags(isEngram bool, isEquipped bool, isBl
 }
 
 func syntheticEquipmentObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
+	return syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(ownerInventoryBlueprintOptions{OwnerInventory: ownerInventory})
+}
+
+func syntheticEquipmentObjectBytesWithOwnerInventoryAndBlueprint(opts ownerInventoryBlueprintOptions) []byte {
 	return testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
 		Quantity:         1,
 		Rating:           7.5,
 		Quality:          3,
 		Durability:       0.75,
-		OwnerInventoryID: ownerInventory,
+		OwnerInventoryID: opts.OwnerInventory,
+		IsBlueprint:      trueBoolPtr(opts.IsBlueprint),
 		Stats: map[int32]uint16{
 			2: 1000,
 			3: 1234,
