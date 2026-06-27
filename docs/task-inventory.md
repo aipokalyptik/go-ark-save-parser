@@ -64,7 +64,7 @@ Status markers:
 | P2-API-005 | `[ ]` | Finish full dino edge behavior. | Legacy/modded cryopods, cryopod-location parity, and full pedigree tree rendering remain. |
 | P2-API-006 | `[~]` | Finish full structure/base edge behavior. | Exact owner/cell parity and base import/customize write parity remain; structure heatmap oracle is blocked by upstream private-save cell indexing. |
 | P2-API-007 | `[~]` | Finish full equipment edge behavior. | Ranking candidate selection and high-rating aggregate stats now have typed API helpers; exact default stat-table parity, legacy/modded cryopod saddle payloads, and cosmetics remain. |
-| P2-API-008 | `[~]` | Finish richer local cluster item/dino domain models. | Uploaded item type has typed constants/accessors while preserving string compatibility; add richer item/dino fields only when chosen local-file features require them. |
+| P2-API-008 | `[~]` | Finish richer local cluster item/dino domain models. | Uploaded item type has typed constants/accessors, enum filters, version/parse helpers, and embedded dino component class summaries; add deeper item/dino fields only when chosen local-file fixtures expose them. |
 | P2-API-009 | `[~]` | Finish remaining Player/Tribe edge behavior. | Typed player pawn inventory indexing and upstream-style inventory item counting now live in `arkapi`; remaining upstream edge cases beyond parsed local archives, save objects, and embedded `GameModeCustomBytes` remain. |
 | P2-MUT-001 | `[x]` | Port copy-based DB modification, object removal, object upsert, and custom-table upsert. | `arkmutation` tests and CLI mutate commands. |
 | P2-MUT-002 | `[~]` | Translate higher-level mutation examples where feasible. | Structural copied-save coverage exists; generated blueprint/base customization live-server acceptance is unverified. |
@@ -94,11 +94,11 @@ Status markers:
 | P4-DOC-002 | `[x]` | Supported file types and unsupported features are documented. | README and development docs. |
 | P4-DOC-003 | `[x]` | Mutation APIs are documented as experimental and live-server-unverified. | README, docs, and mutation package comments. |
 | P4-DEV-001 | `[x]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | [`development.md`](development.md). |
-| P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`. |
+| P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`. |
 | P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests. |
-| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, CLI commands, local tribute handling, and examples against configured private/provided data and skips without env vars. |
+| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, CLI commands, local tribute/cluster handling, and examples against configured private/provided data and skips without env vars. |
 | P4-VERIFY-005 | `[x]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
 

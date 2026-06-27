@@ -16,6 +16,7 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 		Items: []arkcluster.Item{
 			{
 				Index:     0,
+				Version:   7,
 				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
 				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
 					Name:  "CustomItemDatas",
@@ -25,6 +26,7 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 			},
 			{
 				Index:     1,
+				Version:   6,
 				Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
 			},
 			{
@@ -41,6 +43,9 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	if got := api.ItemsByType("equipment"); len(got) != 1 || got[0].Index != 1 {
 		t.Fatalf("ItemsByType(equipment) = %#v, want item index 1", got)
 	}
+	if got := api.ItemsByTypedType(arkobject.ClusterItemTypeEquipment); len(got) != 1 || got[0].Index != 1 {
+		t.Fatalf("ItemsByTypedType(equipment) = %#v, want item index 1", got)
+	}
 	if got := api.ItemsByType("missing"); len(got) != 0 {
 		t.Fatalf("ItemsByType(missing) = %#v, want empty", got)
 	}
@@ -51,8 +56,11 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	if typed[0].Type != "dino" || typed[0].ItemType() != arkobject.ClusterItemTypeDino || !typed[0].IsDinoUpload() || typed[0].IsEquipmentUpload() || typed[0].IsOtherUpload() {
 		t.Fatalf("typed dino item helpers = %#v, want dino upload only", typed[0])
 	}
-	if typed[1].Type != "equipment" || typed[1].ItemType() != arkobject.ClusterItemTypeEquipment || !typed[1].IsEquipmentUpload() || typed[1].IsDinoUpload() || typed[1].IsOtherUpload() {
-		t.Fatalf("typed equipment item helpers = %#v, want equipment upload only", typed[1])
+	if typed[0].UnsupportedVersion() || !typed[1].UnsupportedVersion() {
+		t.Fatalf("typed item version helpers = %#v/%#v, want only item 1 unsupported", typed[0], typed[1])
+	}
+	if typed[1].Type != "equipment" || typed[1].ItemType() != arkobject.ClusterItemTypeEquipment || !typed[1].IsEquipmentUpload() || typed[1].IsDinoUpload() || typed[1].IsOtherUpload() || typed[1].SupportedVersion() {
+		t.Fatalf("typed equipment item helpers = %#v, want unsupported equipment upload only", typed[1])
 	}
 	if typed[2].Type != "other" || typed[2].ItemType() != arkobject.ClusterItemTypeOther || !typed[2].IsOtherUpload() || typed[2].IsDinoUpload() || typed[2].IsEquipmentUpload() {
 		t.Fatalf("typed other item helpers = %#v, want other upload only", typed[2])
@@ -69,13 +77,23 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Dinos: []arkcluster.Dino{
 			{
-				Index: 0,
+				Index:   0,
+				Version: 7,
 				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
 					{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"},
+					{ClassName: "/Game/PrimalEarth/CoreBlueprints/CharacterStatusComponent_BP.CharacterStatusComponent_BP_C"},
+					{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_AIController_BP.Raptor_AIController_BP_C"},
+					{ClassName: "/Game/PrimalEarth/CoreBlueprints/InventoryComponent_BP.InventoryComponent_BP_C"},
 				}},
 			},
 			{
-				Index:      1,
+				Index:   1,
+				Version: 6,
+				Archive: &arkarchive.Archive{},
+			},
+			{
+				Index:      2,
+				Version:    7,
 				ParseError: "unsupported embedded archive",
 			},
 		},
@@ -84,21 +102,27 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	if got := api.ParseErrorCount(); got != 1 {
 		t.Fatalf("ParseErrorCount() = %d, want 1", got)
 	}
-	if got := api.DinosByParseStatus(true); len(got) != 1 || got[0].Index != 0 {
-		t.Fatalf("DinosByParseStatus(true) = %#v, want parsed dino 0", got)
+	if got := api.DinosByParseStatus(true); len(got) != 2 || got[0].Index != 0 || got[1].Index != 1 {
+		t.Fatalf("DinosByParseStatus(true) = %#v, want parsed dinos 0 and 1", got)
 	}
-	if got := api.DinosByParseStatus(false); len(got) != 1 || got[0].Index != 1 {
-		t.Fatalf("DinosByParseStatus(false) = %#v, want failed dino 1", got)
+	if got := api.DinosByParseStatus(false); len(got) != 1 || got[0].Index != 2 {
+		t.Fatalf("DinosByParseStatus(false) = %#v, want unparsed dino 2", got)
 	}
 	typed := api.DinosTyped()
-	if len(typed) != 2 || typed[0].ObjectCount != 1 || len(typed[0].ClassNames) != 1 || typed[0].ClassNames[0] != "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C" {
+	if len(typed) != 3 || typed[0].ObjectCount != 4 || len(typed[0].ClassNames) != 4 || typed[0].ClassNames[0] != "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C" {
 		t.Fatalf("DinosTyped() = %#v, want class-name projection for parsed dino", typed)
 	}
-	if got := api.DinosByParseStatusTyped(false); len(got) != 1 || got[0].Index != 1 || got[0].ParseError != "unsupported embedded archive" {
-		t.Fatalf("DinosByParseStatusTyped(false) = %#v, want failed typed dino 1", got)
+	if !typed[0].Parsed() || typed[0].HasParseError() || !typed[1].Parsed() || !typed[1].UnsupportedVersion() || !typed[2].HasParseError() {
+		t.Fatalf("typed dino helpers = %#v, want parsed/unsupported/error helpers", typed)
+	}
+	if len(typed[0].StatusComponentClassNames) != 1 || len(typed[0].AIControllerClassNames) != 1 || len(typed[0].InventoryComponentClassNames) != 1 {
+		t.Fatalf("typed dino component class names = %#v, want status/AI/inventory component summaries", typed[0])
+	}
+	if got := api.DinosByParseStatusTyped(false); len(got) != 1 || got[0].Index != 2 || got[0].ParseError != "unsupported embedded archive" {
+		t.Fatalf("DinosByParseStatusTyped(false) = %#v, want unparsed typed dino 2", got)
 	}
 	summary := api.Summary()
-	if summary.ID != "EOS_abc123" || summary.ItemCount != 0 || summary.DinoCount != 2 || summary.ParseErrorCount != 1 || summary.ObjectCount != 1 {
+	if summary.ID != "EOS_abc123" || summary.ItemCount != 0 || summary.DinoCount != 3 || summary.ParseErrorCount != 1 || summary.ObjectCount != 1 {
 		t.Fatalf("Summary() = %#v", summary)
 	}
 }

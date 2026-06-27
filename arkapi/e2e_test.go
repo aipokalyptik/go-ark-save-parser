@@ -3,47 +3,50 @@ package arkapi
 import (
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/e2etest"
 )
 
 func TestProvidedDataReadOnlyE2E(t *testing.T) {
 	data := e2etest.DiscoverProvidedData(t)
-	if data.SavePath == "" {
+	if data.SavePath == "" && data.ClusterPath == "" {
 		t.Skip("set ARK_E2E_SAVE or ARK_E2E_SAVE_DIR to run provided-data read-only E2E")
 	}
 
-	save, err := arksave.Open(data.SavePath)
-	if err != nil {
-		t.Fatalf("Open(%q) error = %v", data.SavePath, err)
-	}
-	defer save.Close()
+	if data.SavePath != "" {
+		save, err := arksave.Open(data.SavePath)
+		if err != nil {
+			t.Fatalf("Open(%q) error = %v", data.SavePath, err)
+		}
+		defer save.Close()
 
-	info, err := NewJSON(save).ExportSaveInfo()
-	if err != nil {
-		t.Fatalf("ExportSaveInfo() error = %v", err)
-	}
-	if info.MapName == "" {
-		t.Fatalf("ExportSaveInfo() MapName is empty")
-	}
-	if info.ObjectCount == 0 {
-		t.Fatalf("ExportSaveInfo() ObjectCount = 0")
-	}
+		info, err := NewJSON(save).ExportSaveInfo()
+		if err != nil {
+			t.Fatalf("ExportSaveInfo() error = %v", err)
+		}
+		if info.MapName == "" {
+			t.Fatalf("ExportSaveInfo() MapName is empty")
+		}
+		if info.ObjectCount == 0 {
+			t.Fatalf("ExportSaveInfo() ObjectCount = 0")
+		}
 
-	ids, err := NewGeneral(save).ObjectIDs()
-	if err != nil {
-		t.Fatalf("ObjectIDs() error = %v", err)
-	}
-	if len(ids) == 0 {
-		t.Fatalf("ObjectIDs() returned no objects")
-	}
+		ids, err := NewGeneral(save).ObjectIDs()
+		if err != nil {
+			t.Fatalf("ObjectIDs() error = %v", err)
+		}
+		if len(ids) == 0 {
+			t.Fatalf("ObjectIDs() returned no objects")
+		}
 
-	structures, err := save.ObjectClassInfosWithAnyProperty([]string{"MyInventoryComponent"})
-	if err != nil {
-		t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) error = %v", err)
-	}
-	if len(structures) == 0 {
-		t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) returned no objects")
+		structures, err := save.ObjectClassInfosWithAnyProperty([]string{"MyInventoryComponent"})
+		if err != nil {
+			t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) error = %v", err)
+		}
+		if len(structures) == 0 {
+			t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) returned no objects")
+		}
 	}
 
 	if data.Dir != "" {
@@ -64,6 +67,27 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 		if data.TribeCount > 0 && len(tribes) == 0 {
 			t.Fatalf("PlayerAPI.TribeDetails() returned zero tribes from %d tribe files", data.TribeCount)
+		}
+	}
+
+	if data.ClusterPath != "" {
+		cluster, err := arkcluster.Open(data.ClusterPath)
+		if err != nil {
+			t.Fatalf("arkcluster.Open(%q) error = %v", data.ClusterPath, err)
+		}
+		clusterAPI := NewCluster(cluster)
+		summary := clusterAPI.Summary()
+		if summary.ID == "" {
+			t.Fatalf("ClusterAPI.Summary() ID is empty")
+		}
+		if len(clusterAPI.ItemsTyped()) != len(cluster.Items) {
+			t.Fatalf("ClusterAPI.ItemsTyped() length = %d, want %d", len(clusterAPI.ItemsTyped()), len(cluster.Items))
+		}
+		if len(clusterAPI.DinosTyped()) != len(cluster.Dinos) {
+			t.Fatalf("ClusterAPI.DinosTyped() length = %d, want %d", len(clusterAPI.DinosTyped()), len(cluster.Dinos))
+		}
+		if summary.ParseErrorCount != clusterAPI.ParseErrorCount() {
+			t.Fatalf("ClusterAPI.Summary().ParseErrorCount = %d, want %d", summary.ParseErrorCount, clusterAPI.ParseErrorCount())
 		}
 	}
 }

@@ -208,6 +208,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "player_and_tribe_data", `"players": 1`, dir)
 	runExample(t, "player_unlocked_engrams", "unlocked_engrams=2 first=Blueprint'/Game/Engrams/EngramA.EngramA_C' last=Blueprint'/Game/Engrams/EngramB.EngramB_C'", dir)
 	runExample(t, "cluster_json", `"id": "EOS_abc123"`, clusterPath)
+	runExample(t, "cluster_typed", "cluster=EOS_abc123", clusterPath)
 	runExample(t, "local_tribute", "player_data_ids=2", tributePath)
 	runExample(t, "tribute_json", `"player_data_count": 2`, tributePath)
 	runExample(t, "logging_config", "[api] This is an API log.")
@@ -332,13 +333,18 @@ func TestPlayerInventoriesExampleCountsOnlyInventoryFaults(t *testing.T) {
 
 func TestExamplesRunAgainstProvidedData(t *testing.T) {
 	data := e2etest.DiscoverProvidedData(t)
-	if data.SavePath == "" {
+	if data.SavePath == "" && data.ClusterPath == "" {
 		t.Skip("set ARK_E2E_SAVE or ARK_E2E_SAVE_DIR to run provided-data examples E2E")
 	}
 
-	runProvidedExample(t, "map_summary", "map=", data.SavePath)
+	if data.SavePath != "" {
+		runProvidedExample(t, "map_summary", "map=", data.SavePath)
+	}
 
 	if data.Dir == "" {
+		if data.ClusterPath != "" {
+			runProvidedExample(t, "cluster_typed", "cluster=", data.ClusterPath)
+		}
 		return
 	}
 	if data.ProfileCount > 0 {
@@ -355,6 +361,9 @@ func TestExamplesRunAgainstProvidedData(t *testing.T) {
 			runProvidedExample(t, "local_tribute", "tribute_file=", data.TributePath)
 			runProvidedExample(t, "tribute_json", `"player_data_count":`, data.TributePath)
 		}
+	}
+	if data.ClusterPath != "" {
+		runProvidedExample(t, "cluster_typed", "cluster=", data.ClusterPath)
 	}
 }
 

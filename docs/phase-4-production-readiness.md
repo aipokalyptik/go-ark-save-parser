@@ -35,6 +35,8 @@ For the cross-phase monitorable checklist, see
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
+- [x] Optional provided-data smoke for typed local-cluster API/example coverage
+      through `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR`.
 - [x] Synthetic domain JSON export tests for dinos, structures, equipment,
       stackables, players, tribes, and bases.
 - [x] Private oracle comparison harness for selected implemented read-only Go examples;

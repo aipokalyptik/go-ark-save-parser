@@ -91,13 +91,27 @@ func (c *ClusterAPI) ItemsByTypeTyped(typeName string) []arkobject.ClusterItem {
 	return out
 }
 
+func (c *ClusterAPI) ItemsByTypedType(itemType arkobject.ClusterItemType) []arkobject.ClusterItem {
+	if c == nil || c.data == nil {
+		return nil
+	}
+	var out []arkobject.ClusterItem
+	for _, item := range c.data.Items {
+		currentType := clusterItemType(item)
+		if currentType == itemType {
+			out = append(out, arkobject.ClusterItemFromUpload(item, currentType))
+		}
+	}
+	return out
+}
+
 func (c *ClusterAPI) DinosByParseStatus(ok bool) []arkcluster.Dino {
 	if c == nil || c.data == nil {
 		return nil
 	}
 	var out []arkcluster.Dino
 	for _, dino := range c.data.Dinos {
-		parsed := dino.ParseError == ""
+		parsed := dino.Archive != nil && dino.ParseError == ""
 		if parsed == ok {
 			out = append(out, dino)
 		}
@@ -111,7 +125,7 @@ func (c *ClusterAPI) DinosByParseStatusTyped(ok bool) []arkobject.ClusterDino {
 	}
 	var out []arkobject.ClusterDino
 	for _, dino := range c.data.Dinos {
-		parsed := dino.ParseError == ""
+		parsed := dino.Archive != nil && dino.ParseError == ""
 		if parsed != ok {
 			continue
 		}

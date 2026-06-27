@@ -54,9 +54,10 @@ Implemented:
   include type classification, blueprint, quantity, rating, quality, and
   crafter metadata where present. Uploaded dino summaries include a
   `parse_error` field when embedded dino archive bytes cannot yet be parsed.
-- Typed local cluster API helpers provide uploaded item type counts, dino
-  parse-status filters, typed item/dino projections, and summary metadata for
-  library callers.
+- Typed local cluster API helpers provide uploaded item type counts, enum-based
+  item filters, dino parse-status filters, version/parse helpers, typed
+  item/dino projections, embedded dino component class summaries, and summary
+  metadata for library callers.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
@@ -276,6 +277,7 @@ go run ./examples/dino_export_from_save /path/to/Valguero_WP.ark /tmp/dino-expor
 go run ./examples/equipment_export_from_save /path/to/Valguero_WP.ark /tmp/equipment-export
 go run ./examples/local_profiles /path/to/save-directory
 go run ./examples/cluster_json /path/to/EOS_abc123
+go run ./examples/cluster_typed /path/to/EOS_abc123
 go run ./examples/local_tribute /path/to/tribute-directory-or-file
 go run ./examples/tribute_json /path/to/tribute-directory-or-file
 go run ./examples/mutation_copy /path/to/Valguero_WP.ark /tmp/Valguero_copy.ark

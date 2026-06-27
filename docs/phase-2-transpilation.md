@@ -154,6 +154,8 @@ For the cross-phase monitorable checklist, see
       quality index, and crafter names where present.
 - [x] Add local cluster uploaded item type classification for dino, equipment,
       and other items in JSON and CLI summaries.
+- [x] Add typed local cluster version/parse helper methods, enum-based item
+      filters, and embedded dino status/AI/inventory component class summaries.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

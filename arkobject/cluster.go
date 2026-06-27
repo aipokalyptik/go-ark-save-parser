@@ -1,6 +1,8 @@
 package arkobject
 
 import (
+	"strings"
+
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
@@ -32,14 +34,18 @@ type ClusterItem struct {
 }
 
 type ClusterDino struct {
-	Index       int
-	Version     float64
-	UploadTime  float64
-	RawSize     int
-	ObjectCount int
-	ClassNames  []string
-	ParseError  string
-	Properties  arkproperty.Container
+	Index                        int
+	Version                      float64
+	UploadTime                   float64
+	RawSize                      int
+	ObjectCount                  int
+	ParsedArchive                bool
+	ClassNames                   []string
+	StatusComponentClassNames    []string
+	AIControllerClassNames       []string
+	InventoryComponentClassNames []string
+	ParseError                   string
+	Properties                   arkproperty.Container
 }
 
 func (i ClusterItem) IsDinoUpload() bool {
@@ -67,6 +73,14 @@ func (i ClusterItem) ItemType() ClusterItemType {
 	}
 }
 
+func (i ClusterItem) SupportedVersion() bool {
+	return i.Version == 7
+}
+
+func (i ClusterItem) UnsupportedVersion() bool {
+	return i.Version != 0 && !i.SupportedVersion()
+}
+
 func ClusterItemFromUpload(item arkcluster.Item, itemType ClusterItemType) ClusterItem {
 	return ClusterItem{
 		Index:                item.Index,
@@ -89,13 +103,43 @@ func ClusterDinoFromUpload(dino arkcluster.Dino, classNames []string) ClusterDin
 		objectCount = len(dino.Archive.Objects)
 	}
 	return ClusterDino{
-		Index:       dino.Index,
-		Version:     dino.Version,
-		UploadTime:  dino.UploadTime,
-		RawSize:     dino.RawSize,
-		ObjectCount: objectCount,
-		ClassNames:  append([]string(nil), classNames...),
-		ParseError:  dino.ParseError,
-		Properties:  dino.Properties,
+		Index:                        dino.Index,
+		Version:                      dino.Version,
+		UploadTime:                   dino.UploadTime,
+		RawSize:                      dino.RawSize,
+		ObjectCount:                  objectCount,
+		ParsedArchive:                dino.Archive != nil,
+		ClassNames:                   append([]string(nil), classNames...),
+		StatusComponentClassNames:    clusterClassNamesContaining(classNames, "CharacterStatusComponent"),
+		AIControllerClassNames:       clusterClassNamesContaining(classNames, "AIController"),
+		InventoryComponentClassNames: clusterClassNamesContaining(classNames, "InventoryComponent"),
+		ParseError:                   dino.ParseError,
+		Properties:                   dino.Properties,
 	}
+}
+
+func (d ClusterDino) Parsed() bool {
+	return d.ParsedArchive && d.ParseError == ""
+}
+
+func (d ClusterDino) HasParseError() bool {
+	return d.ParseError != ""
+}
+
+func (d ClusterDino) SupportedVersion() bool {
+	return d.Version == 7
+}
+
+func (d ClusterDino) UnsupportedVersion() bool {
+	return d.Version != 0 && !d.SupportedVersion()
+}
+
+func clusterClassNamesContaining(classNames []string, token string) []string {
+	out := make([]string, 0)
+	for _, className := range classNames {
+		if strings.Contains(className, token) {
+			out = append(out, className)
+		}
+	}
+	return out
 }

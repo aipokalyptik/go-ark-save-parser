@@ -46,6 +46,8 @@ For the cross-phase monitorable checklist, see
       while preserving raw `arkcluster` accessors.
 - [x] Add typed local cluster uploaded-item type constants and helper methods
       while preserving string-based filter and JSON compatibility.
+- [x] Add typed local cluster enum filters, upload-version helpers, parse-status
+      helpers, and embedded dino component class summaries for Go callers.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full

@@ -212,6 +212,8 @@ documented.
 - [~] Finish richer local cluster item/dino domain models:
   - [x] Model uploaded item type with typed constants and helper methods while
         preserving string-based filters and JSON output.
+  - [x] Add enum-based uploaded item filters, version/parse helper methods, and
+        embedded uploaded-dino component class-name summaries.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local
@@ -329,6 +331,7 @@ documented.
       structure location JSON. Inventory item expansion, binary import, and
       live-server validation remain mutation-copy-adjacent and unverified.
 - [x] `cluster_json`.
+- [x] `cluster_typed`.
 - [x] `local_tribute`.
 - [x] `tribute_json`.
 - [x] `export_json`.
@@ -449,6 +452,8 @@ without Python or private chat context.
       commands, local tribute handling, and aggregate-output examples through
       `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
+- [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
+      examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
 - [x] Private oracle comparison suite exists and currently records forty-six
       passing sanitized comparison cases for selected implemented features.
 - [x] Expanding the private oracle comparison suite to every runnable upstream
