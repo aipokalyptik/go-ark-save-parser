@@ -194,6 +194,9 @@ documented.
 - [~] Finish full dino edge behavior:
   - [ ] Legacy/modded cryopod variants.
   - [ ] Cryopod-location example parity when upstream/private data permits.
+  - [x] Typed cryopod payload errors classify unsupported embedded saddle
+        versions so fault-tolerant callers can distinguish legacy/modded
+        saddle payload failures from generic parse failures.
   - [x] Typed pedigree tree helpers and domain JSON pedigree trees beyond flat
         child/descendant UUID references.
   - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains
@@ -223,6 +226,9 @@ documented.
         tests.
   - [x] Skip unsupported embedded cryopod saddle payloads in the plain read API
         while reporting them through the fault-collecting API.
+  - [x] Classify unsupported embedded cryopod saddle payload versions with a
+        typed `arkobject.CryopodPayloadError` surfaced through fault-collecting
+        APIs.
   - [x] Model generic equipment `CustomItemDatas` presence/count metadata,
         include it in equipment summaries, JSON export rows, and the
         `equipment_summary` example output.

@@ -139,6 +139,10 @@ func TestDinoAPISaddlesFromCryopodsWithFaultsReportsUnsupportedEmbeddedSaddle(t 
 	if len(faults) != 1 || !strings.Contains(faults[0].Err.Error(), "unsupported embedded cryopod saddle data version") {
 		t.Fatalf("SaddlesFromCryopodsWithFaults() faults = %#v, want unsupported saddle version fault", faults)
 	}
+	var cryopodErr *arkobject.CryopodPayloadError
+	if !errors.As(faults[0].Err, &cryopodErr) || cryopodErr.Kind != arkobject.CryopodPayloadUnsupportedSaddleVersion || cryopodErr.Version != 0 {
+		t.Fatalf("SaddlesFromCryopodsWithFaults() typed fault = %#v, want unsupported saddle version 0", cryopodErr)
+	}
 }
 
 func TestDinoAPIAllReturnsMalformedCryopodError(t *testing.T) {

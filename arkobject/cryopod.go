@@ -9,6 +9,40 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
+type CryopodPayloadErrorKind string
+
+const (
+	CryopodPayloadUnsupportedSaddleVersion CryopodPayloadErrorKind = "unsupported_saddle_version"
+)
+
+type CryopodPayloadError struct {
+	Kind    CryopodPayloadErrorKind
+	Version uint32
+	Err     error
+}
+
+func (e *CryopodPayloadError) Error() string {
+	if e == nil {
+		return ""
+	}
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	switch e.Kind {
+	case CryopodPayloadUnsupportedSaddleVersion:
+		return fmt.Sprintf("unsupported embedded cryopod saddle data version %d", e.Version)
+	default:
+		return "unsupported embedded cryopod payload"
+	}
+}
+
+func (e *CryopodPayloadError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
 func CryopodPayloadsFromObject(object *GameObject) [][]byte {
 	if object == nil {
 		return nil
@@ -90,7 +124,10 @@ func saddleObjectFromCryopodPayload(payload []byte, cryopod *GameObject) (*GameO
 		return nil, false, err
 	}
 	if second != 7 {
-		return nil, false, fmt.Errorf("unsupported embedded cryopod saddle data version %d", second)
+		return nil, false, &CryopodPayloadError{
+			Kind:    CryopodPayloadUnsupportedSaddleVersion,
+			Version: second,
+		}
 	}
 	if err := r.Skip(8); err != nil {
 		return nil, false, err

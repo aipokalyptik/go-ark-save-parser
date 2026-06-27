@@ -291,6 +291,8 @@ For the cross-phase monitorable checklist, see
 - [x] Add read-only modern cryopod saddle extraction through the Dino API,
       keyed by containing cryopod item UUID for no-header embedded saddle
       payloads.
+- [x] Add typed cryopod payload errors for unsupported embedded saddle payload
+      versions while preserving skip behavior in plain read APIs.
 - [x] Include modern cryopod saddles in equipment domain JSON exports with an
       explicit `in_cryopod` marker.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,
