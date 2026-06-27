@@ -53,6 +53,8 @@ For the cross-phase monitorable checklist, see
 - [x] Add typed local cluster uploaded-dino aggregate summaries for parsed
       dinos, parse errors, version support, component presence, and embedded
       object counts.
+- [x] Add typed local cluster uploaded item short names and uploaded dino
+      primary/short class names for JSON/library consumers.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can

@@ -43,6 +43,9 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	if info.ItemCount != 1 || len(info.Items) != 1 || info.Items[0].Blueprint != "/Game/Test/Item.Item_C" {
 		t.Fatalf("ClusterDataInfo items = %#v", info.Items)
 	}
+	if info.Items[0].ShortName != "Item" {
+		t.Fatalf("ClusterDataInfo item short name = %q, want Item", info.Items[0].ShortName)
+	}
 	if info.Items[0].Rating != 7.5 || info.Items[0].Quality != 2 || info.Items[0].CrafterCharacterName != "Survivor" || info.Items[0].CrafterTribeName != "Porters" {
 		t.Fatalf("ClusterDataInfo item metadata = %#v", info.Items[0])
 	}
@@ -82,6 +85,9 @@ func TestExportClusterDataIncludesUploadedDinoClassNames(t *testing.T) {
 	}
 	if !reflect.DeepEqual(info.Dinos[0].ClassNames, want) {
 		t.Fatalf("ClassNames = %#v, want %#v", info.Dinos[0].ClassNames, want)
+	}
+	if info.Dinos[0].PrimaryClassName != "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C" || info.Dinos[0].ShortName != "Raptor" {
+		t.Fatalf("ClusterDataInfo dino primary/short name = %q/%q, want raptor class/Raptor", info.Dinos[0].PrimaryClassName, info.Dinos[0].ShortName)
 	}
 	if info.Dinos[0].ParseStatus != "parsed" || !info.Dinos[0].ParsedArchive || !info.Dinos[0].SupportedVersion || info.Dinos[0].UnsupportedVersion {
 		t.Fatalf("typed dino status fields = %#v, want parsed supported archive", info.Dinos[0])

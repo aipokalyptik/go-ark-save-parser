@@ -105,6 +105,10 @@ func (i ClusterItem) IsCrafted() bool {
 	return i.Crafter().Valid()
 }
 
+func (i ClusterItem) ShortName() string {
+	return ShortNameFromBlueprint(i.Blueprint)
+}
+
 func ClusterItemFromUpload(item arkcluster.Item, itemType ClusterItemType) ClusterItem {
 	return ClusterItem{
 		Index:                item.Index,
@@ -169,6 +173,29 @@ func (d ClusterDino) ParseStatus() ClusterDinoParseStatus {
 	default:
 		return ClusterDinoParseStatusUnparsed
 	}
+}
+
+func (d ClusterDino) PrimaryClassName() string {
+	for _, className := range d.ClassNames {
+		if !clusterDinoComponentClass(className) {
+			return className
+		}
+	}
+	if len(d.ClassNames) == 0 {
+		return ""
+	}
+	return d.ClassNames[0]
+}
+
+func (d ClusterDino) ShortName() string {
+	return ShortNameFromBlueprint(d.PrimaryClassName())
+}
+
+func clusterDinoComponentClass(className string) bool {
+	return strings.Contains(className, "CharacterStatus") ||
+		strings.Contains(className, "DinoCharacterStatus") ||
+		strings.Contains(className, "AIController") ||
+		strings.Contains(className, "InventoryComponent")
 }
 
 func clusterClassNamesContaining(classNames []string, token string) []string {

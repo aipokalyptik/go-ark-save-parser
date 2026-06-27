@@ -158,6 +158,8 @@ For the cross-phase monitorable checklist, see
       filters, and embedded dino status/AI/inventory component class summaries.
 - [x] Add explicit local cluster uploaded-dino parse status helpers and JSON
       fields for parsed, unsupported-version, parse-error, and unparsed uploads.
+- [x] Add local cluster uploaded item short names and uploaded dino
+      primary/short class names to typed models and JSON exports.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
       summaries in JSON and CLI output.

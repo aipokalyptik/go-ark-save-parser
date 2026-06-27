@@ -34,6 +34,7 @@ type ClusterItemInfo struct {
 	UnsupportedVersion   bool    `json:"unsupported_version"`
 	UploadTime           float64 `json:"upload_time"`
 	Blueprint            string  `json:"blueprint,omitempty"`
+	ShortName            string  `json:"short_name,omitempty"`
 	Quantity             int32   `json:"quantity"`
 	Rating               float64 `json:"rating,omitempty"`
 	Quality              int32   `json:"quality,omitempty"`
@@ -51,6 +52,8 @@ type ClusterDinoInfo struct {
 	ObjectCount                  int      `json:"object_count"`
 	ParsedArchive                bool     `json:"parsed_archive"`
 	ParseStatus                  string   `json:"parse_status"`
+	PrimaryClassName             string   `json:"primary_class_name,omitempty"`
+	ShortName                    string   `json:"short_name,omitempty"`
 	ClassNames                   []string `json:"class_names,omitempty"`
 	StatusComponentClassNames    []string `json:"status_component_class_names,omitempty"`
 	AIControllerClassNames       []string `json:"ai_controller_class_names,omitempty"`
@@ -81,6 +84,7 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			UnsupportedVersion:   typed.UnsupportedVersion(),
 			UploadTime:           typed.UploadTime,
 			Blueprint:            typed.Blueprint,
+			ShortName:            typed.ShortName(),
 			Quantity:             typed.Quantity,
 			Rating:               typed.Rating,
 			Quality:              typed.Quality,
@@ -104,6 +108,8 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			ObjectCount:                  typed.ObjectCount,
 			ParsedArchive:                typed.ParsedArchive,
 			ParseStatus:                  typed.ParseStatus().String(),
+			PrimaryClassName:             typed.PrimaryClassName(),
+			ShortName:                    typed.ShortName(),
 			ClassNames:                   typed.ClassNames,
 			StatusComponentClassNames:    typed.StatusComponentClassNames,
 			AIControllerClassNames:       typed.AIControllerClassNames,
