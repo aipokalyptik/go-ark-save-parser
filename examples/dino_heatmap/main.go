@@ -11,14 +11,6 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
-type heatmapSummary struct {
-	Resolution   int `json:"resolution"`
-	NonzeroCells int `json:"nonzero_cells"`
-	Total        int `json:"total"`
-	Max          int `json:"max"`
-	Faults       int `json:"faults"`
-}
-
 func main() {
 	if len(os.Args) < 3 || len(os.Args) > 5 {
 		log.Fatalf("usage: %s [--no-cryos] <save.ark> <out.json> [resolution]", os.Args[0])
@@ -64,7 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	summary := summarizeHeatmap(heatmap, len(faults))
+	summary := arkapi.SummarizeHeatmap(heatmap, len(faults))
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
 		log.Fatal(err)
@@ -74,21 +66,4 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("cells=%d total=%d max=%d faults=%d wrote=%s\n", summary.NonzeroCells, summary.Total, summary.Max, summary.Faults, args[1])
-}
-
-func summarizeHeatmap(heatmap [][]int, faults int) heatmapSummary {
-	summary := heatmapSummary{Resolution: len(heatmap), Faults: faults}
-	for _, row := range heatmap {
-		for _, value := range row {
-			if value == 0 {
-				continue
-			}
-			summary.NonzeroCells++
-			summary.Total += value
-			if value > summary.Max {
-				summary.Max = value
-			}
-		}
-	}
-	return summary
 }
