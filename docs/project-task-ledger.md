@@ -194,6 +194,8 @@ documented.
 - [~] Finish full dino edge behavior:
   - [ ] Legacy/modded cryopod variants.
   - [ ] Cryopod-location example parity when upstream/private data permits.
+  - [x] Typed cryopod payload errors classify malformed embedded dino payload
+        parse failures while preserving wrapped parser errors for `errors.Is`.
   - [x] Typed cryopod payload errors classify unsupported embedded saddle
         versions so fault-tolerant callers can distinguish legacy/modded
         saddle payload failures from generic parse failures.

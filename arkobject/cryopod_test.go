@@ -2,8 +2,11 @@ package arkobject
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/propertyfixtures"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
@@ -193,6 +196,26 @@ func TestDinoFromCryopodObjectFindsReversedEmbeddedDinoAndStatus(t *testing.T) {
 	}
 	if !ok || dino.UUID != dinoID || dino.Stats == nil || dino.Stats.BaseLevel != 12 {
 		t.Fatalf("DinoFromCryopodObject() = %#v, %v; want reversed embedded dino/status parsed", dino, ok)
+	}
+}
+
+func TestDinoFromCryopodObjectClassifiesMalformedPayload(t *testing.T) {
+	var payload bytes.Buffer
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0406))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
+	cryopod := &GameObject{
+		UUID:       uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
+		Properties: []arkproperty.Property{propertyfixtures.CryopodCustomItemDatasProperty(payload.Bytes())},
+	}
+
+	_, _, err := DinoFromCryopodObject(cryopod, 1<<20)
+	if !errors.Is(err, arkbinary.ErrUnsupportedEmbeddedDataVersion) {
+		t.Fatalf("DinoFromCryopodObject() error = %v, want ErrUnsupportedEmbeddedDataVersion", err)
+	}
+	var cryopodErr *CryopodPayloadError
+	if !errors.As(err, &cryopodErr) || cryopodErr.Kind != CryopodPayloadDinoParse {
+		t.Fatalf("DinoFromCryopodObject() typed error = %#v, want dino parse kind", cryopodErr)
 	}
 }
 

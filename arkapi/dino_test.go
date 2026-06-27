@@ -171,6 +171,10 @@ func TestDinoAPIAllWithFaultsReportsMalformedCryopodError(t *testing.T) {
 	if len(faults) != 1 || !errors.Is(faults[0].Err, arkbinary.ErrUnsupportedEmbeddedDataVersion) {
 		t.Fatalf("AllWithFaults() faults = %#v, want unsupported embedded data fault", faults)
 	}
+	var cryopodErr *arkobject.CryopodPayloadError
+	if !errors.As(faults[0].Err, &cryopodErr) || cryopodErr.Kind != arkobject.CryopodPayloadDinoParse {
+		t.Fatalf("AllWithFaults() typed fault = %#v, want dino parse kind", cryopodErr)
+	}
 }
 
 func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {

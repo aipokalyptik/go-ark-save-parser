@@ -246,6 +246,8 @@ For the cross-phase monitorable checklist, see
       so consumers can build pedigree trees without reimplementing traversal.
 - [x] Add typed Dino API pedigree tree helpers and nested domain JSON pedigree
       branches for parsed tamed dinos.
+- [x] Add typed cryopod payload errors for malformed embedded dino payload
+      parse failures while preserving wrapped parser errors for `errors.Is`.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild

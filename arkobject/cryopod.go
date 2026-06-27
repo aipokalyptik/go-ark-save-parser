@@ -12,6 +12,7 @@ import (
 type CryopodPayloadErrorKind string
 
 const (
+	CryopodPayloadDinoParse                CryopodPayloadErrorKind = "dino_parse"
 	CryopodPayloadUnsupportedSaddleVersion CryopodPayloadErrorKind = "unsupported_saddle_version"
 )
 
@@ -29,6 +30,8 @@ func (e *CryopodPayloadError) Error() string {
 		return e.Err.Error()
 	}
 	switch e.Kind {
+	case CryopodPayloadDinoParse:
+		return "failed to parse embedded cryopod dino payload"
 	case CryopodPayloadUnsupportedSaddleVersion:
 		return fmt.Sprintf("unsupported embedded cryopod saddle data version %d", e.Version)
 	default:
@@ -73,7 +76,10 @@ func DinoFromCryopodObject(object *GameObject, maxInflatedBytes int64) (Dino, bo
 	}
 	archive, err := arkarchive.ParseEmbeddedCryopodPayload(payloads[0], maxInflatedBytes)
 	if err != nil {
-		return Dino{}, false, err
+		return Dino{}, false, &CryopodPayloadError{
+			Kind: CryopodPayloadDinoParse,
+			Err:  err,
+		}
 	}
 	if archive == nil || len(archive.Objects) < 2 {
 		return Dino{}, false, nil
