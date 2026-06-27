@@ -27,6 +27,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var healthOut bytes.Buffer
+	if err := run([]string{"structure-health", data.SavePath}, &healthOut); err != nil {
+		t.Fatalf("run(structure-health) error = %v", err)
+	}
+	for _, want := range []string{"Structures:", "With health:", "Parse faults:"} {
+		if !strings.Contains(healthOut.String(), want) {
+			t.Fatalf("structure-health output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

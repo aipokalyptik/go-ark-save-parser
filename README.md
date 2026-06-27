@@ -60,9 +60,9 @@ Implemented:
   metadata for library callers.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
-- `arksave inspect`, `parse`, `players`, `tribes`, `cluster`, `tribute`,
-  `export-json`, `export-domain-json`, `export-cluster-json`, and
-  `export-tribute-json` commands.
+- `arksave inspect`, `parse`, `structure-health`, `players`, `tribes`,
+  `cluster`, `tribute`, `export-json`, `export-domain-json`,
+  `export-cluster-json`, and `export-tribute-json` commands.
 - Go-only provided-data E2E smoke tests for selected read-only APIs, CLI
   commands, and examples, runnable with `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - Private Python oracle setup and gated private `.ark` integration test.
@@ -117,6 +117,12 @@ Run a fault-tolerant full-object parse smoke check:
 
 ```sh
 ./bin/arksave parse /path/to/Valguero_WP.ark
+```
+
+Summarize structure health with a selected-property scan:
+
+```sh
+./bin/arksave structure-health /path/to/Valguero_WP.ark
 ```
 
 Export save metadata and object classes to JSON:

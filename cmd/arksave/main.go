@@ -52,6 +52,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("parse requires a local .ark path")
 		}
 		return parseSave(args[1], out, opts)
+	case "structure-health":
+		if len(args) != 2 {
+			return fmt.Errorf("structure-health requires a local .ark path")
+		}
+		return structureHealth(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -122,6 +127,7 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
+  arksave structure-health <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -198,6 +204,33 @@ func parseSave(path string, out io.Writer, opts runOptions) error {
 		save.Context.SaveVersion,
 		len(ids),
 		len(objects),
+		len(faults),
+	)
+	return err
+}
+
+func structureHealth(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewStructure(save).HealthSummaryWithFaults()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Structures: %d\nWith health: %d\nDamaged: %d\nFully repaired: %d\nWithout max health: %d\nAverage health: %.1f%%\nMinimum health: %.1f%%\nMaximum health: %.1f%%\nParse faults: %d\n",
+		summary.Structures,
+		summary.WithHealth,
+		summary.Damaged,
+		summary.FullyRepaired,
+		summary.WithoutMaxHealth,
+		summary.AverageHealthPercent,
+		summary.MinimumHealthPercent,
+		summary.MaximumHealthPercent,
 		len(faults),
 	)
 	return err

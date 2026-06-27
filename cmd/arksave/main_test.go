@@ -83,6 +83,33 @@ func TestParseCommandRedactsPath(t *testing.T) {
 	}
 }
 
+func TestStructureHealthCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-health", path}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-health) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Structures: 1",
+		"With health: 1",
+		"Damaged: 1",
+		"Fully repaired: 0",
+		"Without max health: 0",
+		"Average health: 90.0%",
+		"Minimum health: 90.0%",
+		"Maximum health: 90.0%",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-health output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1354,6 +1381,38 @@ func createSyntheticSave(t *testing.T, path string) {
 		}),
 		Objects: map[uuid.UUID][]byte{
 			objectID: testfixtures.ObjectBytesWithProperties(0x10000001, 0x10000002, props.Bytes()),
+		},
+	})
+}
+
+func createSyntheticStructureHealthSave(t *testing.T, path string) {
+	t.Helper()
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000001: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			0x10000002: "None",
+			0x10000003: "IntProperty",
+			0x10000004: "StructureID",
+			0x10000005: "TargetingTeam",
+			0x10000006: "MaxHealth",
+			0x10000007: "FloatProperty",
+			0x10000008: "Health",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:             0x10000001,
+				NoneID:              0x10000002,
+				IntPropertyID:       0x10000003,
+				StructureIDNameID:   0x10000004,
+				TribeIDNameID:       0x10000005,
+				MaxHealthNameID:     0x10000006,
+				FloatPropertyID:     0x10000007,
+				CurrentHealthNameID: 0x10000008,
+				StructureID:         101,
+				TribeID:             555,
+				MaxHealth:           10000,
+				CurrentHealth:       9000,
+			}),
 		},
 	})
 }
