@@ -661,7 +661,8 @@ func TestPlayerAPIPlayerAndTribeDataSummaryForDataSortsPrivacySafeRows(t *testin
 	summary := api.PlayerAndTribeDataSummaryForData(players, tribes, relations)
 	if summary.Players != 3 || summary.Tribes != 2 || summary.PlayersWithNames != 2 ||
 		summary.TribesWithNames != 1 || summary.ActiveLinks != 1 ||
-		summary.InactiveMembers != 2 || summary.PlayersWithoutTribe != 1 {
+		summary.InactiveMembers != 2 || summary.PlayersWithoutTribe != 1 ||
+		summary.TribesWithInactive != 2 || summary.TribesWithoutActive != 1 {
 		t.Fatalf("PlayerAndTribeDataSummaryForData() aggregate = %#v", summary)
 	}
 	wantPlayers := []PlayerDataRow{

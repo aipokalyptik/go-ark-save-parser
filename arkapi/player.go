@@ -57,6 +57,8 @@ type PlayerAndTribeDataSummary struct {
 	ActiveLinks         int               `json:"active_links"`
 	InactiveMembers     int               `json:"inactive_members"`
 	PlayersWithoutTribe int               `json:"players_without_tribe"`
+	TribesWithInactive  int               `json:"tribes_with_inactive"`
+	TribesWithoutActive int               `json:"tribes_without_active"`
 	TribeRows           []TribeDataRow    `json:"tribe_rows"`
 	PlayerRows          []PlayerDataRow   `json:"player_rows"`
 	RelationRows        []RelationDataRow `json:"relation_rows"`
@@ -1348,6 +1350,12 @@ func (p *PlayerAPI) PlayerAndTribeDataSummaryForData(players []arkobject.Player,
 		row := RelationDataRow{ActiveMembers: len(relation.ActivePlayers), InactiveMembers: len(relation.InactiveMemberIDs)}
 		out.ActiveLinks += row.ActiveMembers
 		out.InactiveMembers += row.InactiveMembers
+		if row.InactiveMembers > 0 {
+			out.TribesWithInactive++
+		}
+		if row.ActiveMembers == 0 {
+			out.TribesWithoutActive++
+		}
 		out.RelationRows = append(out.RelationRows, row)
 	}
 

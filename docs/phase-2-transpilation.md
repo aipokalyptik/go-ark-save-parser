@@ -424,6 +424,8 @@ For the cross-phase monitorable checklist, see
 - [x] Compare normalized Go `player_and_tribe_data` output with private Python
       upstream oracle output for combined all-player, all-tribe, and
       active/inactive tribe relation iteration.
+- [x] Include typed `player_and_tribe_data` relationship edge counters for
+      tribes with inactive members and tribes without active players.
 - [x] Compare normalized Go `tribe_list` output with private Python upstream
       oracle output for all-tribe iteration using privacy-safe aggregate
       fields.

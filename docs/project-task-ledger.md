@@ -253,6 +253,9 @@ documented.
         `arkapi.PlayerInventorySummaryFromPath`.
   - [x] Move the `player_all` example aggregate into typed
         `arkapi.PlayerAllSummary`.
+  - [x] Extend `arkapi.PlayerAndTribeDataSummary` with typed relationship edge
+        counters for tribes with inactive members and tribes without active
+        players.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.
