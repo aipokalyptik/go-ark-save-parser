@@ -785,6 +785,40 @@ func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
 	}
 }
 
+func TestEquipmentHistorySnapshotFromPathUsesStableEquipmentIdentities(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	snapshot, err := EquipmentHistorySnapshotFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("EquipmentHistorySnapshotFromPath() error = %v", err)
+	}
+	if len(snapshot) != 1 {
+		t.Fatalf("EquipmentHistorySnapshotFromPath() length = %d, want one non-engram equipment item", len(snapshot))
+	}
+	for key := range snapshot {
+		if !strings.Contains(key, `"blueprint"`) || !strings.Contains(key, `"weapon"`) {
+			t.Fatalf("EquipmentHistorySnapshotFromPath() key = %q, want JSON equipment identity", key)
+		}
+	}
+}
+
+func TestDiffEquipmentHistorySnapshotsCountsAddedAndRemoved(t *testing.T) {
+	previous := map[string]struct{}{
+		"kept":    {},
+		"removed": {},
+	}
+	current := map[string]struct{}{
+		"kept":  {},
+		"added": {},
+	}
+
+	added, removed := DiffEquipmentHistorySnapshots(previous, current)
+	if added != 1 || removed != 1 {
+		t.Fatalf("DiffEquipmentHistorySnapshots() = %d, %d; want 1, 1", added, removed)
+	}
+}
+
 func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
 	api := EquipmentAPI{}
 	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")

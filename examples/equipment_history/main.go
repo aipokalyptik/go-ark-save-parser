@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 type historyReport struct {
@@ -24,17 +23,6 @@ type historyChange struct {
 	Removed int    `json:"removed"`
 }
 
-type equipmentIdentity struct {
-	Blueprint   string  `json:"blueprint"`
-	Kind        string  `json:"kind"`
-	IsBlueprint bool    `json:"is_blueprint"`
-	Rating      float64 `json:"rating"`
-	Quality     int32   `json:"quality"`
-	Damage      float64 `json:"damage,omitempty"`
-	Armor       float64 `json:"armor,omitempty"`
-	Durability  float64 `json:"durability,omitempty"`
-}
-
 func main() {
 	if len(os.Args) != 3 {
 		log.Fatalf("usage: %s <ark-files.json> <out.json>", os.Args[0])
@@ -46,14 +34,14 @@ func main() {
 	report := historyReport{Saves: len(paths)}
 	var previous map[string]struct{}
 	for index, path := range paths {
-		current, err := equipmentSnapshot(path)
+		current, err := arkapi.EquipmentHistorySnapshotFromPath(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if index == 0 {
 			report.InitialCount = len(current)
 		} else {
-			added, removed := diffSnapshot(previous, current)
+			added, removed := arkapi.DiffEquipmentHistorySnapshots(previous, current)
 			if added != 0 || removed != 0 {
 				report.Changes = append(report.Changes, historyChange{
 					Save:    filepath.Base(path),
@@ -86,58 +74,4 @@ func readManifest(path string) ([]string, error) {
 		return nil, err
 	}
 	return paths, nil
-}
-
-func equipmentSnapshot(path string) (map[string]struct{}, error) {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer save.Close()
-
-	exported, err := arkapi.NewJSON(save).ExportDomain("equipment")
-	if err != nil {
-		return nil, err
-	}
-	items, ok := exported.Items.([]arkapi.EquipmentInfo)
-	if !ok {
-		return nil, fmt.Errorf("equipment export item type %T", exported.Items)
-	}
-	out := map[string]struct{}{}
-	for _, item := range items {
-		identity := equipmentIdentity{
-			Blueprint:   item.Blueprint,
-			Kind:        item.Kind,
-			IsBlueprint: item.IsBlueprint,
-			Rating:      item.Rating,
-			Quality:     item.Quality,
-		}
-		if item.Stats != nil {
-			identity.Damage = item.Stats.Damage
-			identity.Armor = item.Stats.Armor
-			identity.Durability = item.Stats.Durability
-		}
-		data, err := json.Marshal(identity)
-		if err != nil {
-			return nil, err
-		}
-		out[string(data)] = struct{}{}
-	}
-	return out, nil
-}
-
-func diffSnapshot(previous map[string]struct{}, current map[string]struct{}) (int, int) {
-	added := 0
-	for key := range current {
-		if _, ok := previous[key]; !ok {
-			added++
-		}
-	}
-	removed := 0
-	for key := range previous {
-		if _, ok := current[key]; !ok {
-			removed++
-		}
-	}
-	return added, removed
 }

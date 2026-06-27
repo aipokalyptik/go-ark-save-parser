@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -68,6 +69,17 @@ type EquipmentSaddleSummary struct {
 type EquipmentOwnedSummary struct {
 	Items     int
 	MaxDamage float64
+}
+
+type equipmentHistoryIdentity struct {
+	Blueprint   string  `json:"blueprint"`
+	Kind        string  `json:"kind"`
+	IsBlueprint bool    `json:"is_blueprint"`
+	Rating      float64 `json:"rating"`
+	Quality     int32   `json:"quality"`
+	Damage      float64 `json:"damage,omitempty"`
+	Armor       float64 `json:"armor,omitempty"`
+	Durability  float64 `json:"durability,omitempty"`
 }
 
 const AscendantQualityIndex int32 = 5
@@ -654,6 +666,60 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 	summary.Classes = len(directClasses)
 	faults = append(faults, cryopodFaults...)
 	return summary, faults, nil
+}
+
+func EquipmentHistorySnapshotFromPath(path string) (map[string]struct{}, error) {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer save.Close()
+
+	exported, err := NewJSON(save).ExportDomain("equipment")
+	if err != nil {
+		return nil, err
+	}
+	items, ok := exported.Items.([]EquipmentInfo)
+	if !ok {
+		return nil, fmt.Errorf("equipment export item type %T", exported.Items)
+	}
+	out := map[string]struct{}{}
+	for _, item := range items {
+		identity := equipmentHistoryIdentity{
+			Blueprint:   item.Blueprint,
+			Kind:        item.Kind,
+			IsBlueprint: item.IsBlueprint,
+			Rating:      item.Rating,
+			Quality:     item.Quality,
+		}
+		if item.Stats != nil {
+			identity.Damage = item.Stats.Damage
+			identity.Armor = item.Stats.Armor
+			identity.Durability = item.Stats.Durability
+		}
+		data, err := json.Marshal(identity)
+		if err != nil {
+			return nil, err
+		}
+		out[string(data)] = struct{}{}
+	}
+	return out, nil
+}
+
+func DiffEquipmentHistorySnapshots(previous map[string]struct{}, current map[string]struct{}) (int, int) {
+	added := 0
+	for key := range current {
+		if _, ok := previous[key]; !ok {
+			added++
+		}
+	}
+	removed := 0
+	for key := range previous {
+		if _, ok := current[key]; !ok {
+			removed++
+		}
+	}
+	return added, removed
 }
 
 func (e *EquipmentAPI) SaddleSummaryWithFaults() (EquipmentSaddleSummary, []arksave.FaultyObjectInfo, error) {
