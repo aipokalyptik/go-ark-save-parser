@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/e2etest"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
@@ -290,6 +291,26 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	}
 }
 
+func TestExamplesRunAgainstProvidedData(t *testing.T) {
+	data := e2etest.DiscoverProvidedData(t)
+	if data.SavePath == "" {
+		t.Skip("set ARK_E2E_SAVE or ARK_E2E_SAVE_DIR to run provided-data examples E2E")
+	}
+
+	runProvidedExample(t, "map_summary", "map=", data.SavePath)
+
+	if data.Dir == "" {
+		return
+	}
+	if data.ProfileCount > 0 {
+		runProvidedExample(t, "player_list", "players=", data.Dir)
+		runProvidedExample(t, "local_profiles", "profiles=", data.Dir)
+	}
+	if data.TribeCount > 0 {
+		runProvidedExample(t, "tribe_list", "tribes=", data.Dir)
+	}
+}
+
 func runExample(t *testing.T, name string, want string, args ...string) {
 	t.Helper()
 	cmdArgs := append([]string{"run", "./" + name}, args...)
@@ -300,6 +321,19 @@ func runExample(t *testing.T, name string, want string, args ...string) {
 	}
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("go run ./%s output %q does not contain %q", name, out, want)
+	}
+}
+
+func runProvidedExample(t *testing.T, name string, want string, args ...string) {
+	t.Helper()
+	cmdArgs := append([]string{"run", "./" + name}, args...)
+	cmd := exec.Command("go", cmdArgs...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("go run ./%s failed for provided data: %v\n%s", name, err, e2etest.RedactProvidedPaths(string(out)))
+	}
+	if !strings.Contains(string(out), want) {
+		t.Fatalf("go run ./%s output %q does not contain %q", name, e2etest.RedactProvidedPaths(string(out)), want)
 	}
 }
 

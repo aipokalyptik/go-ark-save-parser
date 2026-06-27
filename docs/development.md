@@ -60,9 +60,14 @@ ARK_E2E_SAVE_DIR=/absolute/path/to/SavedArks make e2e-test
 
 `make e2e-test` is read-only. It opens the map save, checks save metadata,
 exercises object enumeration and selected-property scans, runs read-only CLI
-commands, and, when a directory is supplied, also exercises local player and
-tribe discovery. CLI JSON output is written only to temporary test directories.
-It skips cleanly when no provided data environment variables are set.
+commands and aggregate-output examples, and, when a directory is supplied, also
+exercises local player and tribe discovery. CLI JSON output is written only to
+temporary test directories. It skips cleanly when no provided data environment
+variables are set.
+
+The default provided-data E2E path intentionally avoids full-save parse examples
+such as `parse_all`; those can be useful manually but are too slow for the
+standard gate on large saves.
 
 ## Oracle Regeneration
 

@@ -14,7 +14,7 @@ verify:
 	$(MAKE) build
 
 e2e-test:
-	GOCACHE="$(GO_CACHE)" go test ./arkapi ./cmd/arksave -run TestProvidedDataReadOnlyE2E -count=1
+	GOCACHE="$(GO_CACHE)" go test ./arkapi ./cmd/arksave ./examples -run 'TestProvidedDataReadOnlyE2E|TestExamplesRunAgainstProvidedData' -count=1
 
 oracle-test:
 	test -n "$$ARK_ORACLE_SAVE"

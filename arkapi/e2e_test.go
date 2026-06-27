@@ -1,24 +1,21 @@
 package arkapi
 
 import (
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/e2etest"
 )
 
 func TestProvidedDataReadOnlyE2E(t *testing.T) {
-	data := providedData(t)
-	if data.savePath == "" {
+	data := e2etest.DiscoverProvidedData(t)
+	if data.SavePath == "" {
 		t.Skip("set ARK_E2E_SAVE or ARK_E2E_SAVE_DIR to run provided-data read-only E2E")
 	}
 
-	save, err := arksave.Open(data.savePath)
+	save, err := arksave.Open(data.SavePath)
 	if err != nil {
-		t.Fatalf("Open(%q) error = %v", data.savePath, err)
+		t.Fatalf("Open(%q) error = %v", data.SavePath, err)
 	}
 	defer save.Close()
 
@@ -49,66 +46,24 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		t.Fatalf("ObjectClassInfosWithAnyProperty(MyInventoryComponent) returned no objects")
 	}
 
-	if data.dir != "" {
-		playerAPI, err := NewPlayerFromDirectory(data.dir)
+	if data.Dir != "" {
+		playerAPI, err := NewPlayerFromDirectory(data.Dir)
 		if err != nil {
-			t.Fatalf("NewPlayerFromDirectory(%q) error = %v", data.dir, err)
+			t.Fatalf("NewPlayerFromDirectory(%q) error = %v", data.Dir, err)
 		}
 		players, err := playerAPI.Players()
 		if err != nil {
 			t.Fatalf("PlayerAPI.Players() error = %v", err)
 		}
-		if data.profileCount > 0 && len(players) == 0 {
-			t.Fatalf("PlayerAPI.Players() returned zero players from %d profiles", data.profileCount)
+		if data.ProfileCount > 0 && len(players) == 0 {
+			t.Fatalf("PlayerAPI.Players() returned zero players from %d profiles", data.ProfileCount)
 		}
 		tribes, err := playerAPI.TribeDetails()
 		if err != nil {
 			t.Fatalf("PlayerAPI.TribeDetails() error = %v", err)
 		}
-		if data.tribeCount > 0 && len(tribes) == 0 {
-			t.Fatalf("PlayerAPI.TribeDetails() returned zero tribes from %d tribe files", data.tribeCount)
+		if data.TribeCount > 0 && len(tribes) == 0 {
+			t.Fatalf("PlayerAPI.TribeDetails() returned zero tribes from %d tribe files", data.TribeCount)
 		}
 	}
-}
-
-type providedDataSet struct {
-	savePath     string
-	dir          string
-	profileCount int
-	tribeCount   int
-}
-
-func providedData(t *testing.T) providedDataSet {
-	t.Helper()
-	data := providedDataSet{savePath: os.Getenv("ARK_E2E_SAVE"), dir: os.Getenv("ARK_E2E_SAVE_DIR")}
-	if data.dir == "" {
-		return data
-	}
-
-	var savePaths []string
-	err := filepath.WalkDir(data.dir, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			return nil
-		}
-		switch strings.ToLower(filepath.Ext(path)) {
-		case ".ark":
-			savePaths = append(savePaths, path)
-		case ".arkprofile":
-			data.profileCount++
-		case ".arktribe":
-			data.tribeCount++
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("discover provided data files in %q: %v", data.dir, err)
-	}
-	sort.Strings(savePaths)
-	if data.savePath == "" && len(savePaths) > 0 {
-		data.savePath = savePaths[0]
-	}
-	return data
 }
