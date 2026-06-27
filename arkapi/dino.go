@@ -35,6 +35,11 @@ type BabyFilterOptions struct {
 	IncludeWild       bool
 }
 
+type BabyCounts struct {
+	Wild  int
+	Tamed int
+}
+
 type DinoBestStatOptions struct {
 	Blueprints      []string
 	Stats           []arkobject.DinoStat
@@ -853,6 +858,21 @@ func (d *DinoAPI) CountByTamed(dinos map[uuid.UUID]arkobject.Dino) map[bool]int 
 	counts := map[bool]int{}
 	for _, dino := range dinos {
 		counts[dino.IsTamed]++
+	}
+	return counts
+}
+
+func (d *DinoAPI) CountBabiesByTamed(dinos map[uuid.UUID]arkobject.Dino) BabyCounts {
+	var counts BabyCounts
+	for _, dino := range dinos {
+		if !dino.IsBaby {
+			continue
+		}
+		if dino.IsTamed {
+			counts.Tamed++
+		} else {
+			counts.Wild++
+		}
 	}
 	return counts
 }

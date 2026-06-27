@@ -32,14 +32,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	wild := 0
-	tamed := 0
-	for _, dino := range babies {
-		if dino.IsTamed {
-			tamed++
-		} else {
-			wild++
-		}
-	}
-	fmt.Printf("wild_babies=%d tamed_babies=%d\n", wild, tamed)
+	counts := api.CountBabiesByTamed(babies)
+	fmt.Printf("wild_babies=%d tamed_babies=%d\n", counts.Wild, counts.Tamed)
 }

@@ -1094,6 +1094,33 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	}
 }
 
+func TestDinoAPICountsBabiesByTamedState(t *testing.T) {
+	api := NewDino(nil)
+	dinos := map[uuid.UUID]arkobject.Dino{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			IsBaby:  true,
+			IsTamed: true,
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			IsBaby:  true,
+			IsTamed: true,
+		},
+		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
+			IsBaby:  true,
+			IsTamed: false,
+		},
+		uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111"): {
+			IsBaby:  false,
+			IsTamed: true,
+		},
+	}
+
+	counts := api.CountBabiesByTamed(dinos)
+	if counts.Tamed != 2 || counts.Wild != 1 {
+		t.Fatalf("CountBabiesByTamed() = %#v, want 2 tamed and 1 wild", counts)
+	}
+}
+
 func TestDinoAPIFilterChildlessTamedDinosUsesAncestorIDsAndSkipsBabiesAsParents(t *testing.T) {
 	api := NewDino(nil)
 	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
