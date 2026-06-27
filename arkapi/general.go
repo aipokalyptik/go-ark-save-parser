@@ -155,7 +155,7 @@ func (g *GeneralAPI) ClassLookupSummaryWithFaults(classSubstrings []string) (Cla
 		if _, ok := container.Value("StructureID"); !ok {
 			continue
 		}
-		if _, ok := container.Value("bIsEngram"); ok {
+		if selectedBoolProperty(container, "bIsEngram") {
 			continue
 		}
 		objects++

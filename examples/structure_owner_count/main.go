@@ -28,11 +28,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStructure(save)
-	count, _, err := api.CountOwnedByTribeWithFaults(int32(tribeID64))
+	summary, _, err := api.TribeOwnershipSummaryWithFaults(int32(tribeID64))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read structures: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("tribe_id=%d structures=%d\n", tribeID64, count)
+	fmt.Printf("tribe_id=%d structures=%d\n", summary.TribeID, summary.Structures)
 }

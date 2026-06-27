@@ -30,6 +30,11 @@ type StructureOwnerSummary struct {
 	UniqueOriginalPlacers int
 }
 
+type StructureTribeOwnershipSummary struct {
+	TribeID    int32
+	Structures int
+}
+
 type StructureOwnerLocationExport struct {
 	Structures          int                          `json:"structures"`
 	Owners              int                          `json:"owners"`
@@ -203,7 +208,7 @@ func (s *StructureAPI) CountOwnedByTribeWithFaults(tribeID int32) (int, []arksav
 		if _, ok := container.Value("StructureID"); !ok {
 			continue
 		}
-		if _, ok := container.Value("bIsEngram"); ok {
+		if selectedBoolProperty(container, "bIsEngram") {
 			continue
 		}
 		if !isStructureBlueprint(info.ClassName) {
@@ -219,6 +224,14 @@ func (s *StructureAPI) CountOwnedByTribeWithFaults(tribeID int32) (int, []arksav
 		}
 	}
 	return count, faults, nil
+}
+
+func (s *StructureAPI) TribeOwnershipSummaryWithFaults(tribeID int32) (StructureTribeOwnershipSummary, []arksave.FaultyObjectInfo, error) {
+	count, faults, err := s.CountOwnedByTribeWithFaults(tribeID)
+	if err != nil {
+		return StructureTribeOwnershipSummary{}, nil, err
+	}
+	return StructureTribeOwnershipSummary{TribeID: tribeID, Structures: count}, faults, nil
 }
 
 func (s *StructureAPI) OwnerSummaryWithFaults() (StructureOwnerSummary, []arksave.FaultyObjectInfo, error) {
@@ -544,7 +557,7 @@ func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobje
 		if _, ok := container.Value("StructureID"); !ok {
 			continue
 		}
-		if _, ok := container.Value("bIsEngram"); ok {
+		if selectedBoolProperty(container, "bIsEngram") {
 			continue
 		}
 		if !isStructureBlueprint(info.ClassName) {

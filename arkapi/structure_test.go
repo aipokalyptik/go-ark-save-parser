@@ -606,6 +606,52 @@ func TestStructureAPICountOwnedByTribeWithFaultsUsesSelectedProperties(t *testin
 	}
 }
 
+func TestStructureAPITribeOwnershipSummaryWithFaultsUsesSelectedProperties(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	summary, faults, err := api.TribeOwnershipSummaryWithFaults(555)
+	if err != nil {
+		t.Fatalf("TribeOwnershipSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("TribeOwnershipSummaryWithFaults() faults = %#v, want no selected-property parse faults", faults)
+	}
+	want := StructureTribeOwnershipSummary{TribeID: 555, Structures: 1}
+	if summary != want {
+		t.Fatalf("TribeOwnershipSummaryWithFaults() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestStructureAPISelectedPropertyPathsKeepFalseEngramFlag(t *testing.T) {
+	save := openSyntheticFalseEngramStructureSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	count, faults, err := api.CountOwnedByTribeWithFaults(555)
+	if err != nil {
+		t.Fatalf("CountOwnedByTribeWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("CountOwnedByTribeWithFaults() faults = %#v, want none", faults)
+	}
+	if count != 1 {
+		t.Fatalf("CountOwnedByTribeWithFaults() count = %d, want explicit false bIsEngram structure only", count)
+	}
+
+	summary, faults, err := api.OwnerSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("OwnerSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("OwnerSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.Structures != 1 || summary.WithTribeID != 1 || summary.UniqueTribes != 1 {
+		t.Fatalf("OwnerSummaryWithFaults() = %#v, want explicit false bIsEngram structure only", summary)
+	}
+}
+
 func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -677,6 +723,17 @@ func openSyntheticStructureSaveWithFault(t *testing.T) *arksave.Save {
 	})
 }
 
+func openSyntheticFalseEngramStructureSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	falseEngramID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	trueEngramID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	return openSyntheticSaveWith(t, "structures.ark", nil, map[uuid.UUID][]byte{
+		falseEngramID: syntheticStructureObjectBytesWithEngramFlag(false),
+		trueEngramID:  syntheticStructureObjectBytesWithEngramFlag(true),
+	})
+}
+
 func openSyntheticStructureWithInventorySave(t *testing.T) *arksave.Save {
 	t.Helper()
 
@@ -694,6 +751,16 @@ func syntheticStructureObjectBytes() []byte {
 	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
 	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
 	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
+}
+
+func syntheticStructureObjectBytesWithEngramFlag(isEngram bool) []byte {
+	var props bytes.Buffer
+	testfixtures.WriteIntPropertyID(&props, 0x10000006, 0x10000003, 123)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000007, 0x1000000a, 10000)
+	testfixtures.WriteFloatPropertyID(&props, 0x10000008, 0x1000000a, 9000)
+	testfixtures.WriteIntPropertyID(&props, 0x10000009, 0x10000003, 555)
+	testfixtures.WriteBoolPropertyID(&props, 0x10000013, 0x1000000e, isEngram)
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
 

@@ -250,7 +250,7 @@ func selectedInventoryContainerOwners(save *arksave.Save) (map[uuid.UUID]arkobje
 		if _, ok := container.Value("StructureID"); !ok {
 			continue
 		}
-		if _, ok := container.Value("bIsEngram"); ok {
+		if selectedBoolProperty(container, "bIsEngram") {
 			continue
 		}
 		if !isStructureBlueprint(info.ClassName) {
@@ -330,6 +330,15 @@ func (s *StackableAPI) byBlueprintSubstring(substring string) (map[uuid.UUID]ark
 
 func boolProperty(object *arkobject.GameObject, name string) bool {
 	value, ok := object.Value(name)
+	if !ok {
+		return false
+	}
+	out, _ := value.(bool)
+	return out
+}
+
+func selectedBoolProperty(container arkproperty.Container, name string) bool {
+	value, ok := container.Value(name)
 	if !ok {
 		return false
 	}
