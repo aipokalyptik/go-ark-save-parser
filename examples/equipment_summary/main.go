@@ -24,7 +24,7 @@ func main() {
 
 	api := arkapi.NewEquipment(save)
 	summary, _, err := api.SummaryIncludingCryopodSaddlesWithFaults(arkapi.EquipmentFilterOptions{
-		Blueprints: canonicalEquipmentBlueprints(),
+		Blueprints: arkapi.CanonicalEquipmentBlueprints(),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
@@ -42,13 +42,4 @@ func main() {
 		summary.WithCustomData,
 		summary.CustomDataEntries,
 	)
-}
-
-func canonicalEquipmentBlueprints() []string {
-	blueprints := []string{}
-	blueprints = append(blueprints, arkapi.UpstreamWeaponBlueprints()...)
-	blueprints = append(blueprints, arkapi.UpstreamArmorBlueprints()...)
-	blueprints = append(blueprints, arkapi.UpstreamSaddleBlueprints()...)
-	blueprints = append(blueprints, arkapi.UpstreamShieldBlueprints()...)
-	return blueprints
 }

@@ -95,6 +95,34 @@ func TestUpstreamEquipmentBlueprintListsExposeCanonicalClasses(t *testing.T) {
 	}
 }
 
+func TestCanonicalEquipmentBlueprintsCombinesSortedUniqueUpstreamLists(t *testing.T) {
+	combined := CanonicalEquipmentBlueprints()
+	wantLen := len(UpstreamWeaponBlueprints()) + len(UpstreamArmorBlueprints()) + len(UpstreamSaddleBlueprints()) + len(UpstreamShieldBlueprints())
+	if len(combined) != wantLen {
+		t.Fatalf("CanonicalEquipmentBlueprints() length = %d, want %d", len(combined), wantLen)
+	}
+	if !sortedStrings(combined) {
+		t.Fatalf("CanonicalEquipmentBlueprints() must be sorted")
+	}
+	seen := map[string]struct{}{}
+	for _, blueprint := range combined {
+		if _, exists := seen[blueprint]; exists {
+			t.Fatalf("CanonicalEquipmentBlueprints() duplicate %q", blueprint)
+		}
+		seen[blueprint] = struct{}{}
+	}
+	for _, blueprint := range []string{
+		"/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+		"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Metal/PrimalItemArmor_MetalShirt.PrimalItemArmor_MetalShirt_C",
+		"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_TurtleSaddle.PrimalItemArmor_TurtleSaddle_C",
+		"/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C",
+	} {
+		if _, ok := seen[blueprint]; !ok {
+			t.Fatalf("CanonicalEquipmentBlueprints() missing %q", blueprint)
+		}
+	}
+}
+
 func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()

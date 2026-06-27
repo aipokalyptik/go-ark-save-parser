@@ -162,6 +162,16 @@ func UpstreamShieldBlueprints() []string {
 	return sortedBlueprintKeys(upstreamShieldBlueprints)
 }
 
+func CanonicalEquipmentBlueprints() []string {
+	values := make([]string, 0, len(upstreamWeaponBlueprints)+len(upstreamArmorBlueprints)+len(upstreamSaddleBlueprints)+len(upstreamShieldBlueprints))
+	values = append(values, UpstreamWeaponBlueprints()...)
+	values = append(values, UpstreamArmorBlueprints()...)
+	values = append(values, UpstreamSaddleBlueprints()...)
+	values = append(values, UpstreamShieldBlueprints()...)
+	sort.Strings(values)
+	return values
+}
+
 func sortedBlueprintKeys(values map[string]struct{}) []string {
 	out := make([]string, 0, len(values))
 	for value := range values {
