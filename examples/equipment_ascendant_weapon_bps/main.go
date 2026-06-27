@@ -23,7 +23,7 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewEquipment(save)
-	items, _, err := api.FilteredWithFaults(arkapi.EquipmentFilterOptions{
+	summary, _, err := api.SummaryWithFaults(arkapi.EquipmentFilterOptions{
 		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:     arkapi.UpstreamWeaponBlueprints(),
 		OnlyBlueprints: true,
@@ -34,9 +34,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	maxDamage := float64(0)
-	if _, item, ok := api.BestWeaponDamage(items); ok {
-		maxDamage = item.Stats.Damage
-	}
-	fmt.Printf("items=%d max_damage=%.1f\n", len(items), maxDamage)
+	fmt.Printf("items=%d max_damage=%.1f\n", summary.Items, summary.MaxDamage)
 }
