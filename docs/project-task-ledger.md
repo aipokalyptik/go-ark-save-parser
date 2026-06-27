@@ -210,6 +210,8 @@ documented.
         stats into typed `arkapi` helpers used by the example.
   - [x] Add upstream family/slot default stat tables for equipment durability,
         armor, hypothermal resistance, and hyperthermal resistance.
+  - [x] Add a Go regression guard that every curated upstream equipment
+        blueprint list classifies to the expected kind.
   - [x] Cover cursed shield durability and shield armor defaults in Go stat
         table tests.
   - [x] Cover cursed weapon durability defaults in Go stat table tests.

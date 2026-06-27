@@ -35,6 +35,22 @@ func TestEquipmentAPIClassifiesBlueprints(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPIClassifiesAllUpstreamCanonicalBlueprints(t *testing.T) {
+	api := EquipmentAPI{}
+	check := func(name string, blueprints []string, want arkobject.EquipmentKind) {
+		t.Helper()
+		for _, blueprint := range blueprints {
+			if got := api.KindForBlueprint(blueprint); got != want {
+				t.Fatalf("KindForBlueprint(%s %q) = %s, want %s", name, blueprint, got, want)
+			}
+		}
+	}
+	check("weapon", UpstreamWeaponBlueprints(), arkobject.EquipmentWeapon)
+	check("armor", UpstreamArmorBlueprints(), arkobject.EquipmentArmor)
+	check("saddle", UpstreamSaddleBlueprints(), arkobject.EquipmentSaddle)
+	check("shield", UpstreamShieldBlueprints(), arkobject.EquipmentShield)
+}
+
 func sortedStrings(values []string) bool {
 	for i := 1; i < len(values); i++ {
 		if values[i-1] > values[i] {
