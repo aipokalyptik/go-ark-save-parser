@@ -444,6 +444,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           typed `arkapi.DinoAPI.PopulationSummaryWithFaults`.
     - [x] Move dino stat CLI token parsing/formatting for `dino_best_stat` and
           `dino_best_base_stat` onto typed `arkobject.DinoStat` helpers.
+    - [x] Move `dino_heatmap` cryopod filtering, fault handling, and summary
+          generation onto typed `arkapi.DinoAPI.HeatmapSummaryWithFaults`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the

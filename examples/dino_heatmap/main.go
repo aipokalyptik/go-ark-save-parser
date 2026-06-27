@@ -40,23 +40,14 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	dinos, faults, err := api.AllWithFaults()
+	summary, _, err := api.HeatmapSummaryWithFaults(arkapi.DinoHeatmapOptions{
+		MapName:           save.Context.MapName,
+		Resolution:        resolution,
+		IncludeCryopodded: includeCryos,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !includeCryos {
-		for id, dino := range dinos {
-			if dino.IsCryopodded {
-				delete(dinos, id)
-			}
-		}
-		faults = nil
-	}
-	heatmap, err := api.Heatmap(save.Context.MapName, resolution, dinos, nil, false)
-	if err != nil {
-		log.Fatal(err)
-	}
-	summary := arkapi.SummarizeHeatmap(heatmap, len(faults))
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
 		log.Fatal(err)

@@ -53,6 +53,14 @@ type DinoPopulationSummary struct {
 	Classes    int
 }
 
+type DinoHeatmapOptions struct {
+	MapName           string
+	Resolution        int
+	Blueprints        []string
+	OnlyTamed         bool
+	IncludeCryopodded bool
+}
+
 type DinoBestStatOptions struct {
 	Blueprints      []string
 	Stats           []arkobject.DinoStat
@@ -677,6 +685,26 @@ func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]ar
 		heatmap[x][y]++
 	}
 	return heatmap, nil
+}
+
+func (d *DinoAPI) HeatmapSummaryWithFaults(opts DinoHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
+	dinos, faults, err := d.AllWithFaults()
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	if !opts.IncludeCryopodded {
+		for id, dino := range dinos {
+			if dino.IsCryopodded {
+				delete(dinos, id)
+			}
+		}
+		faults = nil
+	}
+	heatmap, err := d.Heatmap(opts.MapName, opts.Resolution, dinos, opts.Blueprints, opts.OnlyTamed)
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
 }
 
 func (d *DinoAPI) FilterWildTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {

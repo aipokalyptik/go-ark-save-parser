@@ -580,6 +580,42 @@ func TestDinoAPIHeatmapCountsDinoMapCells(t *testing.T) {
 	}
 }
 
+func TestDinoAPIHeatmapSummaryWithFaultsCanExcludeCryopodsAndClearCryopodFaults(t *testing.T) {
+	save := openSyntheticDinoHeatmapSaveWithMalformedCryopod(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	includeCryos, faults, err := api.HeatmapSummaryWithFaults(DinoHeatmapOptions{
+		MapName:           "Valguero",
+		Resolution:        100,
+		IncludeCryopodded: true,
+	})
+	if err != nil {
+		t.Fatalf("HeatmapSummaryWithFaults(include cryos) error = %v", err)
+	}
+	if len(faults) != 1 || includeCryos.Faults != 1 {
+		t.Fatalf("HeatmapSummaryWithFaults(include cryos) faults = %d / %#v, want 1", len(faults), includeCryos)
+	}
+	if includeCryos.Total != 1 || includeCryos.NonzeroCells != 1 {
+		t.Fatalf("HeatmapSummaryWithFaults(include cryos) summary = %#v, want one direct dino", includeCryos)
+	}
+
+	excludeCryos, faults, err := api.HeatmapSummaryWithFaults(DinoHeatmapOptions{
+		MapName:           "Valguero",
+		Resolution:        100,
+		IncludeCryopodded: false,
+	})
+	if err != nil {
+		t.Fatalf("HeatmapSummaryWithFaults(no cryos) error = %v", err)
+	}
+	if len(faults) != 0 || excludeCryos.Faults != 0 {
+		t.Fatalf("HeatmapSummaryWithFaults(no cryos) faults = %d / %#v, want 0", len(faults), excludeCryos)
+	}
+	if excludeCryos.Total != 1 || excludeCryos.NonzeroCells != 1 {
+		t.Fatalf("HeatmapSummaryWithFaults(no cryos) summary = %#v, want one direct dino", excludeCryos)
+	}
+}
+
 func TestDinoAPIFilterWildTamableDropsKnownNonTameableClasses(t *testing.T) {
 	api := DinoAPI{}
 	raptorID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
@@ -1527,6 +1563,23 @@ func openSyntheticDinoStatsSaveWithMalformedCryopod(t *testing.T) *arksave.Save 
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
+		statusID: syntheticDinoStatusObjectBytes(),
+		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
+	})
+}
+
+func openSyntheticDinoHeatmapSaveWithMalformedCryopod(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	return openSyntheticSaveWith(t, "dinos.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
+			dinoID: {100, 200, 300},
+		}),
+	}, map[uuid.UUID][]byte{
 		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
 		statusID: syntheticDinoStatusObjectBytes(),
 		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
