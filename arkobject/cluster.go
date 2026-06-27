@@ -81,6 +81,17 @@ func (i ClusterItem) UnsupportedVersion() bool {
 	return i.Version != 0 && !i.SupportedVersion()
 }
 
+func (i ClusterItem) Crafter() ObjectCrafter {
+	return ObjectCrafter{
+		CharacterName: i.CrafterCharacterName,
+		TribeName:     i.CrafterTribeName,
+	}
+}
+
+func (i ClusterItem) IsCrafted() bool {
+	return i.Crafter().Valid()
+}
+
 func ClusterItemFromUpload(item arkcluster.Item, itemType ClusterItemType) ClusterItem {
 	return ClusterItem{
 		Index:                item.Index,

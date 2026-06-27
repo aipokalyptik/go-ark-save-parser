@@ -25,9 +25,11 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 				}}},
 			},
 			{
-				Index:     1,
-				Version:   6,
-				Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+				Index:                1,
+				Version:              6,
+				Blueprint:            "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+				CrafterCharacterName: "Survivor",
+				CrafterTribeName:     "Porters",
 			},
 			{
 				Index:     2,
@@ -62,8 +64,15 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	if typed[1].Type != "equipment" || typed[1].ItemType() != arkobject.ClusterItemTypeEquipment || !typed[1].IsEquipmentUpload() || typed[1].IsDinoUpload() || typed[1].IsOtherUpload() || typed[1].SupportedVersion() {
 		t.Fatalf("typed equipment item helpers = %#v, want unsupported equipment upload only", typed[1])
 	}
+	crafted := typed[1].Crafter()
+	if !typed[1].IsCrafted() || crafted.CharacterName != "Survivor" || crafted.TribeName != "Porters" {
+		t.Fatalf("typed equipment crafter = %#v crafted=%v, want Survivor/Porters crafted item", crafted, typed[1].IsCrafted())
+	}
 	if typed[2].Type != "other" || typed[2].ItemType() != arkobject.ClusterItemTypeOther || !typed[2].IsOtherUpload() || typed[2].IsDinoUpload() || typed[2].IsEquipmentUpload() {
 		t.Fatalf("typed other item helpers = %#v, want other upload only", typed[2])
+	}
+	if typed[2].IsCrafted() || typed[2].Crafter().Valid() {
+		t.Fatalf("typed other item crafter = %#v crafted=%v, want no crafter metadata", typed[2].Crafter(), typed[2].IsCrafted())
 	}
 	if got := api.ItemsByTypeTyped("dino"); len(got) != 1 || got[0].Index != 0 || got[0].Type != "dino" {
 		t.Fatalf("ItemsByTypeTyped(dino) = %#v, want typed item index 0", got)
