@@ -255,7 +255,8 @@ documented.
         cluster JSON exports.
   - [x] Add directory-level local cluster aggregate summaries for total files,
         objects, items, dinos, parse errors, uploaded-item summaries, and
-        uploaded-dino summaries, and include them in directory JSON exports.
+        uploaded-dino summaries, and include them in directory JSON exports and
+        CLI directory summaries.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local

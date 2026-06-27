@@ -160,7 +160,7 @@ For the cross-phase monitorable checklist, see
       fields for parsed, unsupported-version, parse-error, and unparsed uploads.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
-      summaries.
+      summaries in JSON and CLI output.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

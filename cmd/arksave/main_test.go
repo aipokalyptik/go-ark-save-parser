@@ -422,6 +422,32 @@ func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
 	}
 }
 
+func TestClusterCommandPrintsDirectoryAggregateSummary(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"cluster", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster directory:",
+		"Files: 2",
+		"Objects: 2",
+		"Items: 0",
+		"Dinos: 0",
+		"Parse errors: 0",
+		"Cluster file:",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterSummary(&out, &arkcluster.Data{
