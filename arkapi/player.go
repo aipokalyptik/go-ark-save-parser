@@ -49,6 +49,37 @@ type TribePlayerRelationSummary struct {
 	TribesWithoutActive int
 }
 
+type PlayerAndTribeDataSummary struct {
+	Players             int               `json:"players"`
+	Tribes              int               `json:"tribes"`
+	PlayersWithNames    int               `json:"players_with_names"`
+	TribesWithNames     int               `json:"tribes_with_names"`
+	ActiveLinks         int               `json:"active_links"`
+	InactiveMembers     int               `json:"inactive_members"`
+	PlayersWithoutTribe int               `json:"players_without_tribe"`
+	TribeRows           []TribeDataRow    `json:"tribe_rows"`
+	PlayerRows          []PlayerDataRow   `json:"player_rows"`
+	RelationRows        []RelationDataRow `json:"relation_rows"`
+}
+
+type PlayerDataRow struct {
+	HasCharacterName bool  `json:"has_character_name"`
+	HasPlayerName    bool  `json:"has_player_name"`
+	Level            int32 `json:"level"`
+	TribeID          int32 `json:"tribe_id"`
+}
+
+type TribeDataRow struct {
+	HasName bool  `json:"has_name"`
+	Members int   `json:"members"`
+	Dinos   int32 `json:"dinos"`
+}
+
+type RelationDataRow struct {
+	ActiveMembers   int `json:"active_members"`
+	InactiveMembers int `json:"inactive_members"`
+}
+
 type PlayerInventorySummary struct {
 	Players          int
 	WithInventory    int
@@ -1222,6 +1253,91 @@ func (p *PlayerAPI) TribePlayerRelationSummaryForData(players []arkobject.Player
 		}
 	}
 	return summary
+}
+
+func (p *PlayerAPI) PlayerAndTribeDataSummary() (PlayerAndTribeDataSummary, error) {
+	players, err := p.Players()
+	if err != nil {
+		return PlayerAndTribeDataSummary{}, err
+	}
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return PlayerAndTribeDataSummary{}, err
+	}
+	relations, err := p.TribePlayerRelations()
+	if err != nil {
+		return PlayerAndTribeDataSummary{}, err
+	}
+	return p.PlayerAndTribeDataSummaryForData(players, tribes, relations), nil
+}
+
+func (p *PlayerAPI) PlayerAndTribeDataSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe, relations []TribePlayerRelation) PlayerAndTribeDataSummary {
+	out := PlayerAndTribeDataSummary{
+		Players:      len(players),
+		Tribes:       len(tribes),
+		PlayerRows:   make([]PlayerDataRow, 0, len(players)),
+		TribeRows:    make([]TribeDataRow, 0, len(tribes)),
+		RelationRows: make([]RelationDataRow, 0, len(relations)),
+	}
+	tribeIDs := map[int32]struct{}{}
+	for _, tribe := range tribes {
+		tribeIDs[tribe.TribeID] = struct{}{}
+		row := TribeDataRow{HasName: tribe.Name != "", Members: len(tribe.MemberIDs), Dinos: tribe.NumDinos}
+		if row.HasName {
+			out.TribesWithNames++
+		}
+		out.TribeRows = append(out.TribeRows, row)
+	}
+	for _, player := range players {
+		row := PlayerDataRow{
+			HasCharacterName: player.CharacterName != "",
+			HasPlayerName:    player.PlayerName != "",
+			Level:            player.Level,
+			TribeID:          player.TribeID,
+		}
+		if row.HasCharacterName || row.HasPlayerName {
+			out.PlayersWithNames++
+		}
+		if _, ok := tribeIDs[player.TribeID]; !ok {
+			out.PlayersWithoutTribe++
+		}
+		out.PlayerRows = append(out.PlayerRows, row)
+	}
+	for _, relation := range relations {
+		row := RelationDataRow{ActiveMembers: len(relation.ActivePlayers), InactiveMembers: len(relation.InactiveMemberIDs)}
+		out.ActiveLinks += row.ActiveMembers
+		out.InactiveMembers += row.InactiveMembers
+		out.RelationRows = append(out.RelationRows, row)
+	}
+
+	sort.Slice(out.PlayerRows, func(i int, j int) bool {
+		if out.PlayerRows[i].TribeID != out.PlayerRows[j].TribeID {
+			return out.PlayerRows[i].TribeID < out.PlayerRows[j].TribeID
+		}
+		if out.PlayerRows[i].Level != out.PlayerRows[j].Level {
+			return out.PlayerRows[i].Level < out.PlayerRows[j].Level
+		}
+		if out.PlayerRows[i].HasCharacterName != out.PlayerRows[j].HasCharacterName {
+			return !out.PlayerRows[i].HasCharacterName
+		}
+		return !out.PlayerRows[i].HasPlayerName && out.PlayerRows[j].HasPlayerName
+	})
+	sort.Slice(out.TribeRows, func(i int, j int) bool {
+		if out.TribeRows[i].Members != out.TribeRows[j].Members {
+			return out.TribeRows[i].Members < out.TribeRows[j].Members
+		}
+		if out.TribeRows[i].Dinos != out.TribeRows[j].Dinos {
+			return out.TribeRows[i].Dinos < out.TribeRows[j].Dinos
+		}
+		return !out.TribeRows[i].HasName && out.TribeRows[j].HasName
+	})
+	sort.Slice(out.RelationRows, func(i int, j int) bool {
+		if out.RelationRows[i].ActiveMembers != out.RelationRows[j].ActiveMembers {
+			return out.RelationRows[i].ActiveMembers < out.RelationRows[j].ActiveMembers
+		}
+		return out.RelationRows[i].InactiveMembers < out.RelationRows[j].InactiveMembers
+	})
+	return out
 }
 
 func (p *PlayerAPI) TribeOfPlayer(player arkobject.Player) (arkobject.Tribe, bool, error) {

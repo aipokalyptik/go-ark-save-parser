@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -606,6 +607,52 @@ func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	want := TribeRosterSummary{Tribes: 2, WithNames: 1, Members: 3, Dinos: 10}
 	if summary != want {
 		t.Fatalf("TribeRosterSummaryForTribes() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestPlayerAPIPlayerAndTribeDataSummaryForDataSortsPrivacySafeRows(t *testing.T) {
+	api := NewPlayer(nil)
+	players := []arkobject.Player{
+		{CharacterName: "Ada", Level: 5, TribeID: 20},
+		{PlayerName: "Grace", Level: 2, TribeID: 10},
+		{Level: 5, TribeID: 99},
+	}
+	tribes := []arkobject.Tribe{
+		{Name: "Porters", MemberIDs: []int32{1, 2}, NumDinos: 7, TribeID: 20},
+		{MemberIDs: []int32{3}, NumDinos: 1, TribeID: 10},
+	}
+	relations := []TribePlayerRelation{
+		{ActivePlayers: []arkobject.Player{players[0]}, InactiveMemberIDs: []int32{9}},
+		{InactiveMemberIDs: []int32{3}},
+	}
+
+	summary := api.PlayerAndTribeDataSummaryForData(players, tribes, relations)
+	if summary.Players != 3 || summary.Tribes != 2 || summary.PlayersWithNames != 2 ||
+		summary.TribesWithNames != 1 || summary.ActiveLinks != 1 ||
+		summary.InactiveMembers != 2 || summary.PlayersWithoutTribe != 1 {
+		t.Fatalf("PlayerAndTribeDataSummaryForData() aggregate = %#v", summary)
+	}
+	wantPlayers := []PlayerDataRow{
+		{HasCharacterName: false, HasPlayerName: true, Level: 2, TribeID: 10},
+		{HasCharacterName: true, Level: 5, TribeID: 20},
+		{Level: 5, TribeID: 99},
+	}
+	if !reflect.DeepEqual(summary.PlayerRows, wantPlayers) {
+		t.Fatalf("PlayerRows = %#v, want %#v", summary.PlayerRows, wantPlayers)
+	}
+	wantTribes := []TribeDataRow{
+		{Members: 1, Dinos: 1},
+		{HasName: true, Members: 2, Dinos: 7},
+	}
+	if !reflect.DeepEqual(summary.TribeRows, wantTribes) {
+		t.Fatalf("TribeRows = %#v, want %#v", summary.TribeRows, wantTribes)
+	}
+	wantRelations := []RelationDataRow{
+		{InactiveMembers: 1},
+		{ActiveMembers: 1, InactiveMembers: 1},
+	}
+	if !reflect.DeepEqual(summary.RelationRows, wantRelations) {
+		t.Fatalf("RelationRows = %#v, want %#v", summary.RelationRows, wantRelations)
 	}
 }
 
