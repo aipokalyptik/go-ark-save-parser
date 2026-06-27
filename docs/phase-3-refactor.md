@@ -48,6 +48,8 @@ For the cross-phase monitorable checklist, see
       while preserving string-based filter and JSON compatibility.
 - [x] Add typed local cluster enum filters, upload-version helpers, parse-status
       helpers, and embedded dino component class summaries for Go callers.
+- [x] Add typed local cluster uploaded-item aggregate summaries for item type,
+      version support, crafted item, quantity, rating, and quality counts.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can
