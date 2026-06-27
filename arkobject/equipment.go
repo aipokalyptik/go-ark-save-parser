@@ -147,6 +147,9 @@ func defaultEquipmentDurability(blueprint string) float64 {
 	if value, ok := shieldDefaultDurability(blueprint); ok {
 		return value
 	}
+	if value, ok := weaponDefaultDurability(blueprint); ok {
+		return value
+	}
 	switch {
 	case armorFamily(blueprint, "/Chitin/", "Chitin"):
 		return 50
@@ -170,38 +173,12 @@ func defaultEquipmentDurability(blueprint string) float64 {
 	case strings.Contains(blueprint, "/HazardSuit/"):
 		return 85.5
 	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Items/Armor/Metal/PrimalItemArmor_MinersHelmet.PrimalItemArmor_MinersHelmet_C",
-		tekSaddleBlueprint(blueprint),
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponCrossbow.PrimalItem_WeaponCrossbow_C",
-		blueprint == "/Game/LostColony/Weapons/FabricatedCrossbow/PrimalItem_WeaponCrossbow_Fab.PrimalItem_WeaponCrossbow_Fab_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponHarpoon.PrimalItem_WeaponHarpoon_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponMachinedShotgun.PrimalItem_WeaponMachinedShotgun_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponRocketLauncher.PrimalItem_WeaponRocketLauncher_C":
+		tekSaddleBlueprint(blueprint):
 		return 120
 	case blueprint == "/Game/Aberration/Dinos/MoleRat/PrimalItemArmor_MoleRatSaddle.PrimalItemArmor_MoleRatSaddle_C":
 		return 500
 	case strings.Contains(blueprint, "PrimalItemArmor_") && (strings.Contains(blueprint, "Saddle") || strings.Contains(blueprint, "/Saddle/")):
 		return 100
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponCompoundBow.PrimalItem_WeaponCompoundBow_C":
-		return 55
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponOneShotRifle.PrimalItem_WeaponOneShotRifle_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponMachinedSniper.PrimalItem_WeaponMachinedSniper_C":
-		return 70
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponProd.PrimalItem_WeaponProd_C":
-		return 10
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C":
-		return 50
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponGun.PrimalItem_WeaponGun_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponMachinedPistol.PrimalItem_WeaponMachinedPistol_C":
-		return 60
-	case blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponShotgun.PrimalItem_WeaponShotgun_C",
-		blueprint == "/Game/ScorchedEarth/WeaponChainsaw/PrimalItem_ChainSaw.PrimalItem_ChainSaw_C",
-		blueprint == "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_TekRifle.PrimalItem_TekRifle_C":
-		return 80
-	case weaponDurability40Blueprint(blueprint):
-		return 40
-	case blueprint == "/Game/Aberration/CoreBlueprints/Weapons/PrimalItem_WeaponClimbPick.PrimalItem_WeaponClimbPick_C":
-		return 65
 	case blueprint == "":
 		return 1
 	default:
@@ -265,6 +242,44 @@ func shieldDefaultDurability(blueprint string) (float64, bool) {
 		return 2300, true
 	case strings.Contains(blueprint, "PrimalItemArmor_WoodShield"):
 		return 350, true
+	default:
+		return 0, false
+	}
+}
+
+func weaponDefaultDurability(blueprint string) (float64, bool) {
+	switch {
+	case strings.Contains(blueprint, "PrimalItem_WeaponProd"):
+		return 10, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponMetalHatchet"),
+		strings.Contains(blueprint, "PrimalItem_WeaponMetalPick"),
+		strings.Contains(blueprint, "PrimalItem_WeaponPike"),
+		strings.Contains(blueprint, "PrimalItem_WeaponRifle"),
+		strings.Contains(blueprint, "PrimalItem_WeapFlamethrower"),
+		weaponDurability40Blueprint(blueprint):
+		return 40, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponBow"):
+		return 50, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponCompoundBow"):
+		return 55, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponGun"),
+		strings.Contains(blueprint, "PrimalItem_WeaponMachinedPistol"):
+		return 60, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponClimbPick"):
+		return 65, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponSword"),
+		strings.Contains(blueprint, "PrimalItem_WeaponOneShotRifle"),
+		strings.Contains(blueprint, "PrimalItem_WeaponMachinedSniper"):
+		return 70, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponShotgun"),
+		strings.Contains(blueprint, "PrimalItem_ChainSaw"),
+		strings.Contains(blueprint, "PrimalItem_TekRifle"):
+		return 80, true
+	case strings.Contains(blueprint, "PrimalItem_WeaponCrossbow"),
+		strings.Contains(blueprint, "PrimalItem_WeaponHarpoon"),
+		strings.Contains(blueprint, "PrimalItem_WeaponMachinedShotgun"),
+		strings.Contains(blueprint, "PrimalItem_WeaponRocketLauncher"):
+		return 120, true
 	default:
 		return 0, false
 	}

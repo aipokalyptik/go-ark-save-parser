@@ -212,6 +212,7 @@ documented.
         armor, hypothermal resistance, and hyperthermal resistance.
   - [x] Cover cursed shield durability and shield armor defaults in Go stat
         table tests.
+  - [x] Cover cursed weapon durability defaults in Go stat table tests.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
         long-tail default stat-table parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
