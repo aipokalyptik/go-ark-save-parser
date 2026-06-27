@@ -809,6 +809,35 @@ func TestEquipmentAPISummaryIncludingCryopodSaddlesWithFaults(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPISaddleSummaryWithFaultsCountsDirectAndCryopodSaddles(t *testing.T) {
+	save := openSyntheticEquipmentAndCryopodSaddleSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewEquipment(save).SaddleSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("SaddleSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("SaddleSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.ItemSaddles != 1 || summary.CryopodSaddles != 1 || summary.TotalSaddles != 2 {
+		t.Fatalf("SaddleSummaryWithFaults() = %#v, want one direct saddle and one cryopod saddle", summary)
+	}
+
+	faultySave := openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t)
+	defer faultySave.Close()
+	faultySummary, faultyFaults, err := NewEquipment(faultySave).SaddleSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("SaddleSummaryWithFaults(faulty) error = %v", err)
+	}
+	if faultySummary.TotalSaddles != 0 || faultySummary.CryopodSaddles != 0 {
+		t.Fatalf("SaddleSummaryWithFaults(faulty) = %#v, want no saddles", faultySummary)
+	}
+	if len(faultyFaults) != 1 {
+		t.Fatalf("SaddleSummaryWithFaults(faulty) faults = %#v, want one unsupported saddle fault", faultyFaults)
+	}
+}
+
 func TestEquipmentAPIRankedCandidatesWithFaultsUsesCanonicalEquipmentBlueprintLists(t *testing.T) {
 	save := openSyntheticMixedEquipmentSave(t)
 	defer save.Close()
@@ -916,6 +945,21 @@ func openSyntheticMixedEquipmentSave(t *testing.T) *arksave.Save {
 		armorID:  syntheticArmorEquipmentObjectBytes(),
 		shieldID: testfixtures.GenericObjectBytes(0x10000052, 0x10000004),
 		saddleID: testfixtures.GenericObjectBytes(0x10000053, 0x10000004),
+	})
+}
+
+func openSyntheticEquipmentAndCryopodSaddleSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	saddleID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	saddlePayload := syntheticCryopodSaddlePayload()
+	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
+		saddleID: testfixtures.GenericObjectBytes(0x10000053, 0x10000004),
+		podID:    syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, saddlePayload),
 	})
 }
 

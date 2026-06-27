@@ -58,6 +58,13 @@ type EquipmentSummary struct {
 	MaxCurrentDurability float64
 }
 
+type EquipmentSaddleSummary struct {
+	ItemSaddles    int
+	CryopodSaddles int
+	TotalSaddles   int
+	MaxArmor       float64
+}
+
 const AscendantQualityIndex int32 = 5
 
 var canonicalEquipmentKinds = map[string]arkobject.EquipmentKind{
@@ -622,6 +629,33 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 		}
 	}
 	summary.Classes = len(directClasses)
+	faults = append(faults, cryopodFaults...)
+	return summary, faults, nil
+}
+
+func (e *EquipmentAPI) SaddleSummaryWithFaults() (EquipmentSaddleSummary, []arksave.FaultyObjectInfo, error) {
+	itemSaddles, faults, err := e.FilteredWithFaults(EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{arkobject.EquipmentSaddle},
+		Blueprints: UpstreamSaddleBlueprints(),
+	})
+	if err != nil {
+		return EquipmentSaddleSummary{}, nil, err
+	}
+	cryopodSaddles, cryopodFaults, err := NewDino(e.save).SaddlesFromCryopodsWithFaults()
+	if err != nil {
+		return EquipmentSaddleSummary{}, nil, err
+	}
+	summary := EquipmentSaddleSummary{
+		ItemSaddles:    len(itemSaddles),
+		CryopodSaddles: len(cryopodSaddles),
+		TotalSaddles:   len(itemSaddles) + len(cryopodSaddles),
+	}
+	if _, saddle, ok := e.BestArmor(itemSaddles); ok {
+		summary.MaxArmor = saddle.Stats.Armor
+	}
+	if _, saddle, ok := e.BestArmor(cryopodSaddles); ok && saddle.Stats.Armor > summary.MaxArmor {
+		summary.MaxArmor = saddle.Stats.Armor
+	}
 	faults = append(faults, cryopodFaults...)
 	return summary, faults, nil
 }
