@@ -190,11 +190,13 @@ documented.
 - [x] Port save-info and implemented domain JSON exports.
 - [x] Add explicit-output `export_all_items` example and manifest.
 - [x] Add local multi-save `equipment_history` example.
-- [ ] Finish full dino edge behavior:
+- [~] Finish full dino edge behavior:
   - [ ] Legacy/modded cryopod variants.
   - [ ] Cryopod-location example parity when upstream/private data permits.
-  - [ ] Full pedigree rendering/tree export parity beyond JSON child and
-        descendant references.
+  - [x] Typed pedigree tree helpers and domain JSON pedigree trees beyond flat
+        child/descendant UUID references.
+  - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains
+        blocked by malformed cryopod parsing before stable aggregate output.
 - [ ] Finish full structure/base edge behavior:
   - [ ] Exact `structure_owner_locations` owner/cell parity without
         prohibitive full-parse runtime.
@@ -308,7 +310,8 @@ documented.
 - [blocked] `dino_cryopod_location`: upstream/private malformed cryopod path
       blocks stable oracle output.
 - [blocked] `dino_pedigrees`: upstream/private malformed cryopod path blocks
-      stable oracle output.
+      stable oracle output; Go now exposes typed pedigree trees and nested
+      domain JSON pedigree branches for parsed tamed dinos.
 - [x] `stackable_count`.
 - [x] `stackable_owned_by`.
 - [x] `domain_json_stackables`.

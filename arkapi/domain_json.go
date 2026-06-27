@@ -31,6 +31,7 @@ type DinoInfo struct {
 	AncestorIDs            []DinoIDInfo        `json:"ancestor_ids,omitempty"`
 	ChildUUIDs             []string            `json:"child_uuids,omitempty"`
 	DescendantUUIDs        []string            `json:"descendant_uuids,omitempty"`
+	Pedigree               *DinoPedigreeInfo   `json:"pedigree,omitempty"`
 	MaturationPercent      float64             `json:"maturation_percent,omitempty"`
 	BabyStage              arkobject.BabyStage `json:"baby_stage,omitempty"`
 	InventoryUUID          string              `json:"inventory_uuid,omitempty"`
@@ -195,6 +196,18 @@ type DinoIDInfo struct {
 	ID2 uint32 `json:"id2"`
 }
 
+type DinoPedigreeInfo struct {
+	UUID            string             `json:"uuid"`
+	ID              DinoIDInfo         `json:"id"`
+	Blueprint       string             `json:"blueprint,omitempty"`
+	Name            string             `json:"name,omitempty"`
+	Generation      int                `json:"generation,omitempty"`
+	IsFemale        bool               `json:"is_female,omitempty"`
+	IsBaby          bool               `json:"is_baby,omitempty"`
+	DescendantCount int                `json:"descendant_count,omitempty"`
+	Children        []DinoPedigreeInfo `json:"children,omitempty"`
+}
+
 type EquipmentStatsInfo struct {
 	Internal               map[string]uint16 `json:"internal,omitempty"`
 	Damage                 float64           `json:"damage,omitempty"`
@@ -286,6 +299,11 @@ func (j *JSONAPI) exportDinosWithFaultCount() ([]DinoInfo, int, error) {
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
 		dinoID := arkobject.DinoID{ID1: dino.ID1, ID2: dino.ID2}
+		pedigree, hasPedigree := dinoAPI.PedigreeTree(dinos, id)
+		var pedigreeInfo *DinoPedigreeInfo
+		if hasPedigree && pedigree.DescendantCount > 0 {
+			pedigreeInfo = dinoPedigreeInfo(pedigree)
+		}
 		out = append(out, DinoInfo{
 			UUID:                   id.String(),
 			Blueprint:              dino.Blueprint,
@@ -300,6 +318,7 @@ func (j *JSONAPI) exportDinosWithFaultCount() ([]DinoInfo, int, error) {
 			AncestorIDs:            dinoIDInfos(dino.AncestorIDs),
 			ChildUUIDs:             sortedUUIDStrings(children[dinoID]),
 			DescendantUUIDs:        sortedUUIDStrings(sortedUUIDKeys(descendantsFromChildren(children, dinos, dinoID))),
+			Pedigree:               pedigreeInfo,
 			MaturationPercent:      dino.MaturationPercent,
 			BabyStage:              dino.BabyStage,
 			InventoryUUID:          optionalUUIDString(dino.InventoryUUID),
@@ -679,6 +698,33 @@ func dinoIDInfos(values []arkobject.DinoID) []DinoIDInfo {
 		out = append(out, DinoIDInfo{ID1: value.ID1, ID2: value.ID2})
 	}
 	return out
+}
+
+func dinoPedigreeInfo(node DinoPedigreeNode) *DinoPedigreeInfo {
+	if node.UUID == uuid.Nil {
+		return nil
+	}
+	info := &DinoPedigreeInfo{
+		UUID:            node.UUID.String(),
+		ID:              DinoIDInfo{ID1: node.DinoID.ID1, ID2: node.DinoID.ID2},
+		Blueprint:       node.Blueprint,
+		Name:            node.Name,
+		Generation:      node.Generation,
+		IsFemale:        node.IsFemale,
+		IsBaby:          node.IsBaby,
+		DescendantCount: node.DescendantCount,
+		Children:        make([]DinoPedigreeInfo, 0, len(node.Children)),
+	}
+	for _, child := range node.Children {
+		childInfo := dinoPedigreeInfo(child)
+		if childInfo != nil {
+			info.Children = append(info.Children, *childInfo)
+		}
+	}
+	if len(info.Children) == 0 {
+		info.Children = nil
+	}
+	return info
 }
 
 func dinoStatPointsInfo(value arkobject.DinoStatPoints) DinoStatPointsInfo {

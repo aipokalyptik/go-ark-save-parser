@@ -131,12 +131,27 @@ func TestJSONAPIExportDinosIncludesPedigreeUUIDs(t *testing.T) {
 	if len(parent.DescendantUUIDs) != 2 || parent.DescendantUUIDs[0] != childID || parent.DescendantUUIDs[1] != grandchildID {
 		t.Fatalf("parent DescendantUUIDs = %#v, want child and grandchild", parent.DescendantUUIDs)
 	}
+	if parent.Pedigree == nil || parent.Pedigree.UUID != parentID || parent.Pedigree.DescendantCount != 2 {
+		t.Fatalf("parent Pedigree = %#v, want tree with two descendants", parent.Pedigree)
+	}
+	if len(parent.Pedigree.Children) != 1 || parent.Pedigree.Children[0].UUID != childID {
+		t.Fatalf("parent Pedigree children = %#v, want child", parent.Pedigree.Children)
+	}
+	if len(parent.Pedigree.Children[0].Children) != 1 || parent.Pedigree.Children[0].Children[0].UUID != grandchildID {
+		t.Fatalf("parent Pedigree grandchild = %#v, want grandchild", parent.Pedigree.Children[0].Children)
+	}
 	child := byUUID[childID]
 	if len(child.ChildUUIDs) != 1 || child.ChildUUIDs[0] != grandchildID {
 		t.Fatalf("child ChildUUIDs = %#v, want [%s]", child.ChildUUIDs, grandchildID)
 	}
 	if len(child.DescendantUUIDs) != 1 || child.DescendantUUIDs[0] != grandchildID {
 		t.Fatalf("child DescendantUUIDs = %#v, want [%s]", child.DescendantUUIDs, grandchildID)
+	}
+	if child.Pedigree == nil || child.Pedigree.DescendantCount != 1 || len(child.Pedigree.Children) != 1 || child.Pedigree.Children[0].UUID != grandchildID {
+		t.Fatalf("child Pedigree = %#v, want grandchild tree", child.Pedigree)
+	}
+	if grandchild := byUUID[grandchildID]; grandchild.Pedigree != nil {
+		t.Fatalf("grandchild Pedigree = %#v, want omitted leaf pedigree", grandchild.Pedigree)
 	}
 }
 

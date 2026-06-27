@@ -1227,6 +1227,117 @@ func TestDinoAPIPedigreeHelpersIndexChildrenAndWalkDescendants(t *testing.T) {
 	}
 }
 
+func TestDinoAPIPedigreeTreeBuildsStableDescendantTree(t *testing.T) {
+	api := NewDino(nil)
+	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	childID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	secondChildID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	grandchildID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	cycleID := uuid.MustParse("eeeeeeee-ffff-0000-1111-222222222222")
+	parentArkID := arkobject.DinoID{ID1: 11, ID2: 12}
+	childArkID := arkobject.DinoID{ID1: 21, ID2: 22}
+	secondChildArkID := arkobject.DinoID{ID1: 31, ID2: 32}
+	grandchildArkID := arkobject.DinoID{ID1: 41, ID2: 42}
+	dinos := map[uuid.UUID]arkobject.Dino{
+		parentID: {
+			ID1:        parentArkID.ID1,
+			ID2:        parentArkID.ID2,
+			IsTamed:    true,
+			Generation: 1,
+			TamedName:  "Parent",
+		},
+		secondChildID: {
+			ID1:         secondChildArkID.ID1,
+			ID2:         secondChildArkID.ID2,
+			IsTamed:     true,
+			Generation:  2,
+			TamedName:   "Second",
+			AncestorIDs: []arkobject.DinoID{parentArkID},
+		},
+		childID: {
+			ID1:         childArkID.ID1,
+			ID2:         childArkID.ID2,
+			IsTamed:     true,
+			Generation:  2,
+			TamedName:   "Child",
+			AncestorIDs: []arkobject.DinoID{parentArkID},
+		},
+		grandchildID: {
+			ID1:         grandchildArkID.ID1,
+			ID2:         grandchildArkID.ID2,
+			IsTamed:     true,
+			Generation:  3,
+			TamedName:   "Grandchild",
+			AncestorIDs: []arkobject.DinoID{childArkID},
+		},
+		cycleID: {
+			ID1:         51,
+			ID2:         52,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{{ID1: 51, ID2: 52}},
+		},
+	}
+
+	tree, ok := api.PedigreeTree(dinos, parentID)
+
+	if !ok {
+		t.Fatalf("PedigreeTree() ok = false, want true")
+	}
+	if tree.UUID != parentID || tree.DinoID != parentArkID || tree.Name != "Parent" || tree.Generation != 1 {
+		t.Fatalf("PedigreeTree root = %#v", tree)
+	}
+	if tree.DescendantCount != 3 {
+		t.Fatalf("PedigreeTree DescendantCount = %d, want 3", tree.DescendantCount)
+	}
+	if len(tree.Children) != 2 || tree.Children[0].UUID != childID || tree.Children[1].UUID != secondChildID {
+		t.Fatalf("PedigreeTree children = %#v, want stable UUID order", tree.Children)
+	}
+	if len(tree.Children[0].Children) != 1 || tree.Children[0].Children[0].UUID != grandchildID {
+		t.Fatalf("PedigreeTree grandchild branch = %#v", tree.Children[0])
+	}
+	cycleTree, ok := api.PedigreeTree(dinos, cycleID)
+	if !ok {
+		t.Fatalf("PedigreeTree(cycle) ok = false, want true")
+	}
+	if len(cycleTree.Children) != 0 || cycleTree.DescendantCount != 0 {
+		t.Fatalf("PedigreeTree(cycle) = %#v, want self-cycle omitted", cycleTree)
+	}
+}
+
+func TestDinoAPIPedigreeTreesBuildsRootsForAllTamedDinos(t *testing.T) {
+	api := NewDino(nil)
+	parentID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	childID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	wildID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	parentArkID := arkobject.DinoID{ID1: 11, ID2: 12}
+	dinos := map[uuid.UUID]arkobject.Dino{
+		childID: {
+			ID1:         21,
+			ID2:         22,
+			IsTamed:     true,
+			AncestorIDs: []arkobject.DinoID{parentArkID},
+		},
+		wildID: {
+			ID1: 31,
+			ID2: 32,
+		},
+		parentID: {
+			ID1:     parentArkID.ID1,
+			ID2:     parentArkID.ID2,
+			IsTamed: true,
+		},
+	}
+
+	trees := api.PedigreeTrees(dinos)
+
+	if len(trees) != 2 || trees[0].UUID != parentID || trees[1].UUID != childID {
+		t.Fatalf("PedigreeTrees() = %#v, want tamed roots in UUID order", trees)
+	}
+	if trees[0].DescendantCount != 1 || len(trees[0].Children) != 1 || trees[0].Children[0].UUID != childID {
+		t.Fatalf("PedigreeTrees(parent) = %#v, want child branch", trees[0])
+	}
+}
+
 func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	t.Helper()
 

@@ -236,11 +236,14 @@ For the cross-phase monitorable checklist, see
 - [x] Add upstream-compatible tamed dino generation and ancestor ID extraction
       from female/male ancestor arrays.
 - [x] Add read-only childless tamed dino filtering from parsed ancestor IDs;
-      full upstream pedigree rendering/export parity remains pending.
+      full upstream oracle comparison remains blocked by malformed cryopod
+      parsing in the supplied private data.
 - [x] Add read-only Dino API pedigree base helpers for child indexing by
       ancestor ID and descendant traversal through parsed ancestor records.
 - [x] Include child and descendant UUID references in dino domain JSON export
       so consumers can build pedigree trees without reimplementing traversal.
+- [x] Add typed Dino API pedigree tree helpers and nested domain JSON pedigree
+      branches for parsed tamed dinos.
 - [x] Add upstream-style baby dino filtering flags for tamed, wild, and
       cryopodded inclusion.
 - [x] Add read-only Dino API lookup by two-part dino ID with explicit wild

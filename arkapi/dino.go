@@ -46,6 +46,18 @@ type DinoBestStatOptions struct {
 	LevelUpperBound *int32
 }
 
+type DinoPedigreeNode struct {
+	UUID            uuid.UUID
+	DinoID          arkobject.DinoID
+	Blueprint       string
+	Name            string
+	Generation      int
+	IsFemale        bool
+	IsBaby          bool
+	DescendantCount int
+	Children        []DinoPedigreeNode
+}
+
 var nonTameableDinoBlueprints = map[string]struct{}{
 	"/Game/Aberration/Dinos/Basilisk/MegaBasilisk_Character_BP.MegaBasilisk_Character_BP_C":                                         {},
 	"/Game/Aberration/Dinos/ChupaCabra/ChupaCabra_Character_BP_Surface.ChupaCabra_Character_BP_Surface_C":                           {},
@@ -729,6 +741,70 @@ func (d *DinoAPI) DescendantsOf(dinos map[uuid.UUID]arkobject.Dino, root arkobje
 		}
 	}
 	return descendants
+}
+
+func (d *DinoAPI) PedigreeTree(dinos map[uuid.UUID]arkobject.Dino, rootID uuid.UUID) (DinoPedigreeNode, bool) {
+	root, ok := dinos[rootID]
+	if !ok || !root.IsTamed {
+		return DinoPedigreeNode{}, false
+	}
+	children := d.ChildrenByAncestor(dinos)
+	seen := map[uuid.UUID]struct{}{}
+	tree := d.pedigreeTreeFromChildren(dinos, children, rootID, seen)
+	return tree, true
+}
+
+func (d *DinoAPI) PedigreeTrees(dinos map[uuid.UUID]arkobject.Dino) []DinoPedigreeNode {
+	out := make([]DinoPedigreeNode, 0, len(dinos))
+	for _, id := range sortedUUIDKeys(dinos) {
+		tree, ok := d.PedigreeTree(dinos, id)
+		if ok {
+			out = append(out, tree)
+		}
+	}
+	return out
+}
+
+func (d *DinoAPI) pedigreeTreeFromChildren(dinos map[uuid.UUID]arkobject.Dino, children map[arkobject.DinoID][]uuid.UUID, id uuid.UUID, seen map[uuid.UUID]struct{}) DinoPedigreeNode {
+	if _, ok := seen[id]; ok {
+		return DinoPedigreeNode{}
+	}
+	seen[id] = struct{}{}
+	dino := dinos[id]
+	dinoID := arkobject.DinoID{ID1: dino.ID1, ID2: dino.ID2}
+	node := DinoPedigreeNode{
+		UUID:       id,
+		DinoID:     dinoID,
+		Blueprint:  dino.Blueprint,
+		Name:       dino.TamedName,
+		Generation: dino.Generation,
+		IsFemale:   dino.IsFemale,
+		IsBaby:     dino.IsBaby,
+	}
+	for _, childID := range children[dinoID] {
+		if childID == id {
+			continue
+		}
+		child, ok := dinos[childID]
+		if !ok || !child.IsTamed {
+			continue
+		}
+		childNode := d.pedigreeTreeFromChildren(dinos, children, childID, copySeenUUIDs(seen))
+		if childNode.UUID == uuid.Nil {
+			continue
+		}
+		node.DescendantCount += 1 + childNode.DescendantCount
+		node.Children = append(node.Children, childNode)
+	}
+	return node
+}
+
+func copySeenUUIDs(seen map[uuid.UUID]struct{}) map[uuid.UUID]struct{} {
+	out := make(map[uuid.UUID]struct{}, len(seen))
+	for id := range seen {
+		out[id] = struct{}{}
+	}
+	return out
 }
 
 func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int {
