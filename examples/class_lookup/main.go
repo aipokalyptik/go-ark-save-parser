@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
-	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
@@ -23,32 +22,11 @@ func main() {
 	defer save.Close()
 
 	substrings := os.Args[2:]
-	infos, _, err := save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
-		for _, substr := range substrings {
-			if strings.Contains(info.ClassName, substr) {
-				return true
-			}
-		}
-		return false
-	}, []string{"StructureID", "bIsEngram"})
+	summary, _, err := arkapi.NewGeneral(save).ClassLookupSummaryWithFaults(substrings)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "lookup class substring: %v\n", err)
 		os.Exit(1)
 	}
 
-	objects := 0
-	matchedClasses := map[string]struct{}{}
-	for _, info := range infos {
-		container := arkproperty.Container{Properties: info.Properties}
-		if _, ok := container.Value("StructureID"); !ok {
-			continue
-		}
-		if _, ok := container.Value("bIsEngram"); ok {
-			continue
-		}
-		objects++
-		matchedClasses[info.ClassName] = struct{}{}
-	}
-
-	fmt.Printf("objects=%d classes=%d\n", objects, len(matchedClasses))
+	fmt.Printf("objects=%d classes=%d\n", summary.Objects, summary.Classes)
 }

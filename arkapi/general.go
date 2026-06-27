@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -23,6 +24,11 @@ type ObjectSummary struct {
 type ClassPropertySummary struct {
 	Objects    int
 	Properties int
+}
+
+type ClassLookupSummary struct {
+	Objects int
+	Classes int
 }
 
 func NewGeneral(save *arksave.Save) *GeneralAPI {
@@ -91,6 +97,34 @@ func (g *GeneralAPI) ClassPropertySummaryWithFaults(classSubstring string) (Clas
 		}
 	}
 	return ClassPropertySummary{Objects: len(objects), Properties: len(properties)}, faults, nil
+}
+
+func (g *GeneralAPI) ClassLookupSummaryWithFaults(classSubstrings []string) (ClassLookupSummary, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := g.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		for _, substr := range classSubstrings {
+			if strings.Contains(info.ClassName, substr) {
+				return true
+			}
+		}
+		return false
+	}, []string{"StructureID", "bIsEngram"})
+	if err != nil {
+		return ClassLookupSummary{}, nil, err
+	}
+	objects := 0
+	classes := map[string]struct{}{}
+	for _, info := range infos {
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("StructureID"); !ok {
+			continue
+		}
+		if _, ok := container.Value("bIsEngram"); ok {
+			continue
+		}
+		objects++
+		classes[info.ClassName] = struct{}{}
+	}
+	return ClassLookupSummary{Objects: objects, Classes: len(classes)}, faults, nil
 }
 
 func (g *GeneralAPI) ObjectsWithAnyProperty(names []string) ([]*arkobject.GameObject, error) {

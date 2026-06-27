@@ -217,6 +217,47 @@ func TestGeneralClassPropertySummaryReturnsEmptyForNoMatch(t *testing.T) {
 	}
 }
 
+func TestGeneralClassLookupSummaryCountsMatchedStructureClasses(t *testing.T) {
+	wallID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	testID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	engramID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
+	noStructureID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		wallID:        syntheticLookupStructureObjectBytes(0x10000005, false),
+		testID:        syntheticLookupStructureObjectBytes(0x10000001, false),
+		engramID:      syntheticLookupStructureObjectBytes(0x10000005, true),
+		noStructureID: syntheticObjectBytes(0x10000005),
+	})
+	defer save.Close()
+
+	summary, faults, err := NewGeneral(save).ClassLookupSummaryWithFaults([]string{"Wall_Stone", "Test_C"})
+	if err != nil {
+		t.Fatalf("ClassLookupSummaryWithFaults() error = %v", err)
+	}
+	if summary.Objects != 2 || summary.Classes != 2 {
+		t.Fatalf("ClassLookupSummaryWithFaults() = %#v, want 2 objects and 2 classes", summary)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("ClassLookupSummaryWithFaults() faults = %#v, want none", faults)
+	}
+}
+
+func TestGeneralClassLookupSummaryReturnsEmptyForNoSubstrings(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewGeneral(save).ClassLookupSummaryWithFaults(nil)
+	if err != nil {
+		t.Fatalf("ClassLookupSummaryWithFaults(nil) error = %v", err)
+	}
+	if summary.Objects != 0 || summary.Classes != 0 {
+		t.Fatalf("ClassLookupSummaryWithFaults(nil) = %#v, want empty", summary)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("ClassLookupSummaryWithFaults(nil) faults = %#v, want none", faults)
+	}
+}
+
 func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
@@ -251,6 +292,15 @@ func syntheticObjectBytesWithExtraProperty(classNameID uint32) []byte {
 	var buf bytes.Buffer
 	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
 	testfixtures.WriteFloatPropertyID(&buf, 0x10000007, 0x1000000a, 123.5)
+	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
+}
+
+func syntheticLookupStructureObjectBytes(classNameID uint32, isEngram bool) []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteIntPropertyID(&buf, 0x10000006, 0x10000003, 101)
+	if isEngram {
+		testfixtures.WriteBoolPropertyID(&buf, 0x10000013, 0x1000000e, true)
+	}
 	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
 }
 
