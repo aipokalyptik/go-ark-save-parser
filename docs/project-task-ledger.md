@@ -214,7 +214,8 @@ documented.
         blueprint list classifies to the expected kind.
   - [x] Cover cursed shield durability and shield armor defaults in Go stat
         table tests.
-  - [x] Cover cursed weapon durability defaults in Go stat table tests.
+  - [x] Cover inferable cursed weapon durability defaults in Go stat table
+        tests.
   - [x] Cover base and cursed Tek sword durability defaults in Go stat table
         tests.
   - [ ] Exact equipment ranking count and average-stat parity, still limited by
