@@ -1,8 +1,6 @@
 package arkapi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -504,7 +502,7 @@ func TestPlayerAPIPlayerInventoriesWithFaultsKeepsMissingInventoryFault(t *testi
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			pawnID: savePlayerPawnObjectBytes(42, missingInventoryID),
+			pawnID: testfixtures.PlayerPawnGameObjectBytes(42, missingInventoryID),
 		},
 	})
 	save, err := arksave.Open(path)
@@ -665,8 +663,8 @@ func TestPlayerInventorySummaryFromPathFallsBackToDirectoryPlayers(t *testing.T)
 	testfixtures.WriteSave(t, savePath, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
-			uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff"): savePlayerPawnObjectBytes(42, inventoryID),
-			inventoryID: saveInventoryObjectBytes(
+			uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff"): testfixtures.PlayerPawnGameObjectBytes(42, inventoryID),
+			inventoryID: testfixtures.InventoryGameObjectBytes(
 				inventoryID,
 				firstItemID,
 				secondItemID,
@@ -709,8 +707,8 @@ func TestPlayerAPIPlayerInventoryByDataIDIgnoresUnrelatedBrokenObjects(t *testin
 		Header: testfixtures.Header("Valguero_WP", nil),
 		Objects: map[uuid.UUID][]byte{
 			playerID:    testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 42, CharacterName: "Survivor", PlayerName: "PlatformName", TribeID: 12345}),
-			pawnID:      savePlayerPawnObjectBytes(42, inventoryID),
-			inventoryID: saveInventoryObjectBytes(inventoryID, firstItemID),
+			pawnID:      testfixtures.PlayerPawnGameObjectBytes(42, inventoryID),
+			inventoryID: testfixtures.InventoryGameObjectBytes(inventoryID, firstItemID),
 			faultyID:    testfixtures.PlayerGameObjectBytes(testfixtures.PlayerArchiveOptions{PlayerDataID: 99, CharacterName: "Broken"})[:40],
 		},
 	})
@@ -836,8 +834,8 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 				Members:   []string{"Survivor"},
 				MemberIDs: []int32{42},
 			}),
-			pawnID:      savePlayerPawnObjectBytes(42, inventoryID),
-			inventoryID: saveInventoryObjectBytes(inventoryID, firstItemID, secondItemID),
+			pawnID:      testfixtures.PlayerPawnGameObjectBytes(42, inventoryID),
+			inventoryID: testfixtures.InventoryGameObjectBytes(inventoryID, firstItemID, secondItemID),
 		},
 	})
 	save, err := arksave.Open(path)
@@ -845,45 +843,6 @@ func openSyntheticPlayerTribeSave(t *testing.T) *arksave.Save {
 		t.Fatalf("Open(save) error = %v", err)
 	}
 	return save
-}
-
-func savePlayerPawnObjectBytes(playerDataID int32, inventoryID uuid.UUID) []byte {
-	var props bytes.Buffer
-	testfixtures.WriteNameIntProperty(&props, "LinkedPlayerDataID", playerDataID)
-	testfixtures.WriteNameObjectPathProperty(&props, "MyInventoryComponent", inventoryID.String())
-	writeNameVectorProperty(&props, "SavedBaseWorldLocation", 11, 22, 33)
-	testfixtures.WriteArkString(&props, "None")
-	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'", []string{"PlayerPawn_0"}, props.Bytes())
-}
-
-func writeNameVectorProperty(buf *bytes.Buffer, name string, x float64, y float64, z float64) {
-	testfixtures.WriteArkString(buf, name)
-	testfixtures.WriteArkString(buf, "StructProperty")
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	testfixtures.WriteArkString(buf, "Vector")
-	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
-	testfixtures.WriteArkString(buf, "/Script/CoreUObject")
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
-	buf.WriteByte(8)
-	_ = binary.Write(buf, binary.LittleEndian, x)
-	_ = binary.Write(buf, binary.LittleEndian, y)
-	_ = binary.Write(buf, binary.LittleEndian, z)
-}
-
-func saveInventoryObjectBytes(inventoryID uuid.UUID, itemIDs ...uuid.UUID) []byte {
-	values := make([]string, 0, len(itemIDs))
-	for _, id := range itemIDs {
-		values = append(values, id.String())
-	}
-	var props bytes.Buffer
-	testfixtures.WriteNameObjectPathArrayProperty(&props, "InventoryItems", values)
-	testfixtures.WriteArkString(&props, "None")
-	return saveObjectBytes("Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'", []string{inventoryID.String()}, props.Bytes())
-}
-
-func saveObjectBytes(className string, names []string, properties []byte) []byte {
-	return testfixtures.GameObjectBytesWithNames(className, names, properties)
 }
 
 func TestPlayerAPIFiltersLocalPlayersByNamesAndUniqueID(t *testing.T) {

@@ -144,6 +144,49 @@ func PlayerGameObjectBytes(opts PlayerArchiveOptions) []byte {
 	)
 }
 
+func PlayerPawnGameObjectBytes(playerDataID int32, inventoryID uuid.UUID) []byte {
+	var props bytes.Buffer
+	WriteNameIntProperty(&props, "LinkedPlayerDataID", playerDataID)
+	WriteNameObjectPathProperty(&props, "MyInventoryComponent", inventoryID.String())
+	writeNameVectorProperty(&props, "SavedBaseWorldLocation", 11, 22, 33)
+	WriteArkString(&props, "None")
+	return GameObjectBytesWithNames(
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'",
+		[]string{"PlayerPawn_0"},
+		props.Bytes(),
+	)
+}
+
+func InventoryGameObjectBytes(inventoryID uuid.UUID, itemIDs ...uuid.UUID) []byte {
+	values := make([]string, 0, len(itemIDs))
+	for _, id := range itemIDs {
+		values = append(values, id.String())
+	}
+	var props bytes.Buffer
+	WriteNameObjectPathArrayProperty(&props, "InventoryItems", values)
+	WriteArkString(&props, "None")
+	return GameObjectBytesWithNames(
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Inventories/PrimalInventoryTest.PrimalInventoryTest_C'",
+		[]string{inventoryID.String()},
+		props.Bytes(),
+	)
+}
+
+func writeNameVectorProperty(buf *bytes.Buffer, name string, x float64, y float64, z float64) {
+	WriteArkString(buf, name)
+	WriteArkString(buf, "StructProperty")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	WriteArkString(buf, "Vector")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(1))
+	WriteArkString(buf, "/Script/CoreUObject")
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))
+	_ = binary.Write(buf, binary.LittleEndian, uint32(24))
+	buf.WriteByte(8)
+	_ = binary.Write(buf, binary.LittleEndian, x)
+	_ = binary.Write(buf, binary.LittleEndian, y)
+	_ = binary.Write(buf, binary.LittleEndian, z)
+}
+
 func playerProperties(opts PlayerArchiveOptions) []byte {
 	var myData bytes.Buffer
 	WriteNameIntProperty(&myData, "PlayerDataID", opts.PlayerDataID)

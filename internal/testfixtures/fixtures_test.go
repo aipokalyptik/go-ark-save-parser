@@ -7,6 +7,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/google/uuid"
 )
 
@@ -168,6 +170,68 @@ func TestCryopodSaddlePayloadWritesSupportedNoHeaderPayload(t *testing.T) {
 	if !bytes.Contains(payload, []byte("ItemArchetype")) {
 		t.Fatalf("CryopodSaddlePayload() missing ItemArchetype property")
 	}
+}
+
+func TestPlayerPawnGameObjectBytesWritesParseablePawnObject(t *testing.T) {
+	inventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	pawnID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+
+	object, err := arkobject.ParseGameObject(pawnID, PlayerPawnGameObjectBytes(42, inventoryID), nil, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(player pawn) error = %v", err)
+	}
+	if object.Blueprint != "Blueprint'/Game/PrimalEarth/CoreBlueprints/PlayerPawnTest.PlayerPawnTest_C'" {
+		t.Fatalf("Blueprint = %q, want player pawn test blueprint", object.Blueprint)
+	}
+	if got, ok := object.Value("LinkedPlayerDataID"); !ok || got != int32(42) {
+		t.Fatalf("LinkedPlayerDataID = %#v, %v; want 42, true", got, ok)
+	}
+	rawInventory, ok := object.Value("MyInventoryComponent")
+	if !ok {
+		t.Fatalf("MyInventoryComponent missing")
+	}
+	inventoryRef, ok := rawInventory.(arkproperty.ObjectReference)
+	if !ok {
+		t.Fatalf("MyInventoryComponent type = %T, want ObjectReference", rawInventory)
+	}
+	if inventoryRef.Type != arkproperty.ObjectReferencePath || inventoryRef.Value != inventoryID.String() {
+		t.Fatalf("MyInventoryComponent = %#v, want object-path reference %s", inventoryRef, inventoryID)
+	}
+	if _, ok := object.Value("SavedBaseWorldLocation"); !ok {
+		t.Fatalf("SavedBaseWorldLocation missing")
+	}
+}
+
+func TestInventoryGameObjectBytesWritesParseableInventoryObject(t *testing.T) {
+	inventoryID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	firstItemID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	secondItemID := uuid.MustParse("99992222-3333-4444-5555-666677778888")
+
+	object, err := arkobject.ParseGameObject(inventoryID, InventoryGameObjectBytes(inventoryID, firstItemID, secondItemID), nil, nil)
+	if err != nil {
+		t.Fatalf("ParseGameObject(inventory) error = %v", err)
+	}
+	inventory := arkobject.InventoryFromObject(object)
+	if inventory.UUID != inventoryID {
+		t.Fatalf("Inventory UUID = %s, want %s", inventory.UUID, inventoryID)
+	}
+	if inventory.NumberOfItems() != 2 {
+		t.Fatalf("NumberOfItems() = %d, want 2; item UUIDs %#v", inventory.NumberOfItems(), inventory.ItemUUIDs)
+	}
+	for _, want := range []uuid.UUID{firstItemID, secondItemID} {
+		if !inventoryHasItem(inventory, want) {
+			t.Fatalf("inventory item UUIDs = %#v, missing %s", inventory.ItemUUIDs, want)
+		}
+	}
+}
+
+func inventoryHasItem(inventory arkobject.Inventory, want uuid.UUID) bool {
+	for _, got := range inventory.ItemUUIDs {
+		if got == want {
+			return true
+		}
+	}
+	return false
 }
 
 func readFixtureArkString(t *testing.T, data []byte) (string, []byte) {
