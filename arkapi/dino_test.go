@@ -581,6 +581,45 @@ func TestDinoAPIFilterWildTamableDropsKnownNonTameableClasses(t *testing.T) {
 	}
 }
 
+func TestDinoAPIWildTamableSummaryForDinosCountsWildAndTamable(t *testing.T) {
+	api := DinoAPI{}
+	dinos := map[uuid.UUID]arkobject.Dino{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Dragonfly/Dragonfly_Character_BP.Dragonfly_Character_BP_C'",
+		},
+		uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): {
+			Blueprint: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			IsTamed:   true,
+		},
+	}
+
+	summary := api.WildTamableSummaryForDinos(dinos)
+	want := WildTamableSummary{WildDinos: 2, WildTamables: 1}
+	if summary != want {
+		t.Fatalf("WildTamableSummaryForDinos() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestDinoAPIWildTamableSummaryWithFaultsReadsSaveWildDinos(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewDino(save).WildTamableSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("WildTamableSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("WildTamableSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	want := WildTamableSummary{WildDinos: 1, WildTamables: 1}
+	if summary != want {
+		t.Fatalf("WildTamableSummaryWithFaults() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestDinoAPIContainerOfInventoryFindsInventoryBearingDino(t *testing.T) {
 	save := openSyntheticDinoDetailSave(t)
 	defer save.Close()

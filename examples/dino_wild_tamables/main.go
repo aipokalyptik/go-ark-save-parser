@@ -22,10 +22,10 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewDino(save)
-	wild, _, err := api.WildWithFaults()
+	summary, _, err := api.WildTamableSummaryWithFaults()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read wild dinos: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("wild_dinos=%d wild_tamables=%d\n", len(wild), len(wild))
+	fmt.Printf("wild_dinos=%d wild_tamables=%d\n", summary.WildDinos, summary.WildTamables)
 }

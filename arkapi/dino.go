@@ -40,6 +40,11 @@ type BabyCounts struct {
 	Tamed int
 }
 
+type WildTamableSummary struct {
+	WildDinos    int
+	WildTamables int
+}
+
 type DinoBestStatOptions struct {
 	Blueprints      []string
 	Stats           []arkobject.DinoStat
@@ -353,6 +358,24 @@ func (d *DinoAPI) WildTamableWithFaults() (map[uuid.UUID]arkobject.Dino, []arksa
 		return nil, nil, err
 	}
 	return d.FilterWildTamable(wild), faults, nil
+}
+
+func (d *DinoAPI) WildTamableSummaryForDinos(dinos map[uuid.UUID]arkobject.Dino) WildTamableSummary {
+	wild := 0
+	for _, dino := range dinos {
+		if !dino.IsTamed {
+			wild++
+		}
+	}
+	return WildTamableSummary{WildDinos: wild, WildTamables: len(d.FilterWildTamable(dinos))}
+}
+
+func (d *DinoAPI) WildTamableSummaryWithFaults() (WildTamableSummary, []arksave.FaultyObjectInfo, error) {
+	wild, faults, err := d.WildWithFaults()
+	if err != nil {
+		return WildTamableSummary{}, nil, err
+	}
+	return d.WildTamableSummaryForDinos(wild), faults, nil
 }
 
 func (d *DinoAPI) FilterWildTamable(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {
