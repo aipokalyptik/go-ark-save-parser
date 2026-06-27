@@ -20,7 +20,8 @@ func main() {
 	api := arkapi.NewCluster(cluster)
 	summary := api.Summary()
 	items := api.ItemSummary()
-	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d other_items=%d crafted=%d unsupported_items=%d parse_errors=%d\n",
+	dinos := api.DinoSummary()
+	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d other_items=%d crafted=%d unsupported_items=%d parsed_dinos=%d unsupported_dinos=%d dino_parse_errors=%d embedded_objects=%d parse_errors=%d\n",
 		summary.ID,
 		summary.ItemCount,
 		summary.DinoCount,
@@ -29,6 +30,10 @@ func main() {
 		items.OtherItems,
 		items.CraftedItems,
 		items.UnsupportedVersionItems,
+		dinos.ParsedDinos,
+		dinos.UnsupportedVersionDinos,
+		dinos.ParseErrorDinos,
+		dinos.TotalEmbeddedObjects,
 		summary.ParseErrorCount,
 	)
 }

@@ -144,4 +144,11 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	if summary.ID != "EOS_abc123" || summary.ItemCount != 0 || summary.DinoCount != 3 || summary.ParseErrorCount != 1 || summary.ObjectCount != 1 {
 		t.Fatalf("Summary() = %#v", summary)
 	}
+	dinoSummary := api.DinoSummary()
+	if dinoSummary.Dinos != 3 || dinoSummary.ParsedDinos != 2 || dinoSummary.ParseErrorDinos != 1 || dinoSummary.UnsupportedVersionDinos != 1 {
+		t.Fatalf("DinoSummary() counts = %#v, want 3 dinos, 2 parsed, 1 parse error, 1 unsupported version", dinoSummary)
+	}
+	if dinoSummary.WithStatusComponent != 1 || dinoSummary.WithAIController != 1 || dinoSummary.WithInventoryComponent != 1 || dinoSummary.TotalEmbeddedObjects != 4 || dinoSummary.MaxEmbeddedObjects != 4 {
+		t.Fatalf("DinoSummary() component counts = %#v, want one component-bearing dino with four embedded objects", dinoSummary)
+	}
 }

@@ -136,7 +136,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 - `cluster_json`: read one local cluster file and print the cluster upload
   summary JSON.
 - `cluster_typed`: read one local cluster file through the typed cluster API
-  and print item/dino type counts plus crafted and unsupported item counts.
+  and print item/dino type counts plus crafted, unsupported, parsed dino, and
+  embedded-object counts.
 - `local_tribute`: read local compact tribute index files and print aggregate
   player-data and tribe-data ID counts.
 - `tribute_json`: read one local compact tribute index file or directory and

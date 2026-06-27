@@ -33,6 +33,19 @@ type ClusterItemSummary struct {
 	MaxQuality              int32
 }
 
+type ClusterDinoSummary struct {
+	Dinos                   int
+	ParsedDinos             int
+	ParseErrorDinos         int
+	SupportedVersionDinos   int
+	UnsupportedVersionDinos int
+	WithStatusComponent     int
+	WithAIController        int
+	WithInventoryComponent  int
+	TotalEmbeddedObjects    int
+	MaxEmbeddedObjects      int
+}
+
 func NewCluster(data *arkcluster.Data) *ClusterAPI {
 	return &ClusterAPI{data: data}
 }
@@ -204,6 +217,38 @@ func (c *ClusterAPI) ParseErrorCount() int {
 		}
 	}
 	return count
+}
+
+func (c *ClusterAPI) DinoSummary() ClusterDinoSummary {
+	dinos := c.DinosTyped()
+	summary := ClusterDinoSummary{Dinos: len(dinos)}
+	for _, dino := range dinos {
+		if dino.Parsed() {
+			summary.ParsedDinos++
+		}
+		if dino.HasParseError() {
+			summary.ParseErrorDinos++
+		}
+		if dino.SupportedVersion() {
+			summary.SupportedVersionDinos++
+		} else if dino.UnsupportedVersion() {
+			summary.UnsupportedVersionDinos++
+		}
+		if len(dino.StatusComponentClassNames) > 0 {
+			summary.WithStatusComponent++
+		}
+		if len(dino.AIControllerClassNames) > 0 {
+			summary.WithAIController++
+		}
+		if len(dino.InventoryComponentClassNames) > 0 {
+			summary.WithInventoryComponent++
+		}
+		summary.TotalEmbeddedObjects += dino.ObjectCount
+		if dino.ObjectCount > summary.MaxEmbeddedObjects {
+			summary.MaxEmbeddedObjects = dino.ObjectCount
+		}
+	}
+	return summary
 }
 
 func (c *ClusterAPI) Summary() ClusterSummary {
