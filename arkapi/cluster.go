@@ -70,7 +70,7 @@ func (c *ClusterAPI) ItemsByType(typeName string) []arkcluster.Item {
 	}
 	var out []arkcluster.Item
 	for _, item := range c.data.Items {
-		if clusterItemType(item) == typeName {
+		if clusterItemType(item).String() == typeName {
 			out = append(out, item)
 		}
 	}
@@ -84,7 +84,7 @@ func (c *ClusterAPI) ItemsByTypeTyped(typeName string) []arkobject.ClusterItem {
 	var out []arkobject.ClusterItem
 	for _, item := range c.data.Items {
 		itemType := clusterItemType(item)
-		if itemType == typeName {
+		if itemType.String() == typeName {
 			out = append(out, arkobject.ClusterItemFromUpload(item, itemType))
 		}
 	}
@@ -130,7 +130,7 @@ func (c *ClusterAPI) ItemCountsByType() map[string]int {
 		return counts
 	}
 	for _, item := range c.data.Items {
-		counts[clusterItemType(item)]++
+		counts[clusterItemType(item).String()]++
 	}
 	return counts
 }

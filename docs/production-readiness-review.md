@@ -10,8 +10,8 @@ print private `.oracle` contents.
 
 The project is a useful offline read-only foundation, but it is not yet
 production-complete against the original compatibility goal. Current blockers
-are complete runnable-example oracle coverage and full offline domain/API
-coverage, not basic build health.
+are full chosen-feature offline domain/API coverage and remaining parser edge
+behavior, not basic build health or expanded Python oracle coverage.
 
 Public verification reported by reviewers:
 
@@ -20,7 +20,7 @@ Public verification reported by reviewers:
 
 ## Blockers
 
-- Oracle parity evidence has expanded but is still incomplete. The committed
+- Oracle parity evidence exists for selected implemented features. The committed
   oracle comparison summary currently covers forty-six implemented aggregate
   read-only cases: `map_summary`, `object_classes`, `object_summary`,
   `property_positions`,
@@ -39,9 +39,9 @@ Public verification reported by reviewers:
   `structure_owner_locations`, `structure_at_location`, `base_components`,
   `domain_json_dinos`, `cluster_json`, `local_tribute`, `tribute_json`, and
   `logging_config`.
-  Phase 4 still requires comparison
-  coverage for every runnable offline Python example where a Go counterpart
-  exists or is feasible.
+  Expanding comparison coverage to every runnable upstream Python example is
+  intentionally out of scope; future oracle use should be limited to existing
+  evidence or focused checks that directly support chosen Go feature parity.
 - Full offline API/domain compatibility remains incomplete. Phase 2 still has
   open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
   richer local cluster models, remaining read-first object wrappers, and
@@ -109,20 +109,14 @@ Public verification reported by reviewers:
   fault-tolerant full-object parse summary with parsed-object and parse-fault
   counts; on the large private Valguero save this remains too slow for the
   default oracle comparison suite and should be treated as a manual smoke path.
-- Some upstream read-only examples are not stable oracle candidates on the
-  private save yet. In particular, `DinoApi.get_all_babies(include_wild=True)`
-  produced high-volume parser debug output and previously failed in an embedded
-  cryopod path before returning a stable aggregate; defer that comparison until
-  the remaining legacy/modded cryopod handling is improved or a quieter
-  upstream invocation is available.
-- The upstream cryopod-location and pedigree examples were also probed after
-  this review and are currently blocked as oracle cases on the supplied private
-  save by malformed embedded cryopod parsing before stable aggregate output.
+- Some upstream read-only examples were not stable oracle candidates on the
+  private save. They are now treated as reference context only; do not spend
+  project time expanding the Python/oracle suite unless a focused check is
+  needed to validate a chosen Go feature.
 
 ## Next Actions
 
-1. Expand oracle comparison coverage one runnable offline example at a time.
-2. Continue filling domain/API gaps with synthetic tests and private oracle
-   comparison where runnable upstream behavior exists.
-3. Continue routing high-volume CLI/examples through fault-tolerant object scans
+1. Continue filling chosen offline domain/API gaps with synthetic tests and
+   existing private oracle evidence where it is already useful.
+2. Continue routing high-volume CLI/examples through fault-tolerant object scans
    where upstream behavior skips faulty rows instead of aborting the run.

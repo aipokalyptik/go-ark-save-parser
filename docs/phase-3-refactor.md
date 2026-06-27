@@ -44,6 +44,8 @@ For the cross-phase monitorable checklist, see
       dino parse-status filtering, and summary metadata.
 - [x] Add typed local cluster domain projections for uploaded items and dinos
       while preserving raw `arkcluster` accessors.
+- [x] Add typed local cluster uploaded-item type constants and helper methods
+      while preserving string-based filter and JSON compatibility.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full

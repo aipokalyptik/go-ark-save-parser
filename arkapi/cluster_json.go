@@ -5,6 +5,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
@@ -63,7 +64,7 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 	for _, item := range data.Items {
 		info.Items = append(info.Items, ClusterItemInfo{
 			Index:                item.Index,
-			Type:                 clusterItemType(item),
+			Type:                 clusterItemType(item).String(),
 			Version:              item.Version,
 			UploadTime:           item.UploadTime,
 			Blueprint:            item.Blueprint,
@@ -107,14 +108,14 @@ func archiveClassNames(archive *arkarchive.Archive) []string {
 	return names
 }
 
-func clusterItemType(item arkcluster.Item) string {
+func clusterItemType(item arkcluster.Item) arkobject.ClusterItemType {
 	switch {
 	case NewDino(nil).IsApplicableBlueprint(item.Blueprint) && hasCustomItemDatas(item.Properties):
-		return "dino"
+		return arkobject.ClusterItemTypeDino
 	case NewEquipment(nil).IsApplicableBlueprint(item.Blueprint):
-		return "equipment"
+		return arkobject.ClusterItemTypeEquipment
 	default:
-		return "other"
+		return arkobject.ClusterItemTypeOther
 	}
 }
 

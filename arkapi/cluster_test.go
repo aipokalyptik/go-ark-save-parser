@@ -5,6 +5,7 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
@@ -46,6 +47,15 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	typed := api.ItemsTyped()
 	if len(typed) != 3 || typed[0].Type != "dino" || typed[1].Type != "equipment" || typed[2].Type != "other" {
 		t.Fatalf("ItemsTyped() = %#v, want dino/equipment/other projections", typed)
+	}
+	if typed[0].Type != "dino" || typed[0].ItemType() != arkobject.ClusterItemTypeDino || !typed[0].IsDinoUpload() || typed[0].IsEquipmentUpload() || typed[0].IsOtherUpload() {
+		t.Fatalf("typed dino item helpers = %#v, want dino upload only", typed[0])
+	}
+	if typed[1].Type != "equipment" || typed[1].ItemType() != arkobject.ClusterItemTypeEquipment || !typed[1].IsEquipmentUpload() || typed[1].IsDinoUpload() || typed[1].IsOtherUpload() {
+		t.Fatalf("typed equipment item helpers = %#v, want equipment upload only", typed[1])
+	}
+	if typed[2].Type != "other" || typed[2].ItemType() != arkobject.ClusterItemTypeOther || !typed[2].IsOtherUpload() || typed[2].IsDinoUpload() || typed[2].IsEquipmentUpload() {
+		t.Fatalf("typed other item helpers = %#v, want other upload only", typed[2])
 	}
 	if got := api.ItemsByTypeTyped("dino"); len(got) != 1 || got[0].Index != 0 || got[0].Type != "dino" {
 		t.Fatalf("ItemsByTypeTyped(dino) = %#v, want typed item index 0", got)

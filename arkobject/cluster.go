@@ -5,6 +5,18 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 )
 
+type ClusterItemType string
+
+const (
+	ClusterItemTypeDino      ClusterItemType = "dino"
+	ClusterItemTypeEquipment ClusterItemType = "equipment"
+	ClusterItemTypeOther     ClusterItemType = "other"
+)
+
+func (t ClusterItemType) String() string {
+	return string(t)
+}
+
 type ClusterItem struct {
 	Index                int
 	Type                 string
@@ -30,10 +42,35 @@ type ClusterDino struct {
 	Properties  arkproperty.Container
 }
 
-func ClusterItemFromUpload(item arkcluster.Item, typeName string) ClusterItem {
+func (i ClusterItem) IsDinoUpload() bool {
+	return i.ItemType() == ClusterItemTypeDino
+}
+
+func (i ClusterItem) IsEquipmentUpload() bool {
+	return i.ItemType() == ClusterItemTypeEquipment
+}
+
+func (i ClusterItem) IsOtherUpload() bool {
+	return i.ItemType() == ClusterItemTypeOther
+}
+
+// ItemType normalizes the known upload type strings and treats any unknown
+// string as "other"; the raw Type field remains available for compatibility.
+func (i ClusterItem) ItemType() ClusterItemType {
+	switch ClusterItemType(i.Type) {
+	case ClusterItemTypeDino:
+		return ClusterItemTypeDino
+	case ClusterItemTypeEquipment:
+		return ClusterItemTypeEquipment
+	default:
+		return ClusterItemTypeOther
+	}
+}
+
+func ClusterItemFromUpload(item arkcluster.Item, itemType ClusterItemType) ClusterItem {
 	return ClusterItem{
 		Index:                item.Index,
-		Type:                 typeName,
+		Type:                 itemType.String(),
 		Version:              item.Version,
 		UploadTime:           item.UploadTime,
 		Blueprint:            item.Blueprint,

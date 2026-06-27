@@ -37,7 +37,7 @@ For the cross-phase monitorable checklist, see
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
 - [x] Synthetic domain JSON export tests for dinos, structures, equipment,
       stackables, players, tribes, and bases.
-- [x] Private oracle comparison harness for implemented read-only Go examples;
+- [x] Private oracle comparison harness for selected implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local
       profile/tribe aggregate counts, local player deaths and unlocked engram
@@ -54,7 +54,9 @@ For the cross-phase monitorable checklist, see
       structure owner and map-coordinate/connected counts, local cluster JSON
       aggregate counts, local tribute aggregate counts, and tribute JSON
       aggregate counts.
-- [ ] Private oracle comparison suite for every runnable Python example.
+- [x] Expanding private oracle comparison coverage to every runnable upstream
+      Python example is intentionally out of scope; use existing oracle evidence
+      only when it helps selected-feature Go parity.
 - [x] Final review for parser parity, API coverage, privacy, docs, and release
       readiness. Current review findings are recorded in
       `docs/production-readiness-review.md`; production readiness is still

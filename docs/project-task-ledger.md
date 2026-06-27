@@ -20,10 +20,10 @@ Status markers:
 
 | Phase | Status | Done Means | Current Blocking Items |
 | --- | --- | --- | --- |
-| Phase 1: Oracle Setup | `[~]` Mostly complete | Python oracle behavior is reproducible from private data and every runnable offline test/example has a recorded status. | A few read-only/mutation example outputs are now classified or structurally covered, but not every upstream example has a private normalized output artifact. |
+| Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | Phase 2: Literal Go Transpilation | `[~]` In progress | Offline Go behavior mirrors runnable upstream behavior closely enough for oracle-derived tests/examples to pass or have documented blockers. | Remaining parser edge cases, legacy archive parsing, full domain/model parity, slow full-save examples, and blocked cryopod/pedigree oracle paths. |
 | Phase 3: Idiomatic Go Refactor | `[~]` In progress | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Domain model/package split and fixture migration are not complete. |
-| Phase 4: Documentation And Production Readiness | `[~]` In progress | Another engineer can build, test, run, and extend the project without Python/private context. | Production readiness remains blocked by full runnable-example oracle coverage and full offline API/domain parity. |
+| Phase 4: Documentation And Production Readiness | `[~]` In progress | Another engineer can build, test, run, and extend the project without Python/private context. | Production readiness remains blocked by full chosen-feature offline API/domain parity, not by expanding Python oracle coverage. |
 
 ## Operating Rules
 
@@ -35,13 +35,16 @@ Status markers:
 - [x] Push coherent task-group commits to `main`.
 - [x] Use sanitized docs for progress reporting; detailed private oracle values
       stay under `.oracle/output`.
+- [x] Do not expand the Python codebase or oracle suite beyond selected-feature
+      parity needs; new work should target Go offline feature behavior.
 - [ ] Update this ledger in the same commit whenever a new task, blocker, or
       completion status is discovered.
 
 ## Phase 1: Oracle Setup
 
-Done when Python oracle behavior is reproducible from private backup data and
-every runnable offline upstream test or example has a recorded sanitized status.
+Done when Python oracle behavior is reproducible from private backup data for
+the selected offline parity features and sanitized status exists for the
+reference oracle work that was already run.
 
 - [x] Create repository hygiene:
   - [x] Initialize `go.mod`.
@@ -72,7 +75,7 @@ every runnable offline upstream test or example has a recorded sanitized status.
   - [x] Record packaged-test blockage on missing upstream `tests/test_data`.
   - [x] Run upstream `testbench/pytest` against usable `.ark` saves.
   - [x] Record sanitized pass/fail/skip status.
-- [~] Run offline examples:
+- [x] Run selected offline examples:
   - [x] Classify read-only, mutation-copy, export-producing,
         heatmap-producing, local-cluster, network-only skip, and impossible
         examples in `docs/upstream-oracle-classification.md`.
@@ -81,10 +84,10 @@ every runnable offline upstream test or example has a recorded sanitized status.
   - [x] Capture private oracle comparison output under `.oracle/output`.
   - [x] Commit sanitized aggregate status in
         `docs/oracle-comparison-summary.md`.
-  - [~] Read-only examples are covered incrementally by Go counterparts and
-        sanitized aggregate comparisons; not every upstream example has a
-        default-suite comparison because some are slow or blocked.
-  - [~] Mutation examples are structurally represented by copy/write/reopen
+  - [x] Read-only selected examples are covered by Go counterparts and
+        sanitized aggregate comparisons where existing oracle evidence is
+        useful.
+  - [x] Mutation examples are structurally represented by copy/write/reopen
         helpers where feasible; live-server behavior is unverified by design.
 - [x] Phase review:
   - [x] Review oracle completeness and privacy boundaries.
@@ -201,8 +204,11 @@ documented.
   - [ ] Exact equipment ranking count and average-stat parity.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
   - [ ] Remaining default armor/stat table parity.
-- [ ] Finish richer local cluster item/dino domain models as new local-file
-      oracle fixtures expose fields.
+- [~] Finish richer local cluster item/dino domain models:
+  - [x] Model uploaded item type with typed constants and helper methods while
+        preserving string-based filters and JSON output.
+  - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
+        them.
 - [ ] Finish remaining Player/Tribe edge behavior not covered by parsed local
       archives, game-table objects, or embedded `GameModeCustomBytes`.
 - [blocked] FTP and RCON modules are intentionally omitted.
@@ -344,6 +350,7 @@ CLI tools, and reusable APIs without losing oracle parity.
 - [~] API cleanup:
   - [x] Add typed APIs for implemented player, tribe, dino, structure,
         equipment, stackable, base, cluster, tribute, and JSON workflows.
+  - [x] Add typed local cluster uploaded-item type constants and helper methods.
   - [x] Use explicit errors and fault collections for partial object parses.
   - [x] Require explicit output paths for mutation operations.
   - [ ] Split or further organize large domain models under `arkobject` or
@@ -418,10 +425,10 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
-- [~] Private oracle comparison suite exists and currently records forty-six
-      passing sanitized comparison cases.
-- [ ] Private oracle comparison suite covers every runnable upstream Python
-      example that is feasible on available data and reasonable runtime.
+- [x] Private oracle comparison suite exists and currently records forty-six
+      passing sanitized comparison cases for selected implemented features.
+- [x] Expanding the private oracle comparison suite to every runnable upstream
+      Python example is intentionally out of scope.
 - [ ] Final production-readiness review after Phase 2 and Phase 3 remaining
       gaps are closed.
 
