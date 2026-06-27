@@ -818,6 +818,21 @@ func (d *DinoAPI) CountByLevel(dinos map[uuid.UUID]arkobject.Dino) map[int32]int
 	return counts
 }
 
+func (d *DinoAPI) MaxCurrentLevel(dinos map[uuid.UUID]arkobject.Dino) (int32, bool) {
+	var max int32
+	ok := false
+	for _, dino := range dinos {
+		if dino.Stats == nil {
+			continue
+		}
+		if !ok || dino.Stats.CurrentLevel > max {
+			max = dino.Stats.CurrentLevel
+			ok = true
+		}
+	}
+	return max, ok
+}
+
 func (d *DinoAPI) CountByClass(dinos map[uuid.UUID]arkobject.Dino) map[string]int {
 	counts := map[string]int{}
 	for _, dino := range dinos {

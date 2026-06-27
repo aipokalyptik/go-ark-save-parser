@@ -575,6 +575,14 @@ func TestEquipmentAPITopItemHelpersMirrorExampleSelections(t *testing.T) {
 		t.Fatalf("BestWeaponDamage() = %s %#v, want second weapon", id, item)
 	}
 
+	id, item, ok = api.BestArmor(items)
+	if !ok {
+		t.Fatalf("BestArmor() ok = false, want true")
+	}
+	if id != thirdID || item.Stats.Armor != 45 {
+		t.Fatalf("BestArmor() = %s %#v, want armor with armor 45", id, item)
+	}
+
 	id, item, ok = api.BestActualDurability(items)
 	if !ok {
 		t.Fatalf("BestActualDurability() ok = false, want true")

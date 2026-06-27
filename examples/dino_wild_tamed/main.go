@@ -21,17 +21,16 @@ func main() {
 	}
 	defer save.Close()
 
-	dinos, _, err := arkapi.NewDino(save).WildTamedWithFaults()
+	api := arkapi.NewDino(save)
+	dinos, _, err := api.WildTamedWithFaults()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read wild-tamed dinos: %v\n", err)
 		os.Exit(1)
 	}
 
 	maxLevel := int32(0)
-	for _, dino := range dinos {
-		if dino.Stats != nil && dino.Stats.CurrentLevel > maxLevel {
-			maxLevel = dino.Stats.CurrentLevel
-		}
+	if level, ok := api.MaxCurrentLevel(dinos); ok {
+		maxLevel = level
 	}
 	fmt.Printf("wild_tamed=%d max_level=%d\n", len(dinos), maxLevel)
 }

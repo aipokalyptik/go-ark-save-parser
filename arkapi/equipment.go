@@ -400,6 +400,17 @@ func (e *EquipmentAPI) BestWeaponDamage(items map[uuid.UUID]arkobject.EquipmentI
 	})
 }
 
+func (e *EquipmentAPI) BestArmor(items map[uuid.UUID]arkobject.EquipmentItem) (uuid.UUID, arkobject.EquipmentItem, bool) {
+	return e.best(items, func(item arkobject.EquipmentItem) (float64, bool) {
+		switch item.Kind {
+		case arkobject.EquipmentArmor, arkobject.EquipmentSaddle, arkobject.EquipmentShield:
+			return item.Stats.Armor, true
+		default:
+			return 0, false
+		}
+	})
+}
+
 func (e *EquipmentAPI) BestActualDurability(items map[uuid.UUID]arkobject.EquipmentItem) (uuid.UUID, arkobject.EquipmentItem, bool) {
 	return e.best(items, func(item arkobject.EquipmentItem) (float64, bool) {
 		return item.Stats.Durability, true

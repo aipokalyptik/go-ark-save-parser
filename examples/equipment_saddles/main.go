@@ -22,7 +22,8 @@ func main() {
 	}
 	defer save.Close()
 
-	itemSaddles, _, err := arkapi.NewEquipment(save).FilteredWithFaults(arkapi.EquipmentFilterOptions{
+	equipmentAPI := arkapi.NewEquipment(save)
+	itemSaddles, _, err := equipmentAPI.FilteredWithFaults(arkapi.EquipmentFilterOptions{
 		Kinds:      []arkobject.EquipmentKind{arkobject.EquipmentSaddle},
 		Blueprints: arkapi.UpstreamSaddleBlueprints(),
 	})
@@ -38,15 +39,11 @@ func main() {
 	}
 
 	maxArmor := float64(0)
-	for _, saddle := range itemSaddles {
-		if saddle.Stats.Armor > maxArmor {
-			maxArmor = saddle.Stats.Armor
-		}
+	if _, saddle, ok := equipmentAPI.BestArmor(itemSaddles); ok {
+		maxArmor = saddle.Stats.Armor
 	}
-	for _, saddle := range cryopodSaddles {
-		if saddle.Stats.Armor > maxArmor {
-			maxArmor = saddle.Stats.Armor
-		}
+	if _, saddle, ok := equipmentAPI.BestArmor(cryopodSaddles); ok && saddle.Stats.Armor > maxArmor {
+		maxArmor = saddle.Stats.Armor
 	}
 
 	fmt.Printf(

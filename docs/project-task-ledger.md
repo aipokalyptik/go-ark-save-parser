@@ -401,6 +401,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.PlayerInventorySummaryFromPath`.
     - [x] Move equipment max-damage example aggregation onto existing typed
           `arkapi.EquipmentAPI.BestWeaponDamage`.
+    - [x] Move saddle max-armor and wild-tamed max-level example aggregation
+          onto typed `arkapi.EquipmentAPI.BestArmor` and
+          `arkapi.DinoAPI.MaxCurrentLevel`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

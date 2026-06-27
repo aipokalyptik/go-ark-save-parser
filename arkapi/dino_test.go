@@ -1051,6 +1051,13 @@ func TestDinoAPICountsByLevelClassAndTamedState(t *testing.T) {
 	if byLevel[12] != 2 || byLevel[8] != 1 {
 		t.Fatalf("CountByLevel() = %#v", byLevel)
 	}
+	maxLevel, ok := api.MaxCurrentLevel(dinos)
+	if !ok || maxLevel != 12 {
+		t.Fatalf("MaxCurrentLevel() = %d, %v; want 12, true", maxLevel, ok)
+	}
+	if maxLevel, ok := api.MaxCurrentLevel(map[uuid.UUID]arkobject.Dino{uuid.Nil: {}}); ok || maxLevel != 0 {
+		t.Fatalf("MaxCurrentLevel(no stats) = %d, %v; want 0, false", maxLevel, ok)
+	}
 	byClass := api.CountByClass(dinos)
 	if byClass["Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'"] != 2 ||
 		byClass["Blueprint'/Game/PrimalEarth/Dinos/Dodo/Dodo_Character_BP.Dodo_Character_BP_C'"] != 1 {
