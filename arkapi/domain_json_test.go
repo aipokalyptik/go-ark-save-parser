@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"math"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -540,6 +541,55 @@ func TestJSONAPIExportDomainJSONIsDeterministic(t *testing.T) {
 	}
 	if _, err := NewJSON(save).ExportDomainJSON("unknown"); err == nil {
 		t.Fatalf("ExportDomainJSON(unknown) error = nil, want unsupported domain")
+	}
+}
+
+func TestJSONAPIExportAllDomainsWritesManifestAndFiles(t *testing.T) {
+	save := openSyntheticStackableSave(t)
+	defer save.Close()
+
+	outDir := filepath.Join(t.TempDir(), "exports")
+	manifest, err := NewJSON(save).ExportAllDomains(outDir, []string{"stackables"})
+	if err != nil {
+		t.Fatalf("ExportAllDomains() error = %v", err)
+	}
+	if len(manifest.Files) != 2 {
+		t.Fatalf("ExportAllDomains() manifest = %#v, want save info and one domain", manifest)
+	}
+	if manifest.Files[0].Name != "save-info.json" || manifest.Files[0].Count != 1 {
+		t.Fatalf("ExportAllDomains() first file = %#v", manifest.Files[0])
+	}
+	if manifest.Files[1].Name != "stackables.json" || manifest.Files[1].Count != 1 {
+		t.Fatalf("ExportAllDomains() second file = %#v", manifest.Files[1])
+	}
+	for _, name := range []string{"save-info.json", "stackables.json", "manifest.json"} {
+		raw, err := os.ReadFile(filepath.Join(outDir, name))
+		if err != nil {
+			t.Fatalf("read exported %s: %v", name, err)
+		}
+		if len(raw) == 0 || raw[len(raw)-1] != '\n' {
+			t.Fatalf("exported %s missing trailing newline", name)
+		}
+	}
+	var decoded JSONExportManifest
+	raw, err := os.ReadFile(filepath.Join(outDir, "manifest.json"))
+	if err != nil {
+		t.Fatalf("read manifest: %v", err)
+	}
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(manifest) error = %v; data = %s", err, raw)
+	}
+	if len(decoded.Files) != len(manifest.Files) || decoded.Files[1].Name != "stackables.json" {
+		t.Fatalf("decoded manifest = %#v, want %#v", decoded, manifest)
+	}
+}
+
+func TestJSONAPIExportAllDomainsRejectsUnknownDomain(t *testing.T) {
+	save := openSyntheticStackableSave(t)
+	defer save.Close()
+
+	if _, err := NewJSON(save).ExportAllDomains(t.TempDir(), []string{"unknown"}); err == nil {
+		t.Fatalf("ExportAllDomains(unknown) error = nil, want unsupported domain")
 	}
 }
 

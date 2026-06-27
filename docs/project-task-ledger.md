@@ -448,6 +448,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           generation onto typed `arkapi.DinoAPI.HeatmapSummaryWithFaults`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
+    - [x] Move `export_all_items` domain export loop and manifest writing onto
+          typed `arkapi.JSONAPI.ExportAllDomains`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

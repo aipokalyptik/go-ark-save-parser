@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -15,6 +17,15 @@ type DomainExport struct {
 	Count      int    `json:"count"`
 	FaultCount int    `json:"fault_count,omitempty"`
 	Items      any    `json:"items"`
+}
+
+type JSONExportManifest struct {
+	Files []JSONExportManifestFile `json:"files"`
+}
+
+type JSONExportManifestFile struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }
 
 type DinoInfo struct {
@@ -281,6 +292,53 @@ func (j *JSONAPI) ExportDomainJSON(domain string) ([]byte, error) {
 		return nil, err
 	}
 	return json.MarshalIndent(data, "", "  ")
+}
+
+func (j *JSONAPI) ExportAllDomains(outputDir string, domains []string) (JSONExportManifest, error) {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return JSONExportManifest{}, err
+	}
+	manifest := JSONExportManifest{}
+	saveInfo, err := j.ExportSaveInfoJSON()
+	if err != nil {
+		return JSONExportManifest{}, err
+	}
+	if err := writeJSONExportFile(outputDir, "save-info.json", saveInfo); err != nil {
+		return JSONExportManifest{}, err
+	}
+	manifest.Files = append(manifest.Files, JSONExportManifestFile{Name: "save-info.json", Count: 1})
+
+	for _, domain := range domains {
+		exported, err := j.ExportDomain(domain)
+		if err != nil {
+			return JSONExportManifest{}, err
+		}
+		data, err := json.MarshalIndent(exported, "", "  ")
+		if err != nil {
+			return JSONExportManifest{}, err
+		}
+		name := domain + ".json"
+		if err := writeJSONExportFile(outputDir, name, data); err != nil {
+			return JSONExportManifest{}, err
+		}
+		manifest.Files = append(manifest.Files, JSONExportManifestFile{Name: name, Count: exported.Count})
+	}
+
+	manifestData, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return JSONExportManifest{}, err
+	}
+	if err := writeJSONExportFile(outputDir, "manifest.json", manifestData); err != nil {
+		return JSONExportManifest{}, err
+	}
+	return manifest, nil
+}
+
+func writeJSONExportFile(dir string, name string, data []byte) error {
+	if len(data) == 0 || data[len(data)-1] != '\n' {
+		data = append(data, '\n')
+	}
+	return os.WriteFile(filepath.Join(dir, name), data, 0o644)
 }
 
 func (j *JSONAPI) ExportDinos() ([]DinoInfo, error) {
