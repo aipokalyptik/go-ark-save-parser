@@ -268,6 +268,7 @@ func weaponDefaultDurability(blueprint string) (float64, bool) {
 	case strings.Contains(blueprint, "PrimalItem_WeaponClimbPick"):
 		return 65, true
 	case strings.Contains(blueprint, "PrimalItem_WeaponSword"),
+		strings.Contains(blueprint, "PrimalItem_WeaponTekSword"),
 		strings.Contains(blueprint, "PrimalItem_WeaponOneShotRifle"),
 		strings.Contains(blueprint, "PrimalItem_WeaponMachinedSniper"):
 		return 70, true

@@ -143,6 +143,22 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			wantImplementedStats: 2,
 		},
 		{
+			name:                 "tek sword weapon",
+			blueprint:            "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponTekSword.PrimalItem_WeaponTekSword_C'",
+			kind:                 EquipmentWeapon,
+			wantDurability:       87.5,
+			wantAverageStat:      1000,
+			wantImplementedStats: 2,
+		},
+		{
+			name:                 "cursed tek sword weapon",
+			blueprint:            "Blueprint'/Game/LostColony/CoreBlueprints/Items/CursedWeapons/PrimalItem_WeaponTekSword_Cursed.PrimalItem_WeaponTekSword_Cursed_C'",
+			kind:                 EquipmentWeapon,
+			wantDurability:       87.5,
+			wantAverageStat:      1000,
+			wantImplementedStats: 2,
+		},
+		{
 			name:                 "cursed chainsaw weapon",
 			blueprint:            "Blueprint'/Game/LostColony/CoreBlueprints/Items/CursedWeapons/PrimalItem_ChainSaw_Cursed.PrimalItem_ChainSaw_Cursed_C'",
 			kind:                 EquipmentWeapon,
