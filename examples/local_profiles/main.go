@@ -16,7 +16,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("profiles=%d tribes=%d clusters=%d tributes=%d\n", len(api.ProfilePaths()), len(api.TribePaths()), len(api.ClusterPaths()), len(api.TributePaths()))
+	files := api.LocalFileSummary()
+	fmt.Printf("profiles=%d tribes=%d clusters=%d tributes=%d\n", files.Profiles, files.Tribes, files.Clusters, files.Tributes)
 
 	players, err := api.Players()
 	if err != nil {
@@ -32,14 +33,10 @@ func main() {
 		fmt.Printf("parsed_tribes=%d\n", len(tribes))
 	}
 
-	tribePlayers, err := api.TribePlayerMap()
+	links, err := api.TribePlayerLinkCount()
 	if err != nil {
 		log.Printf("tribe player map: %v", err)
 	} else {
-		links := 0
-		for _, players := range tribePlayers {
-			links += len(players)
-		}
 		fmt.Printf("tribe_player_links=%d\n", links)
 	}
 

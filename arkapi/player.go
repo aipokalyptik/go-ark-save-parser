@@ -25,6 +25,13 @@ type PlayerAPI struct {
 	tributePaths []string
 }
 
+type LocalFileSummary struct {
+	Profiles int
+	Tribes   int
+	Clusters int
+	Tributes int
+}
+
 type TribePlayerRelation struct {
 	Tribe               arkobject.Tribe
 	ActivePlayers       []arkobject.Player
@@ -196,6 +203,15 @@ func (p *PlayerAPI) TributePaths() []string {
 	out := make([]string, len(p.tributePaths))
 	copy(out, p.tributePaths)
 	return out
+}
+
+func (p *PlayerAPI) LocalFileSummary() LocalFileSummary {
+	return LocalFileSummary{
+		Profiles: len(p.profilePaths),
+		Tribes:   len(p.tribePaths),
+		Clusters: len(p.clusterPaths),
+		Tributes: len(p.tributePaths),
+	}
 }
 
 func (p *PlayerAPI) Profiles() ([]*arkprofile.PlayerProfile, error) {
@@ -1119,6 +1135,18 @@ func (p *PlayerAPI) TribePlayerMap() (map[int32][]arkobject.Player, error) {
 		}
 	}
 	return out, nil
+}
+
+func (p *PlayerAPI) TribePlayerLinkCount() (int, error) {
+	tribePlayers, err := p.TribePlayerMap()
+	if err != nil {
+		return 0, err
+	}
+	links := 0
+	for _, players := range tribePlayers {
+		links += len(players)
+	}
+	return links, nil
 }
 
 func (p *PlayerAPI) TribePlayerRelations() ([]TribePlayerRelation, error) {

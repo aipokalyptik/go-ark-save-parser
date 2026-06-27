@@ -54,6 +54,11 @@ func TestPlayerAPIIndexesLocalProfileAndTribeFiles(t *testing.T) {
 	if len(api.TributePaths()) != 1 || api.TributePaths()[0] != tributePath {
 		t.Fatalf("TributePaths() = %#v, want [%s]", api.TributePaths(), tributePath)
 	}
+	summary := api.LocalFileSummary()
+	wantSummary := LocalFileSummary{Profiles: 1, Tribes: 1, Clusters: 1, Tributes: 1}
+	if summary != wantSummary {
+		t.Fatalf("LocalFileSummary() = %#v, want %#v", summary, wantSummary)
+	}
 }
 
 func TestNewPlayerFromPathOpensDirectory(t *testing.T) {
@@ -1091,6 +1096,13 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	}
 	if len(tribePlayers[12345]) != 2 {
 		t.Fatalf("TribePlayerMap()[12345] = %#v, want two active local players", tribePlayers[12345])
+	}
+	linkCount, err := api.TribePlayerLinkCount()
+	if err != nil {
+		t.Fatalf("TribePlayerLinkCount() error = %v", err)
+	}
+	if linkCount != 2 {
+		t.Fatalf("TribePlayerLinkCount() = %d, want 2", linkCount)
 	}
 	relations, err := api.TribePlayerRelations()
 	if err != nil {
