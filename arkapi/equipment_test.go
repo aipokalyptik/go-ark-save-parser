@@ -774,6 +774,41 @@ func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
 	}
 }
 
+func TestEquipmentAPISummaryIncludingCryopodSaddlesWithFaults(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSaveWithSaddle(t)
+	defer save.Close()
+
+	summary, faults, err := NewEquipment(save).SummaryIncludingCryopodSaddlesWithFaults(EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{arkobject.EquipmentSaddle},
+		Blueprints: UpstreamSaddleBlueprints(),
+	})
+	if err != nil {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.Items != 1 || summary.CryopodSaddles != 1 || summary.ByKind[arkobject.EquipmentSaddle] != 1 {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults() = %#v, want one cryopod saddle", summary)
+	}
+
+	faultySave := openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t)
+	defer faultySave.Close()
+	faultySummary, faultyFaults, err := NewEquipment(faultySave).SummaryIncludingCryopodSaddlesWithFaults(EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{arkobject.EquipmentSaddle},
+		Blueprints: UpstreamSaddleBlueprints(),
+	})
+	if err != nil {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults(faulty) error = %v", err)
+	}
+	if faultySummary.Items != 0 || faultySummary.CryopodSaddles != 0 {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults(faulty) = %#v, want no parsed saddles", faultySummary)
+	}
+	if len(faultyFaults) != 1 {
+		t.Fatalf("SummaryIncludingCryopodSaddlesWithFaults(faulty) faults = %#v, want one unsupported saddle fault", faultyFaults)
+	}
+}
+
 func TestEquipmentAPIRankedCandidatesWithFaultsUsesCanonicalEquipmentBlueprintLists(t *testing.T) {
 	save := openSyntheticMixedEquipmentSave(t)
 	defer save.Close()

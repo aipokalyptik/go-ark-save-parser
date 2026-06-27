@@ -23,16 +23,11 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewEquipment(save)
-	summary, _, err := api.SummaryWithFaults(arkapi.EquipmentFilterOptions{
+	summary, _, err := api.SummaryIncludingCryopodSaddlesWithFaults(arkapi.EquipmentFilterOptions{
 		Blueprints: canonicalEquipmentBlueprints(),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
-		os.Exit(1)
-	}
-	cryopodSaddles, _, err := arkapi.NewDino(save).SaddlesFromCryopodsWithFaults()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read cryopod saddles: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -42,7 +37,7 @@ func main() {
 		summary.ByKind[arkobject.EquipmentWeapon],
 		summary.ByKind[arkobject.EquipmentArmor],
 		summary.ByKind[arkobject.EquipmentSaddle],
-		len(cryopodSaddles),
+		summary.CryopodSaddles,
 		summary.ByKind[arkobject.EquipmentShield],
 	)
 }

@@ -427,7 +427,7 @@ CLI tools, and reusable APIs without losing oracle parity.
           onto typed `arkapi.EquipmentAPI.BestArmor` and
           `arkapi.DinoAPI.MaxCurrentLevel`.
     - [x] Move `equipment_summary` canonical kind/blueprint counting onto
-          typed `arkapi.EquipmentAPI.SummaryWithFaults`.
+          typed `arkapi.EquipmentAPI.SummaryIncludingCryopodSaddlesWithFaults`.
     - [ ] Keep migrating example-local parsing into package APIs when the
           behavior is reusable rather than the example's core inspection
           feature.

@@ -45,6 +45,7 @@ type EquipmentSummary struct {
 	Items                int
 	TotalQuantity        int32
 	ByKind               map[arkobject.EquipmentKind]int
+	CryopodSaddles       int
 	Blueprints           int
 	Crafted              int
 	Equipped             int
@@ -559,6 +560,70 @@ func (e *EquipmentAPI) SummaryWithFaults(opts EquipmentFilterOptions) (Equipment
 		return EquipmentSummary{}, nil, err
 	}
 	return e.Summary(items), faults, nil
+}
+
+func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
+	match, err := equipmentFilterPredicate(opts)
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	directItems, faults, err := e.FilteredWithFaults(opts)
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	summary := e.Summary(directItems)
+	cryopodSaddles, cryopodFaults, err := NewDino(e.save).SaddlesFromCryopodsWithFaults()
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	filteredCryopodSaddles := map[uuid.UUID]arkobject.EquipmentItem{}
+	for id, item := range cryopodSaddles {
+		if match(item) {
+			filteredCryopodSaddles[id] = item
+		}
+	}
+	cryopodSummary := e.Summary(filteredCryopodSaddles)
+	summary.Items += cryopodSummary.Items
+	summary.TotalQuantity += cryopodSummary.TotalQuantity
+	for kind, count := range cryopodSummary.ByKind {
+		summary.ByKind[kind] += count
+	}
+	summary.CryopodSaddles = cryopodSummary.Items
+	summary.Blueprints += cryopodSummary.Blueprints
+	summary.Crafted += cryopodSummary.Crafted
+	summary.Equipped += cryopodSummary.Equipped
+	if cryopodSummary.MaxQuality > summary.MaxQuality {
+		summary.MaxQuality = cryopodSummary.MaxQuality
+	}
+	if cryopodSummary.MaxRating > summary.MaxRating {
+		summary.MaxRating = cryopodSummary.MaxRating
+	}
+	if cryopodSummary.MaxDamage > summary.MaxDamage {
+		summary.MaxDamage = cryopodSummary.MaxDamage
+	}
+	if cryopodSummary.MaxArmor > summary.MaxArmor {
+		summary.MaxArmor = cryopodSummary.MaxArmor
+	}
+	if cryopodSummary.MaxStatDurability > summary.MaxStatDurability {
+		summary.MaxStatDurability = cryopodSummary.MaxStatDurability
+	}
+	if cryopodSummary.MaxCurrentDurability > summary.MaxCurrentDurability {
+		summary.MaxCurrentDurability = cryopodSummary.MaxCurrentDurability
+	}
+	directClasses := map[string]struct{}{}
+	for _, item := range directItems {
+		if item.Blueprint != "" {
+			directClasses[canonicalBlueprintPath(item.Blueprint)] = struct{}{}
+		}
+	}
+	for _, item := range filteredCryopodSaddles {
+		if item.Blueprint != "" {
+			directClasses[canonicalBlueprintPath(item.Blueprint)] = struct{}{}
+		}
+	}
+	summary.Classes = len(directClasses)
+	faults = append(faults, cryopodFaults...)
+	return summary, faults, nil
 }
 
 func ignoredEquipmentNamePart(item arkobject.EquipmentItem, parts []string) bool {
