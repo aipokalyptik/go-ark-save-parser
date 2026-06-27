@@ -2,7 +2,6 @@ package arkapi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"os"
 	"path/filepath"
 	"testing"
@@ -306,7 +305,7 @@ func syntheticBaseStructureObjectBytes(structureID int32, linked ...uuid.UUID) [
 	writeFloatProperty(&props, 0x10000008, 9000)
 	writeIntProperty(&props, 0x10000009, 555)
 	if len(linked) > 0 {
-		writeObjectReferenceArrayProperty(&props, 0x1000001d, linked)
+		testfixtures.WriteObjectReferenceArrayPropertyID(&props, 0x1000001d, 0x1000001e, 0x1000001f, linked)
 	}
 	return testfixtures.ObjectBytesWithProperties(0x10000005, 0x10000004, props.Bytes())
 }
@@ -316,23 +315,4 @@ func syntheticBaseActorTransforms(first uuid.UUID, second uuid.UUID) []byte {
 		testfixtures.ActorTransform{UUID: first, Quaternion: 1},
 		testfixtures.ActorTransform{UUID: second, X: 1000, Y: 1000, Quaternion: 1},
 	)
-}
-
-func writeObjectReferenceArrayProperty(buf *bytes.Buffer, name uint32, values []uuid.UUID) {
-	dataSize := int32(len(values) * 18)
-	_ = binary.Write(buf, binary.LittleEndian, name)
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001e))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(len(values)))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(0x1000001f))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(buf, binary.LittleEndian, uint32(dataSize))
-	buf.WriteByte(0)
-	_ = binary.Write(buf, binary.LittleEndian, uint32(len(values)))
-	for _, id := range values {
-		_ = binary.Write(buf, binary.LittleEndian, int16(0))
-		buf.Write(id[:])
-	}
 }
