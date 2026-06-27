@@ -219,6 +219,8 @@ documented.
   - [x] Add typed uploaded-item aggregate summaries for item type counts,
         version support counts, crafted item counts, total quantity, and max
         rating/quality.
+  - [x] Add typed uploaded-dino aggregate summaries for parsed/error counts,
+        version support counts, component presence, and embedded object totals.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local

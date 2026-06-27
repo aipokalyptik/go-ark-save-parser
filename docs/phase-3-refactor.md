@@ -50,6 +50,9 @@ For the cross-phase monitorable checklist, see
       helpers, and embedded dino component class summaries for Go callers.
 - [x] Add typed local cluster uploaded-item aggregate summaries for item type,
       version support, crafted item, quantity, rating, and quality counts.
+- [x] Add typed local cluster uploaded-dino aggregate summaries for parsed
+      dinos, parse errors, version support, component presence, and embedded
+      object counts.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can
