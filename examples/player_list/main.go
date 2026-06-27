@@ -22,19 +22,9 @@ func main() {
 		}
 	}()
 
-	players, err := api.Players()
+	summary, err := api.PlayerRosterSummary()
 	if err != nil {
 		log.Fatal(err)
 	}
-	withNames := 0
-	highestLevel := int32(0)
-	for _, player := range players {
-		if player.CharacterName != "" || player.PlayerName != "" {
-			withNames++
-		}
-		if player.Level > highestLevel {
-			highestLevel = player.Level
-		}
-	}
-	fmt.Printf("players=%d with_names=%d highest_level=%d\n", len(players), withNames, highestLevel)
+	fmt.Printf("players=%d with_names=%d highest_level=%d\n", summary.Players, summary.WithNames, summary.HighestLevel)
 }

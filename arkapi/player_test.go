@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
@@ -524,6 +525,35 @@ func TestPlayerAPIPlayerInventorySummaryForPlayersRequiresSave(t *testing.T) {
 	_, _, err = api.PlayerInventorySummaryForPlayers(nil)
 	if err == nil || !strings.Contains(err.Error(), "save-backed") {
 		t.Fatalf("PlayerInventorySummaryForPlayers(directory) error = %v, want save-backed error", err)
+	}
+}
+
+func TestPlayerAPIPlayerRosterSummaryForPlayers(t *testing.T) {
+	api := NewPlayer(nil)
+	players := []arkobject.Player{
+		{CharacterName: "Ada", Level: 5},
+		{PlayerName: "Grace", Level: 12},
+		{Level: 7},
+	}
+
+	summary := api.PlayerRosterSummaryForPlayers(players)
+	want := PlayerRosterSummary{Players: 3, WithNames: 2, HighestLevel: 12}
+	if summary != want {
+		t.Fatalf("PlayerRosterSummaryForPlayers() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
+	api := NewPlayer(nil)
+	tribes := []arkobject.Tribe{
+		{Name: "Porters", MemberIDs: []int32{42, 43}, NumDinos: 7},
+		{MemberIDs: []int32{99}, NumDinos: 3},
+	}
+
+	summary := api.TribeRosterSummaryForTribes(tribes)
+	want := TribeRosterSummary{Tribes: 2, WithNames: 1, Members: 3, Dinos: 10}
+	if summary != want {
+		t.Fatalf("TribeRosterSummaryForTribes() = %#v, want %#v", summary, want)
 	}
 }
 

@@ -42,6 +42,19 @@ type PlayerInventorySummary struct {
 	AverageItems     float64
 }
 
+type PlayerRosterSummary struct {
+	Players      int
+	WithNames    int
+	HighestLevel int32
+}
+
+type TribeRosterSummary struct {
+	Tribes    int
+	WithNames int
+	Members   int
+	Dinos     int32
+}
+
 func NewPlayer(save *arksave.Save) *PlayerAPI {
 	return &PlayerAPI{save: save}
 }
@@ -207,6 +220,27 @@ func (p *PlayerAPI) PlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObj
 		return nil, nil, err
 	}
 	return players, nil, nil
+}
+
+func (p *PlayerAPI) PlayerRosterSummary() (PlayerRosterSummary, error) {
+	players, err := p.Players()
+	if err != nil {
+		return PlayerRosterSummary{}, err
+	}
+	return p.PlayerRosterSummaryForPlayers(players), nil
+}
+
+func (p *PlayerAPI) PlayerRosterSummaryForPlayers(players []arkobject.Player) PlayerRosterSummary {
+	summary := PlayerRosterSummary{Players: len(players)}
+	for _, player := range players {
+		if player.CharacterName != "" || player.PlayerName != "" {
+			summary.WithNames++
+		}
+		if player.Level > summary.HighestLevel {
+			summary.HighestLevel = player.Level
+		}
+	}
+	return summary
 }
 
 func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {
@@ -899,6 +933,26 @@ func (p *PlayerAPI) TribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.Fault
 		return nil, nil, err
 	}
 	return tribes, nil, nil
+}
+
+func (p *PlayerAPI) TribeRosterSummary() (TribeRosterSummary, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return TribeRosterSummary{}, err
+	}
+	return p.TribeRosterSummaryForTribes(tribes), nil
+}
+
+func (p *PlayerAPI) TribeRosterSummaryForTribes(tribes []arkobject.Tribe) TribeRosterSummary {
+	summary := TribeRosterSummary{Tribes: len(tribes)}
+	for _, tribe := range tribes {
+		if tribe.Name != "" {
+			summary.WithNames++
+		}
+		summary.Members += len(tribe.MemberIDs)
+		summary.Dinos += tribe.NumDinos
+	}
+	return summary
 }
 
 func (p *PlayerAPI) saveTribeDetails() ([]arkobject.Tribe, error) {
