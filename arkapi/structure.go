@@ -374,6 +374,26 @@ func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, play
 	if err != nil {
 		return StructureOwnerLocationExport{}, nil, err
 	}
+	export, err := s.ownerLocationsForStructures(structures, len(faults), mapName, digits, playerAPI)
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	return export, faults, nil
+}
+
+func (s *StructureAPI) OwnerLocationsFullWithFaults(mapName string, digits int, playerAPI *PlayerAPI) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.AllWithFaults()
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	export, err := s.ownerLocationsForStructures(structures, len(faults), mapName, digits, playerAPI)
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	return export, faults, nil
+}
+
+func (s *StructureAPI) ownerLocationsForStructures(structures map[uuid.UUID]arkobject.Structure, faultCount int, mapName string, digits int, playerAPI *PlayerAPI) (StructureOwnerLocationExport, error) {
 	if mapName == "" && s.save != nil && s.save.Context != nil {
 		mapName = s.save.Context.MapName
 	}
@@ -383,10 +403,10 @@ func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, play
 	scale := math.Pow10(digits)
 	ownerNames, err := ownerLocationTribeNames(playerAPI)
 	if err != nil {
-		return StructureOwnerLocationExport{}, nil, err
+		return StructureOwnerLocationExport{}, err
 	}
 	byOwner := map[string]map[string]StructureOwnerLocationCell{}
-	export := StructureOwnerLocationExport{Structures: len(structures), FaultCount: len(faults)}
+	export := StructureOwnerLocationExport{Structures: len(structures), FaultCount: faultCount}
 	for _, id := range sortedUUIDKeys(structures) {
 		structure := structures[id]
 		if structure.Owner.TribeID == 0 {
@@ -452,7 +472,7 @@ func (s *StructureAPI) OwnerLocationsWithFaults(mapName string, digits int, play
 		export.Cells += len(cells)
 		export.OwnersByLocation = append(export.OwnersByLocation, StructureOwnerLocationData{Owner: owner, Cells: cells})
 	}
-	return export, faults, nil
+	return export, nil
 }
 
 func ownerLocationTribeNames(playerAPI *PlayerAPI) (map[int32]string, error) {

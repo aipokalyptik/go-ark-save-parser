@@ -511,10 +511,10 @@ evidence, but they are not the active execution target.
       inventory-bearing rows.
 - [x] Add `structure_owner_locations` as an owner/location JSON grouping
       counterpart to upstream `extract_structures_per_owner`; compare the
-      stable multi-structure coordinate-cell aggregate. Exact owner and cell
-      count parity remains open because full Go structure parsing is too slow
-      on the supplied large private save and the selected-property scan finds
-      a few extra owner/location buckets.
+      stable multi-structure coordinate-cell aggregate. The selected-property
+      example remains the large-save fast path; exact owner/cell grouping now
+      has a full-parse `StructureAPI.OwnerLocationsFullWithFaults` API covered
+      by Go fixtures.
 - [x] Add explicit `structure_owner_locations` skipped-candidate counters for
       selected structures without usable owner or location data.
 - [x] Compare normalized Go `structure_at_location` aggregate output with

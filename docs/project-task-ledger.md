@@ -227,9 +227,11 @@ documented.
         child/descendant UUID references.
   - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains
         blocked by malformed cryopod parsing before stable aggregate output.
-- [ ] Finish full structure/base edge behavior:
-  - [ ] Exact `structure_owner_locations` owner/cell parity without
-        prohibitive full-parse runtime.
+- [~] Finish full structure/base edge behavior:
+  - [x] Add exact full-parse owner/location grouping through
+        `StructureAPI.OwnerLocationsFullWithFaults` for fixture-sized parity
+        checks while preserving selected-property `structure_owner_locations`
+        as the large-save fast path.
   - [x] `structure_owner_locations` reports skipped candidate counts for
         structures without usable owner or location data while preserving valid
         selected-property owner/location buckets.

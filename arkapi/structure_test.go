@@ -223,6 +223,31 @@ func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *test
 	}
 }
 
+func TestStructureAPIOwnerLocationsFullUsesParsedStructures(t *testing.T) {
+	save := openSyntheticStructureOwnerLocationSave(t)
+	defer save.Close()
+
+	export, faults, err := NewStructure(save).OwnerLocationsFullWithFaults("Valguero", 1, nil)
+	if err != nil {
+		t.Fatalf("OwnerLocationsFullWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 || export.FaultCount != 0 {
+		t.Fatalf("OwnerLocationsFullWithFaults() faults = %d / %#v, want none", len(faults), export)
+	}
+	if export.Structures != 3 || export.Owners != 2 || export.Cells != 2 || export.NamedCells != 1 || export.MultiStructureCells != 1 {
+		t.Fatalf("OwnerLocationsFullWithFaults() = %#v, want 3 structures, 2 owners, 2 cells, 1 named, 1 multi", export)
+	}
+	if len(export.OwnersByLocation) != 2 {
+		t.Fatalf("OwnersByLocation length = %d, want 2", len(export.OwnersByLocation))
+	}
+	if export.OwnersByLocation[0].Owner != "555" || len(export.OwnersByLocation[0].Cells) != 1 || export.OwnersByLocation[0].Cells[0].Count != 2 || export.OwnersByLocation[0].Cells[0].Name != "" {
+		t.Fatalf("first owner bucket = %#v, want owner 555 with one multi-structure cell", export.OwnersByLocation[0])
+	}
+	if export.OwnersByLocation[1].Owner != "777" || len(export.OwnersByLocation[1].Cells) != 1 || export.OwnersByLocation[1].Cells[0].Count != 0 || export.OwnersByLocation[1].Cells[0].Name == "" {
+		t.Fatalf("second owner bucket = %#v, want owner 777 with one named singleton cell", export.OwnersByLocation[1])
+	}
+}
+
 func TestStructureAPIOwnerLocationsReportsSkippedCandidates(t *testing.T) {
 	save := openSyntheticStructureOwnerLocationSkippedSave(t)
 	defer save.Close()

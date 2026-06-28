@@ -134,10 +134,10 @@ These are offline-compatible but produce files or images, so outputs stay under
   falls outside the fixed 100x100 heatmap grid.
 - `examples/structure_api/ex_07_extract_structures_per_owner.py` is implemented
   as `examples/structure_owner_locations`. Oracle comparison covers the
-  stable multi-structure coordinate-cell aggregate; exact owner and cell counts
-  remain open because full Go structure parsing is currently too slow on the
-  supplied large private save, while the efficient selected-property scan finds
-  a few additional owner/location buckets.
+  stable multi-structure coordinate-cell aggregate on the efficient
+  selected-property path. Exact owner/cell grouping is covered by the Go
+  full-parse `StructureAPI.OwnerLocationsFullWithFaults` fixture path instead
+  of expanding the Python oracle suite.
 - `examples/structure_api/ex_05_modify_structures.py` and
   `examples/structure_api/ex_08_modify_structures_of_tribe.py` are partially
   structurally represented by `examples/structure_export_from_save` plus
