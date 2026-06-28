@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
 
@@ -18,13 +17,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	save, err := arksave.Open(os.Args[1])
+	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, err := arkapi.NewGeneral(save).ObjectSummary(id)
+	summary, err := api.ObjectSummary(id)
 	if err != nil {
 		log.Fatal(err)
 	}

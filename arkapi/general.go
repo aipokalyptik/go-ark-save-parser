@@ -56,6 +56,14 @@ func NewGeneral(save *arksave.Save) *GeneralAPI {
 	return &GeneralAPI{save: save}
 }
 
+func NewGeneralFromPath(savePath string) (*GeneralAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewGeneral(save), save.Close, nil
+}
+
 func (g *GeneralAPI) ObjectIDs() ([]uuid.UUID, error) {
 	return g.save.ObjectIDs()
 }

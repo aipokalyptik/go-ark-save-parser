@@ -6,20 +6,19 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
 	if len(os.Args) < 3 {
 		log.Fatalf("usage: %s <save.ark> <property> [property...]", os.Args[0])
 	}
-	save, err := arksave.Open(os.Args[1])
+	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, err := arkapi.NewGeneral(save).PropertyFilterSummary(os.Args[2:])
+	summary, err := api.PropertyFilterSummary(os.Args[2:])
 	if err != nil {
 		log.Fatal(err)
 	}

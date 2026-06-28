@@ -29,6 +29,25 @@ func TestGeneralObjectIDsReturnsSaveObjectIDs(t *testing.T) {
 	}
 }
 
+func TestNewGeneralFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewGeneralFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewGeneralFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	classes, err := api.Classes()
+	if err != nil {
+		t.Fatalf("Classes() error = %v", err)
+	}
+	if len(classes) != 1 || classes[0] != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("Classes() = %#v, want synthetic class", classes)
+	}
+}
+
 func TestGeneralObjectReturnsParsedSaveObject(t *testing.T) {
 	save := openSyntheticSave(t)
 	defer save.Close()
