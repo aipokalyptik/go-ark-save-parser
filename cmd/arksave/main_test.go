@@ -365,6 +365,29 @@ func TestStackablesCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestEquipmentBestCommandPrintsBestItems(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "equipment-best.ark")
+	createSyntheticBestEquipmentSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-best", path}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-best) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Best weapon damage: 112.3",
+		"Best weapon crafted: false",
+		"Best armor durability: 31.2",
+		"Best armor crafted: false",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-best output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -2082,6 +2105,43 @@ func createSyntheticStackableSave(t *testing.T, path string) {
 		Objects: map[uuid.UUID][]byte{
 			uuid.MustParse("50515253-5455-5657-5859-5a5b5c5d5e5f"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
 				Quantity: 250,
+			}),
+		},
+	})
+}
+
+func createSyntheticBestEquipmentSave(t *testing.T, path string) {
+	t.Helper()
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000d: "bIsBlueprint",
+			0x1000000e: "BoolProperty",
+			0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+			0x10000010: "ItemRating",
+			0x10000011: "ItemQualityIndex",
+			0x10000012: "SavedDurability",
+			0x10000013: "bIsEngram",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+			0x10000042: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("60616263-6465-6667-6869-6a6b6c6d6e6f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity: 1,
+				Stats: map[int32]uint16{
+					3: 1234,
+				},
+			}),
+			uuid.MustParse("70717273-7475-7677-7879-7a7b7c7d7e7f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				ClassID:  0x10000042,
+				Quantity: 1,
+				Stats: map[int32]uint16{
+					2: 1000,
+				},
 			}),
 		},
 	})

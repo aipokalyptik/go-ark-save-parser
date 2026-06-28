@@ -521,6 +521,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `dino-babies`.
   - [x] `equipment-summary`.
   - [x] `equipment-saddles`.
+  - [x] `equipment-best`.
   - [x] `stackables`.
   - [x] `player-inventories`.
   - [x] `player-roster`.

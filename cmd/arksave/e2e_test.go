@@ -127,6 +127,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var equipmentBestOut bytes.Buffer
+	if err := run([]string{"equipment-best", data.SavePath}, &equipmentBestOut); err != nil {
+		t.Fatalf("run(equipment-best) error = %v", err)
+	}
+	for _, want := range []string{"Best weapon", "Best armor", "Parse faults:"} {
+		if !strings.Contains(equipmentBestOut.String(), want) {
+			t.Fatalf("equipment-best output missing %q", want)
+		}
+	}
+
 	var stackablesOut bytes.Buffer
 	if err := run([]string{"stackables", data.SavePath}, &stackablesOut); err != nil {
 		t.Fatalf("run(stackables) error = %v", err)

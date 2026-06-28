@@ -115,6 +115,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-saddles requires a local .ark path")
 		}
 		return equipmentSaddles(args[1], out)
+	case "equipment-best":
+		if len(args) != 2 {
+			return fmt.Errorf("equipment-best requires a local .ark path")
+		}
+		return equipmentBest(args[1], out)
 	case "stackables":
 		if len(args) != 2 {
 			return fmt.Errorf("stackables requires a local .ark path")
@@ -225,6 +230,7 @@ func usage(out io.Writer) error {
   arksave dino-babies <save.ark>
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
+  arksave equipment-best <save.ark>
   arksave stackables <save.ark>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
@@ -583,6 +589,60 @@ func equipmentSaddles(path string, out io.Writer) error {
 		summary.MaxArmor,
 		len(faults),
 	)
+	return err
+}
+
+func equipmentBest(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	api := arkapi.NewEquipment(save)
+	_, weapon, weaponOK, weaponFaults, err := api.BestWeaponDamageWithFaults(arkapi.EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:   arkapi.UpstreamWeaponBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		return err
+	}
+	_, armor, armorOK, armorFaults, err := api.BestActualDurabilityWithFaults(arkapi.EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
+		Blueprints:   arkapi.UpstreamArmorBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		return err
+	}
+	if weaponOK {
+		if _, err := fmt.Fprintf(
+			out,
+			"Best weapon damage: %.1f\nBest weapon: %s\nBest weapon crafted: %t\n",
+			weapon.Stats.Damage,
+			arkobject.ShortNameFromBlueprint(weapon.Blueprint),
+			weapon.IsCrafted(),
+		); err != nil {
+			return err
+		}
+	} else if _, err := fmt.Fprintln(out, "Best weapon: none"); err != nil {
+		return err
+	}
+	if armorOK {
+		if _, err := fmt.Fprintf(
+			out,
+			"Best armor durability: %.1f\nBest armor: %s\nBest armor crafted: %t\n",
+			armor.Stats.Durability,
+			arkobject.ShortNameFromBlueprint(armor.Blueprint),
+			armor.IsCrafted(),
+		); err != nil {
+			return err
+		}
+	} else if _, err := fmt.Fprintln(out, "Best armor: none"); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Parse faults: %d\n", len(weaponFaults)+len(armorFaults))
 	return err
 }
 
