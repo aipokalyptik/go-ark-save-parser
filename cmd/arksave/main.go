@@ -23,6 +23,18 @@ import (
 
 const redactedValue = "[redacted]"
 
+var ignoredEquipmentNameParts = []string{
+	"WeaponCrossbow",
+	"WeaponMetalHatchet",
+	"WeaponMetalPick",
+	"WeaponBow",
+	"Chitin",
+	"Hide",
+	"WeaponPike",
+	"WeaponGun",
+	"Cloth",
+}
+
 type runOptions struct {
 	Redact bool
 }
@@ -135,6 +147,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-best requires a local .ark path")
 		}
 		return equipmentBest(args[1], out)
+	case "equipment-rank":
+		if len(args) != 2 {
+			return fmt.Errorf("equipment-rank requires a local .ark path")
+		}
+		return equipmentRank(args[1], out)
 	case "stackables":
 		if len(args) != 2 {
 			return fmt.Errorf("stackables requires a local .ark path")
@@ -249,6 +266,7 @@ func usage(out io.Writer) error {
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
+  arksave equipment-rank <save.ark>
   arksave stackables <save.ark>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
@@ -748,6 +766,37 @@ func equipmentBest(path string, out io.Writer) error {
 		return err
 	}
 	_, err = fmt.Fprintf(out, "Parse faults: %d\n", len(weaponFaults)+len(armorFaults))
+	return err
+}
+
+func equipmentRank(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	api := arkapi.NewEquipment(save)
+	items, faults, err := api.RankedCandidatesWithFaults()
+	if err != nil {
+		return err
+	}
+	stats := api.RankStats(items, arkapi.EquipmentRankOptions{
+		MinRating:        3,
+		ExcludeCrafted:   true,
+		IgnoredNameParts: ignoredEquipmentNameParts,
+	})
+	_, err = fmt.Fprintf(
+		out,
+		"Ranked: %d\nBest rating: %.1f\nBest average stat: %.1f\nCrafted: %d\nBlueprints: %d\nClasses: %d\nParse faults: %d\n",
+		stats.Ranked,
+		stats.BestRating,
+		stats.BestAverageStat,
+		stats.Crafted,
+		stats.Blueprints,
+		stats.Classes,
+		len(faults),
+	)
 	return err
 }
 

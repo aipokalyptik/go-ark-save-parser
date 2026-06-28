@@ -455,6 +455,31 @@ func TestEquipmentBestCommandPrintsBestItems(t *testing.T) {
 	}
 }
 
+func TestEquipmentRankCommandPrintsRankStats(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "equipment-rank.ark")
+	createSyntheticRankEquipmentSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-rank", path}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-rank) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Ranked: 2",
+		"Best rating: 5.5",
+		"Best average stat: 700.0",
+		"Crafted: 0",
+		"Blueprints: 1",
+		"Classes: 2",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-rank output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -2322,6 +2347,51 @@ func createSyntheticBestEquipmentSave(t *testing.T, path string) {
 				Quantity: 1,
 				Stats: map[int32]uint16{
 					2: 1000,
+				},
+			}),
+		},
+	})
+}
+
+func createSyntheticRankEquipmentSave(t *testing.T, path string) {
+	t.Helper()
+	trueValue := true
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000d: "bIsBlueprint",
+			0x1000000e: "BoolProperty",
+			0x10000010: "ItemRating",
+			0x10000011: "ItemQualityIndex",
+			0x10000012: "SavedDurability",
+			0x1000001a: "StrProperty",
+			0x1000001b: "CrafterCharacterName",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+			0x10000050: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C'",
+			0x10000051: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_TurtleSaddle.PrimalItemArmor_TurtleSaddle_C'",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("80818283-8485-8687-8889-8a8b8c8d8e8f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				ClassID:  0x10000050,
+				Quantity: 1,
+				Rating:   4.2,
+				Stats: map[int32]uint16{
+					2: 100,
+					3: 200,
+				},
+			}),
+			uuid.MustParse("90919293-9495-9697-9899-9a9b9c9d9e9f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				ClassID:     0x10000051,
+				Quantity:    1,
+				Rating:      5.5,
+				IsBlueprint: &trueValue,
+				Stats: map[int32]uint16{
+					1: 800,
+					2: 600,
 				},
 			}),
 		},

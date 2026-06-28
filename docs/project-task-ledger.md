@@ -525,6 +525,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `equipment-summary`.
   - [x] `equipment-saddles`.
   - [x] `equipment-best`.
+  - [x] `equipment-rank`.
   - [x] `stackables`.
   - [x] `player-inventories`.
   - [x] `player-roster`.
