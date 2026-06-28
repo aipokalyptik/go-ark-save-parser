@@ -125,6 +125,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		t.Fatalf("dino-most-mutated output missing summary")
 	}
 
+	var wildTamedOut bytes.Buffer
+	if err := run([]string{"dino-wild-tamed", data.SavePath}, &wildTamedOut); err != nil {
+		t.Fatalf("run(dino-wild-tamed) error = %v", err)
+	}
+	for _, want := range []string{"Wild-tamed dinos:", "Max level:", "Parse faults:"} {
+		if !strings.Contains(wildTamedOut.String(), want) {
+			t.Fatalf("dino-wild-tamed output missing %q", want)
+		}
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)

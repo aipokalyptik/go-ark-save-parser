@@ -367,6 +367,27 @@ func TestDinoMostMutatedCommandPrintsMostMutatedTamedDino(t *testing.T) {
 	}
 }
 
+func TestDinoWildTamedCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dino-wild-tamed.ark")
+	createSyntheticTamedDinoStatsSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-wild-tamed", path}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-wild-tamed) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Wild-tamed dinos: 1",
+		"Max level: 12",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-wild-tamed output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSaddlesCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "saddles.ark")
 	createSyntheticSaddleEquipmentSave(t, path)

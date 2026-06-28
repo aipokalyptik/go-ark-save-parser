@@ -521,6 +521,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `dino-babies`.
   - [x] `dino-best-stat`.
   - [x] `dino-most-mutated`.
+  - [x] `dino-wild-tamed`.
   - [x] `equipment-summary`.
   - [x] `equipment-saddles`.
   - [x] `equipment-best`.

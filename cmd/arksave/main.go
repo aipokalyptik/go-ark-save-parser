@@ -115,6 +115,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-most-mutated requires a local .ark path")
 		}
 		return dinoMostMutated(args[1], out)
+	case "dino-wild-tamed":
+		if len(args) != 2 {
+			return fmt.Errorf("dino-wild-tamed requires a local .ark path")
+		}
+		return dinoWildTamed(args[1], out)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -240,6 +245,7 @@ func usage(out io.Writer) error {
   arksave dino-babies <save.ark>
   arksave dino-best-stat <save.ark>
   arksave dino-most-mutated <save.ark>
+  arksave dino-wild-tamed <save.ark>
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
@@ -602,6 +608,32 @@ func dinoMostMutated(path string, out io.Writer) error {
 		total,
 		total/2,
 		level,
+	)
+	return err
+}
+
+func dinoWildTamed(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	api := arkapi.NewDino(save)
+	dinos, faults, err := api.WildTamedWithFaults()
+	if err != nil {
+		return err
+	}
+	maxLevel := int32(0)
+	if level, ok := api.MaxCurrentLevel(dinos); ok {
+		maxLevel = level
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Wild-tamed dinos: %d\nMax level: %d\nParse faults: %d\n",
+		len(dinos),
+		maxLevel,
+		len(faults),
 	)
 	return err
 }

@@ -63,7 +63,7 @@ Implemented:
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
   `structure-owners`, `structure-owner-locations`, `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
-  `dino-most-mutated`, `equipment-summary`,
+  `dino-most-mutated`, `dino-wild-tamed`, `equipment-summary`,
   `equipment-saddles`, `equipment-best`, `stackables`, `player-inventories`,
   `player-roster`, `tribe-roster`, `player-tribe-links`, `players`, `tribes`, `cluster`,
   `cluster-summary`, `tribute`, `export-json`, `export-domain-json`,
@@ -137,6 +137,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave dino-babies /path/to/Valguero_WP.ark
 ./bin/arksave dino-best-stat /path/to/Valguero_WP.ark
 ./bin/arksave dino-most-mutated /path/to/Valguero_WP.ark
+./bin/arksave dino-wild-tamed /path/to/Valguero_WP.ark
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
 ./bin/arksave equipment-best /path/to/Valguero_WP.ark
