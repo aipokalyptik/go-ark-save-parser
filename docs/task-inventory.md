@@ -15,13 +15,14 @@ Status markers:
 
 ## Execution Mode
 
-This inventory is phase-gated. Phase 1 is closed for the selected offline
-parity scope, and Phase 2 is the active implementation phase. Phase 3 and Phase
-4 rows remain in the inventory because ahead-of-phase package, CLI, docs, and
-verification work already exists, but new work should not target those phases
-until Phase 2 has been closed or explicitly blocked. When a Phase 2 task needs
-tests, docs, or status updates to keep progress auditable, keep those changes
-narrow and tie them to the Phase 2 row they support.
+This inventory is phase-gated from this point forward. Phase 1 is closed for
+the selected offline parity scope, and Phase 2 is closed with documented
+blockers for the selected offline, fixture-backed scope. Phase 3 is the active
+implementation phase; new work should target Phase 3 package/API/refactor
+requirements while preserving Phase 2 behavior. Phase 4 rows remain visible
+because ahead-of-phase docs and verification already exist, but final
+production-readiness cleanup is paused until Phase 3 is closed. Status docs may
+still be updated with implementation commits so progress stays auditable.
 
 ## Scope Rules
 
@@ -93,7 +94,7 @@ narrow and tie them to the Phase 2 row they support.
 | P3-PERF-001 | `[x]` | Add benchmarks for full save open/object enumeration, object parse, query filters, and JSON export. | Benchmarks are committed. |
 | P3-PERF-002 | `[x]` | Add object cache controls and prove safe concurrency only where tested. | `arksave.Save` object row cache and concurrent raw read tests exist. |
 | P3-CLI-001 | `[x]` | Implement offline CLI commands. | `inspect`, `parse`, `map-summary`, `object-classes`, `object-summary`, `property-positions`, `class-lookup`, `class-property-summary`, `property-filter`, `structure-health`, `structure-owner-count`, `structure-owners`, `structure-owner-locations`, `structure-heatmap`, `base-components`, `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`, `dino-best-base-stat`, `dino-most-mutated`, `dino-wild-tamed`, `dino-heatmap`, `equipment-summary`, `equipment-saddles`, `equipment-best`, `equipment-rank`, `equipment-ascendant-weapon-bps`, `equipment-history`, `equipment-owned-by`, `stackables`, `stackable-owned-by`, `player-inventories`, `player-roster`, `tribe-roster`, `player-tribe-links`, `players`, `tribes`, `cluster`, `cluster-summary`, `tribute`, JSON export commands, and experimental mutate commands exist. |
-| P3-FIX-001 | `[~]` | Replace duplicated synthetic fixture builders with internal helpers. | `internal/testfixtures` centralizes many shared fixtures, including player pawn, inventory, structure, equipment, stackable, basic dino save-object builders, binary `CustomItemDatas` writers, ID-table Vector struct property writers, and base linked-structure object-reference array writers; `internal/propertyfixtures` centralizes parsed `CustomItemDatas` cryopod/custom-data builders; specialized status and malformed parser fixtures remain. |
+| P3-FIX-001 | `[~]` | Replace duplicated synthetic fixture builders with internal helpers. | `internal/testfixtures` centralizes many shared fixtures, including player pawn, inventory, structure, equipment, stackable, basic dino save-object builders, binary `CustomItemDatas` writers, ID-table Vector struct property writers, base linked-structure object-reference array writers, and ID-table game-object bytes with custom object-name payloads; `internal/propertyfixtures` centralizes parsed `CustomItemDatas` cryopod/custom-data builders; specialized status and malformed parser fixtures remain. |
 | P3-REG-001 | `[x]` | Re-run regression tests after refactor slices. | `make verify` is the committed verification gate. |
 
 ## Phase 4: Documentation And Production Readiness

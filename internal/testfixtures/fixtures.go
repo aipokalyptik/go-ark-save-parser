@@ -786,13 +786,21 @@ func TruncatedObjectWithPropertiesBytes(classNameID uint32, noneNameID uint32, p
 }
 
 func ObjectBytesWithProperties(classNameID uint32, noneNameID uint32, properties []byte) []byte {
+	return ObjectBytesWithNamePayload(classNameID, nil, 0, properties, noneNameID)
+}
+
+func ObjectBytesWithNamePayload(classNameID uint32, names []byte, unknown int16, properties []byte, noneNameID uint32) []byte {
 	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, classNameID)
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
+	WriteNameID(&buf, classNameID)
+	WriteUInt32(&buf, 0)
+	nameCount := int32(0)
+	if len(names) > 0 {
+		nameCount = 1
+	}
+	_ = binary.Write(&buf, binary.LittleEndian, nameCount)
+	buf.Write(names)
+	WriteInt32(&buf, 0)
+	_ = binary.Write(&buf, binary.LittleEndian, unknown)
 	buf.Write(properties)
 	_ = binary.Write(&buf, binary.LittleEndian, noneNameID)
 	_ = binary.Write(&buf, binary.LittleEndian, int32(0))

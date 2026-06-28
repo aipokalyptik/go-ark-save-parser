@@ -660,9 +660,11 @@ CLI tools, and reusable APIs without losing oracle parity.
         class-only object row fixtures and API/benchmark actor-transform custom
         table fixtures now use shared helpers; save-contained player/tribe game
         object fixture payloads now share the archive property builders while
-        keeping game-object framing explicit; embedded `GameModeCustomBytes`
-        player/tribe fixture assembly and minimal embedded cryopod archive test
-        payloads now live in shared testfixtures; save-layer malformed
+        keeping game-object framing explicit; ID-table game-object bytes with
+        custom object-name payloads now use a shared testfixtures helper;
+        embedded `GameModeCustomBytes` player/tribe fixture assembly and
+        minimal embedded cryopod archive test payloads now live in shared
+        testfixtures; save-layer malformed
         full-object truncation fixtures now use a shared helper; parsed
         `CustomItemDatas` cryopod/custom-data fixtures now live in
         `internal/propertyfixtures`, and binary `CustomItemDatas` writers now

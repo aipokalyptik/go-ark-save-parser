@@ -2,7 +2,6 @@ package arkobject
 
 import (
 	"bytes"
-	"encoding/binary"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkbinary"
@@ -21,23 +20,9 @@ func TestParseGameObjectReadsHeaderNamesSectionAndProperties(t *testing.T) {
 		5: "None",
 	})
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	raw := testfixtures.ObjectBytesWithNamePayload(1, nameIDPayload(2), 9, gameObjectIntPropertyPayload(3, 4, 250), 5)
 
-	stream := bytes.NewBuffer(nil)
-	testfixtures.WriteNameID(stream, 1)
-	testfixtures.WriteUInt32(stream, 0)
-	testfixtures.WriteInt32(stream, 1)
-	testfixtures.WriteNameID(stream, 2)
-	testfixtures.WriteInt32(stream, 0)
-	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	testfixtures.WriteNameID(stream, 3)
-	testfixtures.WriteNameID(stream, 4)
-	testfixtures.WriteInt32(stream, 4)
-	testfixtures.WriteInt32(stream, 0)
-	stream.WriteByte(0)
-	testfixtures.WriteInt32(stream, 250)
-	testfixtures.WriteNameID(stream, 5)
-
-	obj, err := ParseGameObject(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
+	obj, err := ParseGameObject(id, raw, ctx, []string{"PersistentLevel"})
 	if err != nil {
 		t.Fatalf("ParseGameObject() error = %v", err)
 	}
@@ -74,23 +59,9 @@ func TestParseGameObjectReadsStringEncodedObjectNames(t *testing.T) {
 		5: "None",
 	})
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	raw := testfixtures.ObjectBytesWithNamePayload(1, nameStringPayload("RuntimeObjectName_123"), 9, gameObjectIntPropertyPayload(3, 4, 250), 5)
 
-	stream := bytes.NewBuffer(nil)
-	testfixtures.WriteNameID(stream, 1)
-	testfixtures.WriteUInt32(stream, 0)
-	testfixtures.WriteInt32(stream, 1)
-	testfixtures.WriteArkString(stream, "RuntimeObjectName_123")
-	testfixtures.WriteInt32(stream, 0)
-	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	testfixtures.WriteNameID(stream, 3)
-	testfixtures.WriteNameID(stream, 4)
-	testfixtures.WriteInt32(stream, 4)
-	testfixtures.WriteInt32(stream, 0)
-	stream.WriteByte(0)
-	testfixtures.WriteInt32(stream, 250)
-	testfixtures.WriteNameID(stream, 5)
-
-	obj, err := ParseGameObject(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
+	obj, err := ParseGameObject(id, raw, ctx, []string{"PersistentLevel"})
 	if err != nil {
 		t.Fatalf("ParseGameObject() error = %v", err)
 	}
@@ -113,28 +84,17 @@ func TestParseGameObjectPartialKeepsPropertiesBeforePropertyError(t *testing.T) 
 		6: "ObjectProperty",
 	})
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var props bytes.Buffer
+	props.Write(gameObjectIntPropertyPayload(3, 4, 250))
+	testfixtures.WriteNameID(&props, 5)
+	testfixtures.WriteNameID(&props, 6)
+	testfixtures.WriteInt32(&props, 2)
+	testfixtures.WriteInt32(&props, 0)
+	props.WriteByte(0)
+	testfixtures.WriteInt16(&props, 5)
+	raw := testfixtures.ObjectBytesWithNamePayload(1, nameIDPayload(2), 9, props.Bytes(), 0)
 
-	stream := bytes.NewBuffer(nil)
-	testfixtures.WriteNameID(stream, 1)
-	testfixtures.WriteUInt32(stream, 0)
-	testfixtures.WriteInt32(stream, 1)
-	testfixtures.WriteNameID(stream, 2)
-	testfixtures.WriteInt32(stream, 0)
-	_ = binary.Write(stream, binary.LittleEndian, int16(9))
-	testfixtures.WriteNameID(stream, 3)
-	testfixtures.WriteNameID(stream, 4)
-	testfixtures.WriteInt32(stream, 4)
-	testfixtures.WriteInt32(stream, 0)
-	stream.WriteByte(0)
-	testfixtures.WriteInt32(stream, 250)
-	testfixtures.WriteNameID(stream, 5)
-	testfixtures.WriteNameID(stream, 6)
-	testfixtures.WriteInt32(stream, 2)
-	testfixtures.WriteInt32(stream, 0)
-	stream.WriteByte(0)
-	_ = binary.Write(stream, binary.LittleEndian, int16(5))
-
-	obj, err := ParseGameObjectPartial(id, stream.Bytes(), ctx, []string{"PersistentLevel"})
+	obj, err := ParseGameObjectPartial(id, raw, ctx, []string{"PersistentLevel"})
 	if err == nil {
 		t.Fatalf("ParseGameObjectPartial() error = nil, want recorded property error")
 	}
@@ -147,6 +107,24 @@ func TestParseGameObjectPartialKeepsPropertiesBeforePropertyError(t *testing.T) 
 	if obj.Properties[0].Name != "Health" || obj.Properties[0].Value != int32(250) {
 		t.Fatalf("partial property = %#v, want Health 250", obj.Properties[0])
 	}
+}
+
+func nameIDPayload(nameID uint32) []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteNameID(&buf, nameID)
+	return buf.Bytes()
+}
+
+func nameStringPayload(name string) []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteArkString(&buf, name)
+	return buf.Bytes()
+}
+
+func gameObjectIntPropertyPayload(nameID uint32, propertyTypeID uint32, value int32) []byte {
+	var buf bytes.Buffer
+	testfixtures.WriteIntPropertyID(&buf, nameID, propertyTypeID, value)
+	return buf.Bytes()
 }
 
 func TestGameObjectShortNameFollowsUpstreamBlueprintRules(t *testing.T) {

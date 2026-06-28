@@ -35,6 +35,32 @@ func TestObjectBytesWithPropertiesWrapsObjectHeaderAndNoneMarker(t *testing.T) {
 	}
 }
 
+func TestObjectBytesWithNamePayloadWrapsCustomObjectNames(t *testing.T) {
+	var names bytes.Buffer
+	WriteNameID(&names, 0x10000002)
+	WriteInt32(&names, 0)
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, 0x10000003, 0x10000004, 250)
+
+	got := ObjectBytesWithNamePayload(0x10000001, names.Bytes(), 9, props.Bytes(), 0x10000005)
+
+	var want bytes.Buffer
+	_ = binary.Write(&want, binary.LittleEndian, uint32(0x10000001))
+	_ = binary.Write(&want, binary.LittleEndian, int32(0))
+	_ = binary.Write(&want, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&want, binary.LittleEndian, int32(1))
+	want.Write(names.Bytes())
+	_ = binary.Write(&want, binary.LittleEndian, int32(0))
+	_ = binary.Write(&want, binary.LittleEndian, int16(9))
+	want.Write(props.Bytes())
+	_ = binary.Write(&want, binary.LittleEndian, uint32(0x10000005))
+	_ = binary.Write(&want, binary.LittleEndian, int32(0))
+
+	if !bytes.Equal(got, want.Bytes()) {
+		t.Fatalf("ObjectBytesWithNamePayload() = %x, want %x", got, want.Bytes())
+	}
+}
+
 func TestTruncatedObjectWithPropertiesBytesTrimsWrappedObject(t *testing.T) {
 	var props bytes.Buffer
 	WriteIntPropertyID(&props, 0x10000002, 0x10000003, 250)

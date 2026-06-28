@@ -101,6 +101,8 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       API/benchmark actor-transform custom table fixtures use a shared helper;
       save-contained player/tribe game object fixture payloads share archive
       property builders while keeping game-object framing explicit;
+      ID-table game-object bytes with custom object-name payloads use a shared
+      testfixtures helper;
       embedded `GameModeCustomBytes` player/tribe fixture assembly lives in
       shared testfixtures; minimal embedded cryopod archive test payloads use a
       shared helper;
