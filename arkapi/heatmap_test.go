@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -24,6 +25,33 @@ func TestSummarizeHeatmapCountsNonzeroCellsTotalsAndMax(t *testing.T) {
 	if summary != want {
 		t.Fatalf("SummarizeHeatmap() = %#v, want %#v", summary, want)
 	}
+}
+
+func TestHeatmapPathHelpersUseTypedConstructors(t *testing.T) {
+	data, err := os.ReadFile("heatmap.go")
+	if err != nil {
+		t.Fatalf("ReadFile(heatmap.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"DinoHeatmapSummaryFromPath", "StructureHeatmapSummaryFromPath"} {
+		body := heatmapFunctionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") {
+			t.Fatalf("%s() still opens saves directly; use typed arkapi path constructor", name)
+		}
+	}
+}
+
+func heatmapFunctionBody(t *testing.T, source string, name string) string {
+	t.Helper()
+	start := strings.Index(source, "func "+name+"(")
+	if start < 0 {
+		t.Fatalf("function %s not found", name)
+	}
+	next := strings.Index(source[start+len("func "+name+"("):], "\nfunc ")
+	if next < 0 {
+		return source[start:]
+	}
+	return source[start : start+len("func "+name+"(")+next]
 }
 
 func TestHeatmapSummaryFromPathReturnsTypedSummariesWithoutWritingJSON(t *testing.T) {

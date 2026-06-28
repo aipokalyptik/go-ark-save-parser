@@ -654,6 +654,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add `arkapi.NewJSONFromPath`, then move save-info export,
           all-domain JSON export, and equipment history snapshots onto shared
           typed JSON path lifecycle handling.
+    - [x] Move dino and structure heatmap path helpers onto shared typed
+          `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath`
+          lifecycle handling.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

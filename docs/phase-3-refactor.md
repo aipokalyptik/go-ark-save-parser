@@ -141,6 +141,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.NewJSONFromPath`, then move save-info export, all-domain
       JSON export, and equipment history snapshots onto shared typed JSON
       path lifecycle handling.
+- [x] Move dino and structure heatmap path helpers onto shared typed
+      `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath` lifecycle
+      handling.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

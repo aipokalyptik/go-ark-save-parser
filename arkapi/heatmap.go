@@ -3,8 +3,6 @@ package arkapi
 import (
 	"encoding/json"
 	"os"
-
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 type HeatmapSummary struct {
@@ -33,16 +31,16 @@ func SummarizeHeatmap(heatmap [][]int, faults int) HeatmapSummary {
 }
 
 func DinoHeatmapSummaryFromPath(savePath string, opts DinoHeatmapOptions) (HeatmapSummary, error) {
-	save, err := arksave.Open(savePath)
+	api, closeAPI, err := NewDinoFromPath(savePath)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	if opts.MapName == "" && save.Context != nil {
-		opts.MapName = save.Context.MapName
+	if opts.MapName == "" && api.save.Context != nil {
+		opts.MapName = api.save.Context.MapName
 	}
-	summary, _, err := NewDino(save).HeatmapSummaryWithFaults(opts)
+	summary, _, err := api.HeatmapSummaryWithFaults(opts)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
@@ -65,16 +63,16 @@ func ExportDinoHeatmapSummaryJSONFromPath(savePath string, outputPath string, op
 }
 
 func StructureHeatmapSummaryFromPath(savePath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
-	save, err := arksave.Open(savePath)
+	api, closeAPI, err := NewStructureFromPath(savePath)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	if opts.MapName == "" && save.Context != nil {
-		opts.MapName = save.Context.MapName
+	if opts.MapName == "" && api.save.Context != nil {
+		opts.MapName = api.save.Context.MapName
 	}
-	summary, _, err := NewStructure(save).HeatmapSummaryWithFaults(opts)
+	summary, _, err := api.HeatmapSummaryWithFaults(opts)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
