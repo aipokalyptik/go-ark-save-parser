@@ -544,6 +544,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.DinoAPI.BabySummaryWithFaults`.
     - [x] Move `dino_filter` total/tamed/wild/cryopodded/class counting onto
           typed `arkapi.DinoAPI.PopulationSummaryWithFaults`.
+    - [x] Move repeated read-only DinoAPI example save-open/close handling
+          behind typed `arkapi.NewDinoFromPath`.
     - [x] Move dino stat CLI token parsing/formatting for `dino_best_stat` and
           `dino_best_base_stat` onto typed `arkobject.DinoStat` helpers.
     - [x] Move `dino_heatmap` cryopod filtering, fault handling, and summary

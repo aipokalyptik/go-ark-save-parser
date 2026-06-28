@@ -151,6 +151,14 @@ func NewDino(save *arksave.Save) *DinoAPI {
 	return &DinoAPI{save: save}
 }
 
+func NewDinoFromPath(savePath string) (*DinoAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewDino(save), save.Close, nil
+}
+
 func (d *DinoAPI) IsApplicableBlueprint(blueprint string) bool {
 	if blueprint == "" {
 		return false

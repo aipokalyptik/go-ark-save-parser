@@ -7,7 +7,6 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -18,13 +17,12 @@ func main() {
 	if !ok {
 		log.Fatalf("unknown stat %q", os.Args[3])
 	}
-	save, err := arksave.Open(os.Args[1])
+	api, closeAPI, err := arkapi.NewDinoFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	api := arkapi.NewDino(save)
 	_, dino, gotStat, points, found, _, err := api.BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{
 		Blueprints:      []string{os.Args[2]},
 		Stats:           []arkobject.DinoStat{stat},

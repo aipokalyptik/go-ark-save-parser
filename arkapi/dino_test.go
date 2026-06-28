@@ -203,6 +203,30 @@ func TestDinoAPIAllAndByClassReadLocalSaveDinos(t *testing.T) {
 	}
 }
 
+func TestNewDinoFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticDinoSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewDinoFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewDinoFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	dinos, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("All() length = %d, want 1", len(dinos))
+	}
+	for _, dino := range dinos {
+		if dino.ID1 != 1001 || !dino.IsTamed || dino.Location == nil {
+			t.Fatalf("Dino = %#v, want synthetic dino", dino)
+		}
+	}
+}
+
 func TestDinoAPIExportBinaryWritesDinoAndLinkedRows(t *testing.T) {
 	save := openSyntheticDinoStatsSave(t)
 	defer save.Close()

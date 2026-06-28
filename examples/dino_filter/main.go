@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -22,13 +21,12 @@ func main() {
 		includeCryos = false
 		savePath = os.Args[2]
 	}
-	save, err := arksave.Open(savePath)
+	api, closeAPI, err := arkapi.NewDinoFromPath(savePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	api := arkapi.NewDino(save)
 	summary, _, err := api.PopulationSummaryWithFaults(includeCryos)
 	if err != nil {
 		log.Fatal(err)

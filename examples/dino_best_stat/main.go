@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -20,14 +19,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	save, err := arksave.Open(args[0])
+	api, closeAPI, err := arkapi.NewDinoFromPath(args[0])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
 		os.Exit(1)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	api := arkapi.NewDino(save)
 	id, dino, stat, points, ok, _, err := api.BestDinoForStatFilteredWithFaults(opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read dinos: %v\n", err)
