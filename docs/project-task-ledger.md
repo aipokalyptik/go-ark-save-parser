@@ -571,12 +571,16 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `dino_heatmap` save opening, summary JSON encoding, and
           explicit output writing behind typed
           `arkapi.ExportDinoHeatmapSummaryJSONFromPath`.
+    - [x] Add path-level typed dino heatmap summaries through
+          `arkapi.DinoHeatmapSummaryFromPath`.
     - [x] Move `structure_heatmap` structure loading, fault handling, and
           summary generation onto typed
           `arkapi.StructureAPI.HeatmapSummaryWithFaults`.
     - [x] Move `structure_heatmap` save opening, summary JSON encoding, and
           explicit output writing behind typed
           `arkapi.ExportStructureHeatmapSummaryJSONFromPath`.
+    - [x] Add path-level typed structure heatmap summaries through
+          `arkapi.StructureHeatmapSummaryFromPath`.
     - [x] Move repeated pure StructureAPI example save-open/close handling
           behind typed `arkapi.NewStructureFromPath`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed

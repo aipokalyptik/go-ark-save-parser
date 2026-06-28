@@ -32,7 +32,7 @@ func SummarizeHeatmap(heatmap [][]int, faults int) HeatmapSummary {
 	return summary
 }
 
-func ExportDinoHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts DinoHeatmapOptions) (HeatmapSummary, error) {
+func DinoHeatmapSummaryFromPath(savePath string, opts DinoHeatmapOptions) (HeatmapSummary, error) {
 	save, err := arksave.Open(savePath)
 	if err != nil {
 		return HeatmapSummary{}, err
@@ -46,6 +46,14 @@ func ExportDinoHeatmapSummaryJSONFromPath(savePath string, outputPath string, op
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
+	return summary, nil
+}
+
+func ExportDinoHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts DinoHeatmapOptions) (HeatmapSummary, error) {
+	summary, err := DinoHeatmapSummaryFromPath(savePath, opts)
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
 		return HeatmapSummary{}, err
@@ -56,7 +64,7 @@ func ExportDinoHeatmapSummaryJSONFromPath(savePath string, outputPath string, op
 	return summary, nil
 }
 
-func ExportStructureHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
+func StructureHeatmapSummaryFromPath(savePath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
 	save, err := arksave.Open(savePath)
 	if err != nil {
 		return HeatmapSummary{}, err
@@ -67,6 +75,14 @@ func ExportStructureHeatmapSummaryJSONFromPath(savePath string, outputPath strin
 		opts.MapName = save.Context.MapName
 	}
 	summary, _, err := NewStructure(save).HeatmapSummaryWithFaults(opts)
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
+	return summary, nil
+}
+
+func ExportStructureHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
+	summary, err := StructureHeatmapSummaryFromPath(savePath, opts)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}

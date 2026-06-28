@@ -26,6 +26,36 @@ func TestSummarizeHeatmapCountsNonzeroCellsTotalsAndMax(t *testing.T) {
 	}
 }
 
+func TestHeatmapSummaryFromPathReturnsTypedSummariesWithoutWritingJSON(t *testing.T) {
+	dinoSave := openSyntheticDinoHeatmapSaveWithMalformedCryopod(t)
+	defer dinoSave.Close()
+	dinoSummary, err := DinoHeatmapSummaryFromPath(dinoSave.Path(), DinoHeatmapOptions{
+		MapName:           "Valguero",
+		Resolution:        100,
+		IncludeCryopodded: false,
+	})
+	if err != nil {
+		t.Fatalf("DinoHeatmapSummaryFromPath() error = %v", err)
+	}
+	if dinoSummary.Total != 1 || dinoSummary.NonzeroCells != 1 || dinoSummary.Faults != 0 {
+		t.Fatalf("DinoHeatmapSummaryFromPath() = %#v, want one direct dino without cryopod faults", dinoSummary)
+	}
+
+	structureSave := openSyntheticStructureOwnerLocationSave(t)
+	defer structureSave.Close()
+	structureSummary, err := StructureHeatmapSummaryFromPath(structureSave.Path(), StructureHeatmapOptions{
+		MapName:      "Valguero",
+		Resolution:   100,
+		MinInSection: 2,
+	})
+	if err != nil {
+		t.Fatalf("StructureHeatmapSummaryFromPath() error = %v", err)
+	}
+	if structureSummary.Total != 2 || structureSummary.NonzeroCells != 1 || structureSummary.Max != 2 || structureSummary.Faults != 0 {
+		t.Fatalf("StructureHeatmapSummaryFromPath() = %#v, want one cell with two structures", structureSummary)
+	}
+}
+
 func TestExportDinoHeatmapSummaryJSONFromPathWritesSummary(t *testing.T) {
 	save := openSyntheticDinoHeatmapSaveWithMalformedCryopod(t)
 	defer save.Close()
