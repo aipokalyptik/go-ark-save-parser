@@ -3,12 +3,15 @@ package arkapi
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestExportClusterDataSummarizesUploads(t *testing.T) {
@@ -302,5 +305,28 @@ func TestExportClusterDirectoryDataWithFaultsReportsBrokenFiles(t *testing.T) {
 	}
 	if len(decoded.Faults) != 1 || decoded.Faults[0].Error != "not an archive" {
 		t.Fatalf("decoded faults = %#v, want one serialized fault", decoded.Faults)
+	}
+}
+
+func TestExportClusterPathJSONReadsDirectoryWithFaults(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_valid"), "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	raw, err := ExportClusterPathJSON(dir)
+	if err != nil {
+		t.Fatalf("ExportClusterPathJSON(directory) error = %v", err)
+	}
+	var decoded ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].ID != "EOS_valid" {
+		t.Fatalf("decoded directory = %#v, want one valid cluster file", decoded)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Error == "" {
+		t.Fatalf("decoded faults = %#v, want malformed file fault", decoded.Faults)
 	}
 }

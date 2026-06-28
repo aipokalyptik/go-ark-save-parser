@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
@@ -201,4 +202,23 @@ func ExportClusterDirectoryDataJSON(entries []*arkcluster.Data) ([]byte, error) 
 
 func ExportClusterDirectoryDataWithFaultsJSON(entries []*arkcluster.Data, faults []arkcluster.FileFault) ([]byte, error) {
 	return json.MarshalIndent(ExportClusterDirectoryDataWithFaults(entries, faults), "", "  ")
+}
+
+func ExportClusterPathJSON(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if info.IsDir() {
+		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
+		if err != nil {
+			return nil, err
+		}
+		return ExportClusterDirectoryDataWithFaultsJSON(entries, faults)
+	}
+	data, err := arkcluster.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return ExportClusterDataJSON(data)
 }
