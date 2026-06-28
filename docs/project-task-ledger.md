@@ -594,6 +594,10 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath`,
           `arkapi.EquipmentSaddleSummaryFromPath`, and
           `arkapi.EquipmentOwnedSummaryFromPath`.
+    - [x] Move `equipment-summary`, `equipment-saddles`,
+          `equipment-ascendant-weapon-bps`, and `equipment-owned-by` CLI
+          aggregate commands onto typed equipment path helpers while preserving
+          parse-fault counts.
     - [x] Add path-level typed stackable aggregate, fault-preserving
           aggregate, and owned-by summaries through
           `arkapi.StackableSummaryFromPath`,

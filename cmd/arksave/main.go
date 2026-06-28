@@ -1027,13 +1027,7 @@ func dinoHeatmap(path string, outPath string, resolution int, out io.Writer, opt
 }
 
 func equipmentSummary(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewEquipment(save).SummaryWithFaults(arkapi.EquipmentFilterOptions{})
+	summary, faults, err := arkapi.EquipmentSummaryFromPath(path, arkapi.EquipmentFilterOptions{})
 	if err != nil {
 		return err
 	}
@@ -1063,13 +1057,7 @@ func equipmentSummary(path string, out io.Writer) error {
 }
 
 func equipmentSaddles(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewEquipment(save).SaddleSummaryWithFaults()
+	summary, faults, err := arkapi.EquipmentSaddleSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -1171,13 +1159,7 @@ func equipmentRank(path string, out io.Writer) error {
 }
 
 func equipmentAscendantWeaponBPs(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewEquipment(save).SummaryWithFaults(arkapi.EquipmentFilterOptions{
+	summary, faults, err := arkapi.EquipmentSummaryFromPath(path, arkapi.EquipmentFilterOptions{
 		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:     arkapi.UpstreamWeaponBlueprints(),
 		OnlyBlueprints: true,
@@ -1225,13 +1207,7 @@ func equipmentOwnedBy(path string, blueprint string, tribeIDArg string, out io.W
 	if err != nil {
 		return fmt.Errorf("parse tribe id: %w", err)
 	}
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewEquipment(save).OwnedSummaryWithFaults(arkapi.EquipmentFilterOptions{
+	summary, faults, err := arkapi.EquipmentOwnedSummaryFromPath(path, arkapi.EquipmentFilterOptions{
 		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:     []string{blueprint},
 		OnlyBlueprints: true,

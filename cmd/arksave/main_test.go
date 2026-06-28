@@ -57,6 +57,20 @@ func TestDinoAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestEquipmentAggregateCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"equipmentSummary", "equipmentSaddles", "equipmentAscendantWeaponBPs", "equipmentOwnedBy"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") {
+			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func functionBody(t *testing.T, source string, name string) string {
 	t.Helper()
 	start := strings.Index(source, "func "+name+"(")
