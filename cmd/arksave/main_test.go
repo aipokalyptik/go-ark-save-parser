@@ -1860,6 +1860,36 @@ func TestExportTributeJSONWritesDirectorySummary(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportTributeJSONDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "tributes.json")
+	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
+		t.Fatalf("write broken tribute file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"export-tribute-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-tribute-json directory) error = %v", err)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(tribute directory json) error = %v", err)
+	}
+	var decoded arkapi.TributeDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(tribute directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].ID != "abc" {
+		t.Fatalf("decoded valid files = %#v, want one valid tribute file", decoded)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Path != filepath.Join(dir, "broken.arktributetribe") || decoded.Faults[0].Error == "" {
+		t.Fatalf("decoded faults = %#v, want broken tribute file fault", decoded.Faults)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestExportDomainJSONWritesDomainSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

@@ -24,6 +24,11 @@ type File struct {
 	Path string
 }
 
+type FileFault struct {
+	Path string
+	Err  error
+}
+
 type Data struct {
 	ID            string
 	Path          string
@@ -80,19 +85,36 @@ func OpenDirectory(dir string) ([]*Data, error) {
 }
 
 func OpenDirectoryWithOptions(dir string, opts Options) ([]*Data, error) {
-	files, err := Discover(dir)
+	out, faults, err := OpenDirectoryWithFaultsOptions(dir, opts)
 	if err != nil {
 		return nil, err
 	}
+	if len(faults) > 0 {
+		return nil, faults[0].Err
+	}
+	return out, nil
+}
+
+func OpenDirectoryWithFaults(dir string) ([]*Data, []FileFault, error) {
+	return OpenDirectoryWithFaultsOptions(dir, Options{})
+}
+
+func OpenDirectoryWithFaultsOptions(dir string, opts Options) ([]*Data, []FileFault, error) {
+	files, err := Discover(dir)
+	if err != nil {
+		return nil, nil, err
+	}
 	out := make([]*Data, 0, len(files))
+	var faults []FileFault
 	for _, file := range files {
 		data, err := OpenWithOptions(file.Path, opts)
 		if err != nil {
-			return nil, err
+			faults = append(faults, FileFault{Path: file.Path, Err: err})
+			continue
 		}
 		out = append(out, data)
 	}
-	return out, nil
+	return out, faults, nil
 }
 
 func Parse(raw []byte) ([]uint64, []uint64, error) {

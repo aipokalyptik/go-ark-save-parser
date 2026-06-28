@@ -155,6 +155,9 @@ evidence, but they are not the active execution target.
 - [x] Add typed local Tribe API dino-count aggregate helpers.
 - [x] Include local tribute index discovery/loading in the directory-based
       Player API surface.
+- [x] Add fault-preserving local tribute directory reads and expose malformed
+      compact tribute index file faults through JSON export and CLI directory
+      output.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless
       cluster files.
 - [x] Add read-only local cluster item/dino payload extraction, including

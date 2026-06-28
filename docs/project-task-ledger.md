@@ -195,7 +195,9 @@ documented.
 - [x] Port player lookups, tribe relationships, player aggregates,
       unlocked-engrams aggregation, pawn lookup, inventory lookup, and location
       lookup.
-- [x] Port local tribute discovery/loading and JSON export.
+- [x] Port local tribute discovery/loading, fault-preserving directory reads,
+      and JSON/CLI directory fault reporting for malformed local tribute index
+      files.
 - [x] Port local cluster discovery/loading, uploaded item/dino summaries, typed
       projections, parse-status reporting, and JSON export.
 - [x] Port Structure API class, owner, location, connected-structure, heatmap,

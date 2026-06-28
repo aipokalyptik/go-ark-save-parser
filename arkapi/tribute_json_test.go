@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"errors"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -42,6 +43,38 @@ func TestExportTributeDirectoryDataSummarizesFiles(t *testing.T) {
 	}
 	if info.Files[0].ID != "a" || info.Files[1].ID != "b" {
 		t.Fatalf("TributeDirectoryInfo files = %#v", info.Files)
+	}
+}
+
+func TestExportTributeDirectoryDataWithFaultsReportsBrokenFiles(t *testing.T) {
+	entries := []*arktribute.Data{{
+		ID:            "a",
+		Path:          "/tmp/a.arktributetribe",
+		PlayerDataIDs: []uint64{1},
+	}}
+	faults := []arktribute.FileFault{{
+		Path: "/tmp/broken.arktributetribe",
+		Err:  errors.New("bad tribute"),
+	}}
+
+	info := ExportTributeDirectoryDataWithFaults(entries, faults)
+	if info.Count != 1 || len(info.Files) != 1 {
+		t.Fatalf("TributeDirectoryInfo = %#v, want one valid file", info)
+	}
+	if len(info.Faults) != 1 || info.Faults[0].Path != "/tmp/broken.arktributetribe" || info.Faults[0].Error != "bad tribute" {
+		t.Fatalf("TributeDirectoryInfo.Faults = %#v, want broken file fault", info.Faults)
+	}
+
+	raw, err := ExportTributeDirectoryDataWithFaultsJSON(entries, faults)
+	if err != nil {
+		t.Fatalf("ExportTributeDirectoryDataWithFaultsJSON() error = %v", err)
+	}
+	var decoded TributeDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Error != "bad tribute" {
+		t.Fatalf("decoded faults = %#v, want one serialized fault", decoded.Faults)
 	}
 }
 

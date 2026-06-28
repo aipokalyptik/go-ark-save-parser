@@ -2038,25 +2038,28 @@ func exportTributeJSON(path string, outputPath string, out io.Writer, opts runOp
 }
 
 func exportTributeDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
-	entries, err := arktribute.OpenDirectory(path)
+	entries, faults, err := arktribute.OpenDirectoryWithFaults(path)
 	if err != nil {
 		return err
 	}
 	var raw []byte
 	if opts.Redact {
-		info := arkapi.ExportTributeDirectoryData(entries)
+		info := arkapi.ExportTributeDirectoryDataWithFaults(entries, faults)
 		for i := range info.Files {
 			info.Files[i].ID = redactedValue
 			info.Files[i].Path = redactedValue
 			info.Files[i].PlayerDataIDs = nil
 			info.Files[i].TribeDataIDs = nil
 		}
+		for i := range info.Faults {
+			info.Faults[i].Path = redactedValue
+		}
 		raw, err = json.MarshalIndent(info, "", "  ")
 		if err != nil {
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportTributeDirectoryDataJSON(entries)
+		raw, err = arkapi.ExportTributeDirectoryDataWithFaultsJSON(entries, faults)
 		if err != nil {
 			return err
 		}

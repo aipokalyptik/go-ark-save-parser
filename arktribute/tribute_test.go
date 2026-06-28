@@ -84,6 +84,27 @@ func TestOpenRejectsLocalTributeFileAboveConfiguredLimit(t *testing.T) {
 	}
 }
 
+func TestOpenDirectoryWithFaultsKeepsValidTributeFiles(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "abc.arktributetribe")
+	brokenPath := filepath.Join(dir, "broken.arktributetribe")
+	testfixtures.WriteTributeFile(t, validPath, []uint64{11}, []uint64{22})
+	if err := os.WriteFile(brokenPath, []byte("not a tribute index"), 0o600); err != nil {
+		t.Fatalf("write broken tribute file: %v", err)
+	}
+
+	entries, faults, err := OpenDirectoryWithFaults(dir)
+	if err != nil {
+		t.Fatalf("OpenDirectoryWithFaults() error = %v", err)
+	}
+	if len(entries) != 1 || entries[0].ID != "abc" {
+		t.Fatalf("OpenDirectoryWithFaults() entries = %#v, want valid tribute only", entries)
+	}
+	if len(faults) != 1 || faults[0].Path != brokenPath || faults[0].Err == nil {
+		t.Fatalf("OpenDirectoryWithFaults() faults = %#v, want broken path fault", faults)
+	}
+}
+
 func sameUint64s(got []uint64, want []uint64) bool {
 	if len(got) != len(want) {
 		return false

@@ -16,8 +16,14 @@ type TributeDataInfo struct {
 }
 
 type TributeDirectoryInfo struct {
-	Count int               `json:"count"`
-	Files []TributeDataInfo `json:"files"`
+	Count  int                    `json:"count"`
+	Faults []TributeFileFaultInfo `json:"faults,omitempty"`
+	Files  []TributeDataInfo      `json:"files"`
+}
+
+type TributeFileFaultInfo struct {
+	Path  string `json:"path"`
+	Error string `json:"error"`
 }
 
 func ExportTributeData(data *arktribute.Data) TributeDataInfo {
@@ -32,12 +38,26 @@ func ExportTributeData(data *arktribute.Data) TributeDataInfo {
 }
 
 func ExportTributeDirectoryData(entries []*arktribute.Data) TributeDirectoryInfo {
+	return ExportTributeDirectoryDataWithFaults(entries, nil)
+}
+
+func ExportTributeDirectoryDataWithFaults(entries []*arktribute.Data, faults []arktribute.FileFault) TributeDirectoryInfo {
 	info := TributeDirectoryInfo{
-		Count: len(entries),
-		Files: make([]TributeDataInfo, 0, len(entries)),
+		Count:  len(entries),
+		Files:  make([]TributeDataInfo, 0, len(entries)),
+		Faults: make([]TributeFileFaultInfo, 0, len(faults)),
 	}
 	for _, entry := range entries {
 		info.Files = append(info.Files, ExportTributeData(entry))
+	}
+	for _, fault := range faults {
+		if fault.Err == nil {
+			continue
+		}
+		info.Faults = append(info.Faults, TributeFileFaultInfo{
+			Path:  fault.Path,
+			Error: fault.Err.Error(),
+		})
 	}
 	return info
 }
@@ -51,11 +71,11 @@ func TributeSummaryFromPath(path string) (TributeDataInfo, error) {
 }
 
 func TributeDirectorySummaryFromPath(path string) (TributeDirectoryInfo, error) {
-	entries, err := arktribute.OpenDirectory(path)
+	entries, faults, err := arktribute.OpenDirectoryWithFaults(path)
 	if err != nil {
 		return TributeDirectoryInfo{}, err
 	}
-	return ExportTributeDirectoryData(entries), nil
+	return ExportTributeDirectoryDataWithFaults(entries, faults), nil
 }
 
 func ExportTributeDataJSON(data *arktribute.Data) ([]byte, error) {
@@ -63,5 +83,9 @@ func ExportTributeDataJSON(data *arktribute.Data) ([]byte, error) {
 }
 
 func ExportTributeDirectoryDataJSON(entries []*arktribute.Data) ([]byte, error) {
-	return json.MarshalIndent(ExportTributeDirectoryData(entries), "", "  ")
+	return ExportTributeDirectoryDataWithFaultsJSON(entries, nil)
+}
+
+func ExportTributeDirectoryDataWithFaultsJSON(entries []*arktribute.Data, faults []arktribute.FileFault) ([]byte, error) {
+	return json.MarshalIndent(ExportTributeDirectoryDataWithFaults(entries, faults), "", "  ")
 }
