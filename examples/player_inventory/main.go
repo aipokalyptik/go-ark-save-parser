@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -18,28 +17,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	save, err := arksave.Open(os.Args[1])
+	lookup, err := arkapi.PlayerInventoryLookupFromPath(os.Args[1], playerDataID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer save.Close()
-
-	api := arkapi.NewPlayer(save)
-	inventory, ok, err := api.PlayerInventoryByDataID(playerDataID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if !ok {
+	if !lookup.Found {
 		fmt.Printf("player=%d inventory=missing items=0\n", playerDataID)
 		return
 	}
-	location, hasLocation, err := api.PlayerLocationByDataID(playerDataID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if hasLocation {
-		fmt.Printf("player=%d inventory=%s items=%d location=(%.2f,%.2f,%.2f)\n", playerDataID, inventory.UUID, inventory.NumberOfItems(), location.X, location.Y, location.Z)
+	if lookup.HasLocation {
+		fmt.Printf("player=%d inventory=%s items=%d location=(%.2f,%.2f,%.2f)\n", playerDataID, lookup.InventoryUUID, lookup.Items, lookup.Location.X, lookup.Location.Y, lookup.Location.Z)
 		return
 	}
-	fmt.Printf("player=%d inventory=%s items=%d location=missing\n", playerDataID, inventory.UUID, inventory.NumberOfItems())
+	fmt.Printf("player=%d inventory=%s items=%d location=missing\n", playerDataID, lookup.InventoryUUID, lookup.Items)
 }

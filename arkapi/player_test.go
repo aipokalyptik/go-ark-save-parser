@@ -527,6 +527,33 @@ func TestPlayerAPIPlayerInventoryByDataID(t *testing.T) {
 	}
 }
 
+func TestPlayerInventoryLookupFromPathFindsInventoryAndLocation(t *testing.T) {
+	save := openSyntheticPlayerTribeSave(t)
+	defer save.Close()
+
+	lookup, err := PlayerInventoryLookupFromPath(save.Path(), 42)
+	if err != nil {
+		t.Fatalf("PlayerInventoryLookupFromPath() error = %v", err)
+	}
+	if !lookup.Found || lookup.PlayerDataID != 42 {
+		t.Fatalf("PlayerInventoryLookupFromPath() = %#v, want found player 42", lookup)
+	}
+	if lookup.InventoryUUID != uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff") || lookup.Items != 2 {
+		t.Fatalf("PlayerInventoryLookupFromPath() inventory = %#v, want inventory with two items", lookup)
+	}
+	if !lookup.HasLocation || lookup.Location == nil || lookup.Location.X != 11 || lookup.Location.Y != 22 || lookup.Location.Z != 33 {
+		t.Fatalf("PlayerInventoryLookupFromPath() location = %#v, has %v", lookup.Location, lookup.HasLocation)
+	}
+
+	missing, err := PlayerInventoryLookupFromPath(save.Path(), 999)
+	if err != nil {
+		t.Fatalf("PlayerInventoryLookupFromPath(missing) error = %v", err)
+	}
+	if missing.Found || missing.PlayerDataID != 999 || missing.Items != 0 || missing.HasLocation {
+		t.Fatalf("PlayerInventoryLookupFromPath(missing) = %#v, want missing lookup", missing)
+	}
+}
+
 func TestPlayerAPIPlayerInventoriesWithFaultsIndexesSavePawns(t *testing.T) {
 	save := openSyntheticPlayerTribeSave(t)
 	defer save.Close()

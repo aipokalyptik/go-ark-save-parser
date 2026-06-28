@@ -92,6 +92,15 @@ type PlayerInventorySummary struct {
 	AverageItems     float64
 }
 
+type PlayerInventoryLookup struct {
+	PlayerDataID  uint64
+	Found         bool
+	InventoryUUID uuid.UUID
+	Items         int
+	HasLocation   bool
+	Location      *arkobject.ActorTransform
+}
+
 type PlayerRosterSummary struct {
 	Players      int
 	WithNames    int
@@ -597,6 +606,31 @@ func PlayerInventorySummaryFromPath(path string) (PlayerInventorySummary, []arks
 		}
 	}
 	return api.PlayerInventorySummaryForPlayers(players)
+}
+
+func PlayerInventoryLookupFromPath(path string, playerDataID uint64) (PlayerInventoryLookup, error) {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return PlayerInventoryLookup{}, err
+	}
+	defer save.Close()
+
+	api := NewPlayer(save)
+	lookup := PlayerInventoryLookup{PlayerDataID: playerDataID}
+	inventory, ok, err := api.PlayerInventoryByDataID(playerDataID)
+	if err != nil || !ok {
+		return lookup, err
+	}
+	lookup.Found = true
+	lookup.InventoryUUID = inventory.UUID
+	lookup.Items = inventory.NumberOfItems()
+	location, hasLocation, err := api.PlayerLocationByDataID(playerDataID)
+	if err != nil {
+		return PlayerInventoryLookup{}, err
+	}
+	lookup.HasLocation = hasLocation
+	lookup.Location = location
+	return lookup, nil
 }
 
 func (p *PlayerAPI) PlayerLocationByDataID(id uint64) (*arkobject.ActorTransform, bool, error) {
