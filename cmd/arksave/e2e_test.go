@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/e2etest"
 )
 
@@ -33,6 +34,30 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 	}
 	if !strings.Contains(objectClassesOut.String(), "Blueprint") {
 		t.Fatalf("object-classes output missing Blueprint class marker")
+	}
+
+	save, err := arksave.Open(data.SavePath)
+	if err != nil {
+		t.Fatalf("open provided save for object-summary id: %v", err)
+	}
+	objectIDs, err := save.ObjectIDs()
+	if closeErr := save.Close(); closeErr != nil {
+		t.Fatalf("close provided save after object id lookup: %v", closeErr)
+	}
+	if err != nil {
+		t.Fatalf("ObjectIDs() error = %v", err)
+	}
+	if len(objectIDs) == 0 {
+		t.Fatalf("provided save has no objects")
+	}
+	var objectSummaryOut bytes.Buffer
+	if err := run([]string{"object-summary", data.SavePath, objectIDs[0].String()}, &objectSummaryOut); err != nil {
+		t.Fatalf("run(object-summary) error = %v", err)
+	}
+	for _, want := range []string{"Exists: true", "Bytes:", "Properties:"} {
+		if !strings.Contains(objectSummaryOut.String(), want) {
+			t.Fatalf("object-summary output missing %q", want)
+		}
 	}
 
 	var classLookupOut bytes.Buffer

@@ -70,6 +70,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("object-classes requires a local .ark path")
 		}
 		return objectClasses(args[1], out)
+	case "object-summary":
+		if len(args) != 3 {
+			return fmt.Errorf("object-summary requires a local .ark path and object uuid")
+		}
+		return objectSummary(args[1], args[2], out)
 	case "class-lookup":
 		if len(args) < 3 {
 			return fmt.Errorf("class-lookup requires a local .ark path and at least one class substring")
@@ -299,6 +304,7 @@ func usage(out io.Writer) error {
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
   arksave object-classes <save.ark>
+  arksave object-summary <save.ark> <object-uuid>
   arksave class-lookup <save.ark> <class-substring> [class-substring...]
   arksave class-property-summary <save.ark> <class-substring>
   arksave property-filter <save.ark> <property> [property...]
@@ -423,6 +429,31 @@ func objectClasses(path string, out io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func objectSummary(path string, objectIDArg string, out io.Writer) error {
+	objectID, err := uuid.Parse(objectIDArg)
+	if err != nil {
+		return fmt.Errorf("parse object uuid: %w", err)
+	}
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, err := arkapi.NewGeneral(save).ObjectSummary(objectID)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Exists: %t\nBytes: %d\nProperties: %d\n",
+		summary.Exists,
+		summary.Bytes,
+		summary.Properties,
+	)
+	return err
 }
 
 func classLookup(path string, classSubstrings []string, out io.Writer) error {
