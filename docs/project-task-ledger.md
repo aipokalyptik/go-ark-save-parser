@@ -504,6 +504,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `inspect`.
   - [x] `parse`.
   - [x] `structure-health`.
+  - [x] `structure-owner-count`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.

@@ -110,6 +110,59 @@ func TestStructureHealthCommandPrintsAggregateSummary(t *testing.T) {
 	}
 }
 
+func TestStructureOwnerCountCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-owner-count", path, "555"}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-owner-count) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe ID: 555",
+		"Structures: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-owner-count output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestStructureOwnerCountCommandRedactsTribeID(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "structure-owner-count", path, "555"}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact structure-owner-count) error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "Tribe ID: [redacted]") || strings.Contains(got, "555") {
+		t.Fatalf("redacted structure-owner-count output = %q", got)
+	}
+	if !strings.Contains(got, "Structures: 1") || !strings.Contains(got, "Parse faults: 0") {
+		t.Fatalf("redacted structure-owner-count output missing aggregate counts: %q", got)
+	}
+}
+
+func TestStructureOwnerCountCommandRejectsInvalidTribeID(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-owner-count", path, "not-an-id"}, &out)
+	if err == nil {
+		t.Fatalf("run(structure-owner-count invalid id) error = nil, want parse error")
+	}
+	if !strings.Contains(err.Error(), "parse tribe id") {
+		t.Fatalf("run(structure-owner-count invalid id) error = %v", err)
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)

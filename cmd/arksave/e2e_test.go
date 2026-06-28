@@ -37,6 +37,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var ownerCountOut bytes.Buffer
+	if err := run([]string{"--redact", "structure-owner-count", data.SavePath, "555"}, &ownerCountOut); err != nil {
+		t.Fatalf("run(structure-owner-count) error = %v", err)
+	}
+	for _, want := range []string{"Tribe ID: [redacted]", "Structures:", "Parse faults:"} {
+		if !strings.Contains(ownerCountOut.String(), want) {
+			t.Fatalf("structure-owner-count output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {
