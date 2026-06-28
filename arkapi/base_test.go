@@ -223,6 +223,25 @@ func TestBaseAPIComponentStatsUsesLinkedStructures(t *testing.T) {
 	}
 }
 
+func TestNewBaseFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewBaseFromPath(save.Path(), "")
+	if err != nil {
+		t.Fatalf("NewBaseFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	stats, err := api.ComponentStats()
+	if err != nil {
+		t.Fatalf("ComponentStats() error = %v", err)
+	}
+	if stats.Components != 1 || stats.TotalStructures != 2 || stats.LargestComponent != 2 {
+		t.Fatalf("ComponentStats() = %#v, want one two-structure component", stats)
+	}
+}
+
 func TestBaseAPIComponentStatsSkipsUpstreamUnparsedBunkerBase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "base-bunker.ark")
 	normalID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")

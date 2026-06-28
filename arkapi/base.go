@@ -37,6 +37,14 @@ func NewBase(save *arksave.Save, mapName string) *BaseAPI {
 	return &BaseAPI{structures: NewStructure(save), mapName: mapName}
 }
 
+func NewBaseFromPath(savePath string, mapName string) (*BaseAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewBase(save, mapName), save.Close, nil
+}
+
 func (b *BaseAPI) At(coords arkobject.MapCoords, radius float64, owner *arkobject.ObjectOwner) (*arkobject.Base, error) {
 	nearby, err := b.structures.AtLocation(b.mapName, coords, radius, nil)
 	if err != nil {
