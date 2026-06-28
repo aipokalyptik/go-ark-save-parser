@@ -12,17 +12,8 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <save.ark-or-save-directory>", os.Args[0])
 	}
-	api, closeAPI, err := arkapi.NewPlayerFromPath(os.Args[1], arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackPlayers})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		if err := closeAPI(); err != nil {
-			log.Fatal(err)
-		}
-	}()
 
-	engrams, err := api.UnlockedEngrams()
+	engrams, err := arkapi.PlayerUnlockedEngramsFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}

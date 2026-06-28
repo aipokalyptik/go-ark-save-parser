@@ -543,6 +543,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.PlayerInventorySummaryFromPath`.
     - [x] Move `player_inventory` per-player inventory/location lookup behind
           typed `arkapi.PlayerInventoryLookupFromPath`.
+    - [x] Add `arkapi.PlayerUnlockedEngramsFromPath`, then move
+          `player_unlocked_engrams` sorted unique engram output onto the typed
+          player path helper.
     - [x] Move equipment max-damage example aggregation onto existing typed
           `arkapi.EquipmentAPI.BestWeaponDamage`.
     - [x] Move `equipment_best` filter-plus-best selection onto typed

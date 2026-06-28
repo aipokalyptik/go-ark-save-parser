@@ -835,6 +835,37 @@ func TestPlayerAllSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
 	}
 }
 
+func TestPlayerUnlockedEngramsFromPathUsesDirectoryProfiles(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID: 42,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		},
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID: 43,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+		},
+	})
+
+	engrams, err := PlayerUnlockedEngramsFromPath(dir)
+	if err != nil {
+		t.Fatalf("PlayerUnlockedEngramsFromPath() error = %v", err)
+	}
+	want := []string{
+		"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+		"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+	}
+	if !reflect.DeepEqual(engrams, want) {
+		t.Fatalf("PlayerUnlockedEngramsFromPath() = %#v, want %#v", engrams, want)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{

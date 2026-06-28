@@ -70,6 +70,20 @@ func TestGeneralAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestPlayerAggregateExamplesUseTypedPathHelpers(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("player_unlocked_engrams", "main.go"),
+	} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile(%s) error = %v", path, err)
+		}
+		if strings.Contains(string(data), "NewPlayerFromPath") {
+			t.Fatalf("%s still owns PlayerAPI lifecycle; use typed arkapi path helper", path)
+		}
+	}
+}
+
 func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

@@ -895,6 +895,18 @@ func (p *PlayerAPI) UnlockedEngrams() ([]string, error) {
 	return out, nil
 }
 
+func PlayerUnlockedEngramsFromPath(path string) ([]string, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		return nil, err
+	}
+	engrams, err := api.UnlockedEngrams()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return engrams, err
+}
+
 func (p *PlayerAPI) PlayerWithHighestLevel() (arkobject.Player, int32, bool, error) {
 	players, err := p.Players()
 	if err != nil {
