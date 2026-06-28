@@ -488,7 +488,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Add typed local cluster uploaded-item type constants and helper methods.
   - [x] Use explicit errors and fault collections for partial object parses.
   - [x] Require explicit output paths for mutation operations.
-  - [~] Split or further organize large domain models under `arkobject` or
+  - [x] Split or further organize large domain models under `arkobject` or
         subpackages once behavior stabilizes; equipment item construction,
         stat calculation, default stat tables, and property coercion helpers
         are now split into focused files; dino construction, colors, lineage,
@@ -498,8 +498,9 @@ CLI tools, and reusable APIs without losing oracle parity.
         cluster item, dino, and class-name helpers are split with
         package-shape regression coverage; inventory collection, inventory
         item, stackable item, and shared reference helpers are split with
-        package-shape regression coverage, while the broader structure model
-        split remains.
+        package-shape regression coverage; structure construction, ownership
+        matching, linked references, and shared scalar property helpers are
+        split with package-shape regression coverage.
   - [x] Replace remaining Python-shaped compatibility helpers where typed Go
         surfaces now exist:
     - [x] Move `object_summary` and `class_property_summary` direct save

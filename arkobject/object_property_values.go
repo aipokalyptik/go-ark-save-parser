@@ -70,3 +70,31 @@ func actorTransformValue(properties arkproperty.Container, name string) *ActorTr
 func uploadedFromServerName(properties arkproperty.Container) string {
 	return strings.TrimPrefix(stringValue(properties, "UploadedFromServerName"), "\n")
 }
+
+func float64Value(properties arkproperty.Container, name string) float64 {
+	value, ok := properties.Value(name)
+	if !ok {
+		return 0
+	}
+	switch v := value.(type) {
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case uint32:
+		return float64(v)
+	default:
+		return 0
+	}
+}
+
+func boolValue(properties arkproperty.Container, name string) bool {
+	value, ok := properties.Value(name)
+	if !ok {
+		return false
+	}
+	out, _ := value.(bool)
+	return out
+}

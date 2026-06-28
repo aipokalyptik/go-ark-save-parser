@@ -114,3 +114,23 @@ func TestArkObjectInventoryModelsAreSplitByResponsibility(t *testing.T) {
 		}
 	}
 }
+
+func TestArkObjectStructureModelIsSplitByResponsibility(t *testing.T) {
+	for _, path := range []string{
+		"structure.go",
+		"structure_owner.go",
+		"structure_links.go",
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("expected arkobject structure split file %s: %v", path, err)
+		}
+	}
+
+	contents, err := os.ReadFile("structure.go")
+	if err != nil {
+		t.Fatalf("read structure.go: %v", err)
+	}
+	if lines := strings.Count(string(contents), "\n"); lines > 80 {
+		t.Fatalf("structure.go has %d lines, want <= 80 after responsibility split", lines)
+	}
+}
