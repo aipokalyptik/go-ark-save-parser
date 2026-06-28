@@ -725,9 +725,10 @@ CLI tools, and reusable APIs without losing oracle parity.
         live in shared testfixtures; ID-table Vector struct property writers
         now live in shared testfixtures for example/player-location fixtures;
         base linked-structure object-reference array fixtures now use shared
-        ID-table array writers; remaining lower-level dino/equipment parser
-        payload builders and non-save malformed object-shape fixtures still
-        remain.
+        ID-table array writers; player/tribe relation directory fixtures are
+        shared by API and CLI tests; remaining lower-level dino/equipment
+        parser payload builders and non-save malformed object-shape fixtures
+        still remain.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

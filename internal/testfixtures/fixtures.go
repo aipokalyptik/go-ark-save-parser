@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"os"
+	"path/filepath"
 	"sort"
 	"testing"
 
@@ -604,6 +605,47 @@ func WriteTribeArchive(tb testing.TB, path string) {
 		TribeID:  12345,
 		OwnerID:  42,
 		NumDinos: 7,
+	})
+}
+
+func WritePlayerTribeRelationDirectory(tb testing.TB, dir string) {
+	tb.Helper()
+	WritePlayerArchiveWithOptions(tb, filepath.Join(dir, "123.arkprofile"), PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+		TribeID:       12345,
+	})
+	WritePlayerArchiveWithOptions(tb, filepath.Join(dir, "456.arkprofile"), PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		UniqueID:      "eos-scout",
+		TribeID:       12345,
+	})
+	WritePlayerArchiveWithOptions(tb, filepath.Join(dir, "789.arkprofile"), PlayerArchiveOptions{
+		PlayerDataID:  77,
+		CharacterName: "Nomad",
+		PlayerName:    "NoTribe",
+		UniqueID:      "eos-nomad",
+		TribeID:       77777,
+	})
+	WriteTribeArchiveWithOptions(tb, filepath.Join(dir, "456.arktribe"), TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout", "Inactive"},
+		MemberIDs: []int32{42, 43, 99},
+	})
+	WriteTribeArchiveWithOptions(tb, filepath.Join(dir, "789.arktribe"), TribeArchiveOptions{
+		Name:      "Sleepers",
+		TribeID:   67890,
+		OwnerID:   88,
+		NumDinos:  0,
+		Members:   []string{"Gone"},
+		MemberIDs: []int32{88},
 	})
 }
 

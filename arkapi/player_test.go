@@ -1469,7 +1469,7 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 
 func TestTribePlayerRelationSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
 	dir := t.TempDir()
-	writeRelationSummaryDirectory(t, dir)
+	testfixtures.WritePlayerTribeRelationDirectory(t, dir)
 
 	summary, err := TribePlayerRelationSummaryFromPath(dir)
 	if err != nil {
@@ -1491,7 +1491,7 @@ func TestTribePlayerRelationSummaryFromPathUsesDirectoryPlayersAndTribes(t *test
 
 func TestPlayerAndTribeDataSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
 	dir := t.TempDir()
-	writeRelationSummaryDirectory(t, dir)
+	testfixtures.WritePlayerTribeRelationDirectory(t, dir)
 
 	summary, err := PlayerAndTribeDataSummaryFromPath(dir)
 	if err != nil {
@@ -1504,47 +1504,6 @@ func TestPlayerAndTribeDataSummaryFromPathUsesDirectoryPlayersAndTribes(t *testi
 	if len(summary.PlayerRows) != 3 || len(summary.TribeRows) != 2 || len(summary.RelationRows) != 2 {
 		t.Fatalf("PlayerAndTribeDataSummaryFromPath() rows = %#v", summary)
 	}
-}
-
-func writeRelationSummaryDirectory(t *testing.T, dir string) {
-	t.Helper()
-	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
-		PlayerDataID:  42,
-		CharacterName: "Survivor",
-		PlayerName:    "PlatformName",
-		UniqueID:      "eos-survivor",
-		TribeID:       12345,
-	})
-	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
-		PlayerDataID:  43,
-		CharacterName: "Scout",
-		PlayerName:    "OtherPlatform",
-		UniqueID:      "eos-scout",
-		TribeID:       12345,
-	})
-	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "789.arkprofile"), testfixtures.PlayerArchiveOptions{
-		PlayerDataID:  77,
-		CharacterName: "Nomad",
-		PlayerName:    "NoTribe",
-		UniqueID:      "eos-nomad",
-		TribeID:       77777,
-	})
-	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
-		Name:      "Porters",
-		TribeID:   12345,
-		OwnerID:   42,
-		NumDinos:  7,
-		Members:   []string{"Survivor", "Scout", "Inactive"},
-		MemberIDs: []int32{42, 43, 99},
-	})
-	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
-		Name:      "Sleepers",
-		TribeID:   67890,
-		OwnerID:   88,
-		NumDinos:  0,
-		Members:   []string{"Gone"},
-		MemberIDs: []int32{88},
-	})
 }
 
 func TestPlayerAPILocalDeathStatistics(t *testing.T) {
