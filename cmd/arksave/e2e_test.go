@@ -37,6 +37,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var propertyFilterOut bytes.Buffer
+	if err := run([]string{"property-filter", data.SavePath, "Health", "MaxHealth"}, &propertyFilterOut); err != nil {
+		t.Fatalf("run(property-filter) error = %v", err)
+	}
+	for _, want := range []string{"Objects:", "Classes:"} {
+		if !strings.Contains(propertyFilterOut.String(), want) {
+			t.Fatalf("property-filter output missing %q", want)
+		}
+	}
+
 	var healthOut bytes.Buffer
 	if err := run([]string{"structure-health", data.SavePath}, &healthOut); err != nil {
 		t.Fatalf("run(structure-health) error = %v", err)

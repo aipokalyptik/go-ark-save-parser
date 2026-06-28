@@ -512,6 +512,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `inspect`.
   - [x] `parse`.
   - [x] `class-lookup`.
+  - [x] `property-filter`.
   - [x] `structure-health`.
   - [x] `structure-owner-count`.
   - [x] `structure-owners`.
@@ -598,9 +599,9 @@ without Python or private chat context.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
-      commands, class lookup, local profile/tribe/tribute file handling, and
-      aggregate-output examples through `make e2e-test`; they skip without
-      `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
+      commands, class/property lookup, local profile/tribe/tribute file
+      handling, and aggregate-output examples through `make e2e-test`; they
+      skip without `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
       dino, and equipment command/API paths plus domain JSON export through
       both `arkapi.JSONAPI.ExportDomain` and the CLI `export-domain-json` path.

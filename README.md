@@ -60,9 +60,9 @@ Implemented:
   metadata for library callers.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
-- `arksave inspect`, `parse`, `class-lookup`, `structure-health`,
-  `structure-owner-count`, `structure-owners`, `structure-owner-locations`,
-  `structure-heatmap`, `base-components`,
+- `arksave inspect`, `parse`, `class-lookup`, `property-filter`,
+  `structure-health`, `structure-owner-count`, `structure-owners`,
+  `structure-owner-locations`, `structure-heatmap`, `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
   `dino-most-mutated`, `dino-wild-tamed`, `equipment-summary`,
   `equipment-saddles`, `equipment-best`, `equipment-rank`, `stackables`,
@@ -130,6 +130,7 @@ Look up save objects by class substring:
 
 ```sh
 ./bin/arksave class-lookup /path/to/Valguero_WP.ark PrimalStructure
+./bin/arksave property-filter /path/to/Valguero_WP.ark Health MaxHealth
 ```
 
 Summarize structure health with a selected-property scan:

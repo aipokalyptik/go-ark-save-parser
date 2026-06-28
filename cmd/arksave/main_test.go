@@ -105,6 +105,26 @@ func TestClassLookupCommandPrintsAggregateSummary(t *testing.T) {
 	}
 }
 
+func TestPropertyFilterCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"property-filter", path, "Health", "MaxHealth"}, &out)
+	if err != nil {
+		t.Fatalf("run(property-filter) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Objects: 1",
+		"Classes: 1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("property-filter output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestStructureHealthCommandPrintsAggregateSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)
