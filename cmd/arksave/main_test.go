@@ -710,6 +710,27 @@ func TestEquipmentRankCommandPrintsRankStats(t *testing.T) {
 	}
 }
 
+func TestEquipmentAscendantWeaponBPsCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "equipment-ascendant.ark")
+	createSyntheticAscendantWeaponBlueprintSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-ascendant-weapon-bps", path}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-ascendant-weapon-bps) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Items: 1",
+		"Max damage: 112.3",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-ascendant-weapon-bps output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -2624,6 +2645,35 @@ func createSyntheticOwnedEquipmentSave(t *testing.T, path string) {
 				IsBlueprint:      &trueValue,
 				Stats:            map[int32]uint16{3: 2000},
 				OwnerInventoryID: otherInventoryID,
+			}),
+		},
+	})
+}
+
+func createSyntheticAscendantWeaponBlueprintSave(t *testing.T, path string) {
+	t.Helper()
+	trueValue := true
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000d: "bIsBlueprint",
+			0x1000000e: "BoolProperty",
+			0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+			0x10000010: "ItemRating",
+			0x10000011: "ItemQualityIndex",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity:    1,
+				Rating:      9.5,
+				Quality:     arkapi.AscendantQualityIndex,
+				IsBlueprint: &trueValue,
+				Stats:       map[int32]uint16{3: 1234},
 			}),
 		},
 	})

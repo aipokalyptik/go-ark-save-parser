@@ -208,6 +208,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-rank requires a local .ark path")
 		}
 		return equipmentRank(args[1], out)
+	case "equipment-ascendant-weapon-bps":
+		if len(args) != 2 {
+			return fmt.Errorf("equipment-ascendant-weapon-bps requires a local .ark path")
+		}
+		return equipmentAscendantWeaponBPs(args[1], out)
 	case "equipment-owned-by":
 		if len(args) != 4 {
 			return fmt.Errorf("equipment-owned-by requires a local .ark path, blueprint, and tribe id")
@@ -341,6 +346,7 @@ func usage(out io.Writer) error {
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
   arksave equipment-rank <save.ark>
+  arksave equipment-ascendant-weapon-bps <save.ark>
   arksave [--redact] equipment-owned-by <save.ark> <blueprint> <tribe-id>
   arksave stackables <save.ark>
   arksave [--redact] stackable-owned-by <save.ark> <blueprint> <tribe-id>
@@ -1067,6 +1073,32 @@ func equipmentRank(path string, out io.Writer) error {
 		stats.Crafted,
 		stats.Blueprints,
 		stats.Classes,
+		len(faults),
+	)
+	return err
+}
+
+func equipmentAscendantWeaponBPs(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewEquipment(save).SummaryWithFaults(arkapi.EquipmentFilterOptions{
+		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:     arkapi.UpstreamWeaponBlueprints(),
+		OnlyBlueprints: true,
+		MinQuality:     arkapi.AscendantQualityIndex,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Items: %d\nMax damage: %.1f\nParse faults: %d\n",
+		summary.Items,
+		summary.MaxDamage,
 		len(faults),
 	)
 	return err
