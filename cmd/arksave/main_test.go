@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -2746,8 +2745,8 @@ func createSyntheticDinoStatsSave(t *testing.T, path string) {
 			0x1000003c: "DinoImprintingQuality",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			dinoID:   syntheticDinoStatsObjectBytes(statusID),
-			statusID: syntheticDinoStatusObjectBytes(),
+			dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, false),
+			statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 		},
 	})
 }
@@ -2777,64 +2776,10 @@ func createSyntheticTamedDinoStatsSave(t *testing.T, path string) {
 			0x1000003c: "DinoImprintingQuality",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			dinoID:   syntheticTamedDinoStatsObjectBytes(statusID),
-			statusID: syntheticDinoStatusObjectBytes(),
+			dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, true),
+			statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 		},
 	})
-}
-
-func syntheticDinoStatsObjectBytes(statusID uuid.UUID) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	testfixtures.WriteIntPropertyID(&buf, 0x10000015, 0x10000003, 1001)
-	testfixtures.WriteIntPropertyID(&buf, 0x10000016, 0x10000003, 2002)
-	testfixtures.WriteObjectReferencePropertyID(&buf, 0x10000035, 0x1000001f, statusID)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
-}
-
-func syntheticTamedDinoStatsObjectBytes(statusID uuid.UUID) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	testfixtures.WriteIntPropertyID(&buf, 0x10000015, 0x10000003, 1001)
-	testfixtures.WriteIntPropertyID(&buf, 0x10000016, 0x10000003, 2002)
-	testfixtures.WriteDoublePropertyID(&buf, 0x10000018, 0x10000019, 42)
-	testfixtures.WriteObjectReferencePropertyID(&buf, 0x10000035, 0x1000001f, statusID)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
-}
-
-func syntheticDinoStatusObjectBytes() []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000036))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	testfixtures.WriteIntPropertyID(&buf, 0x10000037, 0x10000003, 12)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000038, 0x10000003, 0, 5)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000038, 0x10000003, 7, 3)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000039, 0x10000003, 8, 2)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x1000003a, 0x10000003, 0, 1)
-	testfixtures.WritePositionedFloatPropertyID(&buf, 0x1000003b, 0x1000000a, 0, 1234.5)
-	testfixtures.WritePositionedFloatPropertyID(&buf, 0x1000003b, 0x1000000a, 7, 321.25)
-	testfixtures.WriteFloatPropertyID(&buf, 0x1000003c, 0x1000000a, 0.875)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
 }
 
 func createSyntheticEquipmentSave(t *testing.T, path string) {

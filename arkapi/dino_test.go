@@ -1632,8 +1632,8 @@ func openSyntheticDinoStatsSave(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
-		statusID: syntheticDinoStatusObjectBytes(),
+		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, false),
+		statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 	})
 }
 
@@ -1644,8 +1644,8 @@ func openSyntheticDinoStatsSaveWithMalformedCryopod(t *testing.T) *arksave.Save 
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
-		statusID: syntheticDinoStatusObjectBytes(),
+		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, true),
+		statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
 	})
 }
@@ -1661,8 +1661,8 @@ func openSyntheticDinoHeatmapSaveWithMalformedCryopod(t *testing.T) *arksave.Sav
 			dinoID: {100, 200, 300},
 		}),
 	}, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
-		statusID: syntheticDinoStatusObjectBytes(),
+		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, true),
+		statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 		podID:    syntheticCryopodItemObjectBytes(syntheticLegacyCryopodPayload()),
 	})
 }
@@ -1676,8 +1676,8 @@ func openSyntheticBestStatCryopodSave(t *testing.T) *arksave.Save {
 	cryopodStatusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, false),
-		statusID: syntheticDinoStatusObjectBytesWithHealth(4),
+		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, false),
+		statusID: testfixtures.DinoStatusComponentFixtureBytes(4),
 		podID:    syntheticCryopodItemObjectBytes(syntheticCryopodDinoPayloadWithHealth(t, cryopodDinoID, cryopodStatusID, 6)),
 	})
 }
@@ -1688,53 +1688,9 @@ func openSyntheticTamedDinoStatsSave(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
-		dinoID:   syntheticDinoStatsObjectBytesWithTamed(statusID, true),
-		statusID: syntheticDinoStatusObjectBytes(),
+		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, true),
+		statusID: testfixtures.DinoStatusComponentFixtureBytes(5),
 	})
-}
-
-func syntheticDinoStatsObjectBytesWithTamed(statusID uuid.UUID, tamed bool) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000014))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x10000015, 1001)
-	writeIntProperty(&buf, 0x10000016, 2002)
-	if tamed {
-		testfixtures.WriteDoublePropertyID(&buf, 0x10000018, 0x10000019, 42)
-	}
-	testfixtures.WriteObjectReferencePropertyID(&buf, 0x10000035, 0x1000001f, statusID)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
-}
-
-func syntheticDinoStatusObjectBytes() []byte {
-	return syntheticDinoStatusObjectBytesWithHealth(5)
-}
-
-func syntheticDinoStatusObjectBytesWithHealth(health int32) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000036))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	_ = binary.Write(&buf, binary.LittleEndian, int16(0))
-	writeIntProperty(&buf, 0x10000037, 12)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000038, 0x10000003, 0, health)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000038, 0x10000003, 7, 3)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x10000039, 0x10000003, 8, 2)
-	testfixtures.WritePositionedIntPropertyID(&buf, 0x1000003a, 0x10000003, 0, 1)
-	testfixtures.WritePositionedFloatPropertyID(&buf, 0x1000003b, 0x1000000a, 0, 1234.5)
-	testfixtures.WritePositionedFloatPropertyID(&buf, 0x1000003b, 0x1000000a, 7, 321.25)
-	writeFloatProperty(&buf, 0x1000003c, 0.875)
-	_ = binary.Write(&buf, binary.LittleEndian, uint32(0x10000004))
-	_ = binary.Write(&buf, binary.LittleEndian, int32(0))
-	return buf.Bytes()
 }
 
 func openSyntheticDinoSave(t *testing.T) *arksave.Save {

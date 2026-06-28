@@ -156,6 +156,30 @@ func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
 	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
 }
 
+func DinoStatsFixtureObjectBytes(statusID uuid.UUID, tamed bool) []byte {
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, 0x10000015, 0x10000003, 1001)
+	WriteIntPropertyID(&props, 0x10000016, 0x10000003, 2002)
+	if tamed {
+		WriteDoublePropertyID(&props, 0x10000018, 0x10000019, 42)
+	}
+	WriteObjectReferencePropertyID(&props, 0x10000035, 0x1000001f, statusID)
+	return ObjectBytesWithProperties(0x10000014, 0x10000004, props.Bytes())
+}
+
+func DinoStatusComponentFixtureBytes(health int32) []byte {
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, 0x10000037, 0x10000003, 12)
+	WritePositionedIntPropertyID(&props, 0x10000038, 0x10000003, 0, health)
+	WritePositionedIntPropertyID(&props, 0x10000038, 0x10000003, 7, 3)
+	WritePositionedIntPropertyID(&props, 0x10000039, 0x10000003, 8, 2)
+	WritePositionedIntPropertyID(&props, 0x1000003a, 0x10000003, 0, 1)
+	WritePositionedFloatPropertyID(&props, 0x1000003b, 0x1000000a, 0, 1234.5)
+	WritePositionedFloatPropertyID(&props, 0x1000003b, 0x1000000a, 7, 321.25)
+	WriteFloatPropertyID(&props, 0x1000003c, 0x1000000a, 0.875)
+	return ObjectBytesWithProperties(0x10000036, 0x10000004, props.Bytes())
+}
+
 func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
 	if opts.ClassID == 0 {
 		opts.ClassID = 0x10000014

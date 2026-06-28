@@ -164,7 +164,8 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       object-model tests; ID-table Vector struct property writers are shared by
       example/player-location fixtures; base linked-structure
       object-reference array fixtures use shared ID-table array writers; and
-      player/tribe relation directory fixtures are shared by API and CLI tests.
+      player/tribe relation directory fixtures plus dino stats/status object
+      byte fixtures are shared by API and CLI tests.
       Remaining lower-level domain-specific parser fixtures and non-save
       malformed object-shape fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
