@@ -96,8 +96,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.StructureOwnerSummaryFromPath`, and
       `arkapi.StructureTribeOwnershipSummaryFromPath`, then move
       `structure-health`, `structure-owner-count`, `structure-owners`, and
-      `structure-owner-locations` CLI aggregate commands onto typed structure
-      path helpers while preserving parse-fault counts and redaction behavior.
+      `structure-owner-locations` CLI aggregate commands plus matching
+      structure aggregate examples onto typed structure path helpers while
+      preserving parse-fault counts and redaction behavior.
 - [x] Add `arkapi.DinoPopulationSummaryFromPath`,
       `arkapi.DinoWildTamableSummaryFromPath`, and
       `arkapi.DinoBabySummaryFromPath` so common dino aggregate examples can

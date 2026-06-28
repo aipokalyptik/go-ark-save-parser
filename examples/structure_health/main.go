@@ -13,16 +13,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewStructureFromPath(os.Args[1])
+	summary, faults, err := arkapi.StructureHealthSummaryFromPath(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, faults, err := api.HealthSummaryWithFaults()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read structure health: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Printf(

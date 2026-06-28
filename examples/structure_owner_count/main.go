@@ -19,16 +19,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewStructureFromPath(os.Args[1])
+	summary, _, err := arkapi.StructureTribeOwnershipSummaryFromPath(os.Args[1], int32(tribeID64))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.TribeOwnershipSummaryWithFaults(int32(tribeID64))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read structures: %v\n", err)
 		os.Exit(1)
 	}
 

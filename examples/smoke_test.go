@@ -33,6 +33,22 @@ func TestEquipmentExamplesUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestStructureAggregateExamplesUseTypedPathHelpers(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("structure_health", "main.go"),
+		filepath.Join("structure_owner_count", "main.go"),
+		filepath.Join("structure_owners", "main.go"),
+	} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile(%s) error = %v", path, err)
+		}
+		if strings.Contains(string(data), "NewStructureFromPath") {
+			t.Fatalf("%s still owns StructureAPI lifecycle; use typed arkapi path helper", path)
+		}
+	}
+}
+
 func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

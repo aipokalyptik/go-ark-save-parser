@@ -631,6 +631,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           relation CLI commands plus matching examples onto those helpers.
     - [x] Move repeated pure StructureAPI example save-open/close handling
           behind typed `arkapi.NewStructureFromPath`.
+    - [x] Move `structure_health`, `structure_owner_count`, and
+          `structure_owners` example save-open/close handling onto typed
+          structure path summary helpers.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [x] Move `structure_owner_locations` mixed structure/player save access

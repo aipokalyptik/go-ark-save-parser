@@ -13,16 +13,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewStructureFromPath(os.Args[1])
+	summary, faults, err := arkapi.StructureOwnerSummaryFromPath(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, faults, err := api.OwnerSummaryWithFaults()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read structure owners: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Printf(
