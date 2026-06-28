@@ -68,8 +68,9 @@ Implemented:
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
   `dino-most-mutated`, `dino-wild-tamed`, `equipment-summary`,
   `equipment-saddles`, `equipment-best`, `equipment-rank`,
-  `equipment-ascendant-weapon-bps`, `equipment-owned-by`, `stackables`,
-  `stackable-owned-by`, `player-inventories`, `player-roster`,
+  `equipment-ascendant-weapon-bps`, `equipment-history`,
+  `equipment-owned-by`, `stackables`, `stackable-owned-by`,
+  `player-inventories`, `player-roster`,
   `tribe-roster`, `player-tribe-links`, `players`, `tribes`, `cluster`,
   `cluster-summary`, `tribute`, `export-json`, `export-domain-json`,
   `export-cluster-json`, and `export-tribute-json` commands.
@@ -166,6 +167,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave equipment-best /path/to/Valguero_WP.ark
 ./bin/arksave equipment-rank /path/to/Valguero_WP.ark
 ./bin/arksave equipment-ascendant-weapon-bps /path/to/Valguero_WP.ark
+./bin/arksave equipment-history /path/to/ark-files.json /tmp/equipment-history.json
 ./bin/arksave --redact equipment-owned-by /path/to/Valguero_WP.ark "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'" 555
 ./bin/arksave stackables /path/to/Valguero_WP.ark
 ./bin/arksave --redact stackable-owned-by /path/to/Valguero_WP.ark "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'" 555

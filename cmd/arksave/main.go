@@ -213,6 +213,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-ascendant-weapon-bps requires a local .ark path")
 		}
 		return equipmentAscendantWeaponBPs(args[1], out)
+	case "equipment-history":
+		if len(args) != 3 {
+			return fmt.Errorf("equipment-history requires a manifest JSON path and explicit output path")
+		}
+		return equipmentHistory(args[1], args[2], out)
 	case "equipment-owned-by":
 		if len(args) != 4 {
 			return fmt.Errorf("equipment-owned-by requires a local .ark path, blueprint, and tribe id")
@@ -347,6 +352,7 @@ func usage(out io.Writer) error {
   arksave equipment-best <save.ark>
   arksave equipment-rank <save.ark>
   arksave equipment-ascendant-weapon-bps <save.ark>
+  arksave equipment-history <ark-files.json> <out.json>
   arksave [--redact] equipment-owned-by <save.ark> <blueprint> <tribe-id>
   arksave stackables <save.ark>
   arksave [--redact] stackable-owned-by <save.ark> <blueprint> <tribe-id>
@@ -1100,6 +1106,30 @@ func equipmentAscendantWeaponBPs(path string, out io.Writer) error {
 		summary.Items,
 		summary.MaxDamage,
 		len(faults),
+	)
+	return err
+}
+
+func equipmentHistory(manifestPath string, outputPath string, out io.Writer) error {
+	report, err := arkapi.EquipmentHistoryReportFromManifestPath(manifestPath)
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o600); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"saves=%d initial=%d changes=%d final=%d wrote=%s\n",
+		report.Saves,
+		report.InitialCount,
+		len(report.Changes),
+		report.FinalCount,
+		outputPath,
 	)
 	return err
 }

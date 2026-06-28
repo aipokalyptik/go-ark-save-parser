@@ -535,6 +535,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `equipment-best`.
   - [x] `equipment-rank`.
   - [x] `equipment-ascendant-weapon-bps`.
+  - [x] `equipment-history`.
   - [x] `equipment-owned-by`.
   - [x] `stackables`.
   - [x] `stackable-owned-by`.
@@ -617,6 +618,8 @@ without Python or private chat context.
       blueprint and equipment-owned-by summaries, plus domain JSON export
       through both `arkapi.JSONAPI.ExportDomain` and the CLI
       `export-domain-json` path.
+- [x] CLI and example smoke tests cover generated equipment history manifests
+      and explicit JSON report output on synthetic fixtures.
 - [x] Go-only provided-data E2E smoke tests cover bounded structure and base
       read APIs through structure owner/health summaries, structure CLI
       commands, structure heatmap JSON export, structure owner/location

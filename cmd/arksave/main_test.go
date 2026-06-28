@@ -731,6 +731,53 @@ func TestEquipmentAscendantWeaponBPsCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestEquipmentHistoryCommandWritesReport(t *testing.T) {
+	dir := t.TempDir()
+	savePath := filepath.Join(dir, "equipment.ark")
+	manifestPath := filepath.Join(dir, "equipment-history-files.json")
+	outPath := filepath.Join(dir, "equipment-history-report.json")
+	createSyntheticEquipmentSave(t, savePath)
+
+	manifest, err := json.Marshal([]string{savePath, savePath})
+	if err != nil {
+		t.Fatalf("Marshal(manifest) error = %v", err)
+	}
+	if err := os.WriteFile(manifestPath, append(manifest, '\n'), 0o600); err != nil {
+		t.Fatalf("WriteFile(manifest) error = %v", err)
+	}
+
+	var out bytes.Buffer
+	err = run([]string{"equipment-history", manifestPath, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-history) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"saves=2",
+		"initial=1",
+		"changes=0",
+		"final=1",
+		"wrote=" + outPath,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-history output %q does not contain %q", got, want)
+		}
+	}
+
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(report) error = %v", err)
+	}
+	var report arkapi.EquipmentHistoryReport
+	if err := json.Unmarshal(raw, &report); err != nil {
+		t.Fatalf("Unmarshal(report) error = %v; data = %s", err, raw)
+	}
+	if report.Saves != 2 || report.InitialCount != 1 || report.FinalCount != 1 || len(report.Changes) != 0 {
+		t.Fatalf("equipment history report = %#v, want stable two-save report", report)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
