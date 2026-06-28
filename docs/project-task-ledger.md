@@ -582,6 +582,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.NewStackableFromPath`.
     - [x] Move `base_components` save-open/close handling behind typed
           `arkapi.NewBaseFromPath`.
+    - [x] Add reusable typed base aggregate summaries through
+          `arkapi.BaseAPI.SummaryForBases` and
+          `arkapi.BaseAPI.SummaryWithFaults`.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

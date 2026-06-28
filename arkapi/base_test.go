@@ -210,6 +210,33 @@ func TestBaseAPIAllWithFaultsKeepsValidBasesAndReportsStructureParseFaults(t *te
 	}
 }
 
+func TestBaseAPISummaryWithFaultsKeepsValidBasesAndCountsLargestBase(t *testing.T) {
+	save := openSyntheticBaseSaveWithFault(t)
+	defer save.Close()
+
+	api := NewBase(save, "Valguero")
+	summary, faults, err := api.SummaryWithFaults()
+	if err != nil {
+		t.Fatalf("SummaryWithFaults() error = %v", err)
+	}
+
+	want := BaseSummary{
+		Bases:             1,
+		Structures:        2,
+		LargestBase:       2,
+		BasesWithLocation: 1,
+		BasesWithTribeID:  1,
+		UniqueTribes:      1,
+		Faults:            1,
+	}
+	if summary != want {
+		t.Fatalf("SummaryWithFaults() = %#v, want %#v", summary, want)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("SummaryWithFaults() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestBaseAPIComponentStatsUsesLinkedStructures(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()

@@ -76,6 +76,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.PlayerInventorySummaryForPlayers` and
       `arkapi.PlayerInventorySummaryFromPath` so player inventory examples use
       reusable typed aggregation instead of local counting logic.
+- [x] Add `arkapi.BaseAPI.SummaryForBases` and
+      `arkapi.BaseAPI.SummaryWithFaults` so base aggregate counts are reusable
+      typed API results instead of caller-local counting logic.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

@@ -30,6 +30,16 @@ type BaseComponentStats struct {
 	Faults              int
 }
 
+type BaseSummary struct {
+	Bases             int
+	Structures        int
+	LargestBase       int
+	BasesWithLocation int
+	BasesWithTribeID  int
+	UniqueTribes      int
+	Faults            int
+}
+
 func NewBase(save *arksave.Save, mapName string) *BaseAPI {
 	if mapName == "" && save.Context != nil {
 		mapName = save.Context.MapName
@@ -92,6 +102,36 @@ func (b *BaseAPI) AllWithFaults() ([]arkobject.Base, []arksave.FaultyObjectInfo,
 		return nil, nil, err
 	}
 	return basesFromStructures(structures), faults, nil
+}
+
+func (b *BaseAPI) SummaryForBases(bases []arkobject.Base) BaseSummary {
+	summary := BaseSummary{Bases: len(bases)}
+	tribes := map[int32]struct{}{}
+	for _, base := range bases {
+		summary.Structures += base.StructureCount
+		if base.StructureCount > summary.LargestBase {
+			summary.LargestBase = base.StructureCount
+		}
+		if base.Location != nil || base.AverageLocation != nil {
+			summary.BasesWithLocation++
+		}
+		if base.Owner.TribeID != 0 {
+			summary.BasesWithTribeID++
+			tribes[base.Owner.TribeID] = struct{}{}
+		}
+	}
+	summary.UniqueTribes = len(tribes)
+	return summary
+}
+
+func (b *BaseAPI) SummaryWithFaults() (BaseSummary, []arksave.FaultyObjectInfo, error) {
+	bases, faults, err := b.AllWithFaults()
+	if err != nil {
+		return BaseSummary{}, nil, err
+	}
+	summary := b.SummaryForBases(bases)
+	summary.Faults = len(faults)
+	return summary, faults, nil
 }
 
 func (b *BaseAPI) ComponentStats() (BaseComponentStats, error) {
