@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -14,14 +13,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	save, err := arksave.Open(os.Args[1])
+	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
 		os.Exit(1)
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, _, err := arkapi.NewEquipment(save).SaddleSummaryWithFaults()
+	summary, _, err := api.SaddleSummaryWithFaults()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read saddles: %v\n", err)
 		os.Exit(1)

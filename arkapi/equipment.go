@@ -146,6 +146,14 @@ func NewEquipment(save *arksave.Save) *EquipmentAPI {
 	return &EquipmentAPI{save: save}
 }
 
+func NewEquipmentFromPath(savePath string) (*EquipmentAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewEquipment(save), save.Close, nil
+}
+
 func UpstreamWeaponBlueprints() []string {
 	return sortedBlueprintKeys(upstreamWeaponBlueprints)
 }

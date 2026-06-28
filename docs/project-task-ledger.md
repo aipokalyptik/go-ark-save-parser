@@ -538,6 +538,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           typed `arkapi.EquipmentAPI.SummaryIncludingCryopodSaddlesWithFaults`.
     - [x] Move canonical equipment blueprint-list composition onto
           `arkapi.CanonicalEquipmentBlueprints`.
+    - [x] Move repeated read-only EquipmentAPI example save-open/close handling
+          behind typed `arkapi.NewEquipmentFromPath`.
     - [x] Move `dino_babies` wild/tamed counting onto typed
           `arkapi.DinoAPI.BabySummaryWithFaults`.
     - [x] Move `dino_filter` total/tamed/wild/cryopodded/class counting onto

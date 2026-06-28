@@ -160,6 +160,30 @@ func TestEquipmentAPIAllAndByKindReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestNewEquipmentFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewEquipmentFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewEquipmentFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	items, err := api.Weapons()
+	if err != nil {
+		t.Fatalf("Weapons() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("Weapons() length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Kind != arkobject.EquipmentWeapon || item.Rating != 7.5 {
+			t.Fatalf("Equipment item = %#v, want synthetic weapon", item)
+		}
+	}
+}
+
 func TestEquipmentAPIExportBinaryWritesEquipmentRows(t *testing.T) {
 	save := openSyntheticEquipmentSave(t)
 	defer save.Close()
