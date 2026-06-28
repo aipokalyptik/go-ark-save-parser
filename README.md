@@ -62,7 +62,7 @@ Implemented:
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
   `structure-owners`, `structure-owner-locations`, `base-components`,
-  `players`, `tribes`, `cluster`, `tribute`, `export-json`,
+  `dinos`, `players`, `tribes`, `cluster`, `tribute`, `export-json`,
   `export-domain-json`, `export-cluster-json`, and `export-tribute-json`
   commands.
 - Go-only provided-data E2E smoke tests for selected read-only APIs, CLI
@@ -129,6 +129,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave structure-owners /path/to/Valguero_WP.ark
 ./bin/arksave --redact structure-owner-locations /path/to/Valguero_WP.ark Valguero 1
 ./bin/arksave base-components /path/to/Valguero_WP.ark
+./bin/arksave dinos /path/to/Valguero_WP.ark
 ```
 
 Export save metadata and object classes to JSON:

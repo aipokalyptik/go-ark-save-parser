@@ -77,6 +77,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var dinosOut bytes.Buffer
+	if err := run([]string{"dinos", data.SavePath}, &dinosOut); err != nil {
+		t.Fatalf("run(dinos) error = %v", err)
+	}
+	for _, want := range []string{"Dinos:", "Tamed:", "Wild:", "Parse faults:"} {
+		if !strings.Contains(dinosOut.String(), want) {
+			t.Fatalf("dinos output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

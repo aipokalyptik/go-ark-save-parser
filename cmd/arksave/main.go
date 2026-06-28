@@ -89,6 +89,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("base-components requires a local .ark path")
 		}
 		return baseComponents(args[1], out)
+	case "dinos":
+		if len(args) != 2 {
+			return fmt.Errorf("dinos requires a local .ark path")
+		}
+		return dinos(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -164,6 +169,7 @@ func usage(out io.Writer) error {
   arksave structure-owners <save.ark>
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
   arksave base-components <save.ark>
+  arksave dinos <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -385,6 +391,30 @@ func baseComponents(path string, out io.Writer) error {
 		stats.LargestComponent,
 		stats.ComponentsAtLeast10,
 		stats.Faults,
+	)
+	return err
+}
+
+func dinos(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewDino(save).PopulationSummaryWithFaults(true)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Dinos: %d\nTamed: %d\nWild: %d\nCryopodded: %d\nClasses: %d\nParse faults: %d\n",
+		summary.Dinos,
+		summary.Tamed,
+		summary.Wild,
+		summary.Cryopodded,
+		summary.Classes,
+		len(faults),
 	)
 	return err
 }

@@ -254,6 +254,30 @@ func TestBaseComponentsCommandPrintsComponentStats(t *testing.T) {
 	}
 }
 
+func TestDinosCommandPrintsPopulationSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	createSyntheticDinoSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dinos", path}, &out)
+	if err != nil {
+		t.Fatalf("run(dinos) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Dinos: 1",
+		"Tamed: 0",
+		"Wild: 1",
+		"Cryopodded: 0",
+		"Classes: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dinos output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1629,6 +1653,25 @@ func createSyntheticStructureHealthSave(t *testing.T, path string) {
 				Y:          22,
 				Z:          33,
 				Quaternion: 1,
+			}),
+		},
+	})
+}
+
+func createSyntheticDinoSave(t *testing.T, path string) {
+	t.Helper()
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			0x10000015: "DinoID1",
+			0x10000016: "DinoID2",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("10111213-1415-1617-1819-1a1b1c1d1e1f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1: 1001,
+				ID2: 2002,
 			}),
 		},
 	})

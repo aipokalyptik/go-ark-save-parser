@@ -516,6 +516,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `structure-owners`.
   - [x] `structure-owner-locations`.
   - [x] `base-components`.
+  - [x] `dinos`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.
