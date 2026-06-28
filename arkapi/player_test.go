@@ -866,6 +866,63 @@ func TestPlayerUnlockedEngramsFromPathUsesDirectoryProfiles(t *testing.T) {
 	}
 }
 
+func TestLocalProfileSummaryFromPathUsesDirectoryProfilesAndTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             12345,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    123.5,
+		NumDeaths:           4,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+		},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:     "Porters",
+		TribeID:  12345,
+		OwnerID:  42,
+		NumDinos: 7,
+	})
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, []uint64{22})
+
+	summary, faults, err := LocalProfileSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("LocalProfileSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("LocalProfileSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if summary.Files != (LocalFileSummary{Profiles: 1, Tribes: 1, Clusters: 1, Tributes: 1}) {
+		t.Fatalf("LocalProfileSummaryFromPath() files = %#v, want one of each local file type", summary.Files)
+	}
+	if !summary.HasParsedPlayers || !summary.HasParsedTribes || !summary.HasTribePlayerLinks || !summary.HasTotalDeaths {
+		t.Fatalf("LocalProfileSummaryFromPath() count success flags missing: %#v", summary)
+	}
+	if summary.ParsedPlayers != 1 || summary.ParsedTribes != 1 || summary.TribePlayerLinks != 0 || summary.TotalDeaths != 4 {
+		t.Fatalf("LocalProfileSummaryFromPath() counts = %#v, want parsed player/tribe, zero link rows, and four deaths", summary)
+	}
+	if !summary.HasHighestLevel || summary.HighestLevel != 10 {
+		t.Fatalf("LocalProfileSummaryFromPath() highest level = %d, %v; want 10, true", summary.HighestLevel, summary.HasHighestLevel)
+	}
+	if !summary.HasHighestExperience || summary.HighestExperience != 123.5 {
+		t.Fatalf("LocalProfileSummaryFromPath() highest experience = %f, %v; want 123.5, true", summary.HighestExperience, summary.HasHighestExperience)
+	}
+	if !summary.HasAverageDeaths || !summary.HasAverageLevel || !summary.HasAverageExperience {
+		t.Fatalf("LocalProfileSummaryFromPath() averages missing: %#v", summary)
+	}
+	if !summary.HasUnlockedEngrams {
+		t.Fatalf("LocalProfileSummaryFromPath() unlocked engram success flag missing: %#v", summary)
+	}
+	if summary.AverageDeaths != 4 || summary.AverageLevel != 10 || summary.AverageExperience != 123.5 || summary.UnlockedEngrams != 2 {
+		t.Fatalf("LocalProfileSummaryFromPath() metrics = %#v, want expected averages and engram count", summary)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{

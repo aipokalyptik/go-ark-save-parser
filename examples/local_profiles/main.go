@@ -12,73 +12,61 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <directory-with-arkprofile-arktribe-cluster-files>", os.Args[0])
 	}
-	api, err := arkapi.NewPlayerFromDirectory(os.Args[1])
+	summary, faults, err := arkapi.LocalProfileSummaryFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	files := api.LocalFileSummary()
-	fmt.Printf("profiles=%d tribes=%d clusters=%d tributes=%d\n", files.Profiles, files.Tribes, files.Clusters, files.Tributes)
+	faultByOperation := map[string]error{}
+	for _, fault := range faults {
+		faultByOperation[fault.Operation] = fault.Err
+	}
 
-	players, err := api.Players()
-	if err != nil {
+	fmt.Printf("profiles=%d tribes=%d clusters=%d tributes=%d\n", summary.Files.Profiles, summary.Files.Tribes, summary.Files.Clusters, summary.Files.Tributes)
+	if err, ok := faultByOperation["players"]; ok {
 		log.Printf("players: %v", err)
-	} else {
-		fmt.Printf("parsed_players=%d\n", len(players))
+	} else if summary.HasParsedPlayers {
+		fmt.Printf("parsed_players=%d\n", summary.ParsedPlayers)
 	}
-
-	tribes, err := api.TribeSummaries()
-	if err != nil {
+	if err, ok := faultByOperation["tribes"]; ok {
 		log.Printf("tribes: %v", err)
-	} else {
-		fmt.Printf("parsed_tribes=%d\n", len(tribes))
+	} else if summary.HasParsedTribes {
+		fmt.Printf("parsed_tribes=%d\n", summary.ParsedTribes)
 	}
-
-	links, err := api.TribePlayerLinkCount()
-	if err != nil {
+	if err, ok := faultByOperation["tribe player map"]; ok {
 		log.Printf("tribe player map: %v", err)
-	} else {
-		fmt.Printf("tribe_player_links=%d\n", links)
+	} else if summary.HasTribePlayerLinks {
+		fmt.Printf("tribe_player_links=%d\n", summary.TribePlayerLinks)
 	}
-
-	totalDeaths, err := api.TotalDeaths()
-	if err != nil {
+	if err, ok := faultByOperation["total deaths"]; ok {
 		log.Printf("total deaths: %v", err)
-	} else {
-		fmt.Printf("total_deaths=%d\n", totalDeaths)
+	} else if summary.HasTotalDeaths {
+		fmt.Printf("total_deaths=%d\n", summary.TotalDeaths)
 	}
-
-	if _, level, ok, err := api.PlayerWithHighestLevel(); err != nil {
+	if err, ok := faultByOperation["highest level"]; ok {
 		log.Printf("highest level: %v", err)
-	} else if ok {
-		fmt.Printf("highest_level=%d\n", level)
+	} else if summary.HasHighestLevel {
+		fmt.Printf("highest_level=%d\n", summary.HighestLevel)
 	}
-
-	if _, experience, ok, err := api.PlayerWithHighestExperience(); err != nil {
+	if err, ok := faultByOperation["highest experience"]; ok {
 		log.Printf("highest experience: %v", err)
-	} else if ok {
-		fmt.Printf("highest_experience=%.2f\n", experience)
+	} else if summary.HasHighestExperience {
+		fmt.Printf("highest_experience=%.2f\n", summary.HighestExperience)
 	}
-
-	averageDeaths, hasAverageDeaths, err := api.AverageDeaths()
-	if err != nil {
+	if err, ok := faultByOperation["average deaths"]; ok {
 		log.Printf("average deaths: %v", err)
 	}
-	averageLevel, hasAverageLevel, err := api.AverageLevel()
-	if err != nil {
+	if err, ok := faultByOperation["average level"]; ok {
 		log.Printf("average level: %v", err)
 	}
-	averageExperience, hasAverageExperience, err := api.AverageExperience()
-	if err != nil {
+	if err, ok := faultByOperation["average experience"]; ok {
 		log.Printf("average experience: %v", err)
 	}
-	if hasAverageDeaths && hasAverageLevel && hasAverageExperience {
-		fmt.Printf("average_deaths=%.2f average_level=%.2f average_experience=%.2f\n", averageDeaths, averageLevel, averageExperience)
+	if summary.HasAverageDeaths && summary.HasAverageLevel && summary.HasAverageExperience {
+		fmt.Printf("average_deaths=%.2f average_level=%.2f average_experience=%.2f\n", summary.AverageDeaths, summary.AverageLevel, summary.AverageExperience)
 	}
-
-	unlockedEngrams, err := api.UnlockedEngrams()
-	if err != nil {
+	if err, ok := faultByOperation["unlocked engrams"]; ok {
 		log.Printf("unlocked engrams: %v", err)
-	} else {
-		fmt.Printf("unlocked_engrams=%d\n", len(unlockedEngrams))
+	} else if summary.HasUnlockedEngrams {
+		fmt.Printf("unlocked_engrams=%d\n", summary.UnlockedEngrams)
 	}
 }

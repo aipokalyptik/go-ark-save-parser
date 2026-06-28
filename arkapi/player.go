@@ -32,6 +32,35 @@ type LocalFileSummary struct {
 	Tributes int
 }
 
+type LocalProfileSummary struct {
+	Files                LocalFileSummary
+	HasParsedPlayers     bool
+	ParsedPlayers        int
+	HasParsedTribes      bool
+	ParsedTribes         int
+	HasTribePlayerLinks  bool
+	TribePlayerLinks     int
+	HasTotalDeaths       bool
+	TotalDeaths          int32
+	HasHighestLevel      bool
+	HighestLevel         int32
+	HasHighestExperience bool
+	HighestExperience    float64
+	HasAverageDeaths     bool
+	AverageDeaths        float64
+	HasAverageLevel      bool
+	AverageLevel         float64
+	HasAverageExperience bool
+	AverageExperience    float64
+	HasUnlockedEngrams   bool
+	UnlockedEngrams      int
+}
+
+type LocalProfileFault struct {
+	Operation string
+	Err       error
+}
+
 type TribePlayerRelation struct {
 	Tribe               arkobject.Tribe
 	ActivePlayers       []arkobject.Player
@@ -262,6 +291,102 @@ func (p *PlayerAPI) LocalFileSummary() LocalFileSummary {
 		Clusters: len(p.clusterPaths),
 		Tributes: len(p.tributePaths),
 	}
+}
+
+func LocalProfileSummaryFromPath(path string) (LocalProfileSummary, []LocalProfileFault, error) {
+	api, err := NewPlayerFromDirectory(path)
+	if err != nil {
+		return LocalProfileSummary{}, nil, err
+	}
+	summary, faults := api.LocalProfileSummary()
+	return summary, faults, nil
+}
+
+func (p *PlayerAPI) LocalProfileSummary() (LocalProfileSummary, []LocalProfileFault) {
+	summary := LocalProfileSummary{Files: p.LocalFileSummary()}
+	var faults []LocalProfileFault
+
+	players, err := p.Players()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "players", Err: err})
+	} else {
+		summary.HasParsedPlayers = true
+		summary.ParsedPlayers = len(players)
+	}
+
+	tribes, err := p.TribeSummaries()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "tribes", Err: err})
+	} else {
+		summary.HasParsedTribes = true
+		summary.ParsedTribes = len(tribes)
+	}
+
+	links, err := p.TribePlayerLinkCount()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "tribe player map", Err: err})
+	} else {
+		summary.HasTribePlayerLinks = true
+		summary.TribePlayerLinks = links
+	}
+
+	totalDeaths, err := p.TotalDeaths()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "total deaths", Err: err})
+	} else {
+		summary.HasTotalDeaths = true
+		summary.TotalDeaths = totalDeaths
+	}
+
+	_, level, ok, err := p.PlayerWithHighestLevel()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "highest level", Err: err})
+	} else if ok {
+		summary.HasHighestLevel = true
+		summary.HighestLevel = level
+	}
+
+	_, experience, ok, err := p.PlayerWithHighestExperience()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "highest experience", Err: err})
+	} else if ok {
+		summary.HasHighestExperience = true
+		summary.HighestExperience = experience
+	}
+
+	averageDeaths, ok, err := p.AverageDeaths()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "average deaths", Err: err})
+	} else if ok {
+		summary.HasAverageDeaths = true
+		summary.AverageDeaths = averageDeaths
+	}
+
+	averageLevel, ok, err := p.AverageLevel()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "average level", Err: err})
+	} else if ok {
+		summary.HasAverageLevel = true
+		summary.AverageLevel = averageLevel
+	}
+
+	averageExperience, ok, err := p.AverageExperience()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "average experience", Err: err})
+	} else if ok {
+		summary.HasAverageExperience = true
+		summary.AverageExperience = averageExperience
+	}
+
+	unlockedEngrams, err := p.UnlockedEngrams()
+	if err != nil {
+		faults = append(faults, LocalProfileFault{Operation: "unlocked engrams", Err: err})
+	} else {
+		summary.HasUnlockedEngrams = true
+		summary.UnlockedEngrams = len(unlockedEngrams)
+	}
+
+	return summary, faults
 }
 
 func (p *PlayerAPI) Profiles() ([]*arkprofile.PlayerProfile, error) {

@@ -546,6 +546,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add `arkapi.PlayerUnlockedEngramsFromPath`, then move
           `player_unlocked_engrams` sorted unique engram output onto the typed
           player path helper.
+    - [x] Add `arkapi.LocalProfileSummaryFromPath`, then move
+          `local_profiles` local file counts, aggregate metrics, and
+          per-operation warnings onto the typed player path helper.
     - [x] Move equipment max-damage example aggregation onto existing typed
           `arkapi.EquipmentAPI.BestWeaponDamage`.
     - [x] Move `equipment_best` filter-plus-best selection onto typed

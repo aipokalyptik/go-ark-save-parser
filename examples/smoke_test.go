@@ -72,13 +72,14 @@ func TestGeneralAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 
 func TestPlayerAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 	for _, path := range []string{
+		filepath.Join("local_profiles", "main.go"),
 		filepath.Join("player_unlocked_engrams", "main.go"),
 	} {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatalf("ReadFile(%s) error = %v", path, err)
 		}
-		if strings.Contains(string(data), "NewPlayerFromPath") {
+		if strings.Contains(string(data), "NewPlayerFromPath") || strings.Contains(string(data), "NewPlayerFromDirectory") {
 			t.Fatalf("%s still owns PlayerAPI lifecycle; use typed arkapi path helper", path)
 		}
 	}
