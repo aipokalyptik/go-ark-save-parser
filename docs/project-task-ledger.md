@@ -625,6 +625,10 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.BaseAPI.SummaryWithFaults`.
     - [x] Add path-level typed base aggregate summaries through
           `arkapi.BaseSummaryFromPath`.
+    - [x] Add path-level typed base component summaries through
+          `arkapi.BaseComponentStatsFromPath`, then move the
+          `base-components` example and CLI aggregate workflow onto the typed
+          path helper.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

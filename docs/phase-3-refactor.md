@@ -87,6 +87,8 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       typed API results instead of caller-local counting logic.
 - [x] Add `arkapi.BaseSummaryFromPath` so callers can open local saves and get
       typed base aggregate summaries without manual save lifecycle handling.
+- [x] Add `arkapi.BaseComponentStatsFromPath`, then move `base-components`
+      example and CLI aggregate workflows onto the typed path helper.
 - [x] Add `arkapi.DinoHeatmapSummaryFromPath` and
       `arkapi.StructureHeatmapSummaryFromPath` so callers can get typed
       heatmap summaries without writing JSON output files.

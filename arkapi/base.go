@@ -64,6 +64,15 @@ func BaseSummaryFromPath(savePath string) (BaseSummary, []arksave.FaultyObjectIn
 	return api.SummaryWithFaults()
 }
 
+func BaseComponentStatsFromPath(savePath string, mapName string) (BaseComponentStats, error) {
+	api, closeAPI, err := NewBaseFromPath(savePath, mapName)
+	if err != nil {
+		return BaseComponentStats{}, err
+	}
+	defer closeAPI()
+	return api.ComponentStats()
+}
+
 func (b *BaseAPI) At(coords arkobject.MapCoords, radius float64, owner *arkobject.ObjectOwner) (*arkobject.Base, error) {
 	nearby, err := b.structures.AtLocation(b.mapName, coords, radius, nil)
 	if err != nil {

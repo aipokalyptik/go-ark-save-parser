@@ -759,13 +759,7 @@ func structureHeatmap(path string, outPath string, resolution int, minInCell int
 }
 
 func baseComponents(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	stats, err := arkapi.NewBase(save, "").ComponentStats()
+	stats, err := arkapi.BaseComponentStatsFromPath(path, "")
 	if err != nil {
 		return err
 	}

@@ -13,14 +13,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewBaseFromPath(os.Args[1], "")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	stats, err := api.ComponentStats()
+	stats, err := arkapi.BaseComponentStatsFromPath(os.Args[1], "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read base components: %v\n", err)
 		os.Exit(1)

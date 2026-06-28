@@ -85,6 +85,17 @@ func TestStructureAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestBaseAggregateCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	body := functionBody(t, string(data), "baseComponents")
+	if strings.Contains(body, "arksave.Open") {
+		t.Fatalf("baseComponents() still opens saves directly; use typed arkapi path helper")
+	}
+}
+
 func functionBody(t *testing.T, source string, name string) string {
 	t.Helper()
 	start := strings.Index(source, "func "+name+"(")

@@ -276,6 +276,19 @@ func TestBaseAPIComponentStatsUsesLinkedStructures(t *testing.T) {
 	}
 }
 
+func TestBaseComponentStatsFromPathReturnsTypedStats(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	stats, err := BaseComponentStatsFromPath(save.Path(), "Valguero")
+	if err != nil {
+		t.Fatalf("BaseComponentStatsFromPath() error = %v", err)
+	}
+	if stats.Components != 1 || stats.TotalStructures != 2 || stats.LargestComponent != 2 || stats.ComponentsAtLeast10 != 0 {
+		t.Fatalf("BaseComponentStatsFromPath() = %#v, want one two-structure component", stats)
+	}
+}
+
 func TestNewBaseFromPathOpensLocalSave(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()
