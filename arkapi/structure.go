@@ -787,6 +787,18 @@ func (s *StructureAPI) HeatmapSummaryWithFaults(opts StructureHeatmapOptions) (H
 	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
 }
 
+func (s *StructureAPI) SelectedHeatmapSummaryWithFaults(opts StructureHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.selectedStructureIndexWithFaults()
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	heatmap, err := s.Heatmap(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
+}
+
 func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {
 	all, err := s.All()
 	if err != nil {

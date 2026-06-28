@@ -515,6 +515,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `structure-owner-count`.
   - [x] `structure-owners`.
   - [x] `structure-owner-locations`.
+  - [x] `structure-heatmap`.
   - [x] `base-components`.
   - [x] `dinos`.
   - [x] `dino-wild-tamables`.
@@ -603,9 +604,9 @@ without Python or private chat context.
       and the CLI `export-domain-json` path.
 - [x] Go-only provided-data E2E smoke tests cover bounded structure and base
       read APIs through structure owner/health summaries, structure CLI
-      commands, structure owner/location examples, and selected-property base
-      component stats without requiring full structure/base JSON export in the
-      smoke gate.
+      commands, structure heatmap JSON export, structure owner/location
+      examples, and selected-property base component stats without requiring
+      full structure/base JSON export in the smoke gate.
 - [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
 - [x] Private oracle comparison suite exists and currently records forty-six

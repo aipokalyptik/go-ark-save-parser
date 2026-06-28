@@ -97,6 +97,27 @@ func run(args []string, out io.Writer) error {
 			digits = value
 		}
 		return structureOwnerLocations(args[1], mapName, digits, out, opts)
+	case "structure-heatmap":
+		if len(args) < 3 || len(args) > 5 {
+			return fmt.Errorf("structure-heatmap requires a local .ark path, explicit output path, optional resolution, and optional min-in-cell")
+		}
+		resolution := 100
+		if len(args) >= 4 {
+			value, err := strconv.Atoi(args[3])
+			if err != nil {
+				return fmt.Errorf("parse resolution: %w", err)
+			}
+			resolution = value
+		}
+		minInCell := 1
+		if len(args) == 5 {
+			value, err := strconv.Atoi(args[4])
+			if err != nil {
+				return fmt.Errorf("parse min-in-cell: %w", err)
+			}
+			minInCell = value
+		}
+		return structureHeatmap(args[1], args[2], resolution, minInCell, out)
 	case "base-components":
 		if len(args) != 2 {
 			return fmt.Errorf("base-components requires a local .ark path")
@@ -256,6 +277,7 @@ func usage(out io.Writer) error {
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
   arksave structure-owners <save.ark>
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
+  arksave structure-heatmap <save.ark> <out.json> [resolution] [min-in-cell]
   arksave base-components <save.ark>
   arksave dinos <save.ark>
   arksave dino-wild-tamables <save.ark>
@@ -472,6 +494,45 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 		return err
 	}
 	_, err = fmt.Fprintln(out, string(encoded))
+	return err
+}
+
+func structureHeatmap(path string, outPath string, resolution int, minInCell int, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	mapName := ""
+	if save.Context != nil {
+		mapName = save.Context.MapName
+	}
+	summary, _, err := arkapi.NewStructure(save).SelectedHeatmapSummaryWithFaults(arkapi.StructureHeatmapOptions{
+		MapName:      mapName,
+		Resolution:   resolution,
+		MinInSection: minInCell,
+	})
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(outPath, data, 0o644); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nWrote: %s\n",
+		summary.NonzeroCells,
+		summary.Total,
+		summary.Max,
+		summary.Faults,
+		outPath,
+	)
 	return err
 }
 

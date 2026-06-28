@@ -616,6 +616,26 @@ func TestStructureAPIHeatmapSummaryWithFaultsCountsSaveStructures(t *testing.T) 
 	}
 }
 
+func TestStructureAPISelectedHeatmapSummaryWithFaultsCountsSaveStructures(t *testing.T) {
+	save := openSyntheticStructureOwnerLocationSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewStructure(save).SelectedHeatmapSummaryWithFaults(StructureHeatmapOptions{
+		MapName:      "Valguero",
+		Resolution:   100,
+		MinInSection: 2,
+	})
+	if err != nil {
+		t.Fatalf("SelectedHeatmapSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("SelectedHeatmapSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.NonzeroCells != 1 || summary.Total != 2 || summary.Max != 2 || summary.Faults != 0 {
+		t.Fatalf("SelectedHeatmapSummaryWithFaults() = %#v, want one populated cell with two structures", summary)
+	}
+}
+
 func TestStructureAPIContainerOfInventoryFindsInventoryBearingStructure(t *testing.T) {
 	save := openSyntheticStructureWithInventorySave(t)
 	defer save.Close()

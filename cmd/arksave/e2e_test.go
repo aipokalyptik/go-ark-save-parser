@@ -67,6 +67,34 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	heatmapPath := filepath.Join(t.TempDir(), "structure-heatmap.json")
+	var heatmapOut bytes.Buffer
+	if err := run([]string{"structure-heatmap", data.SavePath, heatmapPath, "100", "1"}, &heatmapOut); err != nil {
+		t.Fatalf("run(structure-heatmap) error = %v", err)
+	}
+	for _, want := range []string{"Cells:", "Total:", "Max:", "Parse faults:", "Wrote:"} {
+		if !strings.Contains(heatmapOut.String(), want) {
+			t.Fatalf("structure-heatmap output missing %q", want)
+		}
+	}
+	heatmapData, err := os.ReadFile(heatmapPath)
+	if err != nil {
+		t.Fatalf("read structure heatmap JSON: %v", err)
+	}
+	var heatmap struct {
+		Resolution   int `json:"resolution"`
+		NonzeroCells int `json:"nonzero_cells"`
+		Total        int `json:"total"`
+		Max          int `json:"max"`
+		Faults       int `json:"faults"`
+	}
+	if err := json.Unmarshal(heatmapData, &heatmap); err != nil {
+		t.Fatalf("unmarshal structure heatmap JSON: %v", err)
+	}
+	if heatmap.Resolution != 100 || heatmap.Total < 0 || heatmap.NonzeroCells < 0 || heatmap.Max < 0 || heatmap.Faults < 0 {
+		t.Fatalf("structure heatmap JSON = %#v, want valid aggregate summary", heatmap)
+	}
+
 	var baseComponentsOut bytes.Buffer
 	if err := run([]string{"base-components", data.SavePath}, &baseComponentsOut); err != nil {
 		t.Fatalf("run(base-components) error = %v", err)

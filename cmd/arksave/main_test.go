@@ -232,6 +232,42 @@ func TestStructureOwnerLocationsCommandRedactsOwnerBuckets(t *testing.T) {
 	}
 }
 
+func TestStructureHeatmapCommandWritesSummaryJSON(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "structures.ark")
+	outPath := filepath.Join(dir, "structure-heatmap.json")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-heatmap", path, outPath, "100", "1"}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-heatmap) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cells: 1",
+		"Total: 1",
+		"Max: 1",
+		"Parse faults: 0",
+		"Wrote: " + outPath,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-heatmap output %q does not contain %q", got, want)
+		}
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", outPath, err)
+	}
+	var summary arkapi.HeatmapSummary
+	if err := json.Unmarshal(data, &summary); err != nil {
+		t.Fatalf("Unmarshal heatmap summary error = %v", err)
+	}
+	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 {
+		t.Fatalf("heatmap summary = %#v, want one populated structure cell", summary)
+	}
+}
+
 func TestBaseComponentsCommandPrintsComponentStats(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)

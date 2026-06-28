@@ -61,7 +61,8 @@ Implemented:
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
-  `structure-owners`, `structure-owner-locations`, `base-components`,
+  `structure-owners`, `structure-owner-locations`, `structure-heatmap`,
+  `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
   `dino-most-mutated`, `dino-wild-tamed`, `equipment-summary`,
   `equipment-saddles`, `equipment-best`, `equipment-rank`, `stackables`, `player-inventories`,
@@ -131,6 +132,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave --redact structure-owner-count /path/to/Valguero_WP.ark 555
 ./bin/arksave structure-owners /path/to/Valguero_WP.ark
 ./bin/arksave --redact structure-owner-locations /path/to/Valguero_WP.ark Valguero 1
+./bin/arksave structure-heatmap /path/to/Valguero_WP.ark /tmp/structure-heatmap.json 100 1
 ./bin/arksave base-components /path/to/Valguero_WP.ark
 ./bin/arksave dinos /path/to/Valguero_WP.ark
 ./bin/arksave dino-wild-tamables /path/to/Valguero_WP.ark
