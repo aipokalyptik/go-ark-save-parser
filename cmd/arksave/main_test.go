@@ -308,6 +308,33 @@ func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestPlayerInventoriesCommandPrintsInventorySummary(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "inventory.ark")
+	createSyntheticPlayerInventorySave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"player-inventories", path}, &out)
+	if err != nil {
+		t.Fatalf("run(player-inventories) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Players: 1",
+		"With inventory: 1",
+		"Without inventory: 0",
+		"Total items: 2",
+		"Max items: 2",
+		"Min items: 2",
+		"Average items: 2.00",
+		"Inventory faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("player-inventories output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1745,6 +1772,28 @@ func createSyntheticEquipmentSave(t *testing.T, path string) {
 				},
 			}),
 		},
+	})
+}
+
+func createSyntheticPlayerInventorySave(t *testing.T, path string) {
+	t.Helper()
+	inventoryID := uuid.MustParse("33333333-4455-6677-8899-aabbccddeeff")
+	firstItemID := uuid.MustParse("44444444-4455-6677-8899-aabbccddeeff")
+	secondItemID := uuid.MustParse("55555555-4455-6677-8899-aabbccddeeff")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", nil),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff"): testfixtures.PlayerPawnGameObjectBytes(42, inventoryID),
+			inventoryID: testfixtures.InventoryGameObjectBytes(
+				inventoryID,
+				firstItemID,
+				secondItemID,
+			),
+		},
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(filepath.Dir(path), "42.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Fallback",
 	})
 }
 

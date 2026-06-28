@@ -162,6 +162,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 				t.Fatalf("players directory output missing %q", want)
 			}
 		}
+
+		var inventoryOut bytes.Buffer
+		if err := run([]string{"player-inventories", data.SavePath}, &inventoryOut); err != nil {
+			t.Fatalf("run(player-inventories) error = %v", err)
+		}
+		for _, want := range []string{"Players:", "With inventory:", "Total items:", "Inventory faults:"} {
+			if !strings.Contains(inventoryOut.String(), want) {
+				t.Fatalf("player-inventories output missing %q", want)
+			}
+		}
 	}
 	if data.ProfilePath != "" {
 		var playerOut bytes.Buffer

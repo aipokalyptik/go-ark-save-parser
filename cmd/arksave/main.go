@@ -100,6 +100,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
 		}
 		return equipmentSummary(args[1], out)
+	case "player-inventories":
+		if len(args) != 2 {
+			return fmt.Errorf("player-inventories requires a local .ark path")
+		}
+		return playerInventories(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -177,6 +182,7 @@ func usage(out io.Writer) error {
   arksave base-components <save.ark>
   arksave dinos <save.ark>
   arksave equipment-summary <save.ark>
+  arksave player-inventories <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -457,6 +463,26 @@ func equipmentSummary(path string, out io.Writer) error {
 		summary.MaxDamage,
 		summary.MaxArmor,
 		summary.MaxCurrentDurability,
+		len(faults),
+	)
+	return err
+}
+
+func playerInventories(path string, out io.Writer) error {
+	summary, faults, err := arkapi.PlayerInventorySummaryFromPath(path)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Players: %d\nWith inventory: %d\nWithout inventory: %d\nTotal items: %d\nMax items: %d\nMin items: %d\nAverage items: %.2f\nInventory faults: %d\n",
+		summary.Players,
+		summary.WithInventory,
+		summary.WithoutInventory,
+		summary.TotalItems,
+		summary.MaxItems,
+		summary.MinItems,
+		summary.AverageItems,
 		len(faults),
 	)
 	return err

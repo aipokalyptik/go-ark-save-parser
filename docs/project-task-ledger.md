@@ -518,6 +518,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `base-components`.
   - [x] `dinos`.
   - [x] `equipment-summary`.
+  - [x] `player-inventories`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.
