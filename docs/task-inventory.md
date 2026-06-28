@@ -13,6 +13,16 @@ Status markers:
 - `[blocked]`: blocked by fixture availability, upstream behavior, runtime
   limits, live-server validation, or explicit scope boundaries.
 
+## Execution Mode
+
+This inventory is phase-gated. Phase 1 is closed for the selected offline
+parity scope, and Phase 2 is the active implementation phase. Phase 3 and Phase
+4 rows remain in the inventory because ahead-of-phase package, CLI, docs, and
+verification work already exists, but new work should not target those phases
+until Phase 2 has been closed or explicitly blocked. When a Phase 2 task needs
+tests, docs, or status updates to keep progress auditable, keep those changes
+narrow and tie them to the Phase 2 row they support.
+
 ## Scope Rules
 
 | ID | Status | Requirement | Evidence / Remaining Work |

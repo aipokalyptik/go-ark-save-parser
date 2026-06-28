@@ -6,6 +6,14 @@ enough that oracle-derived tests can run against translated packages.
 For the cross-phase monitorable checklist, see
 [`docs/project-task-ledger.md`](project-task-ledger.md).
 
+## Current Status
+
+Phase 2 is the active implementation phase. Work should focus on closing the
+remaining literal Go port/parity gaps listed below before starting new Phase 3
+refactor or Phase 4 production-readiness tasks. Existing ahead-of-phase CLI,
+docs, examples, and verification artifacts remain in the repository as
+evidence, but they are not the active execution target.
+
 ## Requirements
 
 - Preserve upstream behavior first, even when the shape is not idiomatic Go.

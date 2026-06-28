@@ -10,6 +10,17 @@ and provided-data E2E paths.
 For the cross-phase monitorable checklist, see
 [`docs/project-task-ledger.md`](project-task-ledger.md).
 
+## Current Status
+
+Phase 1 is closed for the selected offline parity scope. The committed
+commit-safe evidence is the aggregate backup summary, upstream test/testbench
+status, example classification, oracle comparison summary, and Phase 1 report.
+Private raw logs, manifests, paths, and outputs remain under `.oracle/`.
+
+Do not add new Python oracle examples or improve upstream Python code as normal
+project work. Future oracle interaction should be limited to narrow checks that
+directly unblock Phase 2 Go parity.
+
 ## Requirements
 
 - Keep all private save files, manifests, raw output, snapshots, and debug dumps

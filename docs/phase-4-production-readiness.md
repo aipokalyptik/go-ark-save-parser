@@ -6,6 +6,14 @@ offline parser without Python or private chat context.
 For the cross-phase monitorable checklist, see
 [`docs/project-task-ledger.md`](project-task-ledger.md).
 
+## Current Status
+
+Phase 4 is not the active execution phase. The documentation and verification
+items below record useful ahead-of-phase work, but final cleanup and production
+readiness review should wait until Phase 2 and then Phase 3 have been closed or
+explicitly blocked. Keep future documentation edits narrow while Phase 2 is
+active, limited to status tracking and direct support for Go parity work.
+
 ## Documentation Tasks
 
 - [x] Write README with build, CLI, library, example, scope, and mutation safety

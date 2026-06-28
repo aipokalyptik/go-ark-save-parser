@@ -6,6 +6,13 @@ Go packages without losing oracle parity.
 For the cross-phase monitorable checklist, see
 [`docs/project-task-ledger.md`](project-task-ledger.md).
 
+## Current Status
+
+Phase 3 is not the active execution phase. The package shape and refactor tasks
+below document ahead-of-phase work that already exists, but new refactor and CLI
+polish should wait until Phase 2 literal Go parity is closed or explicitly
+blocked.
+
 ## Current Package Shape
 
 - `arkbinary`: primitive binary reader/decompression/name-table handling.

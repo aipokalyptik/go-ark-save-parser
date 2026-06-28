@@ -21,9 +21,26 @@ Status markers:
 | Phase | Status | Done Means | Current Blocking Items |
 | --- | --- | --- | --- |
 | Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
-| Phase 2: Literal Go Transpilation | `[~]` In progress | Offline Go behavior mirrors runnable upstream behavior closely enough for oracle-derived tests/examples to pass or have documented blockers. | Remaining parser edge cases, legacy archive parsing, full domain/model parity, slow full-save examples, and blocked cryopod/pedigree oracle paths. |
-| Phase 3: Idiomatic Go Refactor | `[~]` In progress | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Domain model/package split and fixture migration are not complete. |
-| Phase 4: Documentation And Production Readiness | `[~]` In progress | Another engineer can build, test, run, and extend the project without Python/private context. | Production readiness remains blocked by full chosen-feature offline API/domain parity, not by expanding Python oracle coverage. |
+| Phase 2: Literal Go Transpilation | `[~]` Active | Offline Go behavior mirrors runnable upstream behavior closely enough for oracle-derived tests/examples to pass or have documented blockers. | Remaining parser edge cases, legacy archive parsing, full domain/model parity, slow full-save examples, and blocked cryopod/pedigree oracle paths. |
+| Phase 3: Idiomatic Go Refactor | `[~]` Inventory only until Phase 2 closes | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Ahead-of-phase work exists, but new refactor/CLI polish is paused while Phase 2 is active. |
+| Phase 4: Documentation And Production Readiness | `[~]` Inventory only until Phase 2 closes | Another engineer can build, test, run, and extend the project without Python/private context. | Ahead-of-phase docs and verification exist, but final production readiness is blocked until Phase 2 and then Phase 3 close. |
+
+## Execution Mode
+
+Work is phase-gated from this point forward:
+
+- Phase 1 is closed for the selected offline parity scope. Do not add Python
+  oracle examples, improve upstream Python code, or expand oracle coverage
+  unless a Phase 2 blocker cannot be understood without a narrowly scoped
+  existing-oracle check.
+- Phase 2 is the only active implementation phase. New work should be literal
+  Go port/parity work, parser/model/API behavior needed for offline parity, or
+  tests that prove that behavior.
+- Phase 3 and Phase 4 artifacts that already exist remain useful evidence, but
+  new CLI polish, broad refactors, README expansion, and production-readiness
+  cleanup are paused until Phase 2 is closed.
+- Status docs may still be updated in the same commit as Phase 2 work so the
+  repository remains monitorable.
 
 ## Operating Rules
 
@@ -650,7 +667,7 @@ make verify
 ```
 
 ```sh
-ARK_ORACLE_SAVE="$PWD/.oracle/data/SavedArks/Valguero_WP/Valguero_WP.ark" \
+ARK_ORACLE_SAVE="/path/to/private/save.ark" \
   .oracle/venv/bin/python scripts/oracle_compare.py
 ```
 
