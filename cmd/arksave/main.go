@@ -955,76 +955,49 @@ func equipmentSaddles(path string, out io.Writer) error {
 }
 
 func equipmentBest(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	summary, faults, err := arkapi.EquipmentBestSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
-
-	api := arkapi.NewEquipment(save)
-	_, weapon, weaponOK, weaponFaults, err := api.BestWeaponDamageWithFaults(arkapi.EquipmentFilterOptions{
-		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
-		Blueprints:   arkapi.UpstreamWeaponBlueprints(),
-		NoBlueprints: true,
-	})
-	if err != nil {
-		return err
-	}
-	_, armor, armorOK, armorFaults, err := api.BestActualDurabilityWithFaults(arkapi.EquipmentFilterOptions{
-		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
-		Blueprints:   arkapi.UpstreamArmorBlueprints(),
-		NoBlueprints: true,
-	})
-	if err != nil {
-		return err
-	}
-	if weaponOK {
+	if summary.WeaponFound {
 		if _, err := fmt.Fprintf(
 			out,
 			"Best weapon damage: %.1f\nBest weapon: %s\nBest weapon crafted: %t\n",
-			weapon.Stats.Damage,
-			arkobject.ShortNameFromBlueprint(weapon.Blueprint),
-			weapon.IsCrafted(),
+			summary.Weapon.Stats.Damage,
+			arkobject.ShortNameFromBlueprint(summary.Weapon.Blueprint),
+			summary.Weapon.IsCrafted(),
 		); err != nil {
 			return err
 		}
 	} else if _, err := fmt.Fprintln(out, "Best weapon: none"); err != nil {
 		return err
 	}
-	if armorOK {
+	if summary.ArmorFound {
 		if _, err := fmt.Fprintf(
 			out,
 			"Best armor durability: %.1f\nBest armor: %s\nBest armor crafted: %t\n",
-			armor.Stats.Durability,
-			arkobject.ShortNameFromBlueprint(armor.Blueprint),
-			armor.IsCrafted(),
+			summary.Armor.Stats.Durability,
+			arkobject.ShortNameFromBlueprint(summary.Armor.Blueprint),
+			summary.Armor.IsCrafted(),
 		); err != nil {
 			return err
 		}
 	} else if _, err := fmt.Fprintln(out, "Best armor: none"); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(out, "Parse faults: %d\n", len(weaponFaults)+len(armorFaults))
+	_, err = fmt.Fprintf(out, "Parse faults: %d\n", len(faults))
 	return err
 }
 
 func equipmentRank(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	api := arkapi.NewEquipment(save)
-	items, faults, err := api.RankedCandidatesWithFaults()
-	if err != nil {
-		return err
-	}
-	stats := api.RankStats(items, arkapi.EquipmentRankOptions{
+	stats, faults, err := arkapi.EquipmentRankStatsFromPath(path, arkapi.EquipmentRankOptions{
 		MinRating:        3,
 		ExcludeCrafted:   true,
 		IgnoredNameParts: ignoredEquipmentNameParts,
 	})
+	if err != nil {
+		return err
+	}
 	_, err = fmt.Fprintf(
 		out,
 		"Ranked: %d\nBest rating: %.1f\nBest average stat: %.1f\nCrafted: %d\nBlueprints: %d\nClasses: %d\nParse faults: %d\n",

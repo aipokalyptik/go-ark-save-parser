@@ -17,6 +17,21 @@ import (
 	"github.com/google/uuid"
 )
 
+func TestEquipmentExamplesUseTypedPathHelpers(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("equipment_best", "main.go"),
+		filepath.Join("equipment_rank", "main.go"),
+	} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile(%s) error = %v", path, err)
+		}
+		if strings.Contains(string(data), "NewEquipmentFromPath") {
+			t.Fatalf("%s still owns EquipmentAPI lifecycle; use typed arkapi path helper", path)
+		}
+	}
+}
+
 func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

@@ -62,7 +62,7 @@ func TestEquipmentAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 		t.Fatalf("ReadFile(main.go) error = %v", err)
 	}
 	source := string(data)
-	for _, name := range []string{"equipmentSummary", "equipmentSaddles", "equipmentAscendantWeaponBPs", "equipmentOwnedBy"} {
+	for _, name := range []string{"equipmentSummary", "equipmentSaddles", "equipmentBest", "equipmentRank", "equipmentAscendantWeaponBPs", "equipmentOwnedBy"} {
 		body := functionBody(t, source, name)
 		if strings.Contains(body, "arksave.Open") {
 			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)

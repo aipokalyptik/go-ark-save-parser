@@ -540,6 +540,10 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.EquipmentAPI.BestWeaponDamage`.
     - [x] Move `equipment_best` filter-plus-best selection onto typed
           `arkapi.EquipmentAPI` fault-collecting best-item helpers.
+    - [x] Add `arkapi.EquipmentBestSummaryFromPath` and move
+          `equipment-best` CLI/example output onto the typed path helper.
+    - [x] Add `arkapi.EquipmentRankStatsFromPath` and move `equipment-rank`
+          CLI/example output onto the typed path helper.
     - [x] Move `equipment_ascendant_weapon_bps` count/max-damage aggregation
           onto existing typed `arkapi.EquipmentAPI.SummaryWithFaults`.
     - [x] Move `equipment_history` snapshot identity, diff logic, manifest

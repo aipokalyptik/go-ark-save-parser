@@ -42,6 +42,13 @@ type EquipmentRankStats struct {
 	Classes         int
 }
 
+type EquipmentBestSummary struct {
+	Weapon      arkobject.EquipmentItem
+	WeaponFound bool
+	Armor       arkobject.EquipmentItem
+	ArmorFound  bool
+}
+
 type EquipmentSummary struct {
 	Items                int
 	TotalQuantity        int32
@@ -188,6 +195,53 @@ func EquipmentOwnedSummaryFromPath(savePath string, opts EquipmentFilterOptions,
 	}
 	defer closeAPI()
 	return api.OwnedSummaryWithFaults(opts, owner)
+}
+
+func EquipmentBestSummaryFromPath(savePath string) (EquipmentBestSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentBestSummary{}, nil, err
+	}
+	defer closeAPI()
+
+	_, weapon, weaponOK, weaponFaults, err := api.BestWeaponDamageWithFaults(EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:   UpstreamWeaponBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		return EquipmentBestSummary{}, nil, err
+	}
+	_, armor, armorOK, armorFaults, err := api.BestActualDurabilityWithFaults(EquipmentFilterOptions{
+		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
+		Blueprints:   UpstreamArmorBlueprints(),
+		NoBlueprints: true,
+	})
+	if err != nil {
+		return EquipmentBestSummary{}, nil, err
+	}
+	faults := append([]arksave.FaultyObjectInfo{}, weaponFaults...)
+	faults = append(faults, armorFaults...)
+	return EquipmentBestSummary{
+		Weapon:      weapon,
+		WeaponFound: weaponOK,
+		Armor:       armor,
+		ArmorFound:  armorOK,
+	}, faults, nil
+}
+
+func EquipmentRankStatsFromPath(savePath string, opts EquipmentRankOptions) (EquipmentRankStats, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentRankStats{}, nil, err
+	}
+	defer closeAPI()
+
+	items, faults, err := api.RankedCandidatesWithFaults()
+	if err != nil {
+		return EquipmentRankStats{}, nil, err
+	}
+	return api.RankStats(items, opts), faults, nil
 }
 
 func UpstreamWeaponBlueprints() []string {

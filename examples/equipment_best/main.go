@@ -14,48 +14,28 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
+	summary, _, err := arkapi.EquipmentBestSummaryFromPath(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
+		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
 		os.Exit(1)
 	}
-	defer closeAPI()
-
-	_, weapon, ok, _, err := api.BestWeaponDamageWithFaults(arkapi.EquipmentFilterOptions{
-		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
-		Blueprints:   arkapi.UpstreamWeaponBlueprints(),
-		NoBlueprints: true,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read weapons: %v\n", err)
-		os.Exit(1)
-	}
-	if ok {
+	if summary.WeaponFound {
 		fmt.Printf(
 			"weapon_damage=%.1f weapon=%s weapon_crafted=%t\n",
-			weapon.Stats.Damage,
-			arkobject.ShortNameFromBlueprint(weapon.Blueprint),
-			weapon.IsCrafted(),
+			summary.Weapon.Stats.Damage,
+			arkobject.ShortNameFromBlueprint(summary.Weapon.Blueprint),
+			summary.Weapon.IsCrafted(),
 		)
 	} else {
 		fmt.Println("weapon=no_match")
 	}
 
-	_, armorItem, ok, _, err := api.BestActualDurabilityWithFaults(arkapi.EquipmentFilterOptions{
-		Kinds:        []arkobject.EquipmentKind{arkobject.EquipmentArmor},
-		Blueprints:   arkapi.UpstreamArmorBlueprints(),
-		NoBlueprints: true,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read armor: %v\n", err)
-		os.Exit(1)
-	}
-	if ok {
+	if summary.ArmorFound {
 		fmt.Printf(
 			"armor_durability=%.1f armor=%s armor_crafted=%t\n",
-			armorItem.Stats.Durability,
-			arkobject.ShortNameFromBlueprint(armorItem.Blueprint),
-			armorItem.IsCrafted(),
+			summary.Armor.Stats.Durability,
+			arkobject.ShortNameFromBlueprint(summary.Armor.Blueprint),
+			summary.Armor.IsCrafted(),
 		)
 	} else {
 		fmt.Println("armor=no_match")

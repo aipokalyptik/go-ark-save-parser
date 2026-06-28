@@ -25,24 +25,15 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	items, _, err := api.RankedCandidatesWithFaults()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "read ranked equipment candidates: %v\n", err)
-		os.Exit(1)
-	}
-
-	stats := api.RankStats(items, arkapi.EquipmentRankOptions{
+	stats, _, err := arkapi.EquipmentRankStatsFromPath(os.Args[1], arkapi.EquipmentRankOptions{
 		MinRating:        3,
 		ExcludeCrafted:   true,
 		IgnoredNameParts: ignoredEquipmentNameParts,
 	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read ranked equipment candidates: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Printf(
 		"ranked=%d best_rating=%.1f best_average_stat=%.1f crafted=%d blueprints=%d classes=%d\n",
 		stats.Ranked,

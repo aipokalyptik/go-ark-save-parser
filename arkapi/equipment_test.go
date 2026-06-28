@@ -795,6 +795,25 @@ func TestEquipmentAPIBestItemWithFaultsAppliesFilters(t *testing.T) {
 	}
 }
 
+func TestEquipmentBestSummaryFromPathUsesUpstreamWeaponAndArmorFilters(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	summary, faults, err := EquipmentBestSummaryFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("EquipmentBestSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("EquipmentBestSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if !summary.WeaponFound || summary.Weapon.Kind != arkobject.EquipmentWeapon || summary.Weapon.Stats.Damage == 0 {
+		t.Fatalf("EquipmentBestSummaryFromPath() weapon = %#v, found %v; want synthetic weapon", summary.Weapon, summary.WeaponFound)
+	}
+	if !summary.ArmorFound || summary.Armor.Kind != arkobject.EquipmentArmor || summary.Armor.Stats.Armor == 0 {
+		t.Fatalf("EquipmentBestSummaryFromPath() armor = %#v, found %v; want synthetic armor by actual durability", summary.Armor, summary.ArmorFound)
+	}
+}
+
 func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
 	api := EquipmentAPI{}
 	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
@@ -871,6 +890,34 @@ func TestEquipmentAPIRankStatsMirrorsHighRatingExampleSelections(t *testing.T) {
 	}
 	if stats.Classes != 3 {
 		t.Fatalf("RankStats() Classes = %d, want 3", stats.Classes)
+	}
+}
+
+func TestEquipmentRankStatsFromPathUsesRankedCandidatesAndOptions(t *testing.T) {
+	save := openSyntheticMixedEquipmentSave(t)
+	defer save.Close()
+
+	api := NewEquipment(save)
+	items, expectedFaults, err := api.RankedCandidatesWithFaults()
+	if err != nil {
+		t.Fatalf("RankedCandidatesWithFaults() error = %v", err)
+	}
+	opts := EquipmentRankOptions{
+		MinRating:        3,
+		ExcludeCrafted:   true,
+		IgnoredNameParts: []string{"WeaponBow"},
+	}
+	want := api.RankStats(items, opts)
+
+	got, faults, err := EquipmentRankStatsFromPath(save.Path(), opts)
+	if err != nil {
+		t.Fatalf("EquipmentRankStatsFromPath() error = %v", err)
+	}
+	if len(faults) != len(expectedFaults) {
+		t.Fatalf("EquipmentRankStatsFromPath() faults = %#v, want %d faults", faults, len(expectedFaults))
+	}
+	if got != want {
+		t.Fatalf("EquipmentRankStatsFromPath() = %#v, want %#v", got, want)
 	}
 }
 
