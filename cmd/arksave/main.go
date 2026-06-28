@@ -105,6 +105,16 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("player-inventories requires a local .ark path")
 		}
 		return playerInventories(args[1], out)
+	case "player-roster":
+		if len(args) != 2 {
+			return fmt.Errorf("player-roster requires a local .ark path or save directory")
+		}
+		return playerRoster(args[1], out)
+	case "tribe-roster":
+		if len(args) != 2 {
+			return fmt.Errorf("tribe-roster requires a local .ark path or save directory")
+		}
+		return tribeRoster(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -183,6 +193,8 @@ func usage(out io.Writer) error {
   arksave dinos <save.ark>
   arksave equipment-summary <save.ark>
   arksave player-inventories <save.ark>
+  arksave player-roster <save.ark-or-directory>
+  arksave tribe-roster <save.ark-or-directory>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -484,6 +496,49 @@ func playerInventories(path string, out io.Writer) error {
 		summary.MinItems,
 		summary.AverageItems,
 		len(faults),
+	)
+	return err
+}
+
+func playerRoster(path string, out io.Writer) error {
+	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackPlayers})
+	if err != nil {
+		return err
+	}
+	defer closeAPI()
+
+	summary, err := api.PlayerRosterSummary()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Players: %d\nWith names: %d\nHighest level: %d\n",
+		summary.Players,
+		summary.WithNames,
+		summary.HighestLevel,
+	)
+	return err
+}
+
+func tribeRoster(path string, out io.Writer) error {
+	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackTribes})
+	if err != nil {
+		return err
+	}
+	defer closeAPI()
+
+	summary, err := api.TribeRosterSummary()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Tribes: %d\nWith names: %d\nMembers: %d\nDinos: %d\n",
+		summary.Tribes,
+		summary.WithNames,
+		summary.Members,
+		summary.Dinos,
 	)
 	return err
 }

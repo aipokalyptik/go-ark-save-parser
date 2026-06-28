@@ -172,6 +172,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 				t.Fatalf("player-inventories output missing %q", want)
 			}
 		}
+
+		var rosterOut bytes.Buffer
+		if err := run([]string{"player-roster", data.SavePath}, &rosterOut); err != nil {
+			t.Fatalf("run(player-roster) error = %v", err)
+		}
+		for _, want := range []string{"Players:", "With names:", "Highest level:"} {
+			if !strings.Contains(rosterOut.String(), want) {
+				t.Fatalf("player-roster output missing %q", want)
+			}
+		}
 	}
 	if data.ProfilePath != "" {
 		var playerOut bytes.Buffer
@@ -192,6 +202,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		for _, want := range []string{"Tribe directory: [redacted]", "Tribe files:", "Tribes:"} {
 			if !strings.Contains(tribesOut.String(), want) {
 				t.Fatalf("tribes directory output missing %q", want)
+			}
+		}
+
+		var rosterOut bytes.Buffer
+		if err := run([]string{"tribe-roster", data.SavePath}, &rosterOut); err != nil {
+			t.Fatalf("run(tribe-roster) error = %v", err)
+		}
+		for _, want := range []string{"Tribes:", "With names:", "Members:", "Dinos:"} {
+			if !strings.Contains(rosterOut.String(), want) {
+				t.Fatalf("tribe-roster output missing %q", want)
 			}
 		}
 	}

@@ -519,6 +519,8 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `dinos`.
   - [x] `equipment-summary`.
   - [x] `player-inventories`.
+  - [x] `player-roster`.
+  - [x] `tribe-roster`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.

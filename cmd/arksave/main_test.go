@@ -335,6 +335,74 @@ func TestPlayerInventoriesCommandPrintsInventorySummary(t *testing.T) {
 	}
 }
 
+func TestPlayerRosterCommandPrintsRosterSummary(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		ExtraCharacterLevel: 9,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        43,
+		CharacterName:       "",
+		PlayerName:          "",
+		ExtraCharacterLevel: 4,
+	})
+
+	var out bytes.Buffer
+	err := run([]string{"player-roster", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(player-roster) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Players: 2",
+		"With names: 1",
+		"Highest level: 10",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("player-roster output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTribeRosterCommandPrintsRosterSummary(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:     "",
+		TribeID:  222,
+		OwnerID:  43,
+		NumDinos: 3,
+		Members:  []string{"Builder"},
+	})
+
+	var out bytes.Buffer
+	err := run([]string{"tribe-roster", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(tribe-roster) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribes: 2",
+		"With names: 1",
+		"Members: 3",
+		"Dinos: 10",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribe-roster output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
