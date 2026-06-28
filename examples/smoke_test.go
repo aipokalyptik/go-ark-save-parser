@@ -19,6 +19,7 @@ import (
 
 func TestEquipmentExamplesUseTypedPathHelpers(t *testing.T) {
 	for _, path := range []string{
+		filepath.Join("equipment_ascendant_weapon_bps", "main.go"),
 		filepath.Join("equipment_best", "main.go"),
 		filepath.Join("equipment_rank", "main.go"),
 	} {

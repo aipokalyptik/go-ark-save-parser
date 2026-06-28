@@ -119,8 +119,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       can use typed path helpers without manual save lifecycle handling.
 - [x] Move `equipment-summary`, `equipment-saddles`,
       `equipment-best`, `equipment-rank`, `equipment-ascendant-weapon-bps`,
-      and `equipment-owned-by` CLI aggregate commands onto typed equipment path
-      helpers while preserving parse-fault counts.
+      and `equipment-owned-by` CLI aggregate commands and matching aggregate
+      examples onto typed equipment path helpers while preserving parse-fault
+      counts.
 - [x] Add `arkapi.StackableSummaryFromPath` and
       `arkapi.StackableSummaryFromPathWithFaults` plus
       `arkapi.StackableOwnedSummaryFromPath` so stackable aggregate examples

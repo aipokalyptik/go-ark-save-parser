@@ -546,6 +546,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           CLI/example output onto the typed path helper.
     - [x] Move `equipment_ascendant_weapon_bps` count/max-damage aggregation
           onto existing typed `arkapi.EquipmentAPI.SummaryWithFaults`.
+    - [x] Move the `equipment_ascendant_weapon_bps` example save-open/close
+          lifecycle onto `arkapi.EquipmentSummaryFromPath`.
     - [x] Move `equipment_history` snapshot identity, diff logic, manifest
           reading, and report assembly onto typed `arkapi` equipment history
           helpers.

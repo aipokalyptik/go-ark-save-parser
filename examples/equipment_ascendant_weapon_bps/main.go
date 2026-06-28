@@ -14,21 +14,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.SummaryWithFaults(arkapi.EquipmentFilterOptions{
+	summary, _, err := arkapi.EquipmentSummaryFromPath(os.Args[1], arkapi.EquipmentFilterOptions{
 		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
 		Blueprints:     arkapi.UpstreamWeaponBlueprints(),
 		OnlyBlueprints: true,
 		MinQuality:     arkapi.AscendantQualityIndex,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "read equipment: %v\n", err)
+		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
 		os.Exit(1)
 	}
 
