@@ -387,6 +387,8 @@ func TestExamplesRunAgainstProvidedData(t *testing.T) {
 		runProvidedExample(t, "player_all", "players=", data.SavePath)
 		runProvidedExample(t, "equipment_summary", "items=", data.SavePath)
 		runProvidedExample(t, "structure_health", "structures=", data.SavePath)
+		runProvidedExample(t, "structure_owners", "structures=", data.SavePath)
+		runProvidedExample(t, "structure_owner_locations", "structures=", data.SavePath)
 	}
 
 	if data.Dir == "" {
