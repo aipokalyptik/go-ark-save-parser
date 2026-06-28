@@ -525,6 +525,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.
+  - [x] `cluster-summary`.
   - [x] `tribute`.
   - [x] `export-json`.
   - [x] `export-domain-json`.

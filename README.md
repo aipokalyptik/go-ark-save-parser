@@ -64,8 +64,8 @@ Implemented:
   `structure-owners`, `structure-owner-locations`, `base-components`,
   `dinos`, `equipment-summary`, `player-inventories`, `player-roster`,
   `tribe-roster`, `player-tribe-links`, `players`, `tribes`, `cluster`,
-  `tribute`, `export-json`, `export-domain-json`, `export-cluster-json`, and
-  `export-tribute-json` commands.
+  `cluster-summary`, `tribute`, `export-json`, `export-domain-json`,
+  `export-cluster-json`, and `export-tribute-json` commands.
 - Go-only provided-data E2E smoke tests for selected read-only APIs, CLI
   commands, and examples, runnable with `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - Private Python oracle setup and gated private `.ark` integration test.
@@ -214,6 +214,7 @@ Inspect local cluster uploads:
 
 ```sh
 ./bin/arksave cluster /path/to/cluster-directory-or-file
+./bin/arksave cluster-summary /path/to/cluster-directory-or-file
 ```
 
 Inspect local tribute indexes:

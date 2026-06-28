@@ -149,6 +149,18 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	if data.ClusterPath != "" {
+		var clusterSummaryOut bytes.Buffer
+		if err := run([]string{"--redact", "cluster-summary", data.ClusterPath}, &clusterSummaryOut); err != nil {
+			t.Fatalf("run(cluster-summary) error = %v", err)
+		}
+		for _, want := range []string{"Cluster file: [redacted]", "Items:", "Dinos:", "Dino item uploads:", "Parsed dinos:"} {
+			if !strings.Contains(clusterSummaryOut.String(), want) {
+				t.Fatalf("cluster-summary output missing %q", want)
+			}
+		}
+	}
+
 	if data.Dir == "" {
 		return
 	}

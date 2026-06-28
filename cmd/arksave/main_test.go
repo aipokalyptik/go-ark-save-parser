@@ -766,6 +766,61 @@ func TestClusterCommandPrintsDirectoryAggregateSummary(t *testing.T) {
 	}
 }
 
+func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"cluster-summary", path}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster-summary) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster file:",
+		"Archive version: 7",
+		"Objects: 1",
+		"Items: 0",
+		"Dinos: 0",
+		"Parse errors: 0",
+		"Dino item uploads: 0",
+		"Equipment item uploads: 0",
+		"Other item uploads: 0",
+		"Parsed dinos: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster-summary output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestClusterSummaryCommandPrintsDirectoryTypedAggregate(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+
+	var out bytes.Buffer
+	err := run([]string{"cluster-summary", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster-summary directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster directory:",
+		"Files: 2",
+		"Objects: 2",
+		"Items: 0",
+		"Dinos: 0",
+		"Parse errors: 0",
+		"Dino item uploads: 0",
+		"Parsed dinos: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster-summary directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterSummary(&out, &arkcluster.Data{

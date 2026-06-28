@@ -135,6 +135,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("cluster requires a local cluster file or directory path")
 		}
 		return cluster(args[1], out, opts)
+	case "cluster-summary":
+		if len(args) != 2 {
+			return fmt.Errorf("cluster-summary requires a local cluster file or directory path")
+		}
+		return clusterSummary(args[1], out, opts)
 	case "tribute":
 		if len(args) != 2 {
 			return fmt.Errorf("tribute requires a local .arktributetribe file or directory path")
@@ -204,6 +209,7 @@ func usage(out io.Writer) error {
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
+  arksave [--redact] cluster-summary <cluster-file-or-directory>
   arksave [--redact] tribute <tribute-file-or-directory>
   arksave [--redact] export-json <save.ark> <out.json>
   arksave [--redact] export-domain-json <save.ark> <dinos|structures|equipment|stackables|players|tribes|bases> <out.json>
@@ -926,6 +932,78 @@ func cluster(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	return printClusterSummary(out, data, opts)
+}
+
+func clusterSummary(path string, out io.Writer, opts runOptions) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		entries, err := arkcluster.OpenDirectory(path)
+		if err != nil {
+			return err
+		}
+		summary := arkapi.ClusterDirectorySummary(entries)
+		if _, err := fmt.Fprintf(
+			out,
+			"Cluster directory: %s\nFiles: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
+			displayString(path, opts),
+			summary.Files,
+			summary.Objects,
+			summary.Items,
+			summary.Dinos,
+			summary.ParseErrors,
+		); err != nil {
+			return err
+		}
+		return printClusterTypedSummaries(out, summary.ItemSummary, summary.DinoSummary)
+	}
+	data, err := arkcluster.Open(path)
+	if err != nil {
+		return err
+	}
+	fileSummary := arkapi.NewCluster(data).Summary()
+	if _, err := fmt.Fprintf(
+		out,
+		"Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
+		displayString(data.Path, opts),
+		fileSummary.ArchiveVersion,
+		fileSummary.ObjectCount,
+		fileSummary.ItemCount,
+		fileSummary.DinoCount,
+		fileSummary.ParseErrorCount,
+	); err != nil {
+		return err
+	}
+	api := arkapi.NewCluster(data)
+	return printClusterTypedSummaries(out, api.ItemSummary(), api.DinoSummary())
+}
+
+func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
+	_, err := fmt.Fprintf(
+		out,
+		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
+		items.DinoItems,
+		items.EquipmentItems,
+		items.OtherItems,
+		items.SupportedVersionItems,
+		items.UnsupportedVersionItems,
+		items.CraftedItems,
+		items.TotalQuantity,
+		items.MaxRating,
+		items.MaxQuality,
+		dinos.ParsedDinos,
+		dinos.ParseErrorDinos,
+		dinos.SupportedVersionDinos,
+		dinos.UnsupportedVersionDinos,
+		dinos.WithStatusComponent,
+		dinos.WithAIController,
+		dinos.WithInventoryComponent,
+		dinos.TotalEmbeddedObjects,
+		dinos.MaxEmbeddedObjects,
+	)
+	return err
 }
 
 func tribute(path string, out io.Writer, opts runOptions) error {
