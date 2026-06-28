@@ -275,6 +275,8 @@ documented.
   - [x] Extend `arkapi.PlayerAndTribeDataSummary` with typed relationship edge
         counters for tribes with inactive members and tribes without active
         players.
+  - [x] Exercise typed local player death, level, and experience average
+        helpers through the `local_profiles` example smoke test.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.

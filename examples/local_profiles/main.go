@@ -59,6 +59,22 @@ func main() {
 		fmt.Printf("highest_experience=%.2f\n", experience)
 	}
 
+	averageDeaths, hasAverageDeaths, err := api.AverageDeaths()
+	if err != nil {
+		log.Printf("average deaths: %v", err)
+	}
+	averageLevel, hasAverageLevel, err := api.AverageLevel()
+	if err != nil {
+		log.Printf("average level: %v", err)
+	}
+	averageExperience, hasAverageExperience, err := api.AverageExperience()
+	if err != nil {
+		log.Printf("average experience: %v", err)
+	}
+	if hasAverageDeaths && hasAverageLevel && hasAverageExperience {
+		fmt.Printf("average_deaths=%.2f average_level=%.2f average_experience=%.2f\n", averageDeaths, averageLevel, averageExperience)
+	}
+
 	unlockedEngrams, err := api.UnlockedEngrams()
 	if err != nil {
 		log.Printf("unlocked engrams: %v", err)

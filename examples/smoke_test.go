@@ -103,10 +103,13 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 	testfixtures.WritePlayerArchiveWithOptions(t, profilePath, testfixtures.PlayerArchiveOptions{
-		PlayerDataID:  42,
-		CharacterName: "Survivor",
-		PlayerName:    "PlatformName",
-		TribeID:       777,
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             777,
+		NumDeaths:           4,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    123.5,
 		UnlockedEngrams: []string{
 			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
 			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
@@ -206,8 +209,9 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	}
 	runExample(t, "player_inventory", "location=(11.00,22.00,33.00)", savePath, "42")
 	runExample(t, "player_inventories", "players=1 with_inventory=1 without_inventory=0 total_items=2 max_items=2 min_items=2 avg_items=2.00 faults=0", savePath)
+	runExample(t, "local_profiles", "average_deaths=4.00 average_level=10.00 average_experience=123.50", dir)
 	runExample(t, "local_profiles", "unlocked_engrams=2", dir)
-	runExample(t, "player_list", "players=1 with_names=1 highest_level=1", dir)
+	runExample(t, "player_list", "players=1 with_names=1 highest_level=10", dir)
 	runExample(t, "tribe_list", "tribes=1 with_names=1 members=0 dinos=7", dir)
 	runExample(t, "player_and_tribe_data", `"players": 1`, dir)
 	runExample(t, "player_unlocked_engrams", "unlocked_engrams=2 first=Blueprint'/Game/Engrams/EngramA.EngramA_C' last=Blueprint'/Game/Engrams/EngramB.EngramB_C'", dir)

@@ -111,8 +111,8 @@ go run ./examples/map_summary /path/to/Valguero_WP.ark
 
 - `local_profiles`: scan a directory for local `.arkprofile`, `.arktribe`, and
   extensionless local cluster files, then print discovered counts, parsed
-  counts, aggregate tribe-player links, deaths, levels, experience, and
-  unlocked engram blueprint counts.
+  counts, aggregate tribe-player links, death/level/experience totals and
+  averages, and unlocked engram blueprint counts.
 - `player_all`: accept a save path or save directory and print player/tribe
   aggregate counts, falling back to sibling local profile files when a save has
   no embedded player store.
