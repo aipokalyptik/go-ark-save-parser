@@ -832,7 +832,7 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 	}
 	clusterInfo := arkapi.ExportClusterData(data)
 	for _, item := range clusterInfo.Items {
-		if _, err := fmt.Fprintf(out, "  item[%d] type=%s blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Type, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
+		if _, err := fmt.Fprintf(out, "  item[%d] type=%s short=%s blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Type, item.ShortName, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
 			return err
 		}
 	}
@@ -841,12 +841,20 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 		if len(dino.ClassNames) > 0 {
 			classNames = fmt.Sprintf(" class_names=%s", strings.Join(dino.ClassNames, ","))
 		}
+		primaryClass := ""
+		if dino.PrimaryClassName != "" {
+			primaryClass = fmt.Sprintf(" primary_class=%s", dino.PrimaryClassName)
+		}
+		shortName := ""
+		if dino.ShortName != "" {
+			shortName = fmt.Sprintf(" short=%s", dino.ShortName)
+		}
 		if dino.ParseError != "" {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s parse_error=%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, classNames, dino.ParseError); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s parse_error=%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames, dino.ParseError); err != nil {
 				return err
 			}
 		} else {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, classNames); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames); err != nil {
 				return err
 			}
 		}

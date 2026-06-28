@@ -255,6 +255,8 @@ documented.
         cluster JSON exports.
   - [x] Include uploaded item short names and uploaded dino primary/short class
         names in typed local cluster models and JSON exports.
+  - [x] Include uploaded item short names and uploaded dino primary/short class
+        names in local cluster CLI summaries.
   - [x] Add directory-level local cluster aggregate summaries for total files,
         objects, items, dinos, parse errors, uploaded-item summaries, and
         uploaded-dino summaries, and include them in directory JSON exports and

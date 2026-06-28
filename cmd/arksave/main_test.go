@@ -488,9 +488,12 @@ func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 		t.Fatalf("printClusterSummary() error = %v", err)
 	}
 	got := out.String()
-	want := "dino[0] raw_bytes=64 objects=2 upload=12345 class_names=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C,/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"
+	want := "dino[0] raw_bytes=64 objects=2 upload=12345 primary_class=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C short=Raptor class_names=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C,/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"
 	if !strings.Contains(got, want) {
 		t.Fatalf("cluster summary %q does not contain %q", got, want)
+	}
+	if !strings.Contains(got, "primary_class=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C short=Raptor") {
+		t.Fatalf("cluster summary %q does not contain primary class and short dino name", got)
 	}
 }
 
@@ -523,8 +526,8 @@ func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 	}
 	got := out.String()
 	for _, want := range []string{
-		"item[0] type=equipment blueprint=/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C quantity=1 upload=12345",
-		"item[1] type=dino blueprint=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C quantity=0 upload=67890",
+		"item[0] type=equipment short=WeaponBow blueprint=/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C quantity=1 upload=12345",
+		"item[1] type=dino short=Raptor blueprint=/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C quantity=0 upload=67890",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("cluster summary %q does not contain %q", got, want)
