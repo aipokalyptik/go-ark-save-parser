@@ -308,6 +308,30 @@ func TestExportClusterDirectoryDataWithFaultsReportsBrokenFiles(t *testing.T) {
 	}
 }
 
+func TestClusterDirectorySummaryFromPathReadsDirectoryWithFaults(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "EOS_valid")
+	brokenPath := filepath.Join(dir, "EOS_broken")
+	testfixtures.WriteArchive(t, validPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(brokenPath, []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	info, err := ClusterDirectorySummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("ClusterDirectorySummaryFromPath() error = %v", err)
+	}
+	if info.Count != 1 || len(info.Files) != 1 || info.Files[0].ID != "EOS_valid" {
+		t.Fatalf("ClusterDirectorySummaryFromPath() = %#v, want one valid cluster file", info)
+	}
+	if info.Summary.Files != 1 || info.Summary.Objects != 1 {
+		t.Fatalf("ClusterDirectorySummaryFromPath() summary = %#v, want one archive object", info.Summary)
+	}
+	if len(info.Faults) != 1 || info.Faults[0].Path != brokenPath || info.Faults[0].Error == "" {
+		t.Fatalf("ClusterDirectorySummaryFromPath() faults = %#v, want broken file fault", info.Faults)
+	}
+}
+
 func TestExportClusterPathJSONReadsDirectoryWithFaults(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_valid"), "/Script/ShooterGame.ArkCloudInventoryData")

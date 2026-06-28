@@ -204,21 +204,37 @@ func ExportClusterDirectoryDataWithFaultsJSON(entries []*arkcluster.Data, faults
 	return json.MarshalIndent(ExportClusterDirectoryDataWithFaults(entries, faults), "", "  ")
 }
 
+func ClusterSummaryFromPath(path string) (ClusterDataInfo, error) {
+	api, err := NewClusterFromPath(path)
+	if err != nil {
+		return ClusterDataInfo{}, err
+	}
+	return ExportClusterData(api.data), nil
+}
+
+func ClusterDirectorySummaryFromPath(path string) (ClusterDirectoryInfo, error) {
+	entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
+	if err != nil {
+		return ClusterDirectoryInfo{}, err
+	}
+	return ExportClusterDirectoryDataWithFaults(entries, faults), nil
+}
+
 func ExportClusterPathJSON(path string) ([]byte, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
 	if info.IsDir() {
-		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
+		summary, err := ClusterDirectorySummaryFromPath(path)
 		if err != nil {
 			return nil, err
 		}
-		return ExportClusterDirectoryDataWithFaultsJSON(entries, faults)
+		return json.MarshalIndent(summary, "", "  ")
 	}
-	data, err := arkcluster.Open(path)
+	summary, err := ClusterSummaryFromPath(path)
 	if err != nil {
 		return nil, err
 	}
-	return ExportClusterDataJSON(data)
+	return json.MarshalIndent(summary, "", "  ")
 }

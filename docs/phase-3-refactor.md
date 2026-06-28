@@ -71,6 +71,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.NewClusterFromPath` so typed local cluster examples and
       library consumers open local cluster files without direct `arkcluster`
       handling.
+- [x] Add `arkapi.ClusterSummaryFromPath` and
+      `arkapi.ClusterDirectorySummaryFromPath` so local cluster file and
+      directory aggregates are reusable typed results without JSON-only access.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can

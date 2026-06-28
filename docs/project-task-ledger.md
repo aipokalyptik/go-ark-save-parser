@@ -527,6 +527,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           directory handling.
     - [x] Move `cluster_typed` local cluster file opening behind typed
           `arkapi.NewClusterFromPath`.
+    - [x] Add typed local cluster file and directory aggregate helpers through
+          `arkapi.ClusterSummaryFromPath` and
+          `arkapi.ClusterDirectorySummaryFromPath`.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed
