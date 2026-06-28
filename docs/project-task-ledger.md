@@ -161,10 +161,13 @@ documented.
 - [x] Preserve partial struct containers on recoverable profile overread.
 - [x] Continue after aligned malformed compound properties in partial parsing
       while still returning the recovery error.
-- [ ] Port remaining compound payload encodings discovered by future oracle
-      failures.
-- [ ] Port legacy property/object parsing where a runnable local oracle path
-      exists.
+- [blocked] Port remaining compound payload encodings discovered by future
+      oracle failures; currently no open Phase 2 failure exposes a concrete
+      unported encoding.
+- [blocked] Port legacy property/object parsing where a runnable local oracle
+      path exists. Upstream uses separate legacy binary/property parsers for
+      pre-Unreal-5.5 archives and legacy cryopod payloads; the Go port reports
+      typed unsupported legacy errors until a fixture proves exact behavior.
 
 ### Object Model
 

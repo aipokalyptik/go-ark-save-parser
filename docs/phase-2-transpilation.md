@@ -85,11 +85,15 @@ evidence, but they are not the active execution target.
 - [x] Add declared-size realignment for parsed primitive property payloads.
 - [x] Add declared-size realignment and overread detection for compound array,
       map, set, and struct payloads covered by generic readers.
-- [ ] Port remaining property parsing edge cases for compound payload encodings
-      not already covered by generic readers.
+- [blocked] Port remaining property parsing edge cases for compound payload
+      encodings not already covered by generic readers; no current Phase 2
+      failure exposes a concrete unported encoding.
 - [x] Isolate legacy archive behavior behind explicit format paths and a typed
       unsupported-legacy error.
-- [ ] Port legacy property/object parsing where a runnable offline oracle path exists.
+- [blocked] Port legacy property/object parsing where a runnable offline oracle
+      path exists. Upstream uses separate legacy binary/property parsers for
+      pre-Unreal-5.5 archives and legacy cryopod payloads; Go reports typed
+      unsupported legacy errors until a fixture proves exact behavior.
 
 ### Object Model
 
