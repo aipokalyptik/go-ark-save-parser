@@ -21,13 +21,7 @@ func main() {
 		includeCryos = false
 		savePath = os.Args[2]
 	}
-	api, closeAPI, err := arkapi.NewDinoFromPath(savePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.PopulationSummaryWithFaults(includeCryos)
+	summary, _, err := arkapi.DinoPopulationSummaryFromPath(savePath, includeCryos)
 	if err != nil {
 		log.Fatal(err)
 	}

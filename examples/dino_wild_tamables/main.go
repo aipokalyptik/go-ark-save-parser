@@ -13,14 +13,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewDinoFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.WildTamableSummaryWithFaults()
+	summary, _, err := arkapi.DinoWildTamableSummaryFromPath(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read wild dinos: %v\n", err)
 		os.Exit(1)

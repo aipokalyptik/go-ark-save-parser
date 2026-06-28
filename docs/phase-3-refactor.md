@@ -90,6 +90,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.DinoHeatmapSummaryFromPath` and
       `arkapi.StructureHeatmapSummaryFromPath` so callers can get typed
       heatmap summaries without writing JSON output files.
+- [x] Add `arkapi.DinoPopulationSummaryFromPath`,
+      `arkapi.DinoWildTamableSummaryFromPath`, and
+      `arkapi.DinoBabySummaryFromPath` so common dino aggregate examples can
+      use typed path helpers without manual save lifecycle handling.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

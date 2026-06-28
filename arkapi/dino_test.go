@@ -1263,6 +1263,55 @@ func TestDinoAPIPopulationSummaryWithFaultsCountsFilteredDinos(t *testing.T) {
 	}
 }
 
+func TestDinoSummaryFromPathHelpersReturnTypedSummariesAndFaults(t *testing.T) {
+	populationSave := openSyntheticDinoPopulationSummarySave(t)
+	defer populationSave.Close()
+
+	population, faults, err := DinoPopulationSummaryFromPath(populationSave.Path(), false)
+	if err != nil {
+		t.Fatalf("DinoPopulationSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("DinoPopulationSummaryFromPath() faults = %#v, want none", faults)
+	}
+	wantPopulation := DinoPopulationSummary{Dinos: 2, Tamed: 1, Wild: 1, Cryopodded: 0, Classes: 1}
+	if population != wantPopulation {
+		t.Fatalf("DinoPopulationSummaryFromPath() = %#v, want %#v", population, wantPopulation)
+	}
+
+	wildSave := openSyntheticDinoStatsSave(t)
+	defer wildSave.Close()
+
+	wild, faults, err := DinoWildTamableSummaryFromPath(wildSave.Path())
+	if err != nil {
+		t.Fatalf("DinoWildTamableSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("DinoWildTamableSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if wild != (WildTamableSummary{WildDinos: 1, WildTamables: 1}) {
+		t.Fatalf("DinoWildTamableSummaryFromPath() = %#v, want one wild tamable", wild)
+	}
+
+	babySave := openSyntheticDinoBabyFilterSave(t)
+	defer babySave.Close()
+
+	babies, faults, err := DinoBabySummaryFromPath(babySave.Path(), BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       false,
+	})
+	if err != nil {
+		t.Fatalf("DinoBabySummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("DinoBabySummaryFromPath() faults = %#v, want none", faults)
+	}
+	if babies != (BabyCounts{Tamed: 1}) {
+		t.Fatalf("DinoBabySummaryFromPath() = %#v, want one tamed baby", babies)
+	}
+}
+
 func TestDinoAPICountsBabiesByTamedState(t *testing.T) {
 	api := NewDino(nil)
 	dinos := map[uuid.UUID]arkobject.Dino{

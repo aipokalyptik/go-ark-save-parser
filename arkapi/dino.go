@@ -159,6 +159,33 @@ func NewDinoFromPath(savePath string) (*DinoAPI, func() error, error) {
 	return NewDino(save), save.Close, nil
 }
 
+func DinoPopulationSummaryFromPath(savePath string, includeCryopodded bool) (DinoPopulationSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoPopulationSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.PopulationSummaryWithFaults(includeCryopodded)
+}
+
+func DinoWildTamableSummaryFromPath(savePath string) (WildTamableSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return WildTamableSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.WildTamableSummaryWithFaults()
+}
+
+func DinoBabySummaryFromPath(savePath string, opts BabyFilterOptions) (BabyCounts, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return BabyCounts{}, nil, err
+	}
+	defer closeAPI()
+	return api.BabySummaryWithFaults(opts)
+}
+
 func (d *DinoAPI) IsApplicableBlueprint(blueprint string) bool {
 	if blueprint == "" {
 		return false
