@@ -96,6 +96,16 @@ func NewStructureFromPath(savePath string) (*StructureAPI, func() error, error) 
 	return NewStructure(save), save.Close, nil
 }
 
+func StructureOwnerLocationsFromPathWithFaults(savePath string, mapName string, digits int) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return StructureOwnerLocationExport{}, nil, err
+	}
+	defer save.Close()
+
+	return NewStructure(save).OwnerLocationsWithFaults(mapName, digits, NewPlayer(save))
+}
+
 func (s *StructureAPI) All() (map[uuid.UUID]arkobject.Structure, error) {
 	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
 		return isStructureBlueprint(info.ClassName)

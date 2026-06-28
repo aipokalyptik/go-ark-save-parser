@@ -563,8 +563,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.NewStructureFromPath`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
-    - [ ] Move `structure_owner_locations` mixed structure/player save access
-          behind a typed package helper.
+    - [x] Move `structure_owner_locations` mixed structure/player save access
+          behind typed `arkapi.StructureOwnerLocationsFromPathWithFaults`.
     - [x] Move `export_all_items` domain export loop and manifest writing onto
           typed `arkapi.JSONAPI.ExportAllDomains`.
     - [ ] Keep migrating example-local parsing into package APIs when the

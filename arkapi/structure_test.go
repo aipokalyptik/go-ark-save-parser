@@ -247,6 +247,25 @@ func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *test
 	}
 }
 
+func TestStructureOwnerLocationsFromPathWithFaultsUsesSharedSaveAPIs(t *testing.T) {
+	save := openSyntheticStructureOwnerLocationSave(t)
+	defer save.Close()
+
+	export, faults, err := StructureOwnerLocationsFromPathWithFaults(save.Path(), "Valguero", 1)
+	if err != nil {
+		t.Fatalf("StructureOwnerLocationsFromPathWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("StructureOwnerLocationsFromPathWithFaults() faults = %#v, want none", faults)
+	}
+	if export.Structures != 3 || export.Owners != 2 || export.Cells != 2 || export.NamedCells != 1 || export.MultiStructureCells != 1 {
+		t.Fatalf("StructureOwnerLocationsFromPathWithFaults() = %#v, want 3 structures, 2 owners, 2 cells, 1 named, 1 multi", export)
+	}
+	if len(export.OwnersByLocation) != 2 {
+		t.Fatalf("OwnersByLocation length = %d, want 2", len(export.OwnersByLocation))
+	}
+}
+
 func TestStructureAPIOwnerLocationsFullUsesParsedStructures(t *testing.T) {
 	save := openSyntheticStructureOwnerLocationSave(t)
 	defer save.Close()

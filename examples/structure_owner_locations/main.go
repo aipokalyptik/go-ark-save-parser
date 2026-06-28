@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
@@ -29,14 +28,7 @@ func main() {
 		digits = value
 	}
 
-	save, err := arksave.Open(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer save.Close()
-
-	export, _, err := arkapi.NewStructure(save).OwnerLocationsWithFaults(mapName, digits, arkapi.NewPlayer(save))
+	export, _, err := arkapi.StructureOwnerLocationsFromPathWithFaults(os.Args[1], mapName, digits)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read structure owner locations: %v\n", err)
 		os.Exit(1)
