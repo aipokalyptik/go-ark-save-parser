@@ -65,6 +65,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("parse requires a local .ark path")
 		}
 		return parseSave(args[1], out, opts)
+	case "class-lookup":
+		if len(args) < 3 {
+			return fmt.Errorf("class-lookup requires a local .ark path and at least one class substring")
+		}
+		return classLookup(args[1], args[2:], out)
 	case "structure-health":
 		if len(args) != 2 {
 			return fmt.Errorf("structure-health requires a local .ark path")
@@ -278,6 +283,7 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
+  arksave class-lookup <save.ark> <class-substring> [class-substring...]
   arksave structure-health <save.ark>
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
   arksave structure-owners <save.ark>
@@ -377,6 +383,27 @@ func parseSave(path string, out io.Writer, opts runOptions) error {
 		save.Context.SaveVersion,
 		len(ids),
 		len(objects),
+		len(faults),
+	)
+	return err
+}
+
+func classLookup(path string, classSubstrings []string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewGeneral(save).ClassLookupSummaryWithFaults(classSubstrings)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Objects: %d\nClasses: %d\nParse faults: %d\n",
+		summary.Objects,
+		summary.Classes,
 		len(faults),
 	)
 	return err

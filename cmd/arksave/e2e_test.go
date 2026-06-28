@@ -27,6 +27,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var classLookupOut bytes.Buffer
+	if err := run([]string{"class-lookup", data.SavePath, "PrimalStructure"}, &classLookupOut); err != nil {
+		t.Fatalf("run(class-lookup) error = %v", err)
+	}
+	for _, want := range []string{"Objects:", "Classes:", "Parse faults:"} {
+		if !strings.Contains(classLookupOut.String(), want) {
+			t.Fatalf("class-lookup output missing %q", want)
+		}
+	}
+
 	var healthOut bytes.Buffer
 	if err := run([]string{"structure-health", data.SavePath}, &healthOut); err != nil {
 		t.Fatalf("run(structure-health) error = %v", err)

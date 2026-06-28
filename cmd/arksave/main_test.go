@@ -84,6 +84,27 @@ func TestParseCommandRedactsPath(t *testing.T) {
 	}
 }
 
+func TestClassLookupCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"class-lookup", path, "Wall_Stone"}, &out)
+	if err != nil {
+		t.Fatalf("run(class-lookup) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Objects: 1",
+		"Classes: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("class-lookup output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestStructureHealthCommandPrintsAggregateSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)
