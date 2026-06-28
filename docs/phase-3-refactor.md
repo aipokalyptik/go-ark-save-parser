@@ -85,6 +85,8 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.BaseAPI.SummaryForBases` and
       `arkapi.BaseAPI.SummaryWithFaults` so base aggregate counts are reusable
       typed API results instead of caller-local counting logic.
+- [x] Add `arkapi.BaseSummaryFromPath` so callers can open local saves and get
+      typed base aggregate summaries without manual save lifecycle handling.
 - [x] Add `arkapi.DinoHeatmapSummaryFromPath` and
       `arkapi.StructureHeatmapSummaryFromPath` so callers can get typed
       heatmap summaries without writing JSON output files.

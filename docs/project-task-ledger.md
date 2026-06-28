@@ -594,6 +594,8 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add reusable typed base aggregate summaries through
           `arkapi.BaseAPI.SummaryForBases` and
           `arkapi.BaseAPI.SummaryWithFaults`.
+    - [x] Add path-level typed base aggregate summaries through
+          `arkapi.BaseSummaryFromPath`.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.
