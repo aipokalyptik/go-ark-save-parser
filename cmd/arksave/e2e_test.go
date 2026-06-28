@@ -27,6 +27,14 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var objectClassesOut bytes.Buffer
+	if err := run([]string{"object-classes", data.SavePath}, &objectClassesOut); err != nil {
+		t.Fatalf("run(object-classes) error = %v", err)
+	}
+	if !strings.Contains(objectClassesOut.String(), "Blueprint") {
+		t.Fatalf("object-classes output missing Blueprint class marker")
+	}
+
 	var classLookupOut bytes.Buffer
 	if err := run([]string{"class-lookup", data.SavePath, "PrimalStructure"}, &classLookupOut); err != nil {
 		t.Fatalf("run(class-lookup) error = %v", err)

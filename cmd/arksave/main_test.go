@@ -84,6 +84,21 @@ func TestParseCommandRedactsPath(t *testing.T) {
 	}
 }
 
+func TestObjectClassesCommandPrintsSaveClasses(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	createSyntheticSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"object-classes", path}, &out)
+	if err != nil {
+		t.Fatalf("run(object-classes) error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "Blueprint'/Game/Test.Test_C'") {
+		t.Fatalf("object-classes output %q missing synthetic class", got)
+	}
+}
+
 func TestClassLookupCommandPrintsAggregateSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)

@@ -65,6 +65,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("parse requires a local .ark path")
 		}
 		return parseSave(args[1], out, opts)
+	case "object-classes":
+		if len(args) != 2 {
+			return fmt.Errorf("object-classes requires a local .ark path")
+		}
+		return objectClasses(args[1], out)
 	case "class-lookup":
 		if len(args) < 3 {
 			return fmt.Errorf("class-lookup requires a local .ark path and at least one class substring")
@@ -293,6 +298,7 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
+  arksave object-classes <save.ark>
   arksave class-lookup <save.ark> <class-substring> [class-substring...]
   arksave class-property-summary <save.ark> <class-substring>
   arksave property-filter <save.ark> <property> [property...]
@@ -398,6 +404,25 @@ func parseSave(path string, out io.Writer, opts runOptions) error {
 		len(faults),
 	)
 	return err
+}
+
+func objectClasses(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	classes, err := arkapi.NewGeneral(save).Classes()
+	if err != nil {
+		return err
+	}
+	for _, className := range classes {
+		if _, err := fmt.Fprintln(out, className); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func classLookup(path string, classSubstrings []string, out io.Writer) error {
