@@ -62,6 +62,16 @@ func (s *StructureAPI) ExportBinary(outputDir string) (StructureBinaryExport, er
 	return export, nil
 }
 
+func ExportStructureBinaryFromPath(savePath string, outputDir string) (StructureBinaryExport, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return StructureBinaryExport{}, err
+	}
+	defer closeAPI()
+
+	return api.ExportBinary(outputDir)
+}
+
 func (s *StructureAPI) exportStructureBinary(outputDir string, id uuid.UUID, structure arkobject.Structure, mapName string) (StructureBinaryExportFile, error) {
 	raw, err := s.save.ObjectBinary(id)
 	if err != nil {

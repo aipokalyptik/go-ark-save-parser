@@ -54,6 +54,16 @@ func (e *EquipmentAPI) ExportBinary(outputDir string) (EquipmentBinaryExport, er
 	return export, nil
 }
 
+func ExportEquipmentBinaryFromPath(savePath string, outputDir string) (EquipmentBinaryExport, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentBinaryExport{}, err
+	}
+	defer closeAPI()
+
+	return api.ExportBinary(outputDir)
+}
+
 func (e *EquipmentAPI) exportEquipmentBinary(outputDir string, id uuid.UUID, item arkobject.EquipmentItem) (EquipmentBinaryExportItem, error) {
 	raw, err := e.save.ObjectBinary(id)
 	if err != nil {

@@ -154,6 +154,53 @@ func TestBaseAPIExportBinaryWritesMetadataAndStructureRows(t *testing.T) {
 	}
 }
 
+func TestExportBaseBinaryFromPathWritesMetadataAndStructureRows(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	secondID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	outDir := filepath.Join(t.TempDir(), "base-export")
+	exported, err := ExportBaseBinaryFromPath(save.Path(), "Valguero", outDir)
+	if err != nil {
+		t.Fatalf("ExportBaseBinaryFromPath() error = %v", err)
+	}
+	if exported.BaseCount != 1 || exported.StructureCount != 2 || exported.FaultCount != 0 {
+		t.Fatalf("ExportBaseBinaryFromPath() = %#v, want one two-structure base without faults", exported)
+	}
+	baseDir := filepath.Join(outDir, "base_"+firstID.String())
+	for _, path := range []string{
+		filepath.Join(outDir, "manifest.json"),
+		filepath.Join(baseDir, "base.json"),
+		filepath.Join(baseDir, "str_"+firstID.String()+".bin"),
+		filepath.Join(baseDir, "str_"+secondID.String()+".bin"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("exported path %s missing: %v", path, err)
+		}
+	}
+	for _, id := range []uuid.UUID{firstID, secondID} {
+		got, err := os.ReadFile(filepath.Join(baseDir, "str_"+id.String()+".bin"))
+		if err != nil {
+			t.Fatalf("read exported structure %s: %v", id, err)
+		}
+		want, err := save.ObjectBinary(id)
+		if err != nil {
+			t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatalf("exported structure %s differs from save row", id)
+		}
+	}
+}
+
+func TestExportBaseBinaryFromPathReturnsErrorForInvalidSavePath(t *testing.T) {
+	_, err := ExportBaseBinaryFromPath(filepath.Join(t.TempDir(), "missing.ark"), "Valguero", filepath.Join(t.TempDir(), "out"))
+	if err == nil {
+		t.Fatalf("ExportBaseBinaryFromPath() error = nil, want invalid save path error")
+	}
+}
+
 func TestBaseAPIAllBasesAppliesUpstreamStyleOptions(t *testing.T) {
 	save := openSyntheticBaseSave(t)
 	defer save.Close()

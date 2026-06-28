@@ -102,6 +102,42 @@ func TestStructureAPIExportBinaryWritesStructureRowsAndManifest(t *testing.T) {
 	}
 }
 
+func TestExportStructureBinaryFromPathWritesStructureRowsAndManifest(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	dir := t.TempDir()
+	exported, err := ExportStructureBinaryFromPath(save.Path(), dir)
+	if err != nil {
+		t.Fatalf("ExportStructureBinaryFromPath() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	if exported.StructureCount != 1 || exported.RowCount != 1 || exported.FaultCount != 0 || len(exported.Files) != 1 {
+		t.Fatalf("ExportStructureBinaryFromPath() = %#v, want one structure row and no faults", exported)
+	}
+	got, err := os.ReadFile(filepath.Join(dir, "str_"+id.String()+".bin"))
+	if err != nil {
+		t.Fatalf("ReadFile(exported structure) error = %v", err)
+	}
+	want, err := save.ObjectBinary(id)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("exported structure bytes differ from save ObjectBinary bytes")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "manifest.json")); err != nil {
+		t.Fatalf("manifest missing: %v", err)
+	}
+}
+
+func TestExportStructureBinaryFromPathReturnsErrorForInvalidSavePath(t *testing.T) {
+	_, err := ExportStructureBinaryFromPath(filepath.Join(t.TempDir(), "missing.ark"), filepath.Join(t.TempDir(), "out"))
+	if err == nil {
+		t.Fatalf("ExportStructureBinaryFromPath() error = nil, want invalid save path error")
+	}
+}
+
 func TestStructureAPIAllIncludesMissedInventoryContainersAndSkipsEngrams(t *testing.T) {
 	save := openSyntheticStructureDiscoverySave(t)
 	defer save.Close()

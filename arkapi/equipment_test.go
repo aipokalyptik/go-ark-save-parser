@@ -213,6 +213,42 @@ func TestEquipmentAPIExportBinaryWritesEquipmentRows(t *testing.T) {
 	}
 }
 
+func TestExportEquipmentBinaryFromPathWritesEquipmentRows(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	outDir := filepath.Join(t.TempDir(), "equipment-export")
+	exported, err := ExportEquipmentBinaryFromPath(save.Path(), outDir)
+	if err != nil {
+		t.Fatalf("ExportEquipmentBinaryFromPath() error = %v", err)
+	}
+	if exported.ItemCount != 1 || exported.RowCount != 1 || exported.FaultCount != 0 {
+		t.Fatalf("ExportEquipmentBinaryFromPath() = %#v, want one equipment row", exported)
+	}
+	got, err := os.ReadFile(filepath.Join(outDir, "item_"+itemID.String()+".bin"))
+	if err != nil {
+		t.Fatalf("read exported item row: %v", err)
+	}
+	want, err := save.ObjectBinary(itemID)
+	if err != nil {
+		t.Fatalf("ObjectBinary(%s) error = %v", itemID, err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("exported item row differs from save row")
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "manifest.json")); err != nil {
+		t.Fatalf("manifest missing: %v", err)
+	}
+}
+
+func TestExportEquipmentBinaryFromPathReturnsErrorForInvalidSavePath(t *testing.T) {
+	_, err := ExportEquipmentBinaryFromPath(filepath.Join(t.TempDir(), "missing.ark"), filepath.Join(t.TempDir(), "out"))
+	if err == nil {
+		t.Fatalf("ExportEquipmentBinaryFromPath() error = nil, want invalid save path error")
+	}
+}
+
 func TestEquipmentAPIByKindClassFiltersBlueprintsWithinKind(t *testing.T) {
 	save := openSyntheticMixedEquipmentSave(t)
 	defer save.Close()

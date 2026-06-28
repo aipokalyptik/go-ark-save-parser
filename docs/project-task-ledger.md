@@ -646,6 +646,11 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.ExportDinoBinaryFromPath`, then move
           `dino_export_from_save` onto the helper while preserving explicit
           output directory handling.
+    - [x] Add path-level typed structure, equipment, and base binary exports
+          through `arkapi.ExportStructureBinaryFromPath`,
+          `arkapi.ExportEquipmentBinaryFromPath`, and
+          `arkapi.ExportBaseBinaryFromPath`, then move their examples onto the
+          helpers while preserving explicit output directory handling.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

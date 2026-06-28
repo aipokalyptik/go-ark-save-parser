@@ -61,6 +61,16 @@ func (b *BaseAPI) ExportBinary(outputDir string) (BaseBinaryExport, error) {
 	return export, nil
 }
 
+func ExportBaseBinaryFromPath(savePath string, mapName string, outputDir string) (BaseBinaryExport, error) {
+	api, closeAPI, err := NewBaseFromPath(savePath, mapName)
+	if err != nil {
+		return BaseBinaryExport{}, err
+	}
+	defer closeAPI()
+
+	return api.ExportBinary(outputDir)
+}
+
 func (b *BaseAPI) exportBaseBinary(outputDir string, base arkobject.Base) (BaseBinaryExportBase, error) {
 	baseDir := filepath.Join(outputDir, "base_"+base.KeystoneUUID.String())
 	if err := os.MkdirAll(baseDir, 0o700); err != nil {

@@ -134,6 +134,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.ExportDinoBinaryFromPath` and move
       `dino_export_from_save` onto the typed path helper while preserving the
       explicit output directory contract for structural mutation fixtures.
+- [x] Add `arkapi.ExportStructureBinaryFromPath`,
+      `arkapi.ExportEquipmentBinaryFromPath`, and
+      `arkapi.ExportBaseBinaryFromPath`, then move the remaining structure,
+      equipment, and base binary export examples onto typed path helpers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.
