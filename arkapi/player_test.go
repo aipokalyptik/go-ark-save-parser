@@ -386,6 +386,35 @@ func TestPlayerAPIPlayersWithFaultsKeepsValidSavePlayersAndReportsFaults(t *test
 	}
 }
 
+func TestPlayerAPIPlayersWithFaultsKeepsValidLocalProfilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "123.arkprofile")
+	brokenPath := filepath.Join(dir, "broken.arkprofile")
+	testfixtures.WritePlayerArchiveWithOptions(t, validPath, testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+	})
+	if err := os.WriteFile(brokenPath, []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken profile: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	players, faults, err := api.PlayersWithFaults()
+	if err != nil {
+		t.Fatalf("PlayersWithFaults() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("PlayersWithFaults() players = %#v, want valid local profile player", players)
+	}
+	if len(faults) != 1 || faults[0].ClassName != brokenPath || faults[0].Err == nil {
+		t.Fatalf("PlayersWithFaults() faults = %#v, want broken profile path fault", faults)
+	}
+}
+
 func TestPlayerAPITribeDetailsWithFaultsKeepsValidSaveTribesAndReportsFaults(t *testing.T) {
 	validID := uuid.MustParse("22112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("33112233-4455-6677-8899-aabbccddeeff")
@@ -420,6 +449,36 @@ func TestPlayerAPITribeDetailsWithFaultsKeepsValidSaveTribesAndReportsFaults(t *
 	}
 	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
 		t.Fatalf("TribeDetailsWithFaults() faults = %#v, want one tribe parse fault", faults)
+	}
+}
+
+func TestPlayerAPITribeDetailsWithFaultsKeepsValidLocalTribesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "456.arktribe")
+	brokenPath := filepath.Join(dir, "broken.arktribe")
+	testfixtures.WriteTribeArchiveWithOptions(t, validPath, testfixtures.TribeArchiveOptions{
+		Name:     "Porters",
+		TribeID:  12345,
+		OwnerID:  42,
+		NumDinos: 7,
+	})
+	if err := os.WriteFile(brokenPath, []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken tribe: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	tribes, faults, err := api.TribeDetailsWithFaults()
+	if err != nil {
+		t.Fatalf("TribeDetailsWithFaults() error = %v", err)
+	}
+	if len(tribes) != 1 || tribes[0].TribeID != 12345 {
+		t.Fatalf("TribeDetailsWithFaults() tribes = %#v, want valid local tribe", tribes)
+	}
+	if len(faults) != 1 || faults[0].ClassName != brokenPath || faults[0].Err == nil {
+		t.Fatalf("TribeDetailsWithFaults() faults = %#v, want broken tribe path fault", faults)
 	}
 }
 

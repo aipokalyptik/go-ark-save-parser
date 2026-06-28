@@ -309,6 +309,8 @@ documented.
         players.
   - [x] Exercise typed local player death, level, and experience average
         helpers through the `local_profiles` example smoke test.
+  - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
+        valid local player/tribe records survive alongside broken archive files.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.

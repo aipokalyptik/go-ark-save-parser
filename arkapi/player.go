@@ -290,11 +290,25 @@ func (p *PlayerAPI) PlayersWithFaults() ([]arkobject.Player, []arksave.FaultyObj
 	if p.save != nil {
 		return p.savePlayersWithFaults()
 	}
-	players, err := p.Players()
-	if err != nil {
-		return nil, nil, err
+	out := make([]arkobject.Player, 0, len(p.profilePaths))
+	var faults []arksave.FaultyObjectInfo
+	for _, path := range p.profilePaths {
+		profile, err := arkprofile.OpenPlayerProfile(path)
+		if err != nil {
+			faults = append(faults, localFileFault(path, err))
+			continue
+		}
+		player, err := profile.Player()
+		if err != nil {
+			faults = append(faults, localFileFault(path, err))
+			continue
+		}
+		if err := profile.PropertyError(); err != nil {
+			faults = append(faults, localFileFault(path, err))
+		}
+		out = append(out, player)
 	}
-	return players, nil, nil
+	return out, faults, nil
 }
 
 func (p *PlayerAPI) PlayerRosterSummary() (PlayerRosterSummary, error) {
@@ -1034,11 +1048,29 @@ func (p *PlayerAPI) TribeDetailsWithFaults() ([]arkobject.Tribe, []arksave.Fault
 	if p.save != nil {
 		return p.saveTribeDetailsWithFaults()
 	}
-	tribes, err := p.TribeDetails()
-	if err != nil {
-		return nil, nil, err
+	out := make([]arkobject.Tribe, 0, len(p.tribePaths))
+	var faults []arksave.FaultyObjectInfo
+	for _, path := range p.tribePaths {
+		tribeSave, err := arkprofile.OpenTribeSave(path)
+		if err != nil {
+			faults = append(faults, localFileFault(path, err))
+			continue
+		}
+		tribe, err := tribeSave.Tribe()
+		if err != nil {
+			faults = append(faults, localFileFault(path, err))
+			continue
+		}
+		if err := tribeSave.PropertyError(); err != nil {
+			faults = append(faults, localFileFault(path, err))
+		}
+		out = append(out, tribe)
 	}
-	return tribes, nil, nil
+	return out, faults, nil
+}
+
+func localFileFault(path string, err error) arksave.FaultyObjectInfo {
+	return arksave.FaultyObjectInfo{ClassName: path, Err: err}
 }
 
 func (p *PlayerAPI) TribeRosterSummary() (TribeRosterSummary, error) {
