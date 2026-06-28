@@ -179,6 +179,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-best-stat requires a local .ark path")
 		}
 		return dinoBestStat(args[1], out)
+	case "dino-best-base-stat":
+		if len(args) != 4 {
+			return fmt.Errorf("dino-best-base-stat requires a local .ark path, dino blueprint, and stat")
+		}
+		return dinoBestBaseStat(args[1], args[2], args[3], out)
 	case "dino-most-mutated":
 		if len(args) != 2 {
 			return fmt.Errorf("dino-most-mutated requires a local .ark path")
@@ -361,6 +366,7 @@ func usage(out io.Writer) error {
   arksave dino-wild-tamables <save.ark>
   arksave dino-babies <save.ark>
   arksave dino-best-stat <save.ark>
+  arksave dino-best-base-stat <save.ark> <dino-blueprint> <stat>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
   arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
@@ -893,6 +899,47 @@ func dinoBestStat(path string, out io.Writer) error {
 		out,
 		"Best stat: %s\nPoints: %d\nLevel: %d\nBlueprint: %s\nParse faults: %d\n",
 		stat.String(),
+		points,
+		level,
+		dino.ShortName(),
+		len(faults),
+	)
+	return err
+}
+
+func dinoBestBaseStat(path string, blueprint string, statName string, out io.Writer) error {
+	stat, ok := arkobject.DinoStatFromString(statName)
+	if !ok {
+		return fmt.Errorf("unknown dino stat %q", statName)
+	}
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	_, dino, gotStat, points, found, faults, err := arkapi.NewDino(save).BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{
+		Blueprints:      []string{blueprint},
+		Stats:           []arkobject.DinoStat{stat},
+		OnlyTamed:       true,
+		ExcludeCryopods: true,
+		BaseStat:        true,
+	})
+	if err != nil {
+		return err
+	}
+	if !found {
+		_, err = fmt.Fprintf(out, "Best base stat: none\nParse faults: %d\n", len(faults))
+		return err
+	}
+	level := int32(0)
+	if dino.Stats != nil {
+		level = dino.Stats.CurrentLevel
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Best base stat: %s\nPoints: %d\nLevel: %d\nBlueprint: %s\nParse faults: %d\n",
+		gotStat.String(),
 		points,
 		level,
 		dino.ShortName(),

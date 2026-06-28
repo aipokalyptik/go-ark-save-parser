@@ -228,6 +228,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var bestBaseStatOut bytes.Buffer
+	if err := run([]string{"dino-best-base-stat", data.SavePath, "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'", "health"}, &bestBaseStatOut); err != nil {
+		t.Fatalf("run(dino-best-base-stat) error = %v", err)
+	}
+	for _, want := range []string{"Best base stat:", "Parse faults:"} {
+		if !strings.Contains(bestBaseStatOut.String(), want) {
+			t.Fatalf("dino-best-base-stat output missing %q", want)
+		}
+	}
+
 	var mostMutatedOut bytes.Buffer
 	if err := run([]string{"dino-most-mutated", data.SavePath}, &mostMutatedOut); err != nil {
 		t.Fatalf("run(dino-most-mutated) error = %v", err)

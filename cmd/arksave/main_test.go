@@ -565,6 +565,29 @@ func TestDinoBestStatCommandPrintsBestStat(t *testing.T) {
 	}
 }
 
+func TestDinoBestBaseStatCommandPrintsFilteredBaseStat(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dino-base-stats.ark")
+	createSyntheticTamedDinoStatsSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-best-base-stat", path, "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'", "health"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-best-base-stat) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Best base stat: health",
+		"Points: 5",
+		"Level: 12",
+		"Blueprint: Raptor",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-best-base-stat output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestDinoMostMutatedCommandPrintsMostMutatedTamedDino(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "dino-mutated.ark")
 	createSyntheticTamedDinoStatsSave(t, path)
