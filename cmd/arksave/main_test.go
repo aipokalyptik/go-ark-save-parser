@@ -121,6 +121,32 @@ func TestObjectSummaryCommandPrintsObjectSummary(t *testing.T) {
 	}
 }
 
+func TestPropertyPositionsCommandPrintsPositionSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	createSyntheticSave(t, path)
+	objectID := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+
+	var out bytes.Buffer
+	err := run([]string{"property-positions", path, objectID}, &out)
+	if err != nil {
+		t.Fatalf("run(property-positions) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Exists: true",
+		"Properties: 1",
+		"Name offsets:",
+		"Value offsets:",
+		"Encoded: 1",
+		"Positioned:",
+		"Offsets OK:",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("property-positions output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestClassLookupCommandPrintsAggregateSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)

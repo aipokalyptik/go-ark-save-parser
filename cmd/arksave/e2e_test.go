@@ -60,6 +60,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var propertyPositionsOut bytes.Buffer
+	if err := run([]string{"property-positions", data.SavePath, objectIDs[0].String()}, &propertyPositionsOut); err != nil {
+		t.Fatalf("run(property-positions) error = %v", err)
+	}
+	for _, want := range []string{"Exists: true", "Properties:", "Name offsets:", "Value offsets:", "Encoded:", "Positioned:", "Offsets OK:"} {
+		if !strings.Contains(propertyPositionsOut.String(), want) {
+			t.Fatalf("property-positions output missing %q", want)
+		}
+	}
+
 	var classLookupOut bytes.Buffer
 	if err := run([]string{"class-lookup", data.SavePath, "PrimalStructure"}, &classLookupOut); err != nil {
 		t.Fatalf("run(class-lookup) error = %v", err)
