@@ -127,6 +127,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var stackablesOut bytes.Buffer
+	if err := run([]string{"stackables", data.SavePath}, &stackablesOut); err != nil {
+		t.Fatalf("run(stackables) error = %v", err)
+	}
+	for _, want := range []string{"Stackable items:", "Total quantity:", "Parse faults:"} {
+		if !strings.Contains(stackablesOut.String(), want) {
+			t.Fatalf("stackables output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

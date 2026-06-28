@@ -344,6 +344,27 @@ func TestEquipmentSaddlesCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestStackablesCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "stackables.ark")
+	createSyntheticStackableSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"stackables", path}, &out)
+	if err != nil {
+		t.Fatalf("run(stackables) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Stackable items: 1",
+		"Total quantity: 250",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stackables output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -2044,6 +2065,23 @@ func createSyntheticSaddleEquipmentSave(t *testing.T, path string) {
 				Stats: map[int32]uint16{
 					1: 800,
 				},
+			}),
+		},
+	})
+}
+
+func createSyntheticStackableSave(t *testing.T, path string) {
+	t.Helper()
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000c: "ItemQuantity",
+			0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("50515253-5455-5657-5859-5a5b5c5d5e5f"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+				Quantity: 250,
 			}),
 		},
 	})

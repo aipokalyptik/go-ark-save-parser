@@ -63,10 +63,10 @@ Implemented:
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
   `structure-owners`, `structure-owner-locations`, `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `equipment-summary`,
-  `equipment-saddles`, `player-inventories`, `player-roster`, `tribe-roster`,
-  `player-tribe-links`, `players`, `tribes`, `cluster`, `cluster-summary`,
-  `tribute`, `export-json`, `export-domain-json`, `export-cluster-json`, and
-  `export-tribute-json` commands.
+  `equipment-saddles`, `stackables`, `player-inventories`, `player-roster`,
+  `tribe-roster`, `player-tribe-links`, `players`, `tribes`, `cluster`,
+  `cluster-summary`, `tribute`, `export-json`, `export-domain-json`,
+  `export-cluster-json`, and `export-tribute-json` commands.
 - Go-only provided-data E2E smoke tests for selected read-only APIs, CLI
   commands, and examples, runnable with `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - Private Python oracle setup and gated private `.ark` integration test.
@@ -136,6 +136,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave dino-babies /path/to/Valguero_WP.ark
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
+./bin/arksave stackables /path/to/Valguero_WP.ark
 ./bin/arksave player-inventories /path/to/Valguero_WP.ark
 ./bin/arksave player-roster /path/to/Valguero_WP.ark
 ./bin/arksave tribe-roster /path/to/Valguero_WP.ark
