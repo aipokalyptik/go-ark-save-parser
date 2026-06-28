@@ -73,7 +73,7 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		t.Fatalf("exported JSON object_count = 0")
 	}
 
-	for _, domain := range []string{"dinos", "equipment", "stackables"} {
+	for _, domain := range e2etest.DomainJSONExportDomains() {
 		outPath := filepath.Join(t.TempDir(), domain+".json")
 		var domainOut bytes.Buffer
 		if err := run([]string{"--redact", "export-domain-json", data.SavePath, domain, outPath}, &domainOut); err != nil {

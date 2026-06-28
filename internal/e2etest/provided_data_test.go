@@ -3,6 +3,7 @@ package e2etest
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -30,5 +31,13 @@ func TestDiscoverProvidedDataRecordsRepresentativeLocalFiles(t *testing.T) {
 	}
 	if data.TributeCount != 1 || filepath.Base(data.TributePath) != "c.arktributetribe" {
 		t.Fatalf("tribute discovery = count %d path %q", data.TributeCount, data.TributePath)
+	}
+}
+
+func TestDomainJSONExportDomainsStayBoundedForProvidedDataSmoke(t *testing.T) {
+	domains := DomainJSONExportDomains()
+	want := []string{"dinos", "equipment", "stackables"}
+	if !reflect.DeepEqual(domains, want) {
+		t.Fatalf("DomainJSONExportDomains() = %#v, want %#v", domains, want)
 	}
 }

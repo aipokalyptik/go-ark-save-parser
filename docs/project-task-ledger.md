@@ -581,9 +581,11 @@ without Python or private chat context.
       `ARK_E2E_SAVE_DIR`.
 - [x] Go-only provided-data E2E smoke tests cover stackable, dino, and
       equipment domain JSON export through both `arkapi.JSONAPI.ExportDomain`
-      and the CLI `export-domain-json` path; heavier full structure/base domain
-      exports remain outside the smoke target because they made E2E
-      impractically slow on the supplied save.
+      and the CLI `export-domain-json` path.
+- [x] Go-only provided-data E2E smoke tests cover bounded structure and base
+      read APIs through structure owner/health summaries, structure CLI
+      commands, and selected-property base component stats without requiring
+      full structure/base JSON export in the smoke gate.
 - [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
 - [x] Private oracle comparison suite exists and currently records forty-six

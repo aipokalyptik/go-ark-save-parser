@@ -21,6 +21,10 @@ type ProvidedData struct {
 	TributeCount int
 }
 
+func DomainJSONExportDomains() []string {
+	return []string{"dinos", "equipment", "stackables"}
+}
+
 func DiscoverProvidedData(t *testing.T) ProvidedData {
 	t.Helper()
 	data := ProvidedData{

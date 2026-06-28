@@ -50,7 +50,7 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 
 		jsonAPI := NewJSON(save)
-		for _, domain := range []string{"dinos", "equipment", "stackables"} {
+		for _, domain := range e2etest.DomainJSONExportDomains() {
 			export, err := jsonAPI.ExportDomain(domain)
 			if err != nil {
 				t.Fatalf("ExportDomain(%q) error = %v", domain, err)
@@ -64,6 +64,29 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 			if _, err := json.Marshal(export); err != nil {
 				t.Fatalf("json.Marshal(ExportDomain(%q)) error = %v", domain, err)
 			}
+		}
+
+		structureAPI := NewStructure(save)
+		ownerSummary, _, err := structureAPI.OwnerSummaryWithFaults()
+		if err != nil {
+			t.Fatalf("StructureAPI.OwnerSummaryWithFaults() error = %v", err)
+		}
+		if ownerSummary.Structures == 0 {
+			t.Fatalf("StructureAPI.OwnerSummaryWithFaults() returned no structures")
+		}
+		healthSummary, _, err := structureAPI.HealthSummaryWithFaults()
+		if err != nil {
+			t.Fatalf("StructureAPI.HealthSummaryWithFaults() error = %v", err)
+		}
+		if healthSummary.Structures == 0 {
+			t.Fatalf("StructureAPI.HealthSummaryWithFaults() returned no structures")
+		}
+		baseStats, err := NewBase(save, "").ComponentStats()
+		if err != nil {
+			t.Fatalf("BaseAPI.ComponentStats() error = %v", err)
+		}
+		if baseStats.TotalStructures == 0 {
+			t.Fatalf("BaseAPI.ComponentStats() returned no structures")
 		}
 	}
 

@@ -24,7 +24,7 @@ Status markers:
 | SCOPE-005 | `[~]` | Mutation APIs are translated only as explicit copied-save workflows. | `arkmutation` requires output paths and has structural tests; live-server acceptance remains unverified by design. |
 | SCOPE-006 | `[x]` | Private saves, raw oracle output, debug dumps, extracted saves, and snapshots never enter git. | `.gitignore`, development docs, and sanitized oracle docs define the privacy boundary. |
 | SCOPE-007 | `[x]` | Do not expand the Python codebase or oracle suite beyond selected-feature parity needs. | Existing oracle artifacts remain reference evidence only; new work should target Go offline feature parity and chosen examples. |
-| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs Go-only read-only API, stackable/dino/equipment domain JSON API/CLI export, CLI profile/tribe/tribute file handling, and examples smoke paths against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
+| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs Go-only read-only API, stackable/dino/equipment domain JSON API/CLI export, bounded structure/base API checks, CLI profile/tribe/tribute file handling, and examples smoke paths against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
 
 ## Phase 1: Oracle Setup
 
@@ -60,7 +60,7 @@ Status markers:
 | P2-API-001 | `[x]` | Port General API queries and fault collection. | `arkapi.GeneralAPI` tests. |
 | P2-API-002 | `[x]` | Port local profile, tribe, local tribute, and local cluster parsing. | `arkprofile`, `arktribute`, `arkcluster`, and `arkapi` tests. |
 | P2-API-003 | `[x]` | Port save-contained player and tribe parsing, including embedded `GameModeCustomBytes`. | `arkapi` player/tribe tests. |
-| P2-API-004 | `[x]` | Port Dino, Structure, Equipment, Stackable, Base, and JSON read APIs for implemented offline workflows. | Domain tests, examples, and CLI/domain JSON tests, including provided-data E2E for stackable, dino, and equipment JSON exports. |
+| P2-API-004 | `[x]` | Port Dino, Structure, Equipment, Stackable, Base, and JSON read APIs for implemented offline workflows. | Domain tests, examples, and CLI/domain JSON tests, including provided-data E2E for stackable, dino, and equipment JSON exports plus bounded structure/base API checks. |
 | P2-API-005 | `[~]` | Finish full dino edge behavior. | Typed pedigree tree helpers, domain JSON pedigree trees, typed malformed cryopod dino payload faults, and typed unsupported cryopod saddle payload faults exist; legacy/modded cryopod parsing and cryopod-location parity remain. Upstream/private full pedigree oracle comparison remains blocked by malformed cryopod path. |
 | P2-API-006 | `[~]` | Finish full structure/base edge behavior. | Generated base/structure binary exports round-trip through mutation imports; typed structure health summaries and owner-location skip counters are covered by Go fixtures; exact owner/cell parity, base customization write parity, and live-server acceptance remain. Structure heatmap oracle is blocked by upstream private-save cell indexing. |
 | P2-API-007 | `[~]` | Finish full equipment edge behavior. | Ranking candidate selection, high-rating aggregate stats, inventory-state summaries, upstream-list classification guards, upstream family/slot default stat tables, cursed shield defaults, inferable cursed weapon defaults, Tek sword durability, generic `CustomItemDatas` metadata, and typed unsupported cryopod saddle fault handling now have tested Go helpers; remaining long-tail default stat-table parity, legacy/modded cryopod saddle parsing, and exact cosmetic semantics remain. |
@@ -98,7 +98,7 @@ Status markers:
 | P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests. |
-| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, stackable domain JSON API/CLI export, CLI commands, local tribute/cluster handling, and examples against configured private/provided data and skips without env vars. |
+| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, stackable/dino/equipment domain JSON API/CLI export, bounded structure/base API checks, CLI commands, local tribute/cluster handling, and examples against configured private/provided data and skips without env vars. |
 | P4-VERIFY-005 | `[x]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
 
