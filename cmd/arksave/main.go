@@ -806,13 +806,7 @@ func baseComponents(path string, out io.Writer) error {
 }
 
 func dinos(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewDino(save).PopulationSummaryWithFaults(true)
+	summary, faults, err := arkapi.DinoPopulationSummaryFromPath(path, true)
 	if err != nil {
 		return err
 	}
@@ -830,13 +824,7 @@ func dinos(path string, out io.Writer) error {
 }
 
 func dinoWildTamables(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewDino(save).WildTamableSummaryWithFaults()
+	summary, faults, err := arkapi.DinoWildTamableSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -851,13 +839,7 @@ func dinoWildTamables(path string, out io.Writer) error {
 }
 
 func dinoBabies(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewDino(save).BabySummaryWithFaults(arkapi.BabyFilterOptions{
+	summary, faults, err := arkapi.DinoBabySummaryFromPath(path, arkapi.BabyFilterOptions{
 		IncludeTamed:      true,
 		IncludeCryopodded: true,
 		IncludeWild:       true,

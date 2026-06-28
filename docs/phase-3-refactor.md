@@ -94,6 +94,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.DinoWildTamableSummaryFromPath`, and
       `arkapi.DinoBabySummaryFromPath` so common dino aggregate examples can
       use typed path helpers without manual save lifecycle handling.
+- [x] Move `dinos`, `dino-wild-tamables`, and `dino-babies` CLI aggregate
+      commands onto the typed dino path helpers while preserving parse-fault
+      counts.
 - [x] Add `arkapi.EquipmentSummaryFromPath`,
       `arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath`,
       `arkapi.EquipmentSaddleSummaryFromPath`, and

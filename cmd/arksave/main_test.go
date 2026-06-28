@@ -43,6 +43,33 @@ func TestInspectCommandPrintsOfflineSaveSummary(t *testing.T) {
 	}
 }
 
+func TestDinoAggregateCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"dinos", "dinoWildTamables", "dinoBabies"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") {
+			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)
+		}
+	}
+}
+
+func functionBody(t *testing.T, source string, name string) string {
+	t.Helper()
+	start := strings.Index(source, "func "+name+"(")
+	if start < 0 {
+		t.Fatalf("function %s not found", name)
+	}
+	next := strings.Index(source[start+len("func "+name+"("):], "\nfunc ")
+	if next < 0 {
+		return source[start:]
+	}
+	return source[start : start+len("func "+name+"(")+next]
+}
+
 func TestParseCommandPrintsOfflineParseSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	createSyntheticSave(t, path)
