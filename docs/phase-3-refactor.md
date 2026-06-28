@@ -30,8 +30,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       object references, unknown struct fallback, and legacy parser isolation.
 - [~] Split domain models under `arkobject` or subpackages. Equipment item
       construction, stat calculation, default stat tables, and property
-      coercion helpers are now separated; dino, structure, stackable, player,
-      tribe, inventory, and local cluster data remain.
+      coercion helpers are now separated. Dino construction, colors, lineage,
+      traits, and shared object-property coercion helpers are also separated;
+      structure, stackable, player, tribe, inventory, and local cluster data
+      remain.
 - [x] Add first typed local player/tribe lookup layer for player data IDs, tribe
       IDs, parsed player summaries, and parsed tribe detail objects.
 - [x] Add typed dino stat and mutation selection helpers for best-stat and

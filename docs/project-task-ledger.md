@@ -491,9 +491,10 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [~] Split or further organize large domain models under `arkobject` or
         subpackages once behavior stabilizes; equipment item construction,
         stat calculation, default stat tables, and property coercion helpers
-        are now split into focused files with a package-shape regression test,
-        while broader dino, structure, stackable, player, tribe, inventory,
-        and cluster model splits remain.
+        are now split into focused files; dino construction, colors, lineage,
+        traits, and shared object-property coercion helpers are also split with
+        package-shape regression tests, while broader structure, stackable,
+        player, tribe, inventory, and cluster model splits remain.
   - [x] Replace remaining Python-shaped compatibility helpers where typed Go
         surfaces now exist:
     - [x] Move `object_summary` and `class_property_summary` direct save
