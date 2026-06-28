@@ -192,6 +192,7 @@ func ParseAllPartial(r *arkbinary.Reader, end int) ([]Property, error) {
 
 func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error) {
 	var props []Property
+	var partialErr error
 	for r.HasMore() && (end < 0 || r.Position() < end) {
 		prop, err := ParseOne(r, end)
 		if err != nil {
@@ -199,6 +200,9 @@ func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error
 				props = append(props, *prop)
 			}
 			if keepPartial && isRecoverableCompoundError(err) {
+				if partialErr == nil {
+					partialErr = err
+				}
 				continue
 			}
 			if keepPartial {
@@ -211,7 +215,7 @@ func parseAll(r *arkbinary.Reader, end int, keepPartial bool) ([]Property, error
 		}
 		props = append(props, *prop)
 	}
-	return props, nil
+	return props, partialErr
 }
 
 func ParseOne(r *arkbinary.Reader, structEnd int) (*Property, error) {
@@ -1101,7 +1105,7 @@ func readStruct(r *arkbinary.Reader) (any, string, uint32, error) {
 				}
 				return nil, "", 0, err
 			}
-			return Container{Properties: props}, structType, dataSize, err
+			return Container{Properties: props}, structType, dataSize, recoverableCompoundError{err: err}
 		}
 		if err := r.SetPosition(bodyStart); err != nil {
 			return nil, "", 0, err

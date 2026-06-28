@@ -1406,6 +1406,74 @@ func TestParseStructPropertyKeepsPartialContainerBeforeNestedError(t *testing.T)
 	}
 }
 
+func TestParseAllPartialSkipsMalformedCompoundAndContinues(t *testing.T) {
+	ctx := arkbinary.NewContext()
+	ctx.SetNames(map[uint32]string{
+		1:  "MyData",
+		2:  "StructProperty",
+		3:  "PlayerDataStruct",
+		4:  "PlayerDataID",
+		5:  "IntProperty",
+		6:  "Owner",
+		7:  "ObjectProperty",
+		8:  "AfterStruct",
+		9:  "None",
+		10: "BoolProperty",
+	})
+
+	var body bytes.Buffer
+	testfixtures.WriteNameID(&body, 4)
+	testfixtures.WriteNameID(&body, 5)
+	testfixtures.WriteInt32(&body, 4)
+	testfixtures.WriteInt32(&body, 0)
+	body.WriteByte(0)
+	testfixtures.WriteInt32(&body, 42)
+	testfixtures.WriteNameID(&body, 6)
+	testfixtures.WriteNameID(&body, 7)
+	testfixtures.WriteInt32(&body, 2)
+	testfixtures.WriteInt32(&body, 0)
+	body.WriteByte(0)
+	_ = binary.Write(&body, binary.LittleEndian, int16(5))
+	testfixtures.WriteNameID(&body, 9)
+
+	stream := bytes.NewBuffer(nil)
+	testfixtures.WriteNameID(stream, 1)
+	testfixtures.WriteNameID(stream, 2)
+	testfixtures.WriteUInt32(stream, 1)
+	testfixtures.WriteNameID(stream, 3)
+	testfixtures.WriteUInt32(stream, 1)
+	testfixtures.WriteNameID(stream, 3)
+	testfixtures.WriteUInt32(stream, 0)
+	testfixtures.WriteUInt32(stream, uint32(body.Len()))
+	stream.WriteByte(0)
+	stream.Write(body.Bytes())
+	testfixtures.WriteNameID(stream, 8)
+	testfixtures.WriteNameID(stream, 10)
+	testfixtures.WriteInt32(stream, 1)
+	testfixtures.WriteInt32(stream, 0)
+	stream.WriteByte(1)
+	testfixtures.WriteNameID(stream, 9)
+
+	props, err := ParseAllPartial(arkbinary.NewReader(stream.Bytes(), ctx), -1)
+	if err == nil {
+		t.Fatalf("ParseAllPartial() error = nil, want nested parse error")
+	}
+	if len(props) != 2 {
+		t.Fatalf("ParseAllPartial() length = %d, want partial compound plus trailing property: %#v", len(props), props)
+	}
+	container, ok := props[0].Value.(Container)
+	if !ok {
+		t.Fatalf("first value type = %T, want Container", props[0].Value)
+	}
+	value, ok := container.Value("PlayerDataID")
+	if !ok || value != int32(42) {
+		t.Fatalf("PlayerDataID = %#v, %v; want 42, true", value, ok)
+	}
+	if props[1].Name != "AfterStruct" || props[1].Type != TypeBool || props[1].Value != true {
+		t.Fatalf("trailing property = %#v, want AfterStruct bool true", props[1])
+	}
+}
+
 func TestParseStructPropertyFallsBackToRawUnknownStruct(t *testing.T) {
 	ctx := arkbinary.NewContext()
 	ctx.SetNames(map[uint32]string{

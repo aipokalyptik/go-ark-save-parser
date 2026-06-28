@@ -142,6 +142,8 @@ documented.
 - [x] Port packed `Vector`, `Rotator`, `Quat`, `Color`, and `LinearColor`.
 - [x] Add declared-size realignment and recoverable overread handling.
 - [x] Preserve partial struct containers on recoverable profile overread.
+- [x] Continue after aligned malformed compound properties in partial parsing
+      while still returning the recovery error.
 - [ ] Port remaining compound payload encodings discovered by future oracle
       failures.
 - [ ] Port legacy property/object parsing where a runnable local oracle path

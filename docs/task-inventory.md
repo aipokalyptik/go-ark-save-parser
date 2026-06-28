@@ -51,7 +51,7 @@ Status markers:
 | P2-SAVE-001 | `[x]` | Port SQLite `.ark` loading using pure-Go SQLite. | `arksave` uses `modernc.org/sqlite` and synthetic SQLite tests. |
 | P2-SAVE-002 | `[x]` | Port save header, custom tables, actor transforms, class lookup, object binary access, and object enumeration. | `arksave` tests and gated private oracle tests. |
 | P2-PROP-001 | `[x]` | Port primitive, object, soft object, name, byte, enum, array, map, set, and generic struct property parsing. | `arkproperty` tests cover the implemented parser surface. |
-| P2-PROP-002 | `[x]` | Preserve unknown property/struct fallback and declared-size realignment. | `arkproperty` tests cover fallback and recoverable overread behavior. |
+| P2-PROP-002 | `[x]` | Preserve unknown property/struct fallback and declared-size realignment. | `arkproperty` tests cover fallback, recoverable overread behavior, and partial-parser continuation after aligned malformed compound properties. |
 | P2-PROP-003 | `[ ]` | Port future compound payload encodings discovered while implementing chosen offline features. | No open chosen-feature failure currently has a complete parser slice; add cases when Go feature work exposes them. |
 | P2-PROP-004 | `[ ]` | Port legacy property/object parsing where a runnable offline oracle path exists. | Legacy paths are isolated behind typed unsupported errors until fixtures are available. |
 | P2-OBJ-001 | `[x]` | Port generic game objects and raw position/span preservation. | `arkobject` and mutation tests cover parsing and structural spans. |
