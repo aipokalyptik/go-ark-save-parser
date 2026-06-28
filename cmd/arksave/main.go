@@ -62,6 +62,23 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("structure-owner-count requires a local .ark path and tribe id")
 		}
 		return structureOwnerCount(args[1], args[2], out, opts)
+	case "structure-owner-locations":
+		if len(args) != 2 && len(args) != 3 && len(args) != 4 {
+			return fmt.Errorf("structure-owner-locations requires a local .ark path with optional map and digits")
+		}
+		mapName := ""
+		if len(args) >= 3 {
+			mapName = args[2]
+		}
+		digits := 1
+		if len(args) == 4 {
+			value, err := strconv.Atoi(args[3])
+			if err != nil {
+				return fmt.Errorf("parse digits: %w", err)
+			}
+			digits = value
+		}
+		return structureOwnerLocations(args[1], mapName, digits, out, opts)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -134,6 +151,7 @@ func usage(out io.Writer) error {
   arksave [--redact] parse <save.ark>
   arksave structure-health <save.ark>
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
+  arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -264,6 +282,47 @@ func structureOwnerCount(path string, tribeIDArg string, out io.Writer, opts run
 		summary.Structures,
 		len(faults),
 	)
+	return err
+}
+
+func structureOwnerLocations(path string, mapName string, digits int, out io.Writer, opts runOptions) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	export, _, err := arkapi.NewStructure(save).OwnerLocationsWithFaults(mapName, digits, arkapi.NewPlayer(save))
+	if err != nil {
+		return err
+	}
+	printable := export
+	if opts.Redact {
+		printable.OwnersByLocation = make([]arkapi.StructureOwnerLocationData, len(export.OwnersByLocation))
+		for i, owner := range export.OwnersByLocation {
+			printable.OwnersByLocation[i] = owner
+			printable.OwnersByLocation[i].Owner = redactedValue
+		}
+	}
+	if _, err := fmt.Fprintf(
+		out,
+		"Structures: %d\nOwners: %d\nCells: %d\nNamed cells: %d\nMulti-structure cells: %d\nSkipped without owner: %d\nSkipped without location: %d\nParse faults: %d\n",
+		export.Structures,
+		export.Owners,
+		export.Cells,
+		export.NamedCells,
+		export.MultiStructureCells,
+		export.SkippedWithoutOwner,
+		export.SkippedWithoutLocation,
+		export.FaultCount,
+	); err != nil {
+		return err
+	}
+	encoded, err := json.MarshalIndent(printable.OwnersByLocation, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(out, string(encoded))
 	return err
 }
 

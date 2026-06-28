@@ -47,6 +47,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var ownerLocationsOut bytes.Buffer
+	if err := run([]string{"--redact", "structure-owner-locations", data.SavePath}, &ownerLocationsOut); err != nil {
+		t.Fatalf("run(structure-owner-locations) error = %v", err)
+	}
+	for _, want := range []string{"Structures:", "Owners:", "Cells:", "Parse faults:"} {
+		if !strings.Contains(ownerLocationsOut.String(), want) {
+			t.Fatalf("structure-owner-locations output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

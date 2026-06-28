@@ -163,6 +163,50 @@ func TestStructureOwnerCountCommandRejectsInvalidTribeID(t *testing.T) {
 	}
 }
 
+func TestStructureOwnerLocationsCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-owner-locations", path, "Valguero", "1"}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-owner-locations) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Structures: 1",
+		"Owners: 1",
+		"Cells: 1",
+		"Named cells: 1",
+		"Skipped without owner: 0",
+		"Skipped without location: 0",
+		"Parse faults: 0",
+		`"owner": "555"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-owner-locations output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestStructureOwnerLocationsCommandRedactsOwnerBuckets(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "structure-owner-locations", path, "Valguero", "1"}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact structure-owner-locations) error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, `"owner": "[redacted]"`) || strings.Contains(got, `"owner": "555"`) {
+		t.Fatalf("redacted structure-owner-locations output = %q", got)
+	}
+	if !strings.Contains(got, "Structures: 1") || !strings.Contains(got, "Parse faults: 0") {
+		t.Fatalf("redacted structure-owner-locations output missing aggregate counts: %q", got)
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1503,6 +1547,7 @@ func createSyntheticSave(t *testing.T, path string) {
 
 func createSyntheticStructureHealthSave(t *testing.T, path string) {
 	t.Helper()
+	structureID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
 			0x10000001: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
@@ -1515,7 +1560,7 @@ func createSyntheticStructureHealthSave(t *testing.T, path string) {
 			0x10000008: "Health",
 		}),
 		Objects: map[uuid.UUID][]byte{
-			uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+			structureID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
 				ClassID:             0x10000001,
 				NoneID:              0x10000002,
 				IntPropertyID:       0x10000003,
@@ -1528,6 +1573,15 @@ func createSyntheticStructureHealthSave(t *testing.T, path string) {
 				TribeID:             555,
 				MaxHealth:           10000,
 				CurrentHealth:       9000,
+			}),
+		},
+		Custom: map[string][]byte{
+			"ActorTransforms": testfixtures.ActorTransforms(testfixtures.ActorTransform{
+				UUID:       structureID,
+				X:          11,
+				Y:          22,
+				Z:          33,
+				Quaternion: 1,
 			}),
 		},
 	})
