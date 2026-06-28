@@ -24,7 +24,7 @@ Status markers:
 | SCOPE-005 | `[~]` | Mutation APIs are translated only as explicit copied-save workflows. | `arkmutation` requires output paths and has structural tests; live-server acceptance remains unverified by design. |
 | SCOPE-006 | `[x]` | Private saves, raw oracle output, debug dumps, extracted saves, and snapshots never enter git. | `.gitignore`, development docs, and sanitized oracle docs define the privacy boundary. |
 | SCOPE-007 | `[x]` | Do not expand the Python codebase or oracle suite beyond selected-feature parity needs. | Existing oracle artifacts remain reference evidence only; new work should target Go offline feature parity and chosen examples. |
-| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs Go-only read-only API, stackable domain JSON API/CLI export, CLI, and examples smoke paths against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
+| SCOPE-008 | `[x]` | Expand Go code coverage, examples, and provided-data E2E tests for chosen offline features. | `make e2e-test` runs Go-only read-only API, stackable/dino/equipment domain JSON API/CLI export, CLI profile/tribe/tribute file handling, and examples smoke paths against `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`. |
 
 ## Phase 1: Oracle Setup
 

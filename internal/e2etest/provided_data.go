@@ -12,8 +12,10 @@ type ProvidedData struct {
 	SavePath     string
 	Dir          string
 	ClusterPath  string
+	ProfilePath  string
 	ClusterCount int
 	ProfileCount int
+	TribePath    string
 	TribeCount   int
 	TributePath  string
 	TributeCount int
@@ -39,6 +41,8 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 
 	var savePaths []string
 	var clusterPaths []string
+	var profilePaths []string
+	var tribePaths []string
 	var tributePaths []string
 	err := filepath.WalkDir(data.Dir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
@@ -51,8 +55,10 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 		case ".ark":
 			savePaths = append(savePaths, path)
 		case ".arkprofile":
+			profilePaths = append(profilePaths, path)
 			data.ProfileCount++
 		case ".arktribe":
+			tribePaths = append(tribePaths, path)
 			data.TribeCount++
 		case ".arktributetribe", ".arktributetribetribe":
 			tributePaths = append(tributePaths, path)
@@ -69,6 +75,14 @@ func DiscoverProvidedData(t *testing.T) ProvidedData {
 	sort.Strings(savePaths)
 	if data.SavePath == "" && len(savePaths) > 0 {
 		data.SavePath = savePaths[0]
+	}
+	sort.Strings(profilePaths)
+	if len(profilePaths) > 0 {
+		data.ProfilePath = profilePaths[0]
+	}
+	sort.Strings(tribePaths)
+	if len(tribePaths) > 0 {
+		data.TribePath = tribePaths[0]
 	}
 	sort.Strings(clusterPaths)
 	data.ClusterCount += len(clusterPaths)

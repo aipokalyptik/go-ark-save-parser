@@ -567,7 +567,7 @@ without Python or private chat context.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
-      commands, local tribute handling, and aggregate-output examples through
+      commands, local profile/tribe/tribute file handling, and aggregate-output examples through
       `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
 - [x] Go-only provided-data E2E smoke tests cover stackable, dino, and

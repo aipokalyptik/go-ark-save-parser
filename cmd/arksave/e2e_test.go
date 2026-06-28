@@ -103,6 +103,17 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 			}
 		}
 	}
+	if data.ProfilePath != "" {
+		var playerOut bytes.Buffer
+		if err := run([]string{"--redact", "players", data.ProfilePath}, &playerOut); err != nil {
+			t.Fatalf("run(players profile) error = %v", err)
+		}
+		for _, want := range []string{"Player profile: [redacted]", "Character name:", "Player data ID:", "Deaths:"} {
+			if !strings.Contains(playerOut.String(), want) {
+				t.Fatalf("players profile output missing %q", want)
+			}
+		}
+	}
 	if data.TribeCount > 0 {
 		var tribesOut bytes.Buffer
 		if err := run([]string{"--redact", "tribes", data.Dir}, &tribesOut); err != nil {
@@ -111,6 +122,17 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		for _, want := range []string{"Tribe directory: [redacted]", "Tribe files:", "Tribes:"} {
 			if !strings.Contains(tribesOut.String(), want) {
 				t.Fatalf("tribes directory output missing %q", want)
+			}
+		}
+	}
+	if data.TribePath != "" {
+		var tribeOut bytes.Buffer
+		if err := run([]string{"--redact", "tribes", data.TribePath}, &tribeOut); err != nil {
+			t.Fatalf("run(tribe file) error = %v", err)
+		}
+		for _, want := range []string{"Tribe save: [redacted]", "Tribe name:", "Members:", "Dinos:"} {
+			if !strings.Contains(tribeOut.String(), want) {
+				t.Fatalf("tribe file output missing %q", want)
 			}
 		}
 	}
@@ -145,6 +167,30 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 		if info.Count == 0 {
 			t.Fatalf("exported tribute JSON count = 0")
+		}
+	}
+	if data.TributePath != "" {
+		tributeExportPath := filepath.Join(t.TempDir(), "single-tribute.json")
+		var tributeExportOut bytes.Buffer
+		if err := run([]string{"--redact", "export-tribute-json", data.TributePath, tributeExportPath}, &tributeExportOut); err != nil {
+			t.Fatalf("run(export-tribute-json file) error = %v", err)
+		}
+		if !strings.Contains(tributeExportOut.String(), "Wrote tribute JSON export: [redacted]") {
+			t.Fatalf("single export-tribute-json output was not redacted: %q", tributeExportOut.String())
+		}
+		exportData, err := os.ReadFile(tributeExportPath)
+		if err != nil {
+			t.Fatalf("read single tribute JSON export: %v", err)
+		}
+		var info struct {
+			PlayerDataCount int `json:"player_data_count"`
+			TribeDataCount  int `json:"tribe_data_count"`
+		}
+		if err := json.Unmarshal(exportData, &info); err != nil {
+			t.Fatalf("unmarshal single tribute JSON export: %v", err)
+		}
+		if info.PlayerDataCount == 0 && info.TribeDataCount == 0 {
+			t.Fatalf("single tribute JSON export has no IDs: %#v", info)
 		}
 	}
 }
