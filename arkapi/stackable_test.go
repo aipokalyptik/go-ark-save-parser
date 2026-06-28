@@ -137,6 +137,27 @@ func TestStackableAPIAllAndByClassReadLocalSaveItems(t *testing.T) {
 	}
 }
 
+func TestNewStackableFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticStackableSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewStackableFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewStackableFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	summary, err := api.ByClassSummary([]string{
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+	})
+	if err != nil {
+		t.Fatalf("ByClassSummary() error = %v", err)
+	}
+	if summary != (StackableSummary{Items: 1, TotalQuantity: 100}) {
+		t.Fatalf("ByClassSummary() = %#v, want one stack of 100", summary)
+	}
+}
+
 func TestStackableAPIByClassCanReadExactModdedResourceWithoutBroadeningDefaultScan(t *testing.T) {
 	save := openSyntheticMixedStackableSave(t)
 	defer save.Close()

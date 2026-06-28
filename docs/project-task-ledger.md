@@ -565,6 +565,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [x] Move `structure_owner_locations` mixed structure/player save access
           behind typed `arkapi.StructureOwnerLocationsFromPathWithFaults`.
+    - [x] Move repeated read-only StackableAPI example save-open/close handling
+          behind typed `arkapi.NewStackableFromPath`.
     - [x] Move `export_all_items` domain export loop and manifest writing onto
           typed `arkapi.JSONAPI.ExportAllDomains`.
     - [ ] Keep migrating example-local parsing into package APIs when the

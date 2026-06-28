@@ -22,6 +22,14 @@ func NewStackable(save *arksave.Save) *StackableAPI {
 	return &StackableAPI{save: save}
 }
 
+func NewStackableFromPath(savePath string) (*StackableAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewStackable(save), save.Close, nil
+}
+
 func (s *StackableAPI) IsApplicableBlueprint(blueprint string) bool {
 	return strings.Contains(blueprint, "Resources/PrimalItemResource") ||
 		strings.Contains(blueprint, "/PrimalItemConsumable") ||
