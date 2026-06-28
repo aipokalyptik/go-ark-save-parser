@@ -178,6 +178,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("stackables requires a local .ark path")
 		}
 		return stackables(args[1], out)
+	case "stackable-owned-by":
+		if len(args) != 4 {
+			return fmt.Errorf("stackable-owned-by requires a local .ark path, blueprint, and tribe id")
+		}
+		return stackableOwnedBy(args[1], args[2], args[3], out, opts)
 	case "player-inventories":
 		if len(args) != 2 {
 			return fmt.Errorf("player-inventories requires a local .ark path")
@@ -290,6 +295,7 @@ func usage(out io.Writer) error {
   arksave equipment-best <save.ark>
   arksave equipment-rank <save.ark>
   arksave stackables <save.ark>
+  arksave [--redact] stackable-owned-by <save.ark> <blueprint> <tribe-id>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
   arksave tribe-roster <save.ark-or-directory>
@@ -880,6 +886,32 @@ func stackables(path string, out io.Writer) error {
 		summary.Items,
 		summary.TotalQuantity,
 		len(faults),
+	)
+	return err
+}
+
+func stackableOwnedBy(path string, blueprint string, tribeIDArg string, out io.Writer, opts runOptions) error {
+	tribeID64, err := strconv.ParseInt(tribeIDArg, 10, 32)
+	if err != nil {
+		return fmt.Errorf("parse tribe id: %w", err)
+	}
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, err := arkapi.NewStackable(save).ByClassOwnedSummary([]string{blueprint}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Tribe ID: %v\nBlueprint: %s\nItems: %d\nTotal quantity: %d\n",
+		displayInt(int32(tribeID64), opts),
+		displayString(blueprint, opts),
+		summary.Items,
+		summary.TotalQuantity,
 	)
 	return err
 }

@@ -213,6 +213,22 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var stackableOwnedOut bytes.Buffer
+	if err := run([]string{
+		"--redact",
+		"stackable-owned-by",
+		data.SavePath,
+		"Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+		"555",
+	}, &stackableOwnedOut); err != nil {
+		t.Fatalf("run(stackable-owned-by) error = %v", err)
+	}
+	for _, want := range []string{"Tribe ID: [redacted]", "Blueprint: [redacted]", "Items:", "Total quantity:"} {
+		if !strings.Contains(stackableOwnedOut.String(), want) {
+			t.Fatalf("stackable-owned-by output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

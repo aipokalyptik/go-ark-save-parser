@@ -468,6 +468,29 @@ func TestStackablesCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestStackableOwnedByCommandPrintsOwnedSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "stackables.ark")
+	createSyntheticOwnedStackableSave(t, path)
+	blueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"
+
+	var out bytes.Buffer
+	err := run([]string{"stackable-owned-by", path, blueprint, "555"}, &out)
+	if err != nil {
+		t.Fatalf("run(stackable-owned-by) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe ID: 555",
+		"Blueprint: " + blueprint,
+		"Items: 1",
+		"Total quantity: 100",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stackable-owned-by output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentBestCommandPrintsBestItems(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment-best.ark")
 	createSyntheticBestEquipmentSave(t, path)
@@ -2347,6 +2370,41 @@ func createSyntheticStackableSave(t *testing.T, path string) {
 		Objects: map[uuid.UUID][]byte{
 			uuid.MustParse("50515253-5455-5657-5859-5a5b5c5d5e5f"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
 				Quantity: 250,
+			}),
+		},
+	})
+}
+
+func createSyntheticOwnedStackableSave(t *testing.T, path string) {
+	t.Helper()
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000005: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			0x10000006: "StructureID",
+			0x10000009: "TargetingTeam",
+			0x1000000b: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'",
+			0x1000000c: "ItemQuantity",
+			0x1000001f: "ObjectProperty",
+			0x10000023: "MyInventoryComponent",
+			0x10000044: "OwnerInventory",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				StructureID: 101,
+				TribeID:     555,
+				InventoryID: inventoryID,
+			}),
+			uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+				Quantity:         100,
+				OwnerInventoryID: inventoryID,
+			}),
+			uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+				Quantity:         200,
+				OwnerInventoryID: otherInventoryID,
 			}),
 		},
 	})

@@ -528,6 +528,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `equipment-best`.
   - [x] `equipment-rank`.
   - [x] `stackables`.
+  - [x] `stackable-owned-by`.
   - [x] `player-inventories`.
   - [x] `player-roster`.
   - [x] `tribe-roster`.
@@ -599,9 +600,9 @@ without Python or private chat context.
       commands, local profile/tribe/tribute file handling, and aggregate-output examples through
       `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
-- [x] Go-only provided-data E2E smoke tests cover stackable, dino, and
-      equipment domain JSON export through both `arkapi.JSONAPI.ExportDomain`
-      and the CLI `export-domain-json` path.
+- [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
+      dino, and equipment command/API paths plus domain JSON export through
+      both `arkapi.JSONAPI.ExportDomain` and the CLI `export-domain-json` path.
 - [x] Go-only provided-data E2E smoke tests cover bounded structure and base
       read APIs through structure owner/health summaries, structure CLI
       commands, structure heatmap JSON export, structure owner/location
