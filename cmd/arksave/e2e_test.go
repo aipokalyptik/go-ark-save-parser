@@ -286,6 +286,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var equipmentOwnedOut bytes.Buffer
+	if err := run([]string{"--redact", "equipment-owned-by", data.SavePath, "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'", "555"}, &equipmentOwnedOut); err != nil {
+		t.Fatalf("run(equipment-owned-by) error = %v", err)
+	}
+	for _, want := range []string{"Tribe ID: [redacted]", "Blueprint: [redacted]", "Items:", "Max damage:", "Parse faults:"} {
+		if !strings.Contains(equipmentOwnedOut.String(), want) {
+			t.Fatalf("equipment-owned-by output missing %q", want)
+		}
+	}
+
 	var stackablesOut bytes.Buffer
 	if err := run([]string{"stackables", data.SavePath}, &stackablesOut); err != nil {
 		t.Fatalf("run(stackables) error = %v", err)

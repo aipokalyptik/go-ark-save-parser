@@ -208,6 +208,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-rank requires a local .ark path")
 		}
 		return equipmentRank(args[1], out)
+	case "equipment-owned-by":
+		if len(args) != 4 {
+			return fmt.Errorf("equipment-owned-by requires a local .ark path, blueprint, and tribe id")
+		}
+		return equipmentOwnedBy(args[1], args[2], args[3], out, opts)
 	case "stackables":
 		if len(args) != 2 {
 			return fmt.Errorf("stackables requires a local .ark path")
@@ -336,6 +341,7 @@ func usage(out io.Writer) error {
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
   arksave equipment-rank <save.ark>
+  arksave [--redact] equipment-owned-by <save.ark> <blueprint> <tribe-id>
   arksave stackables <save.ark>
   arksave [--redact] stackable-owned-by <save.ark> <blueprint> <tribe-id>
   arksave player-inventories <save.ark>
@@ -1061,6 +1067,37 @@ func equipmentRank(path string, out io.Writer) error {
 		stats.Crafted,
 		stats.Blueprints,
 		stats.Classes,
+		len(faults),
+	)
+	return err
+}
+
+func equipmentOwnedBy(path string, blueprint string, tribeIDArg string, out io.Writer, opts runOptions) error {
+	tribeID64, err := strconv.ParseInt(tribeIDArg, 10, 32)
+	if err != nil {
+		return fmt.Errorf("parse tribe id: %w", err)
+	}
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewEquipment(save).OwnedSummaryWithFaults(arkapi.EquipmentFilterOptions{
+		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:     []string{blueprint},
+		OnlyBlueprints: true,
+	}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Tribe ID: %v\nBlueprint: %s\nItems: %d\nMax damage: %.1f\nParse faults: %d\n",
+		displayInt(int32(tribeID64), opts),
+		displayString(blueprint, opts),
+		summary.Items,
+		summary.MaxDamage,
 		len(faults),
 	)
 	return err

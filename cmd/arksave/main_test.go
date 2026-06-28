@@ -638,6 +638,30 @@ func TestStackableOwnedByCommandPrintsOwnedSummary(t *testing.T) {
 	}
 }
 
+func TestEquipmentOwnedByCommandPrintsOwnedSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "equipment-owned.ark")
+	createSyntheticOwnedEquipmentSave(t, path)
+	blueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-owned-by", path, blueprint, "555"}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-owned-by) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribe ID: 555",
+		"Blueprint: " + blueprint,
+		"Items: 1",
+		"Max damage: 112.3",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-owned-by output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentBestCommandPrintsBestItems(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment-best.ark")
 	createSyntheticBestEquipmentSave(t, path)
@@ -2551,6 +2575,54 @@ func createSyntheticOwnedStackableSave(t *testing.T, path string) {
 			}),
 			uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
 				Quantity:         200,
+				OwnerInventoryID: otherInventoryID,
+			}),
+		},
+	})
+}
+
+func createSyntheticOwnedEquipmentSave(t *testing.T, path string) {
+	t.Helper()
+	trueValue := true
+	inventoryID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000005: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			0x10000006: "StructureID",
+			0x10000009: "TargetingTeam",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000d: "bIsBlueprint",
+			0x1000000e: "BoolProperty",
+			0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+			0x10000010: "ItemRating",
+			0x1000001f: "ObjectProperty",
+			0x10000023: "MyInventoryComponent",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+			0x10000044: "OwnerInventory",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				StructureID: 101,
+				TribeID:     555,
+				InventoryID: inventoryID,
+			}),
+			uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity:         1,
+				Rating:           7.5,
+				IsBlueprint:      &trueValue,
+				Stats:            map[int32]uint16{3: 1234},
+				OwnerInventoryID: inventoryID,
+			}),
+			uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity:         1,
+				Rating:           1.5,
+				IsBlueprint:      &trueValue,
+				Stats:            map[int32]uint16{3: 2000},
 				OwnerInventoryID: otherInventoryID,
 			}),
 		},
