@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
@@ -184,6 +185,26 @@ func TestGeneralClassesReturnsSortedSaveClasses(t *testing.T) {
 	}
 }
 
+func TestGeneralClassesFromPathReturnsSortedSaveClasses(t *testing.T) {
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000005),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+	})
+	defer save.Close()
+
+	classes, err := GeneralClassesFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("GeneralClassesFromPath() error = %v", err)
+	}
+	want := []string{
+		"Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+		"Blueprint'/Game/Test.Test_C'",
+	}
+	if len(classes) != len(want) || classes[0] != want[0] || classes[1] != want[1] {
+		t.Fatalf("GeneralClassesFromPath() = %#v, want %#v", classes, want)
+	}
+}
+
 func TestGeneralParseSummaryCountsObjectsParsedAndFaults(t *testing.T) {
 	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
@@ -202,6 +223,50 @@ func TestGeneralParseSummaryCountsObjectsParsedAndFaults(t *testing.T) {
 	}
 	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
 		t.Fatalf("ParseSummaryWithFaults() faults = %#v, want faulty row", faults)
+	}
+}
+
+func TestGeneralParseSummaryFromPathCountsObjectsParsedAndFaults(t *testing.T) {
+	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		validID:  syntheticObjectBytes(0x10000001),
+		faultyID: syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer save.Close()
+
+	summary, faults, err := GeneralParseSummaryFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("GeneralParseSummaryFromPath() error = %v", err)
+	}
+	if summary.Objects != 2 || summary.Parsed != 1 || summary.Faults != 1 {
+		t.Fatalf("GeneralParseSummaryFromPath() summary = %#v, want 2 objects, 1 parsed, 1 fault", summary)
+	}
+	if len(faults) != 1 || faults[0].UUID != faultyID || faults[0].Err == nil {
+		t.Fatalf("GeneralParseSummaryFromPath() faults = %#v, want faulty row", faults)
+	}
+}
+
+func TestGeneralParseSummaryFromPathLabelsOpenAndParseErrors(t *testing.T) {
+	_, _, err := GeneralParseSummaryFromPath(filepath.Join(t.TempDir(), "missing.ark"))
+	if err == nil || !strings.HasPrefix(err.Error(), "open save: ") {
+		t.Fatalf("GeneralParseSummaryFromPath(missing) error = %v, want open save label", err)
+	}
+
+	path := filepath.Join(t.TempDir(), "no-game-table.ark")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	testfixtures.MustExec(t, db, `create table custom (key text primary key, value blob)`)
+	testfixtures.MustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close sqlite fixture: %v", err)
+	}
+
+	_, _, err = GeneralParseSummaryFromPath(path)
+	if err == nil || !strings.HasPrefix(err.Error(), "parse objects: ") {
+		t.Fatalf("GeneralParseSummaryFromPath(no game table) error = %v, want parse objects label", err)
 	}
 }
 

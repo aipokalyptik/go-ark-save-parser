@@ -49,6 +49,21 @@ func TestStructureAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestGeneralAggregateExamplesUseTypedPathHelpers(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("object_classes", "main.go"),
+		filepath.Join("parse_all", "main.go"),
+	} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile(%s) error = %v", path, err)
+		}
+		if strings.Contains(string(data), "NewGeneralFromPath") {
+			t.Fatalf("%s still owns GeneralAPI lifecycle; use typed arkapi path helper", path)
+		}
+	}
+}
+
 func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	dir := t.TempDir()
 	savePath := filepath.Join(dir, "synthetic.ark")

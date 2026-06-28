@@ -13,17 +13,11 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
+	summary, _, err := arkapi.GeneralParseSummaryFromPath(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer closeAPI()
 
-	summary, _, err := api.ParseSummaryWithFaults()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "parse objects: %v\n", err)
-		os.Exit(1)
-	}
 	fmt.Printf("objects=%d parsed=%d faults=%d\n", summary.Objects, summary.Parsed, summary.Faults)
 }

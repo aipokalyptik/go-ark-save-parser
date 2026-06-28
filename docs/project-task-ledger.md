@@ -513,6 +513,10 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.GeneralAPI` helpers.
     - [x] Move repeated GeneralAPI example save-open/close handling behind
           typed `arkapi.NewGeneralFromPath`.
+    - [x] Add `arkapi.GeneralClassesFromPath` and
+          `arkapi.GeneralParseSummaryFromPath`, then move `object_classes`
+          and `parse_all` example save-open/close handling onto typed path
+          helpers while preserving staged parse error labels.
     - [x] Move `map_summary` save opening and save-info export behind typed
           `arkapi.ExportSaveInfoFromPath`.
     - [x] Move repeated player/tribe save-or-directory fallback logic behind
@@ -669,10 +673,10 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `structure-heatmap` and `dino-heatmap` CLI commands onto typed
           heatmap export path helpers, including selected-structure heatmap
           JSON export so the structure command keeps selected-index semantics.
-    - [x] Add `arkapi.GeneralAPI.SaveInfo`, then move general CLI commands
-          (`parse`, `map-summary`, `object-classes`, `object-summary`,
-          `property-positions`, `class-lookup`, `class-property-summary`, and
-          `property-filter`) onto typed general/JSON path helpers.
+    - [x] Add `arkapi.GeneralAPI.SaveInfo` and keep general CLI commands on
+          typed `arkapi.GeneralAPI`/JSON summary helpers; dedicated path
+          helpers currently cover save-info export plus the `object_classes`
+          and `parse_all` examples.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

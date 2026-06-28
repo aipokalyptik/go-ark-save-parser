@@ -151,10 +151,12 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Move `structure-heatmap` and `dino-heatmap` CLI commands onto typed
       heatmap export path helpers, including selected-structure heatmap JSON
       export so the structure command keeps its selected-index semantics.
-- [x] Move general CLI commands (`parse`, `map-summary`, `object-classes`,
-      `object-summary`, `property-positions`, `class-lookup`,
-      `class-property-summary`, and `property-filter`) onto typed general/JSON
-      path helpers.
+- [x] Add `arkapi.GeneralClassesFromPath` and
+      `arkapi.GeneralParseSummaryFromPath`, then move `object_classes` and
+      `parse_all` examples onto typed general path helpers while preserving
+      staged parse error labels.
+- [x] Move `map-summary` CLI/example save-info export onto typed JSON path
+      helpers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

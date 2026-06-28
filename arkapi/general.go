@@ -52,6 +52,19 @@ type ParseSummary struct {
 	Faults  int
 }
 
+type generalPathError struct {
+	op  string
+	err error
+}
+
+func (e generalPathError) Error() string {
+	return e.op + ": " + e.err.Error()
+}
+
+func (e generalPathError) Unwrap() error {
+	return e.err
+}
+
 func NewGeneral(save *arksave.Save) *GeneralAPI {
 	return &GeneralAPI{save: save}
 }
@@ -62,6 +75,30 @@ func NewGeneralFromPath(savePath string) (*GeneralAPI, func() error, error) {
 		return nil, nil, err
 	}
 	return NewGeneral(save), save.Close, nil
+}
+
+func GeneralClassesFromPath(savePath string) ([]string, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return nil, err
+	}
+	defer closeAPI()
+
+	return api.Classes()
+}
+
+func GeneralParseSummaryFromPath(savePath string) (ParseSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return ParseSummary{}, nil, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, faults, err := api.ParseSummaryWithFaults()
+	if err != nil {
+		return ParseSummary{}, nil, generalPathError{op: "parse objects", err: err}
+	}
+	return summary, faults, nil
 }
 
 func (g *GeneralAPI) SaveInfo() (SaveInfo, error) {
