@@ -21,7 +21,8 @@ func main() {
 	summary := api.Summary()
 	items := api.ItemSummary()
 	dinos := api.DinoSummary()
-	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d other_items=%d crafted=%d unsupported_items=%d parsed_dinos=%d unsupported_dinos=%d dino_parse_errors=%d embedded_objects=%d parse_errors=%d\n",
+	parseStatuses := api.DinoParseStatusCounts()
+	fmt.Printf("cluster=%s items=%d dinos=%d equipment=%d dino_items=%d other_items=%d crafted=%d unsupported_items=%d parsed_dinos=%d unsupported_dinos=%d dino_parse_errors=%d unparsed_dinos=%d embedded_objects=%d parse_errors=%d\n",
 		summary.ID,
 		summary.ItemCount,
 		summary.DinoCount,
@@ -33,6 +34,7 @@ func main() {
 		dinos.ParsedDinos,
 		dinos.UnsupportedVersionDinos,
 		dinos.ParseErrorDinos,
+		parseStatuses["unparsed"],
 		dinos.TotalEmbeddedObjects,
 		summary.ParseErrorCount,
 	)

@@ -261,6 +261,8 @@ documented.
         names in local cluster CLI summaries.
   - [x] Include uploaded-dino parse-status aggregate counts in local cluster
         CLI summaries.
+  - [x] Include explicit unparsed uploaded-dino counts in the typed local
+        cluster example output.
   - [x] Add directory-level local cluster aggregate summaries for total files,
         objects, items, dinos, parse errors, uploaded-item summaries, and
         uploaded-dino summaries, and include them in directory JSON exports and
