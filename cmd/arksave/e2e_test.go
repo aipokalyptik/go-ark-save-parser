@@ -37,6 +37,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var classPropertySummaryOut bytes.Buffer
+	if err := run([]string{"class-property-summary", data.SavePath, "PrimalStructure"}, &classPropertySummaryOut); err != nil {
+		t.Fatalf("run(class-property-summary) error = %v", err)
+	}
+	for _, want := range []string{"Objects:", "Properties:", "Parse faults:"} {
+		if !strings.Contains(classPropertySummaryOut.String(), want) {
+			t.Fatalf("class-property-summary output missing %q", want)
+		}
+	}
+
 	var propertyFilterOut bytes.Buffer
 	if err := run([]string{"property-filter", data.SavePath, "Health", "MaxHealth"}, &propertyFilterOut); err != nil {
 		t.Fatalf("run(property-filter) error = %v", err)

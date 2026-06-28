@@ -70,6 +70,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("class-lookup requires a local .ark path and at least one class substring")
 		}
 		return classLookup(args[1], args[2:], out)
+	case "class-property-summary":
+		if len(args) != 3 {
+			return fmt.Errorf("class-property-summary requires a local .ark path and class substring")
+		}
+		return classPropertySummary(args[1], args[2], out)
 	case "property-filter":
 		if len(args) < 3 {
 			return fmt.Errorf("property-filter requires a local .ark path and at least one property name")
@@ -289,6 +294,7 @@ func usage(out io.Writer) error {
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
   arksave class-lookup <save.ark> <class-substring> [class-substring...]
+  arksave class-property-summary <save.ark> <class-substring>
   arksave property-filter <save.ark> <property> [property...]
   arksave structure-health <save.ark>
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
@@ -410,6 +416,27 @@ func classLookup(path string, classSubstrings []string, out io.Writer) error {
 		"Objects: %d\nClasses: %d\nParse faults: %d\n",
 		summary.Objects,
 		summary.Classes,
+		len(faults),
+	)
+	return err
+}
+
+func classPropertySummary(path string, classSubstring string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewGeneral(save).ClassPropertySummaryWithFaults(classSubstring)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Objects: %d\nProperties: %d\nParse faults: %d\n",
+		summary.Objects,
+		summary.Properties,
 		len(faults),
 	)
 	return err
