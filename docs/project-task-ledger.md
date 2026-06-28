@@ -548,6 +548,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `structure_heatmap` structure loading, fault handling, and
           summary generation onto typed
           `arkapi.StructureAPI.HeatmapSummaryWithFaults`.
+    - [x] Move `structure_heatmap` save opening, summary JSON encoding, and
+          explicit output writing behind typed
+          `arkapi.ExportStructureHeatmapSummaryJSONFromPath`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [x] Move `export_all_items` domain export loop and manifest writing onto
