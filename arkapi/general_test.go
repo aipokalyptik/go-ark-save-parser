@@ -484,9 +484,7 @@ func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, 
 }
 
 func syntheticObjectBytes(classNameID uint32) []byte {
-	var buf bytes.Buffer
-	testfixtures.WriteIntPropertyID(&buf, 0x10000002, 0x10000003, 250)
-	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, buf.Bytes())
+	return testfixtures.ObjectBytesWithIntProperty(classNameID, 0x10000004, 0x10000002, 0x10000003, 250)
 }
 
 func syntheticObjectBytesWithExtraProperty(classNameID uint32) []byte {

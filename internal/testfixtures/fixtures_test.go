@@ -35,6 +35,17 @@ func TestObjectBytesWithPropertiesWrapsObjectHeaderAndNoneMarker(t *testing.T) {
 	}
 }
 
+func TestObjectBytesWithIntPropertyWrapsSingleIntProperty(t *testing.T) {
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, 0x10000002, 0x10000003, 250)
+	want := ObjectBytesWithProperties(0x10000001, 0x10000004, props.Bytes())
+
+	got := ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)
+	if !bytes.Equal(got, want) {
+		t.Fatalf("ObjectBytesWithIntProperty() = %x, want %x", got, want)
+	}
+}
+
 func TestObjectBytesWithNamePayloadWrapsCustomObjectNames(t *testing.T) {
 	var names bytes.Buffer
 	WriteNameID(&names, 0x10000002)

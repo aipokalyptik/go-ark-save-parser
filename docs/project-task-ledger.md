@@ -757,6 +757,8 @@ CLI tools, and reusable APIs without losing oracle parity.
         object fixture payloads now share the archive property builders while
         keeping game-object framing explicit; ID-table game-object bytes with
         custom object-name payloads now use a shared testfixtures helper;
+        simple ID-table int-property object rows now use
+        `testfixtures.ObjectBytesWithIntProperty` in save-layer/general tests;
         embedded `GameModeCustomBytes` player/tribe fixture assembly and
         minimal embedded cryopod archive test payloads now live in shared
         testfixtures; save-layer malformed

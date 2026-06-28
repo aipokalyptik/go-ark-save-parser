@@ -15,9 +15,9 @@ import (
 func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	objectBytes := syntheticObjectBytes(0x10000001)
+	objectBytes := syntheticHealthObjectBytes(0x10000001)
 	secondObjectID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
-	secondObjectBytes := syntheticObjectBytes(0x10000005)
+	secondObjectBytes := syntheticHealthObjectBytes(0x10000005)
 	header := syntheticHeader()
 	actorTransforms := testfixtures.ActorTransforms(testfixtures.ActorTransform{
 		UUID:       objectID,
@@ -183,8 +183,8 @@ func TestOpenReadsHeaderCustomValuesAndGameObjects(t *testing.T) {
 func TestObjectCacheControlsRawObjectRows(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	firstBytes := syntheticObjectBytes(0x10000001)
-	secondBytes := syntheticObjectBytes(0x10000005)
+	firstBytes := syntheticHealthObjectBytes(0x10000001)
+	secondBytes := syntheticHealthObjectBytes(0x10000005)
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: syntheticHeader(),
 		Objects: map[uuid.UUID][]byte{
@@ -230,7 +230,7 @@ func TestObjectCacheControlsRawObjectRows(t *testing.T) {
 	if !bytes.Equal(raw, secondBytes) {
 		t.Fatalf("ObjectBinary(cache fill) = % x, want second bytes", raw)
 	}
-	thirdBytes := syntheticObjectBytes(0x10000001)
+	thirdBytes := syntheticHealthObjectBytes(0x10000001)
 	if err := replaceGameRow(save, objectID, thirdBytes); err != nil {
 		t.Fatalf("replaceGameRow(third) error = %v", err)
 	}
@@ -311,7 +311,7 @@ func TestSelectedObjectPropertiesHandlesDuplicateNameIDs(t *testing.T) {
 func TestObjectCacheReturnsDefensiveCopies(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	objectBytes := syntheticObjectBytes(0x10000001)
+	objectBytes := syntheticHealthObjectBytes(0x10000001)
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: syntheticHeader(),
 		Objects: map[uuid.UUID][]byte{
@@ -343,7 +343,7 @@ func TestObjectCacheReturnsDefensiveCopies(t *testing.T) {
 func TestObjectCacheAllowsConcurrentReads(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
-	objectBytes := syntheticObjectBytes(0x10000001)
+	objectBytes := syntheticHealthObjectBytes(0x10000001)
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: syntheticHeader(),
 		Objects: map[uuid.UUID][]byte{
@@ -405,7 +405,7 @@ func TestParsedObjectsWithFaultsCollectsObjectParseErrors(t *testing.T) {
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: header,
 		Objects: map[uuid.UUID][]byte{
-			objectID: syntheticObjectBytes(0x10000001),
+			objectID: syntheticHealthObjectBytes(0x10000001),
 			faultyID: testfixtures.TruncatedObjectWithPropertiesBytes(0x10000005, 0x10000004, nil, 10),
 		},
 	})
@@ -439,7 +439,7 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: header,
 		Objects: map[uuid.UUID][]byte{
-			objectID: syntheticObjectBytes(0x10000001),
+			objectID: syntheticHealthObjectBytes(0x10000001),
 			faultyID: testfixtures.TruncatedObjectWithPropertiesBytes(0x10000005, 0x10000004, syntheticObjectProperties(), 2),
 		},
 	})
@@ -462,8 +462,8 @@ func TestParsedObjectsWithAnyPropertyWithFaultsKeepsValidMatchesAndReportsFaults
 	}
 }
 
-func syntheticObjectBytes(classNameID uint32) []byte {
-	return testfixtures.ObjectBytesWithProperties(classNameID, 0x10000004, syntheticObjectProperties())
+func syntheticHealthObjectBytes(classNameID uint32) []byte {
+	return testfixtures.ObjectBytesWithIntProperty(classNameID, 0x10000004, 0x10000002, 0x10000003, 250)
 }
 
 func syntheticObjectProperties() []byte {

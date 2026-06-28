@@ -833,6 +833,12 @@ func GenericObjectBytes(classNameID uint32, noneNameID uint32) []byte {
 	return ObjectBytesWithProperties(classNameID, noneNameID, nil)
 }
 
+func ObjectBytesWithIntProperty(classNameID uint32, noneNameID uint32, propertyNameID uint32, intPropertyTypeID uint32, value int32) []byte {
+	var props bytes.Buffer
+	WriteIntPropertyID(&props, propertyNameID, intPropertyTypeID, value)
+	return ObjectBytesWithProperties(classNameID, noneNameID, props.Bytes())
+}
+
 func TruncatedObjectBytes(classNameID uint32) []byte {
 	var buf bytes.Buffer
 	WriteUInt32(&buf, classNameID)
