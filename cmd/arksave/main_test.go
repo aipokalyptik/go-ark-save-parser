@@ -550,6 +550,40 @@ func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 	}
 }
 
+func TestClusterSummaryPrintsDinoParseStatusCounts(t *testing.T) {
+	var out bytes.Buffer
+	err := printClusterSummary(&out, &arkcluster.Data{
+		Path:    "/tmp/EOS_abc123",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+		Dinos: []arkcluster.Dino{
+			{
+				Index:   0,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{
+					ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				}}},
+			},
+			{
+				Index:   1,
+				Version: 6,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{
+					ClassName: "/Game/Test/UnsupportedVersion.UnsupportedVersion_C",
+				}}},
+			},
+			{Index: 2, Version: 7, ParseError: "unsupported embedded archive"},
+			{Index: 3, Version: 7},
+		},
+	}, runOptions{})
+	if err != nil {
+		t.Fatalf("printClusterSummary() error = %v", err)
+	}
+	got := out.String()
+	want := "Dino parse statuses: parsed=1 unsupported_version=1 parse_error=1 unparsed=1"
+	if !strings.Contains(got, want) {
+		t.Fatalf("cluster summary %q does not contain %q", got, want)
+	}
+}
+
 func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterSummary(&out, &arkcluster.Data{

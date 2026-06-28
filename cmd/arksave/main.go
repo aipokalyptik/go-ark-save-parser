@@ -858,6 +858,19 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 	if _, err := fmt.Fprintf(out, "Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\n", displayString(data.Path, opts), data.Archive.Version, len(data.Archive.Objects), len(data.Items), len(data.Dinos)); err != nil {
 		return err
 	}
+	if len(data.Dinos) > 0 {
+		statuses := arkapi.NewCluster(data).DinoParseStatusCounts()
+		if _, err := fmt.Fprintf(
+			out,
+			"Dino parse statuses: parsed=%d unsupported_version=%d parse_error=%d unparsed=%d\n",
+			statuses["parsed"],
+			statuses["unsupported_version"],
+			statuses["parse_error"],
+			statuses["unparsed"],
+		); err != nil {
+			return err
+		}
+	}
 	if opts.Redact {
 		return nil
 	}
