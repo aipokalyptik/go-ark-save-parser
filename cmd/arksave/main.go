@@ -105,6 +105,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-babies requires a local .ark path")
 		}
 		return dinoBabies(args[1], out)
+	case "dino-best-stat":
+		if len(args) != 2 {
+			return fmt.Errorf("dino-best-stat requires a local .ark path")
+		}
+		return dinoBestStat(args[1], out)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -228,6 +233,7 @@ func usage(out io.Writer) error {
   arksave dinos <save.ark>
   arksave dino-wild-tamables <save.ark>
   arksave dino-babies <save.ark>
+  arksave dino-best-stat <save.ark>
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
@@ -528,6 +534,37 @@ func dinoBabies(path string, out io.Writer) error {
 		summary.Tamed+summary.Wild,
 		summary.Tamed,
 		summary.Wild,
+		len(faults),
+	)
+	return err
+}
+
+func dinoBestStat(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	_, dino, stat, points, ok, faults, err := arkapi.NewDino(save).BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{})
+	if err != nil {
+		return err
+	}
+	if !ok {
+		_, err = fmt.Fprintf(out, "Best stat: none\nParse faults: %d\n", len(faults))
+		return err
+	}
+	level := int32(0)
+	if dino.Stats != nil {
+		level = dino.Stats.CurrentLevel
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Best stat: %s\nPoints: %d\nLevel: %d\nBlueprint: %s\nParse faults: %d\n",
+		stat.String(),
+		points,
+		level,
+		dino.ShortName(),
 		len(faults),
 	)
 	return err

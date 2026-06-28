@@ -107,6 +107,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var bestStatOut bytes.Buffer
+	if err := run([]string{"dino-best-stat", data.SavePath}, &bestStatOut); err != nil {
+		t.Fatalf("run(dino-best-stat) error = %v", err)
+	}
+	for _, want := range []string{"Best stat:", "Parse faults:"} {
+		if !strings.Contains(bestStatOut.String(), want) {
+			t.Fatalf("dino-best-stat output missing %q", want)
+		}
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)
