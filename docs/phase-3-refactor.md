@@ -131,6 +131,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.PlayerAndTribeDataSummaryFromPath` so player/tribe aggregate
       CLI commands and examples can use typed path helpers without manual
       `PlayerAPI` lifecycle handling.
+- [x] Add `arkapi.ExportDinoBinaryFromPath` and move
+      `dino_export_from_save` onto the typed path helper while preserving the
+      explicit output directory contract for structural mutation fixtures.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

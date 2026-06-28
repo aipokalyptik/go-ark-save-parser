@@ -63,6 +63,16 @@ func (d *DinoAPI) ExportBinary(outputDir string) (DinoBinaryExport, error) {
 	return export, nil
 }
 
+func ExportDinoBinaryFromPath(savePath string, outputDir string) (DinoBinaryExport, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoBinaryExport{}, err
+	}
+	defer closeAPI()
+
+	return api.ExportBinary(outputDir)
+}
+
 func (d *DinoAPI) exportDinoBinary(outputDir string, id uuid.UUID, dino arkobject.Dino) (DinoBinaryExportDino, error) {
 	dinoDir := filepath.Join(outputDir, "dino_"+id.String())
 	if err := os.MkdirAll(dinoDir, 0o700); err != nil {

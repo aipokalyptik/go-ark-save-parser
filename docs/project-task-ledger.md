@@ -642,12 +642,16 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.BaseComponentStatsFromPath`, then move the
           `base-components` example and CLI aggregate workflow onto the typed
           path helper.
+    - [x] Add path-level typed dino binary export through
+          `arkapi.ExportDinoBinaryFromPath`, then move
+          `dino_export_from_save` onto the helper while preserving explicit
+          output directory handling.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.
     - [x] Keep remaining low-level example access limited to generic
-          inspection, explicit binary export, and mutation-copy workflows where
-          direct save/file handling is the feature.
+          inspection and mutation-copy workflows where direct save/file
+          handling is the feature.
 - [~] Performance pass:
   - [x] Add benchmarks for full save open/object enumeration, object parse,
         query filters, and JSON export.

@@ -264,6 +264,51 @@ func TestDinoAPIExportBinaryWritesDinoAndLinkedRows(t *testing.T) {
 	}
 }
 
+func TestExportDinoBinaryFromPathWritesDinoAndLinkedRows(t *testing.T) {
+	save := openSyntheticDinoStatsSave(t)
+	defer save.Close()
+
+	dinoID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	statusID := uuid.MustParse("99999999-aaaa-bbbb-cccc-ddddeeeeffff")
+	outDir := filepath.Join(t.TempDir(), "dino-export")
+
+	exported, err := ExportDinoBinaryFromPath(save.Path(), outDir)
+	if err != nil {
+		t.Fatalf("ExportDinoBinaryFromPath() error = %v", err)
+	}
+	if exported.DinoCount != 1 || exported.RowCount != 2 || exported.FaultCount != 0 {
+		t.Fatalf("ExportDinoBinaryFromPath() = %#v, want one dino and two rows", exported)
+	}
+	dinoDir := filepath.Join(outDir, "dino_"+dinoID.String())
+	for _, id := range []uuid.UUID{dinoID, statusID} {
+		prefix := "dino_"
+		if id == statusID {
+			prefix = "status_"
+		}
+		got, err := os.ReadFile(filepath.Join(dinoDir, prefix+id.String()+".bin"))
+		if err != nil {
+			t.Fatalf("read exported row %s: %v", id, err)
+		}
+		want, err := save.ObjectBinary(id)
+		if err != nil {
+			t.Fatalf("ObjectBinary(%s) error = %v", id, err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatalf("exported row %s bytes differ from save row", id)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "manifest.json")); err != nil {
+		t.Fatalf("manifest missing: %v", err)
+	}
+}
+
+func TestExportDinoBinaryFromPathReturnsErrorForInvalidSavePath(t *testing.T) {
+	_, err := ExportDinoBinaryFromPath(filepath.Join(t.TempDir(), "missing.ark"), filepath.Join(t.TempDir(), "out"))
+	if err == nil {
+		t.Fatalf("ExportDinoBinaryFromPath() error = nil, want invalid save path error")
+	}
+}
+
 func TestDinoAPIClassHelpersFilterWildAndTamedDinos(t *testing.T) {
 	save := openSyntheticDinoFilterSave(t)
 	defer save.Close()
