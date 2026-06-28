@@ -361,8 +361,8 @@ func TestJSONAPIExportEquipmentSummarizesEquipmentAPI(t *testing.T) {
 	if armorItems[0].Stats.Armor != 12 || armorItems[0].Stats.HypothermalResistance != 8.8 || armorItems[0].Stats.HyperthermalResistance != 15.6 {
 		t.Fatalf("EquipmentInfo armor stats = %#v", armorItems[0].Stats)
 	}
-	if armorItems[0].AverageStat != 425 {
-		t.Fatalf("EquipmentInfo armor average stat = %f, want 425", armorItems[0].AverageStat)
+	if armorItems[0].AverageStat != 431.25 {
+		t.Fatalf("EquipmentInfo armor average stat = %f, want 431.25", armorItems[0].AverageStat)
 	}
 	if len(armorItems[0].ImplementedStats) != 4 || armorItems[0].ImplementedStats[2] != "hypothermal_resistance" {
 		t.Fatalf("EquipmentInfo armor implemented stats = %#v", armorItems[0].ImplementedStats)

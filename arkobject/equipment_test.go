@@ -81,8 +81,8 @@ func TestEquipmentItemFromObjectReadsArmorStats(t *testing.T) {
 	if item.Stats.Armor != 12 || item.Stats.HypothermalResistance != 8.8 || item.Stats.HyperthermalResistance != 15.6 {
 		t.Fatalf("EquipmentItem armor stats = %#v", item.Stats)
 	}
-	if got := item.AverageStat(); got != 425 {
-		t.Fatalf("EquipmentItem.AverageStat() = %f, want 425", got)
+	if got := item.AverageStat(); got != 431.25 {
+		t.Fatalf("EquipmentItem.AverageStat() = %f, want 431.25", got)
 	}
 	if stats := item.ImplementedStats(); len(stats) != 4 ||
 		stats[0] != EquipmentStatDurability ||
@@ -279,7 +279,7 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			kind:                 EquipmentShield,
 			wantDurability:       1562.5,
 			wantArmor:            1.2,
-			wantAverageStat:      1000,
+			wantAverageStat:      1250,
 			wantImplementedStats: 1,
 		},
 		{
@@ -288,7 +288,7 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			kind:                 EquipmentShield,
 			wantDurability:       1562.5,
 			wantArmor:            1.2,
-			wantAverageStat:      1000,
+			wantAverageStat:      1250,
 			wantImplementedStats: 1,
 		},
 		{
@@ -297,7 +297,7 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			kind:                 EquipmentShield,
 			wantDurability:       2875,
 			wantArmor:            1.2,
-			wantAverageStat:      1000,
+			wantAverageStat:      2300,
 			wantImplementedStats: 1,
 		},
 		{
@@ -348,7 +348,7 @@ func TestEquipmentItemFromObjectUsesUpstreamDefaultStatTables(t *testing.T) {
 			wantArmor:            1.2,
 			wantHypothermal:      220,
 			wantHyperthermal:     0,
-			wantAverageStat:      675,
+			wantAverageStat:      625,
 			wantImplementedStats: 4,
 		},
 		{
@@ -425,6 +425,49 @@ func TestEquipmentItemAverageStatUsesKindSpecificInternalStats(t *testing.T) {
 	}
 	if got := saddle.AverageStat(); got != 500 {
 		t.Fatalf("saddle AverageStat() = %f, want average durability and armor", got)
+	}
+}
+
+func TestEquipmentItemAverageStatUsesUpstreamDefaultInternalValues(t *testing.T) {
+	tests := []struct {
+		name      string
+		blueprint string
+		kind      EquipmentKind
+		want      float64
+	}{
+		{
+			name:      "weapon",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+			kind:      EquipmentWeapon,
+			want:      75,
+		},
+		{
+			name:      "armor",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'",
+			kind:      EquipmentArmor,
+			want:      8.75,
+		},
+		{
+			name:      "saddle",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_RaptorSaddle.PrimalItemArmor_RaptorSaddle_C'",
+			kind:      EquipmentSaddle,
+			want:      62.5,
+		},
+		{
+			name:      "shield",
+			blueprint: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C'",
+			kind:      EquipmentShield,
+			want:      350,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			item := EquipmentItemFromObject(&GameObject{Blueprint: tt.blueprint}, tt.kind)
+			if got := item.AverageStat(); got != tt.want {
+				t.Fatalf("AverageStat() = %f, want %f", got, tt.want)
+			}
+		})
 	}
 }
 

@@ -248,6 +248,10 @@ documented.
         tests.
   - [x] Cover base and cursed Tek sword durability defaults in Go stat table
         tests.
+  - [x] Compute equipment average-stat ranking values from upstream-style
+        effective internal stats, including default durability, damage, armor,
+        and zero-default insulation behavior when `ItemStatValues` entries are
+        absent or below upstream minimums.
   - [x] Skip unsupported embedded cryopod saddle payloads in the plain read API
         while reporting them through the fault-collecting API.
   - [x] Classify unsupported embedded cryopod saddle payload versions with a
@@ -256,10 +260,12 @@ documented.
   - [x] Model generic equipment `CustomItemDatas` presence/count metadata,
         include it in equipment summaries, JSON export rows, and the
         `equipment_summary` example output.
-  - [ ] Exact equipment ranking count and average-stat parity, still limited by
-        long-tail default stat-table parity.
+  - [ ] Exact equipment ranking count parity and full private comparison for
+        average-stat aggregates; current harness only compares stable rank
+        fields without a focused `equipment_rank` case.
   - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
-  - [ ] Remaining long-tail default armor/stat table parity.
+  - [ ] Remaining long-tail default armor/stat table parity as new concrete
+        mismatches are found.
 - [~] Finish richer local cluster item/dino domain models:
   - [x] Model uploaded item type with typed constants and helper methods while
         preserving string-based filters and JSON output.

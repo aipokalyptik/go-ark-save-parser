@@ -111,9 +111,51 @@ func (e EquipmentItem) AverageStat() float64 {
 	}
 	var total float64
 	for _, stat := range stats {
-		total += float64(e.Stats.Internal[stat])
+		total += e.effectiveInternalStat(stat)
 	}
 	return total / float64(len(stats))
+}
+
+func (e EquipmentItem) effectiveInternalStat(stat EquipmentStat) float64 {
+	value, ok := e.Stats.Internal[stat]
+	raw := float64(value)
+	switch stat {
+	case EquipmentStatDamage:
+		if ok && raw >= 100 {
+			return raw
+		}
+		return 100
+	case EquipmentStatDurability:
+		return defaultedInternalStat(raw, ok, defaultEquipmentDurability(e.Blueprint))
+	case EquipmentStatArmor:
+		return defaultedInternalStat(raw, ok, defaultEquipmentArmor(e.Blueprint))
+	case EquipmentStatHypothermalResistance:
+		return defaultedThermalInternalStat(raw, ok, defaultEquipmentHypothermal(e.Blueprint))
+	case EquipmentStatHyperthermalResistance:
+		return defaultedThermalInternalStat(raw, ok, defaultEquipmentHyperthermal(e.Blueprint))
+	default:
+		if ok {
+			return raw
+		}
+		return 0
+	}
+}
+
+func defaultedInternalStat(raw float64, ok bool, fallback float64) float64 {
+	if ok && raw >= fallback {
+		return raw
+	}
+	return fallback
+}
+
+func defaultedThermalInternalStat(raw float64, ok bool, fallback float64) float64 {
+	if !ok || raw == 0 || fallback == 0 {
+		return 0
+	}
+	if raw >= fallback {
+		return raw
+	}
+	return fallback
 }
 
 func equipmentStats(properties arkproperty.Container, kind EquipmentKind, blueprint string) EquipmentStats {

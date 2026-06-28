@@ -477,8 +477,8 @@ evidence, but they are not the active execution target.
       direct canonical weapon, armor, saddle, and shield class counts.
 - [x] Compare stable normalized Go `equipment_rank` aggregate fields with the
       upstream high-rating non-crafted equipment ranking workflow; exact ranked
-      count and average-stat parity remain open under long-tail equipment
-      stat-table parity.
+      count parity and a full private average-stat aggregate comparison remain
+      open because the existing harness has no focused `equipment_rank` case.
 - [x] Add `equipment_export_from_save` as a read-only structural export for
       equipment item rows. Private oracle comparison for generated blueprint
       insertion remains mutation-copy-only and live-server-unverified.
