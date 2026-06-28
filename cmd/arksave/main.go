@@ -79,6 +79,11 @@ func run(args []string, out io.Writer) error {
 			digits = value
 		}
 		return structureOwnerLocations(args[1], mapName, digits, out, opts)
+	case "base-components":
+		if len(args) != 2 {
+			return fmt.Errorf("base-components requires a local .ark path")
+		}
+		return baseComponents(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -152,6 +157,7 @@ func usage(out io.Writer) error {
   arksave structure-health <save.ark>
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
+  arksave base-components <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -323,6 +329,29 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 		return err
 	}
 	_, err = fmt.Fprintln(out, string(encoded))
+	return err
+}
+
+func baseComponents(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	stats, err := arkapi.NewBase(save, "").ComponentStats()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Components: %d\nTotal structures: %d\nLargest component: %d\nComponents at least 10: %d\nParse faults: %d\n",
+		stats.Components,
+		stats.TotalStructures,
+		stats.LargestComponent,
+		stats.ComponentsAtLeast10,
+		stats.Faults,
+	)
 	return err
 }
 

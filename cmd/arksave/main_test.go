@@ -207,6 +207,29 @@ func TestStructureOwnerLocationsCommandRedactsOwnerBuckets(t *testing.T) {
 	}
 }
 
+func TestBaseComponentsCommandPrintsComponentStats(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"base-components", path}, &out)
+	if err != nil {
+		t.Fatalf("run(base-components) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Components: 1",
+		"Total structures: 1",
+		"Largest component: 1",
+		"Components at least 10: 0",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("base-components output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)

@@ -57,6 +57,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var baseComponentsOut bytes.Buffer
+	if err := run([]string{"base-components", data.SavePath}, &baseComponentsOut); err != nil {
+		t.Fatalf("run(base-components) error = %v", err)
+	}
+	for _, want := range []string{"Components:", "Total structures:", "Parse faults:"} {
+		if !strings.Contains(baseComponentsOut.String(), want) {
+			t.Fatalf("base-components output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {
