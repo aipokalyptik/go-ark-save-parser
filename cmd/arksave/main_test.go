@@ -95,6 +95,20 @@ func TestBaseAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestGeneralCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"parseSave", "mapSummary", "objectClasses", "objectSummary", "propertyPositions", "classLookup", "classPropertySummary", "propertyFilter"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") {
+			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	data, err := os.ReadFile("main.go")
 	if err != nil {

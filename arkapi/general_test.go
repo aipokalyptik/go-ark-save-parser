@@ -29,6 +29,19 @@ func TestGeneralObjectIDsReturnsSaveObjectIDs(t *testing.T) {
 	}
 }
 
+func TestGeneralSaveInfoSummarizesLocalSave(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	info, err := NewGeneral(save).SaveInfo()
+	if err != nil {
+		t.Fatalf("SaveInfo() error = %v", err)
+	}
+	if info.MapName != "Valguero_WP" || info.SaveVersion != 12 || info.ObjectCount != 1 {
+		t.Fatalf("SaveInfo() = %#v, want synthetic save info", info)
+	}
+}
+
 func TestNewGeneralFromPathOpensLocalSave(t *testing.T) {
 	save := openSyntheticSave(t)
 	defer save.Close()

@@ -64,6 +64,10 @@ func NewGeneralFromPath(savePath string) (*GeneralAPI, func() error, error) {
 	return NewGeneral(save), save.Close, nil
 }
 
+func (g *GeneralAPI) SaveInfo() (SaveInfo, error) {
+	return NewJSON(g.save).ExportSaveInfo()
+}
+
 func (g *GeneralAPI) ObjectIDs() ([]uuid.UUID, error) {
 	return g.save.ObjectIDs()
 }

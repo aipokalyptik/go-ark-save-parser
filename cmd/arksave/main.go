@@ -435,44 +435,35 @@ func inspect(path string, out io.Writer) error {
 }
 
 func parseSave(path string, out io.Writer, opts runOptions) error {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	ids, err := save.ObjectIDs()
+	info, err := api.SaveInfo()
 	if err != nil {
 		return err
 	}
-	objects, faults, err := arkapi.NewGeneral(save).ObjectsWithFaults()
+	summary, _, err := api.ParseSummaryWithFaults()
 	if err != nil {
 		return err
-	}
-	if save.Context == nil {
-		return errors.New("save context is nil")
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Save: %s\nMap: %s\nSave version: %d\nObjects: %d\nParsed objects: %d\nParse faults: %d\n",
 		displayString(path, opts),
-		save.Context.MapName,
-		save.Context.SaveVersion,
-		len(ids),
-		len(objects),
-		len(faults),
+		info.MapName,
+		info.SaveVersion,
+		summary.Objects,
+		summary.Parsed,
+		summary.Faults,
 	)
 	return err
 }
 
 func mapSummary(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	info, err := arkapi.NewJSON(save).ExportSaveInfo()
+	info, err := arkapi.ExportSaveInfoFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -488,13 +479,13 @@ func mapSummary(path string, out io.Writer) error {
 }
 
 func objectClasses(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	classes, err := arkapi.NewGeneral(save).Classes()
+	classes, err := api.Classes()
 	if err != nil {
 		return err
 	}
@@ -511,13 +502,13 @@ func objectSummary(path string, objectIDArg string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse object uuid: %w", err)
 	}
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, err := arkapi.NewGeneral(save).ObjectSummary(objectID)
+	summary, err := api.ObjectSummary(objectID)
 	if err != nil {
 		return err
 	}
@@ -536,13 +527,13 @@ func propertyPositions(path string, objectIDArg string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse object uuid: %w", err)
 	}
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, err := arkapi.NewGeneral(save).PropertyPositionSummary(objectID)
+	summary, err := api.PropertyPositionSummary(objectID)
 	if err != nil {
 		return err
 	}
@@ -561,13 +552,13 @@ func propertyPositions(path string, objectIDArg string, out io.Writer) error {
 }
 
 func classLookup(path string, classSubstrings []string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, faults, err := arkapi.NewGeneral(save).ClassLookupSummaryWithFaults(classSubstrings)
+	summary, faults, err := api.ClassLookupSummaryWithFaults(classSubstrings)
 	if err != nil {
 		return err
 	}
@@ -582,13 +573,13 @@ func classLookup(path string, classSubstrings []string, out io.Writer) error {
 }
 
 func classPropertySummary(path string, classSubstring string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, faults, err := arkapi.NewGeneral(save).ClassPropertySummaryWithFaults(classSubstring)
+	summary, faults, err := api.ClassPropertySummaryWithFaults(classSubstring)
 	if err != nil {
 		return err
 	}
@@ -603,13 +594,13 @@ func classPropertySummary(path string, classSubstring string, out io.Writer) err
 }
 
 func propertyFilter(path string, propertyNames []string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	summary, err := arkapi.NewGeneral(save).PropertyFilterSummary(propertyNames)
+	summary, err := api.PropertyFilterSummary(propertyNames)
 	if err != nil {
 		return err
 	}
