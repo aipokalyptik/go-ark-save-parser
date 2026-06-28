@@ -403,6 +403,31 @@ func TestTribeRosterCommandPrintsRosterSummary(t *testing.T) {
 	}
 }
 
+func TestPlayerTribeLinksCommandPrintsRelationSummary(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticPlayerTribeRelationDirectory(t, dir)
+
+	var out bytes.Buffer
+	err := run([]string{"player-tribe-links", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(player-tribe-links) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Players: 3",
+		"Tribes: 2",
+		"Active links: 2",
+		"Inactive members: 2",
+		"Players without tribe: 1",
+		"Tribes with inactive: 2",
+		"Tribes without active: 1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("player-tribe-links output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1862,6 +1887,47 @@ func createSyntheticPlayerInventorySave(t *testing.T, path string) {
 	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(filepath.Dir(path), "42.arkprofile"), testfixtures.PlayerArchiveOptions{
 		PlayerDataID:  42,
 		CharacterName: "Fallback",
+	})
+}
+
+func createSyntheticPlayerTribeRelationDirectory(t *testing.T, dir string) {
+	t.Helper()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+		TribeID:       12345,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		UniqueID:      "eos-scout",
+		TribeID:       12345,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "789.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  77,
+		CharacterName: "Nomad",
+		PlayerName:    "NoTribe",
+		UniqueID:      "eos-nomad",
+		TribeID:       77777,
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout", "Inactive"},
+		MemberIDs: []int32{42, 43, 99},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Sleepers",
+		TribeID:   67890,
+		OwnerID:   88,
+		NumDinos:  0,
+		Members:   []string{"Gone"},
+		MemberIDs: []int32{88},
 	})
 }
 

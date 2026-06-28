@@ -115,6 +115,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("tribe-roster requires a local .ark path or save directory")
 		}
 		return tribeRoster(args[1], out)
+	case "player-tribe-links":
+		if len(args) != 2 {
+			return fmt.Errorf("player-tribe-links requires a local .ark path or save directory")
+		}
+		return playerTribeLinks(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -195,6 +200,7 @@ func usage(out io.Writer) error {
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
   arksave tribe-roster <save.ark-or-directory>
+  arksave player-tribe-links <save.ark-or-directory>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -539,6 +545,31 @@ func tribeRoster(path string, out io.Writer) error {
 		summary.WithNames,
 		summary.Members,
 		summary.Dinos,
+	)
+	return err
+}
+
+func playerTribeLinks(path string, out io.Writer) error {
+	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{})
+	if err != nil {
+		return err
+	}
+	defer closeAPI()
+
+	summary, err := api.TribePlayerRelationSummary()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Players: %d\nTribes: %d\nActive links: %d\nInactive members: %d\nPlayers without tribe: %d\nTribes with inactive: %d\nTribes without active: %d\n",
+		summary.Players,
+		summary.Tribes,
+		summary.ActiveLinks,
+		summary.InactiveMembers,
+		summary.PlayersWithoutTribe,
+		summary.TribesWithInactive,
+		summary.TribesWithoutActive,
 	)
 	return err
 }

@@ -521,6 +521,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `player-inventories`.
   - [x] `player-roster`.
   - [x] `tribe-roster`.
+  - [x] `player-tribe-links`.
   - [x] `players`.
   - [x] `tribes`.
   - [x] `cluster`.

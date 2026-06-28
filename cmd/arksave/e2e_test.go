@@ -215,6 +215,17 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 			}
 		}
 	}
+	if data.ProfileCount > 0 && data.TribeCount > 0 {
+		var linksOut bytes.Buffer
+		if err := run([]string{"player-tribe-links", data.Dir}, &linksOut); err != nil {
+			t.Fatalf("run(player-tribe-links) error = %v", err)
+		}
+		for _, want := range []string{"Players:", "Tribes:", "Active links:", "Inactive members:"} {
+			if !strings.Contains(linksOut.String(), want) {
+				t.Fatalf("player-tribe-links output missing %q", want)
+			}
+		}
+	}
 	if data.TribePath != "" {
 		var tribeOut bytes.Buffer
 		if err := run([]string{"--redact", "tribes", data.TribePath}, &tribeOut); err != nil {
