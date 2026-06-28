@@ -782,51 +782,51 @@ CLI tools, and reusable APIs without losing oracle parity.
 Done when another engineer can build, test, run, and extend the offline parser
 without Python or private chat context.
 
-- [x] README covers install/build, CLI, library use, examples, scope, and
+- [~] README covers install/build, CLI, library use, examples, scope, and
       mutation safety.
-- [x] Supported file types documented: `.ark`, `.arkprofile`, `.arktribe`,
+- [~] Supported file types documented: `.ark`, `.arkprofile`, `.arktribe`,
       local cluster files, and local tribute index files.
-- [x] Unsupported features documented: FTP, RCON, live server integration, and
+- [~] Unsupported features documented: FTP, RCON, live server integration, and
       unsupported legacy archive paths.
-- [x] Mutation APIs documented as experimental and live-server-unverified.
-- [x] Oracle regeneration documented for `~/Downloads/SavedArks.tar.bz2`.
-- [x] Privacy rules and ignored paths documented.
-- [x] Opt-in CLI redaction documented and tested.
-- [x] Standalone Go examples added for implemented offline workflows.
-- [x] Verification commands documented.
-- [x] `go test ./...` passes.
-- [x] `make build` passes.
-- [x] `make verify` passes.
-- [x] CLI and example smoke tests pass on synthetic fixtures.
-- [x] Static/local release binary builds with `CGO_ENABLED=0`.
-- [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
+- [~] Mutation APIs documented as experimental and live-server-unverified.
+- [~] Oracle regeneration documented for `~/Downloads/SavedArks.tar.bz2`.
+- [~] Privacy rules and ignored paths documented.
+- [~] Opt-in CLI redaction documented and tested.
+- [~] Standalone Go examples added for implemented offline workflows.
+- [~] Verification commands documented.
+- [~] `go test ./...` passes.
+- [~] `make build` passes.
+- [~] `make verify` passes.
+- [~] CLI and example smoke tests pass on synthetic fixtures.
+- [~] Static/local release binary builds with `CGO_ENABLED=0`.
+- [~] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
       commands, map/save metadata summaries, object class lists, object
       summaries, property-position metadata, class/property lookup and class
       property summaries, local
       profile/tribe/tribute file handling, and aggregate-output examples
       through `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
-- [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
+- [~] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
       dino, and equipment command/API paths, including ascendant weapon
       blueprint, direct-dino base-stat and heatmap summaries, and
       equipment-owned-by summaries, plus domain JSON export through both
       `arkapi.JSONAPI.ExportDomain` and the CLI
       `export-domain-json` path.
-- [x] CLI and example smoke tests cover generated equipment history manifests
+- [~] CLI and example smoke tests cover generated equipment history manifests
       and explicit JSON report output on synthetic fixtures.
-- [x] Go-only provided-data E2E smoke tests cover bounded structure and base
+- [~] Go-only provided-data E2E smoke tests cover bounded structure and base
       read APIs through structure owner/health summaries, structure CLI
       commands, structure heatmap JSON export, structure owner/location
       examples, and selected-property base component stats without requiring
       full structure/base JSON export in the smoke gate.
-- [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
+- [~] Go-only provided-data E2E smoke tests cover typed local-cluster API and
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
-- [x] Private oracle comparison suite exists and currently records forty-six
+- [~] Private oracle comparison suite exists and currently records forty-six
       passing sanitized comparison cases for selected implemented features.
-- [x] Expanding the private oracle comparison suite to every runnable upstream
+- [~] Expanding the private oracle comparison suite to every runnable upstream
       Python example is intentionally out of scope.
-- [ ] Final production-readiness review after Phase 2 and Phase 3 remaining
-      gaps are closed.
+- [ ] Final production-readiness review after Phase 3 remaining gaps are
+      closed.
 
 ## Monitor Commands
 

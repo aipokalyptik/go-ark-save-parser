@@ -101,17 +101,17 @@ still be updated with implementation commits so progress stays auditable.
 
 | ID | Status | Requirement | Evidence / Remaining Work |
 | --- | --- | --- | --- |
-| P4-DOC-001 | `[x]` | README covers install, build, CLI, library examples, scope, and mutation safety. | README is committed. |
-| P4-DOC-002 | `[x]` | Supported file types and unsupported features are documented. | README and development docs. |
-| P4-DOC-003 | `[x]` | Mutation APIs are documented as experimental and live-server-unverified. | README, docs, and mutation package comments. |
-| P4-DEV-001 | `[x]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | [`development.md`](development.md). |
-| P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`. |
-| P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests. |
-| P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`. |
-| P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests, including equipment history manifest/report output. |
-| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exercises selected read-only APIs, map/save metadata summaries, object class lists, object summaries, property-position metadata, class/property lookup and class property summaries, stackable owned/count, dino base-stat and heatmap summaries, equipment ascendant weapon blueprint and owned-by summaries, dino/equipment domain JSON API/CLI export, bounded structure/base API checks including structure heatmap JSON, CLI commands, local tribute/cluster handling, and examples against configured private/provided data and skips without env vars. |
-| P4-VERIFY-005 | `[x]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
-| P4-REVIEW-001 | `[blocked]` | Final production-readiness review. | Blocked until remaining Phase 2 and Phase 3 parity/refactor gaps are closed. |
+| P4-DOC-001 | `[~]` | README covers install, build, CLI, library examples, scope, and mutation safety. | Ahead-of-phase README evidence exists; final Phase 4 documentation pass waits until Phase 3 closes. |
+| P4-DOC-002 | `[~]` | Supported file types and unsupported features are documented. | Ahead-of-phase README/development docs exist; final Phase 4 support matrix pass waits until Phase 3 closes. |
+| P4-DOC-003 | `[~]` | Mutation APIs are documented as experimental and live-server-unverified. | Ahead-of-phase README/docs/package comments exist; final Phase 4 mutation-safety pass waits until Phase 3 closes. |
+| P4-DEV-001 | `[~]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | Ahead-of-phase [`development.md`](development.md) evidence exists; final developer-doc pass waits until Phase 3 closes. |
+| P4-EX-001 | `[~]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | Ahead-of-phase examples exist; final Phase 4 example completeness pass waits until Phase 3 closes. |
+| P4-VERIFY-001 | `[~]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests during Phase 3 slices; final Phase 4 verification must be rerun after Phase 3 closes. |
+| P4-VERIFY-002 | `[~]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`; final Phase 4 release build must be rerun after Phase 3 closes. |
+| P4-VERIFY-003 | `[~]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests exist, including equipment history manifest/report output; final Phase 4 smoke verification waits until Phase 3 closes. |
+| P4-VERIFY-004 | `[~]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exists for selected read-only APIs and skips without env vars; final provided-data Phase 4 pass waits until Phase 3 closes. |
+| P4-VERIFY-005 | `[~]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; final Phase 4 oracle comparison pass waits until Phase 3 closes, and expanding Python/oracle coverage for every upstream example remains out of scope. |
+| P4-REVIEW-001 | `[ ]` | Final production-readiness review. | Not started; run only after Phase 3 is closed and final Phase 4 docs/verification are refreshed. |
 
 ## Ledger Detail Map
 

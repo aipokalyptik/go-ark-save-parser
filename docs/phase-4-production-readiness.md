@@ -10,44 +10,44 @@ For the cross-phase monitorable checklist, see
 
 Phase 4 is not the active execution phase. The documentation and verification
 items below record useful ahead-of-phase work, but final cleanup and production
-readiness review should wait until Phase 2 and then Phase 3 have been closed or
-explicitly blocked. Keep future documentation edits narrow while Phase 2 is
-active, limited to status tracking and direct support for Go parity work.
+readiness review must wait until Phase 3 is closed. Keep future documentation
+edits narrow while Phase 3 is active, limited to status tracking and direct
+support for Go refactor work.
 
 ## Documentation Tasks
 
-- [x] Write README with build, CLI, library, example, scope, and mutation safety
+- [~] Write README with build, CLI, library, example, scope, and mutation safety
       notes.
-- [x] Document supported file types: `.ark`, `.arkprofile`, `.arktribe`,
+- [~] Document supported file types: `.ark`, `.arkprofile`, `.arktribe`,
       extensionless local cluster files, and local tribute index files.
-- [x] Document unsupported features: FTP, RCON, live server integration, and
+- [~] Document unsupported features: FTP, RCON, live server integration, and
       legacy archive object parsing outside modern archive/local tribute index
       formats.
-- [x] Document mutation APIs as experimental and live-server-unverified.
-- [x] Document oracle regeneration using `~/Downloads/SavedArks.tar.bz2`.
-- [x] Document privacy rules and ignored paths.
-- [x] Document runtime output sensitivity and write JSON/mutation outputs with
+- [~] Document mutation APIs as experimental and live-server-unverified.
+- [~] Document oracle regeneration using `~/Downloads/SavedArks.tar.bz2`.
+- [~] Document privacy rules and ignored paths.
+- [~] Document runtime output sensitivity and write JSON/mutation outputs with
       private file permissions.
-- [x] Add and document opt-in CLI redaction for aggregate summaries and JSON
+- [~] Add and document opt-in CLI redaction for aggregate summaries and JSON
       exports.
-- [x] Add basic large-file guards for whole-file profile, tribe, and local
+- [~] Add basic large-file guards for whole-file profile, tribe, and local
       cluster archive reads.
-- [x] Document how to add new oracle fixtures safely.
-- [x] Add standalone Go examples for implemented offline workflows.
+- [~] Document how to add new oracle fixtures safely.
+- [~] Add standalone Go examples for implemented offline workflows.
 
 ## Verification Tasks
 
-- [x] `go test ./...`
-- [x] `make build`
-- [x] `make verify`
-- [x] `go test ./examples/...`
-- [x] Public local-cluster fixture smoke for `arksave cluster`.
-- [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
-- [x] Optional provided-data smoke for typed local-cluster API/example coverage
+- [~] `go test ./...`
+- [~] `make build`
+- [~] `make verify`
+- [~] `go test ./examples/...`
+- [~] Public local-cluster fixture smoke for `arksave cluster`.
+- [~] Public local-cluster fixture smoke for `arksave export-cluster-json`.
+- [~] Optional provided-data smoke for typed local-cluster API/example coverage
       through `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR`.
-- [x] Synthetic domain JSON export tests for dinos, structures, equipment,
+- [~] Synthetic domain JSON export tests for dinos, structures, equipment,
       stackables, players, tribes, and bases.
-- [x] Private oracle comparison harness for selected implemented read-only Go examples;
+- [~] Private oracle comparison harness for selected implemented read-only Go examples;
       current aggregate status is in `docs/oracle-comparison-summary.md` and
       covers map summary, object classes, save-info JSON export, local
       profile/tribe aggregate counts, local player deaths and unlocked engram
@@ -64,13 +64,13 @@ active, limited to status tracking and direct support for Go parity work.
       structure owner and map-coordinate/connected counts, local cluster JSON
       aggregate counts, local tribute aggregate counts, and tribute JSON
       aggregate counts.
-- [x] Expanding private oracle comparison coverage to every runnable upstream
+- [~] Expanding private oracle comparison coverage to every runnable upstream
       Python example is intentionally out of scope; use existing oracle evidence
       only when it helps selected-feature Go parity.
-- [x] Final review for parser parity, API coverage, privacy, docs, and release
-      readiness. Current review findings are recorded in
-      `docs/production-readiness-review.md`; production readiness is still
-      blocked by the remaining gaps below.
+- [ ] Final review for parser parity, API coverage, privacy, docs, and release
+      readiness. Current ahead-of-phase review findings are recorded in
+      `docs/production-readiness-review.md`; final production readiness still
+      waits for Phase 3 closure and the remaining gaps below.
 
 ## Remaining Production Gaps
 
