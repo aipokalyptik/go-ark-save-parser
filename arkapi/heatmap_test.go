@@ -1,6 +1,11 @@
 package arkapi
 
-import "testing"
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestSummarizeHeatmapCountsNonzeroCellsTotalsAndMax(t *testing.T) {
 	heatmap := [][]int{
@@ -18,5 +23,34 @@ func TestSummarizeHeatmapCountsNonzeroCellsTotalsAndMax(t *testing.T) {
 	}
 	if summary != want {
 		t.Fatalf("SummarizeHeatmap() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestExportDinoHeatmapSummaryJSONFromPathWritesSummary(t *testing.T) {
+	save := openSyntheticDinoHeatmapSaveWithMalformedCryopod(t)
+	defer save.Close()
+	outputPath := filepath.Join(t.TempDir(), "dino-heatmap.json")
+
+	summary, err := ExportDinoHeatmapSummaryJSONFromPath(save.Path(), outputPath, DinoHeatmapOptions{
+		MapName:           "Valguero",
+		Resolution:        100,
+		IncludeCryopodded: false,
+	})
+	if err != nil {
+		t.Fatalf("ExportDinoHeatmapSummaryJSONFromPath() error = %v", err)
+	}
+	if summary.Total != 1 || summary.NonzeroCells != 1 || summary.Faults != 0 {
+		t.Fatalf("ExportDinoHeatmapSummaryJSONFromPath() summary = %#v, want one direct dino without cryopod faults", summary)
+	}
+	raw, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", outputPath, err)
+	}
+	var decoded HeatmapSummary
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded != summary {
+		t.Fatalf("decoded summary = %#v, want returned summary %#v", decoded, summary)
 	}
 }
