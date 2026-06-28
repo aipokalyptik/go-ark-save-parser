@@ -600,6 +600,28 @@ func TestJSONAPIExportAllDomainsWritesManifestAndFiles(t *testing.T) {
 	}
 }
 
+func TestExportAllDomainsFromPathWritesManifestAndFiles(t *testing.T) {
+	save := openSyntheticStackableSave(t)
+	defer save.Close()
+
+	outDir := filepath.Join(t.TempDir(), "exports")
+	manifest, err := ExportAllDomainsFromPath(save.Path(), outDir, []string{"stackables"})
+	if err != nil {
+		t.Fatalf("ExportAllDomainsFromPath() error = %v", err)
+	}
+	if len(manifest.Files) != 2 {
+		t.Fatalf("ExportAllDomainsFromPath() manifest = %#v, want save info and one domain", manifest)
+	}
+	if manifest.Files[0].Name != "save-info.json" || manifest.Files[1].Name != "stackables.json" {
+		t.Fatalf("ExportAllDomainsFromPath() files = %#v", manifest.Files)
+	}
+	for _, name := range []string{"save-info.json", "stackables.json", "manifest.json"} {
+		if _, err := os.Stat(filepath.Join(outDir, name)); err != nil {
+			t.Fatalf("exported %s missing: %v", name, err)
+		}
+	}
+}
+
 func TestJSONAPIExportAllDomainsRejectsUnknownDomain(t *testing.T) {
 	save := openSyntheticStackableSave(t)
 	defer save.Close()

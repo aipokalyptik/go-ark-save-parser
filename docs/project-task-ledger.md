@@ -490,7 +490,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] Require explicit output paths for mutation operations.
   - [ ] Split or further organize large domain models under `arkobject` or
         subpackages once behavior stabilizes.
-  - [~] Replace remaining Python-shaped compatibility helpers where typed Go
+  - [x] Replace remaining Python-shaped compatibility helpers where typed Go
         surfaces now exist:
     - [x] Move `object_summary` and `class_property_summary` direct save
           parsing behind typed `arkapi.GeneralAPI` summary helpers.
@@ -571,11 +571,12 @@ CLI tools, and reusable APIs without losing oracle parity.
           behind typed `arkapi.NewStackableFromPath`.
     - [x] Move `base_components` save-open/close handling behind typed
           `arkapi.NewBaseFromPath`.
-    - [x] Move `export_all_items` domain export loop and manifest writing onto
-          typed `arkapi.JSONAPI.ExportAllDomains`.
-    - [ ] Keep migrating example-local parsing into package APIs when the
-          behavior is reusable rather than the example's core inspection
-          feature.
+    - [x] Move `export_all_items` domain export loop, manifest writing, and
+          save-open/close handling onto typed
+          `arkapi.ExportAllDomainsFromPath`.
+    - [x] Keep remaining low-level example access limited to generic
+          inspection, explicit binary export, and mutation-copy workflows where
+          direct save/file handling is the feature.
 - [~] Performance pass:
   - [x] Add benchmarks for full save open/object enumeration, object parse,
         query filters, and JSON export.
