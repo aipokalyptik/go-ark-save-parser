@@ -157,7 +157,7 @@ evidence, but they are not the active execution target.
       Player API surface.
 - [x] Add fault-preserving local tribute directory reads and expose malformed
       compact tribute index file faults through JSON export and CLI directory
-      output.
+      output, including direct `tribute` directory summaries.
 - [x] Add first local-file cluster archive discovery/loading surface for extensionless
       cluster files.
 - [x] Add read-only local cluster item/dino payload extraction, including
@@ -182,8 +182,8 @@ evidence, but they are not the active execution target.
 - [x] Add fault-preserving local cluster directory reads so one broken cluster
       upload file does not hide other valid local uploads.
 - [x] Expose local cluster directory file faults in JSON export and CLI
-      `export-cluster-json` directory output, with redacted fault paths when
-      requested.
+      `cluster`, `cluster-summary`, and `export-cluster-json` directory output,
+      with redacted fault paths when requested.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

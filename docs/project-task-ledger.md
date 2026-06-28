@@ -197,7 +197,7 @@ documented.
       lookup.
 - [x] Port local tribute discovery/loading, fault-preserving directory reads,
       and JSON/CLI directory fault reporting for malformed local tribute index
-      files.
+      files, including direct `tribute` directory summaries.
 - [x] Port local cluster discovery/loading, uploaded item/dino summaries, typed
       projections, parse-status reporting, and JSON export.
 - [x] Port Structure API class, owner, location, connected-structure, heatmap,
@@ -298,7 +298,8 @@ documented.
   - [x] Add fault-preserving local cluster directory reads so valid cluster
         uploads survive alongside broken local cluster files.
   - [x] Expose local cluster directory file faults in JSON export and CLI
-        `export-cluster-json` directory output.
+        `cluster`, `cluster-summary`, and `export-cluster-json` directory
+        output.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local

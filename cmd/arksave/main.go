@@ -1729,16 +1729,16 @@ func cluster(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, err := arkcluster.OpenDirectory(path)
+		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
 		if err != nil {
 			return err
 		}
 		if len(entries) == 0 {
-			_, err = fmt.Fprintf(out, "Cluster directory: %s\nFiles: 0\n", displayString(path, opts))
+			_, err = fmt.Fprintf(out, "Cluster directory: %s\nFiles: 0\nFile faults: %d\n", displayString(path, opts), len(faults))
 			return err
 		}
 		summary := arkapi.ClusterDirectorySummary(entries)
-		if _, err := fmt.Fprintf(out, "Cluster directory: %s\nFiles: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n\n", displayString(path, opts), summary.Files, summary.Objects, summary.Items, summary.Dinos, summary.ParseErrors); err != nil {
+		if _, err := fmt.Fprintf(out, "Cluster directory: %s\nFiles: %d\nFile faults: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n\n", displayString(path, opts), summary.Files, len(faults), summary.Objects, summary.Items, summary.Dinos, summary.ParseErrors); err != nil {
 			return err
 		}
 		for i, entry := range entries {
@@ -1766,16 +1766,17 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, err := arkcluster.OpenDirectory(path)
+		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
 		if err != nil {
 			return err
 		}
 		summary := arkapi.ClusterDirectorySummary(entries)
 		if _, err := fmt.Fprintf(
 			out,
-			"Cluster directory: %s\nFiles: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
+			"Cluster directory: %s\nFiles: %d\nFile faults: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
 			displayString(path, opts),
 			summary.Files,
+			len(faults),
 			summary.Objects,
 			summary.Items,
 			summary.Dinos,
@@ -1838,12 +1839,17 @@ func tribute(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, err := arktribute.OpenDirectory(path)
+		entries, faults, err := arktribute.OpenDirectoryWithFaults(path)
 		if err != nil {
 			return err
 		}
+		if _, err := fmt.Fprintf(out, "Tribute directory: %s\nFiles: %d\nFile faults: %d\n", displayString(path, opts), len(entries), len(faults)); err != nil {
+			return err
+		}
 		if len(entries) == 0 {
-			_, err = fmt.Fprintf(out, "Tribute directory: %s\nFiles: 0\n", displayString(path, opts))
+			return nil
+		}
+		if _, err := fmt.Fprintln(out); err != nil {
 			return err
 		}
 		for i, entry := range entries {

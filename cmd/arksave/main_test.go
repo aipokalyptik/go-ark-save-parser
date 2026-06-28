@@ -1326,6 +1326,32 @@ func TestClusterCommandPrintsDirectoryAggregateSummary(t *testing.T) {
 	}
 }
 
+func TestClusterCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not a cluster archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"cluster", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster directory:",
+		"Files: 1",
+		"File faults: 1",
+		"Objects: 1",
+		"Cluster file:",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
 	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
@@ -1372,6 +1398,33 @@ func TestClusterSummaryCommandPrintsDirectoryTypedAggregate(t *testing.T) {
 		"Items: 0",
 		"Dinos: 0",
 		"Parse errors: 0",
+		"Dino item uploads: 0",
+		"Parsed dinos: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster-summary directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestClusterSummaryCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not a cluster archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"cluster-summary", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(cluster-summary directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cluster directory:",
+		"Files: 1",
+		"File faults: 1",
+		"Objects: 1",
 		"Dino item uploads: 0",
 		"Parsed dinos: 0",
 	} {
@@ -1550,6 +1603,33 @@ func TestTributeCommandPrintsLocalTributeSummary(t *testing.T) {
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("tribute output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestTributeCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, []uint64{22})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
+		t.Fatalf("write broken tribute file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"tribute", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(tribute directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Tribute directory:",
+		"Files: 1",
+		"File faults: 1",
+		"Tribute file:",
+		"Player data IDs: 1",
+		"Tribe data IDs: 1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("tribute directory output %q does not contain %q", got, want)
 		}
 	}
 }
