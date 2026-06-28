@@ -95,6 +95,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dinos requires a local .ark path")
 		}
 		return dinos(args[1], out)
+	case "dino-wild-tamables":
+		if len(args) != 2 {
+			return fmt.Errorf("dino-wild-tamables requires a local .ark path")
+		}
+		return dinoWildTamables(args[1], out)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -201,6 +206,7 @@ func usage(out io.Writer) error {
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
   arksave base-components <save.ark>
   arksave dinos <save.ark>
+  arksave dino-wild-tamables <save.ark>
   arksave equipment-summary <save.ark>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
@@ -451,6 +457,27 @@ func dinos(path string, out io.Writer) error {
 		summary.Wild,
 		summary.Cryopodded,
 		summary.Classes,
+		len(faults),
+	)
+	return err
+}
+
+func dinoWildTamables(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewDino(save).WildTamableSummaryWithFaults()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Wild dinos: %d\nWild tamables: %d\nParse faults: %d\n",
+		summary.WildDinos,
+		summary.WildTamables,
 		len(faults),
 	)
 	return err

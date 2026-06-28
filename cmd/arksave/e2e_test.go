@@ -87,6 +87,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var wildTamablesOut bytes.Buffer
+	if err := run([]string{"dino-wild-tamables", data.SavePath}, &wildTamablesOut); err != nil {
+		t.Fatalf("run(dino-wild-tamables) error = %v", err)
+	}
+	for _, want := range []string{"Wild dinos:", "Wild tamables:", "Parse faults:"} {
+		if !strings.Contains(wildTamablesOut.String(), want) {
+			t.Fatalf("dino-wild-tamables output missing %q", want)
+		}
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)

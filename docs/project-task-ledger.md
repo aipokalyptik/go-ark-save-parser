@@ -517,6 +517,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `structure-owner-locations`.
   - [x] `base-components`.
   - [x] `dinos`.
+  - [x] `dino-wild-tamables`.
   - [x] `equipment-summary`.
   - [x] `player-inventories`.
   - [x] `player-roster`.

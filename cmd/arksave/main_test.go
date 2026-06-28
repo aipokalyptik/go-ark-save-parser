@@ -278,6 +278,27 @@ func TestDinosCommandPrintsPopulationSummary(t *testing.T) {
 	}
 }
 
+func TestDinoWildTamablesCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dinos.ark")
+	createSyntheticDinoSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-wild-tamables", path}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-wild-tamables) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Wild dinos: 1",
+		"Wild tamables: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-wild-tamables output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
