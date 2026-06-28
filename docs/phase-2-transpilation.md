@@ -365,6 +365,8 @@ evidence, but they are not the active execution target.
       base aggregates.
 - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
       broken local archives do not hide other valid player or tribe records.
+- [x] Add fault-returning player roster, player-all, and tribe roster summaries
+      for partial local archive batches.
 - [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
       Base, richer local cluster item/dino domain models, and remaining
       model-specific JSON API edge behavior.

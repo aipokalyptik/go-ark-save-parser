@@ -653,6 +653,34 @@ func TestPlayerAPIPlayerRosterSummaryForPlayers(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerRosterSummaryWithFaultsKeepsValidLocalProfiles(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		ExtraCharacterLevel: 4,
+	})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arkprofile"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken profile: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	summary, faults, err := api.PlayerRosterSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("PlayerRosterSummaryWithFaults() error = %v", err)
+	}
+	want := PlayerRosterSummary{Players: 1, WithNames: 1, HighestLevel: 5}
+	if summary != want {
+		t.Fatalf("PlayerRosterSummaryWithFaults() summary = %#v, want %#v", summary, want)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("PlayerRosterSummaryWithFaults() faults = %#v, want one profile fault", faults)
+	}
+}
+
 func TestPlayerAPIPlayerAllSummaryForData(t *testing.T) {
 	api := NewPlayer(nil)
 	players := []arkobject.Player{
@@ -687,6 +715,44 @@ func TestPlayerAPIPlayerAllSummaryForData(t *testing.T) {
 	}
 }
 
+func TestPlayerAPIPlayerAllSummaryWithFaultsKeepsValidLocalPlayersAndTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:      42,
+		CharacterName:     "Survivor",
+		NumDeaths:         3,
+		UnlockedEngrams:   []string{"EngramA", "EngramB"},
+		ExperiencePoints:  10,
+		TotalEngramPoints: 5,
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:    "Porters",
+		TribeID: 12345,
+	})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arkprofile"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken profile: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktribe"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken tribe: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	summary, faults, err := api.PlayerAllSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("PlayerAllSummaryWithFaults() error = %v", err)
+	}
+	want := PlayerAllSummary{Players: 1, Tribes: 1, HighestLevel: 1, TotalDeaths: 3, UnlockedEngrams: 2}
+	if summary != want {
+		t.Fatalf("PlayerAllSummaryWithFaults() summary = %#v, want %#v", summary, want)
+	}
+	if len(faults) != 2 {
+		t.Fatalf("PlayerAllSummaryWithFaults() faults = %#v, want two local faults", faults)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{
@@ -698,6 +764,35 @@ func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	want := TribeRosterSummary{Tribes: 2, WithNames: 1, Members: 3, Dinos: 10}
 	if summary != want {
 		t.Fatalf("TribeRosterSummaryForTribes() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestPlayerAPITribeRosterSummaryWithFaultsKeepsValidLocalTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		NumDinos:  7,
+		MemberIDs: []int32{42, 43},
+	})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktribe"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken tribe: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	summary, faults, err := api.TribeRosterSummaryWithFaults()
+	if err != nil {
+		t.Fatalf("TribeRosterSummaryWithFaults() error = %v", err)
+	}
+	want := TribeRosterSummary{Tribes: 1, WithNames: 1, Members: 2, Dinos: 7}
+	if summary != want {
+		t.Fatalf("TribeRosterSummaryWithFaults() summary = %#v, want %#v", summary, want)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("TribeRosterSummaryWithFaults() faults = %#v, want one tribe fault", faults)
 	}
 }
 

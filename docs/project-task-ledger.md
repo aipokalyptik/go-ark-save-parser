@@ -311,6 +311,8 @@ documented.
         helpers through the `local_profiles` example smoke test.
   - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
         valid local player/tribe records survive alongside broken archive files.
+  - [x] Add fault-returning player roster, player-all, and tribe roster summary
+        helpers so local batch summaries can report partial data explicitly.
   - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
         offline examples expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.

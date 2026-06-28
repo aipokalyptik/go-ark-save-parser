@@ -319,6 +319,14 @@ func (p *PlayerAPI) PlayerRosterSummary() (PlayerRosterSummary, error) {
 	return p.PlayerRosterSummaryForPlayers(players), nil
 }
 
+func (p *PlayerAPI) PlayerRosterSummaryWithFaults() (PlayerRosterSummary, []arksave.FaultyObjectInfo, error) {
+	players, faults, err := p.PlayersWithFaults()
+	if err != nil {
+		return PlayerRosterSummary{}, nil, err
+	}
+	return p.PlayerRosterSummaryForPlayers(players), faults, nil
+}
+
 func (p *PlayerAPI) PlayerRosterSummaryForPlayers(players []arkobject.Player) PlayerRosterSummary {
 	summary := PlayerRosterSummary{Players: len(players)}
 	for _, player := range players {
@@ -342,6 +350,20 @@ func (p *PlayerAPI) PlayerAllSummary() (PlayerAllSummary, error) {
 		return PlayerAllSummary{}, err
 	}
 	return p.PlayerAllSummaryForData(players, tribes), nil
+}
+
+func (p *PlayerAPI) PlayerAllSummaryWithFaults() (PlayerAllSummary, []arksave.FaultyObjectInfo, error) {
+	players, playerFaults, err := p.PlayersWithFaults()
+	if err != nil {
+		return PlayerAllSummary{}, nil, err
+	}
+	tribes, tribeFaults, err := p.TribeDetailsWithFaults()
+	if err != nil {
+		return PlayerAllSummary{}, nil, err
+	}
+	faults := append([]arksave.FaultyObjectInfo{}, playerFaults...)
+	faults = append(faults, tribeFaults...)
+	return p.PlayerAllSummaryForData(players, tribes), faults, nil
 }
 
 func (p *PlayerAPI) PlayerAllSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe) PlayerAllSummary {
@@ -1079,6 +1101,14 @@ func (p *PlayerAPI) TribeRosterSummary() (TribeRosterSummary, error) {
 		return TribeRosterSummary{}, err
 	}
 	return p.TribeRosterSummaryForTribes(tribes), nil
+}
+
+func (p *PlayerAPI) TribeRosterSummaryWithFaults() (TribeRosterSummary, []arksave.FaultyObjectInfo, error) {
+	tribes, faults, err := p.TribeDetailsWithFaults()
+	if err != nil {
+		return TribeRosterSummary{}, nil, err
+	}
+	return p.TribeRosterSummaryForTribes(tribes), faults, nil
 }
 
 func (p *PlayerAPI) TribeRosterSummaryForTribes(tribes []arkobject.Tribe) TribeRosterSummary {
