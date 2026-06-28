@@ -467,8 +467,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.EquipmentAPI` fault-collecting best-item helpers.
     - [x] Move `equipment_ascendant_weapon_bps` count/max-damage aggregation
           onto existing typed `arkapi.EquipmentAPI.SummaryWithFaults`.
-    - [x] Move `equipment_history` snapshot identity and diff logic onto typed
-          `arkapi` equipment history helpers.
+    - [x] Move `equipment_history` snapshot identity, diff logic, manifest
+          reading, and report assembly onto typed `arkapi` equipment history
+          helpers.
     - [x] Move `equipment_owned_by` owner filtering and max damage aggregation
           onto typed `arkapi.EquipmentAPI.OwnedSummaryWithFaults`.
     - [x] Move saddle max-armor and wild-tamed max-level example aggregation

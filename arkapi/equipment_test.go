@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -844,6 +845,32 @@ func TestDiffEquipmentHistorySnapshotsCountsAddedAndRemoved(t *testing.T) {
 	added, removed := DiffEquipmentHistorySnapshots(previous, current)
 	if added != 1 || removed != 1 {
 		t.Fatalf("DiffEquipmentHistorySnapshots() = %d, %d; want 1, 1", added, removed)
+	}
+}
+
+func TestEquipmentHistoryReportFromManifestPathBuildsStableReport(t *testing.T) {
+	save := openSyntheticEquipmentSave(t)
+	defer save.Close()
+
+	manifestPath := filepath.Join(t.TempDir(), "equipment-history.json")
+	paths := []string{save.Path(), save.Path()}
+	data, err := json.Marshal(paths)
+	if err != nil {
+		t.Fatalf("Marshal() error = %v", err)
+	}
+	if err := os.WriteFile(manifestPath, data, 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	report, err := EquipmentHistoryReportFromManifestPath(manifestPath)
+	if err != nil {
+		t.Fatalf("EquipmentHistoryReportFromManifestPath() error = %v", err)
+	}
+	if report.Saves != 2 || report.InitialCount != 1 || report.FinalCount != 1 {
+		t.Fatalf("EquipmentHistoryReportFromManifestPath() counts = %#v, want two saves and one stable item", report)
+	}
+	if len(report.Changes) != 0 {
+		t.Fatalf("EquipmentHistoryReportFromManifestPath() changes = %#v, want no changes for identical saves", report.Changes)
 	}
 }
 
