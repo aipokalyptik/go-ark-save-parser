@@ -8,10 +8,9 @@ For the cross-phase monitorable checklist, see
 
 ## Current Status
 
-Phase 3 is not the active execution phase. The package shape and refactor tasks
-below document ahead-of-phase work that already exists, but new refactor and CLI
-polish should wait until Phase 2 literal Go parity is closed or explicitly
-blocked.
+Phase 3 is the active execution phase. Refactor slices should preserve the
+closed Phase 2 behavior, keep tests passing, and avoid reopening Python oracle
+expansion unless a new Go failure exposes a concrete offline parity defect.
 
 ## Current Package Shape
 

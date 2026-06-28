@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
 )
@@ -76,6 +77,25 @@ func TributeDirectorySummaryFromPath(path string) (TributeDirectoryInfo, error) 
 		return TributeDirectoryInfo{}, err
 	}
 	return ExportTributeDirectoryDataWithFaults(entries, faults), nil
+}
+
+func ExportTributePathJSON(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if info.IsDir() {
+		summary, err := TributeDirectorySummaryFromPath(path)
+		if err != nil {
+			return nil, err
+		}
+		return json.MarshalIndent(summary, "", "  ")
+	}
+	summary, err := TributeSummaryFromPath(path)
+	if err != nil {
+		return nil, err
+	}
+	return json.MarshalIndent(summary, "", "  ")
 }
 
 func ExportTributeDataJSON(data *arktribute.Data) ([]byte, error) {

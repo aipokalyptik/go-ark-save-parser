@@ -504,6 +504,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           typed `arkapi.NewPlayerFromPath`.
     - [x] Move `local_tribute` file/directory aggregate counting behind typed
           `arkapi` tribute summary helpers.
+    - [x] Move `tribute_json` file/directory JSON selection behind typed
+          `arkapi.ExportTributePathJSON` so examples reuse fault-preserving
+          directory handling.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed

@@ -3,6 +3,7 @@ package arkapi
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -103,6 +104,29 @@ func TestTributeSummaryFromPathReadsFileOrDirectory(t *testing.T) {
 	if dirInfo.Files[0].PlayerDataCount+dirInfo.Files[1].PlayerDataCount != 3 ||
 		dirInfo.Files[0].TribeDataCount+dirInfo.Files[1].TribeDataCount != 3 {
 		t.Fatalf("TributeDirectorySummaryFromPath() counts = %#v", dirInfo)
+	}
+}
+
+func TestExportTributePathJSONReadsDirectoryWithFaults(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
+		t.Fatalf("write broken tribute file: %v", err)
+	}
+
+	raw, err := ExportTributePathJSON(dir)
+	if err != nil {
+		t.Fatalf("ExportTributePathJSON(directory) error = %v", err)
+	}
+	var decoded TributeDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].PlayerDataCount != 1 {
+		t.Fatalf("decoded directory = %#v, want one valid tribute file", decoded)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Error == "" {
+		t.Fatalf("decoded directory faults = %#v, want malformed file fault", decoded.Faults)
 	}
 }
 
