@@ -20,14 +20,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewStackableFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, err := api.ByClassOwnedSummary([]string{os.Args[2]}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
+	summary, err := arkapi.StackableOwnedSummaryFromPath(os.Args[1], []string{os.Args[2]}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read stackables: %v\n", err)
 		os.Exit(1)

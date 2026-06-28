@@ -13,14 +13,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewStackableFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, err := api.ByClassSummary(os.Args[2:])
+	summary, err := arkapi.StackableSummaryFromPath(os.Args[1], os.Args[2:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read stackables: %v\n", err)
 		os.Exit(1)

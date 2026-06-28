@@ -30,6 +30,37 @@ func NewStackableFromPath(savePath string) (*StackableAPI, func() error, error) 
 	return NewStackable(save), save.Close, nil
 }
 
+func StackableSummaryFromPath(savePath string, blueprints []string) (StackableSummary, error) {
+	api, closeAPI, err := NewStackableFromPath(savePath)
+	if err != nil {
+		return StackableSummary{}, err
+	}
+	defer closeAPI()
+	return api.ByClassSummary(blueprints)
+}
+
+func StackableSummaryFromPathWithFaults(savePath string) (StackableSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStackableFromPath(savePath)
+	if err != nil {
+		return StackableSummary{}, nil, err
+	}
+	defer closeAPI()
+	items, faults, err := api.AllStackablesWithFaults()
+	if err != nil {
+		return StackableSummary{}, nil, err
+	}
+	return api.StackableSummaryForItems(items), faults, nil
+}
+
+func StackableOwnedSummaryFromPath(savePath string, blueprints []string, owner arkobject.ObjectOwner) (StackableSummary, error) {
+	api, closeAPI, err := NewStackableFromPath(savePath)
+	if err != nil {
+		return StackableSummary{}, err
+	}
+	defer closeAPI()
+	return api.ByClassOwnedSummary(blueprints, owner)
+}
+
 func (s *StackableAPI) IsApplicableBlueprint(blueprint string) bool {
 	return strings.Contains(blueprint, "Resources/PrimalItemResource") ||
 		strings.Contains(blueprint, "/PrimalItemConsumable") ||

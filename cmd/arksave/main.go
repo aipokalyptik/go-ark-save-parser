@@ -1270,18 +1270,10 @@ func equipmentOwnedBy(path string, blueprint string, tribeIDArg string, out io.W
 }
 
 func stackables(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	summary, faults, err := arkapi.StackableSummaryFromPathWithFaults(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
-
-	api := arkapi.NewStackable(save)
-	items, faults, err := api.AllStackablesWithFaults()
-	if err != nil {
-		return err
-	}
-	summary := api.StackableSummaryForItems(items)
 	_, err = fmt.Fprintf(
 		out,
 		"Stackable items: %d\nTotal quantity: %d\nParse faults: %d\n",
@@ -1297,13 +1289,7 @@ func stackableOwnedBy(path string, blueprint string, tribeIDArg string, out io.W
 	if err != nil {
 		return fmt.Errorf("parse tribe id: %w", err)
 	}
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, err := arkapi.NewStackable(save).ByClassOwnedSummary([]string{blueprint}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
+	summary, err := arkapi.StackableOwnedSummaryFromPath(path, []string{blueprint}, arkobject.ObjectOwner{TribeID: int32(tribeID64)})
 	if err != nil {
 		return err
 	}

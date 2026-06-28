@@ -591,6 +591,11 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath`,
           `arkapi.EquipmentSaddleSummaryFromPath`, and
           `arkapi.EquipmentOwnedSummaryFromPath`.
+    - [x] Add path-level typed stackable aggregate, fault-preserving
+          aggregate, and owned-by summaries through
+          `arkapi.StackableSummaryFromPath`,
+          `arkapi.StackableSummaryFromPathWithFaults`, and
+          `arkapi.StackableOwnedSummaryFromPath`.
     - [x] Move repeated pure StructureAPI example save-open/close handling
           behind typed `arkapi.NewStructureFromPath`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed

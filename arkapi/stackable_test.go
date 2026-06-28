@@ -266,6 +266,55 @@ func TestStackableAPIByClassOwnedSummaryUsesTypedStackables(t *testing.T) {
 	}
 }
 
+func TestStackableSummaryFromPathHelpersReturnTypedSummaries(t *testing.T) {
+	save := openSyntheticStackableOwnedByStructureSave(t)
+	defer save.Close()
+
+	blueprint := "Blueprint'/Game/PrimalEarth/CoreBlueprints/Resources/PrimalItemResource_Stone.PrimalItemResource_Stone_C'"
+	summary, err := StackableSummaryFromPath(save.Path(), []string{blueprint})
+	if err != nil {
+		t.Fatalf("StackableSummaryFromPath() error = %v", err)
+	}
+	wantAll := StackableSummary{Items: 2, TotalQuantity: 200}
+	if summary != wantAll {
+		t.Fatalf("StackableSummaryFromPath() = %#v, want %#v", summary, wantAll)
+	}
+
+	owned, err := StackableOwnedSummaryFromPath(save.Path(), []string{blueprint}, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("StackableOwnedSummaryFromPath() error = %v", err)
+	}
+	wantOwned := StackableSummary{Items: 1, TotalQuantity: 100}
+	if owned != wantOwned {
+		t.Fatalf("StackableOwnedSummaryFromPath() = %#v, want %#v", owned, wantOwned)
+	}
+
+	missing, err := StackableOwnedSummaryFromPath(save.Path(), []string{blueprint}, arkobject.ObjectOwner{TribeID: 777})
+	if err != nil {
+		t.Fatalf("StackableOwnedSummaryFromPath(missing owner) error = %v", err)
+	}
+	if missing != (StackableSummary{}) {
+		t.Fatalf("StackableOwnedSummaryFromPath(missing owner) = %#v, want zero summary", missing)
+	}
+}
+
+func TestStackableSummaryFromPathWithFaultsReportsParseFaults(t *testing.T) {
+	save := openSyntheticStackableSaveWithFault(t)
+	defer save.Close()
+
+	summary, faults, err := StackableSummaryFromPathWithFaults(save.Path())
+	if err != nil {
+		t.Fatalf("StackableSummaryFromPathWithFaults() error = %v", err)
+	}
+	want := StackableSummary{Items: 1, TotalQuantity: 100}
+	if summary != want {
+		t.Fatalf("StackableSummaryFromPathWithFaults() = %#v, want %#v", summary, want)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("StackableSummaryFromPathWithFaults() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestStackableAPIFilterOwnedByIgnoresMalformedUnrelatedContainers(t *testing.T) {
 	save := openSyntheticStackableOwnedByStructureSaveWithFault(t)
 	defer save.Close()

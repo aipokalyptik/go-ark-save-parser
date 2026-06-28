@@ -99,6 +99,11 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.EquipmentSaddleSummaryFromPath`, and
       `arkapi.EquipmentOwnedSummaryFromPath` so equipment aggregate examples
       can use typed path helpers without manual save lifecycle handling.
+- [x] Add `arkapi.StackableSummaryFromPath` and
+      `arkapi.StackableSummaryFromPathWithFaults` plus
+      `arkapi.StackableOwnedSummaryFromPath` so stackable aggregate examples
+      and CLI commands can use typed path helpers without manual save lifecycle
+      handling.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.
