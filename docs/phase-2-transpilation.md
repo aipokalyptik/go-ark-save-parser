@@ -176,6 +176,8 @@ evidence, but they are not the active execution target.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
       summaries in JSON and CLI output.
+- [x] Add fault-preserving local cluster directory reads so one broken cluster
+      upload file does not hide other valid local uploads.
 - [x] Add offline CLI summary for local cluster files and directories.
 - [x] Port local-file Player and Tribe APIs for parsed profiles/tribes,
       directory discovery, local cluster/tribute indexing, lookup filters, and

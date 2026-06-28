@@ -73,6 +73,27 @@ func TestOpenDirectoryRejectsClusterArchiveAboveConfiguredLimit(t *testing.T) {
 	}
 }
 
+func TestOpenDirectoryWithFaultsKeepsValidClusterFiles(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "EOS_valid")
+	brokenPath := filepath.Join(dir, "EOS_broken")
+	testfixtures.WriteArchive(t, validPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(brokenPath, []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	entries, faults, err := OpenDirectoryWithFaults(dir)
+	if err != nil {
+		t.Fatalf("OpenDirectoryWithFaults() error = %v", err)
+	}
+	if len(entries) != 1 || entries[0].ID != "EOS_valid" {
+		t.Fatalf("OpenDirectoryWithFaults() entries = %#v, want valid cluster only", entries)
+	}
+	if len(faults) != 1 || faults[0].Path != brokenPath || faults[0].Err == nil {
+		t.Fatalf("OpenDirectoryWithFaults() faults = %#v, want broken path fault", faults)
+	}
+}
+
 func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
 	var item bytes.Buffer
