@@ -33,6 +33,30 @@ func TestStructureAPIGetAllParsesStructureObjects(t *testing.T) {
 	}
 }
 
+func TestNewStructureFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticStructureSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewStructureFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewStructureFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	structures, err := api.All()
+	if err != nil {
+		t.Fatalf("All() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	got, ok := structures[id]
+	if !ok {
+		t.Fatalf("All() missing structure %s: %#v", id, structures)
+	}
+	if got.ID != 123 || got.Owner.TribeID != 555 || got.Location == nil {
+		t.Fatalf("Structure = %#v, want synthetic structure", got)
+	}
+}
+
 func TestStructureAPIExportBinaryWritesStructureRowsAndManifest(t *testing.T) {
 	save := openSyntheticStructureSave(t)
 	defer save.Close()

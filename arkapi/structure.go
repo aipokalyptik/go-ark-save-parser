@@ -88,6 +88,14 @@ func NewStructure(save *arksave.Save) *StructureAPI {
 	return &StructureAPI{save: save}
 }
 
+func NewStructureFromPath(savePath string) (*StructureAPI, func() error, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewStructure(save), save.Close, nil
+}
+
 func (s *StructureAPI) All() (map[uuid.UUID]arkobject.Structure, error) {
 	objects, err := s.save.ParsedObjects(func(info arksave.ObjectClassInfo) bool {
 		return isStructureBlueprint(info.ClassName)
