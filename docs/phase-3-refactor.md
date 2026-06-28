@@ -33,8 +33,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       coercion helpers are now separated. Dino construction, colors, lineage,
       traits, and shared object-property coercion helpers are also separated;
       player, tribe, and shared profile property helpers are separated; local
-      cluster item, dino, and class-name helpers are separated; structure,
-      stackable, and inventory data remain.
+      cluster item, dino, and class-name helpers are separated; inventory
+      collection, inventory item, stackable item, and shared reference helpers
+      are separated; structure data remains.
 - [x] Add first typed local player/tribe lookup layer for player data IDs, tribe
       IDs, parsed player summaries, and parsed tribe detail objects.
 - [x] Add typed dino stat and mutation selection helpers for best-stat and

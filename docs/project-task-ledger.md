@@ -496,8 +496,10 @@ CLI tools, and reusable APIs without losing oracle parity.
         package-shape regression tests; player, tribe, and shared profile
         property helpers are split with package-shape regression coverage;
         cluster item, dino, and class-name helpers are split with
-        package-shape regression coverage, while broader structure, stackable,
-        and inventory model splits remain.
+        package-shape regression coverage; inventory collection, inventory
+        item, stackable item, and shared reference helpers are split with
+        package-shape regression coverage, while the broader structure model
+        split remains.
   - [x] Replace remaining Python-shaped compatibility helpers where typed Go
         surfaces now exist:
     - [x] Move `object_summary` and `class_property_summary` direct save

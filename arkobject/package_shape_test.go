@@ -91,3 +91,26 @@ func TestArkObjectClusterModelsAreSplitByResponsibility(t *testing.T) {
 		t.Fatalf("cluster.go has %d lines, want <= 80 after responsibility split", lines)
 	}
 }
+
+func TestArkObjectInventoryModelsAreSplitByResponsibility(t *testing.T) {
+	for _, path := range []string{
+		"inventory.go",
+		"inventory_item.go",
+		"stackable.go",
+		"reference_values.go",
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("expected arkobject inventory split file %s: %v", path, err)
+		}
+	}
+
+	for _, path := range []string{"inventory.go", "inventory_item.go", "stackable.go"} {
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		if lines := strings.Count(string(contents), "\n"); lines > 90 {
+			t.Fatalf("%s has %d lines, want <= 90 after responsibility split", path, lines)
+		}
+	}
+}
