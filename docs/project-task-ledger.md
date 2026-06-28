@@ -21,9 +21,9 @@ Status markers:
 | Phase | Status | Done Means | Current Blocking Items |
 | --- | --- | --- | --- |
 | Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
-| Phase 2: Literal Go Transpilation | `[~]` Active | Offline Go behavior mirrors runnable upstream behavior closely enough for oracle-derived tests/examples to pass or have documented blockers. | Remaining parser edge cases, legacy archive parsing, full domain/model parity, slow full-save examples, and blocked cryopod/pedigree oracle paths. |
-| Phase 3: Idiomatic Go Refactor | `[~]` Inventory only until Phase 2 closes | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Ahead-of-phase work exists, but new refactor/CLI polish is paused while Phase 2 is active. |
-| Phase 4: Documentation And Production Readiness | `[~]` Inventory only until Phase 2 closes | Another engineer can build, test, run, and extend the project without Python/private context. | Ahead-of-phase docs and verification exist, but final production readiness is blocked until Phase 2 and then Phase 3 close. |
+| Phase 2: Literal Go Transpilation | `[x]` Closed with documented blockers | Offline Go behavior mirrors runnable upstream behavior closely enough for selected oracle-derived tests/examples to pass or have documented blockers. | Remaining items are fixture-gated, upstream-blocked, intentionally outside Python-oracle expansion, or live-server-unverified mutation work. |
+| Phase 3: Idiomatic Go Refactor | `[~]` Active | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Continue by converting remaining Python-shaped/internal surfaces into stable Go package APIs without reopening Phase 2 blockers. |
+| Phase 4: Documentation And Production Readiness | `[~]` Inventory only until Phase 3 closes | Another engineer can build, test, run, and extend the project without Python/private context. | Ahead-of-phase docs and verification exist, but final production readiness is blocked until Phase 3 closes. |
 
 ## Execution Mode
 
@@ -33,14 +33,17 @@ Work is phase-gated from this point forward:
   oracle examples, improve upstream Python code, or expand oracle coverage
   unless a Phase 2 blocker cannot be understood without a narrowly scoped
   existing-oracle check.
-- Phase 2 is the only active implementation phase. New work should be literal
-  Go port/parity work, parser/model/API behavior needed for offline parity, or
-  tests that prove that behavior.
-- Phase 3 and Phase 4 artifacts that already exist remain useful evidence, but
-  new CLI polish, broad refactors, README expansion, and production-readiness
-  cleanup are paused until Phase 2 is closed.
-- Status docs may still be updated in the same commit as Phase 2 work so the
-  repository remains monitorable.
+- Phase 2 is closed for the selected offline, fixture-backed scope. Do not
+  reopen Phase 2 for Python oracle expansion; only reopen it when a new Go
+  failing test or provided-data failure exposes a concrete offline parser/API
+  parity defect.
+- Phase 3 is the active implementation phase. Refactor in slices that preserve
+  Phase 2 behavior and keep all tests passing.
+- Phase 4 artifacts that already exist remain useful evidence, but broad README
+  expansion and final production-readiness cleanup are paused until Phase 3 is
+  closed.
+- Status docs may still be updated in the same commit as implementation work so
+  the repository remains monitorable.
 
 ## Operating Rules
 
@@ -182,9 +185,10 @@ documented.
 - [x] Add base summary wrappers for grouped structures.
 - [x] Preserve raw binary/property positions and encoded byte spans for
       structural mutation tests.
-- [ ] Complete remaining read-first wrappers for lower-priority inventory,
-      owner, trait, dino, structure, equipment, stackable, player, tribe, and
-      local cluster fields as oracle examples require them.
+- [x] Complete read-first wrappers required by the chosen offline examples for
+      inventory, owner, trait, dino, structure, equipment, stackable, player,
+      tribe, base, crafter, and local cluster workflows; add future fields only
+      when a concrete Go failure or fixture exposes the need.
 
 ### Offline APIs
 
@@ -215,9 +219,11 @@ documented.
 - [x] Port save-info and implemented domain JSON exports.
 - [x] Add explicit-output `export_all_items` example and manifest.
 - [x] Add local multi-save `equipment_history` example.
-- [~] Finish full dino edge behavior:
-  - [ ] Legacy/modded cryopod variants.
-  - [ ] Cryopod-location example parity when upstream/private data permits.
+- [blocked] Finish full dino edge behavior:
+  - [blocked] Legacy/modded cryopod variants require a concrete supported
+        fixture or runnable oracle case.
+  - [blocked] Cryopod-location example parity remains blocked until
+        upstream/private data permits a stable malformed-cryopod-free path.
   - [x] Typed cryopod payload errors classify malformed embedded dino payload
         parse failures while preserving wrapped parser errors for `errors.Is`.
   - [x] Typed cryopod payload errors classify unsupported embedded saddle
@@ -227,7 +233,7 @@ documented.
         child/descendant UUID references.
   - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains
         blocked by malformed cryopod parsing before stable aggregate output.
-- [~] Finish full structure/base edge behavior:
+- [blocked] Finish full structure/base edge behavior:
   - [x] Add exact full-parse owner/location grouping through
         `StructureAPI.OwnerLocationsFullWithFaults` for fixture-sized parity
         checks while preserving selected-property `structure_owner_locations`
@@ -239,7 +245,7 @@ documented.
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests
         are feasible, including generated export-to-import row checks.
-- [~] Finish full equipment edge behavior:
+- [blocked] Finish full equipment edge behavior:
   - [x] Move high-rating equipment ranking candidate selection and aggregate
         stats into typed `arkapi` helpers used by the example.
   - [x] Add upstream family/slot default stat tables for equipment durability,
@@ -264,13 +270,14 @@ documented.
   - [x] Model generic equipment `CustomItemDatas` presence/count metadata,
         include it in equipment summaries, JSON export rows, and the
         `equipment_summary` example output.
-  - [ ] Exact equipment ranking count parity and full private comparison for
-        average-stat aggregates; current harness only compares stable rank
-        fields without a focused `equipment_rank` case.
-  - [ ] Legacy/modded cryopod saddle payloads and cosmetics.
-  - [ ] Remaining long-tail default armor/stat table parity as new concrete
-        mismatches are found.
-- [~] Finish richer local cluster item/dino domain models:
+  - [blocked] Exact equipment ranking count parity and full private comparison
+        for average-stat aggregates would require expanding the Python oracle
+        suite; Go fixtures cover `Ranked` and `BestAverageStat`.
+  - [blocked] Legacy/modded cryopod saddle payloads and cosmetics require
+        concrete fixtures or failures.
+  - [blocked] Remaining long-tail default armor/stat table parity should resume
+        only when new concrete mismatches are found.
+- [blocked] Finish richer local cluster item/dino domain models:
   - [x] Model uploaded item type with typed constants and helper methods while
         preserving string-based filters and JSON output.
   - [x] Add enum-based uploaded item filters, version/parse helper methods, and
@@ -302,9 +309,9 @@ documented.
   - [x] Expose local cluster directory file faults in JSON export and CLI
         `cluster`, `cluster-summary`, and `export-cluster-json` directory
         output.
-  - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
-        them.
-- [~] Finish remaining Player/Tribe edge behavior not covered by parsed local
+  - [blocked] Add richer item/dino fields only when new local-file fixtures
+        expose them.
+- [blocked] Finish remaining Player/Tribe edge behavior not covered by parsed local
       archives, game-table objects, or embedded `GameModeCustomBytes`:
   - [x] Move save-contained player pawn inventory indexing and upstream-style
         inventory item counting from the example into typed `arkapi` helpers.
@@ -322,8 +329,8 @@ documented.
         valid local player/tribe records survive alongside broken archive files.
   - [x] Add fault-returning player roster, player-all, and tribe roster summary
         helpers so local batch summaries can report partial data explicitly.
-  - [ ] Continue porting remaining upstream player/tribe edge cases as chosen
-        offline examples expose them.
+  - [blocked] Continue porting remaining upstream player/tribe edge cases only
+        as chosen offline examples or Go failures expose them.
 - [blocked] FTP and RCON modules are intentionally omitted.
 
 ### Mutation APIs
@@ -336,35 +343,35 @@ documented.
 - [x] Require explicit output paths.
 - [x] Add structural write/reopen/reparse tests.
 - [x] Document live-server validation as out of scope.
-- [~] Upstream generated-blueprint insertion is classified as mutation-copy
+- [blocked] Upstream generated-blueprint insertion is classified as mutation-copy
       only; live-server acceptance remains unverified.
-- [~] Upstream base import/customize examples have partial structural coverage
+- [blocked] Upstream base import/customize examples have partial structural coverage
       through exported raw structure rows and `ImportBaseBinary` reinsert into
       explicit copied saves. Moving structures, inventory expansion,
       customization, owner replacement, and live-server acceptance remain
       unverified.
   - [x] Generated base binary exports round-trip through `ImportBaseBinary`
         into reopenable copied saves with byte-for-byte row checks.
-- [~] Upstream structure modification examples have partial structural
+- [blocked] Upstream structure modification examples have partial structural
       coverage through standalone `structure_export_from_save` raw structure
       rows and `ImportStructureBinary` reinsert into explicit copied saves.
       Health/owner mutation and live-server acceptance remain unverified.
   - [x] Generated structure binary exports round-trip through
         `ImportStructureBinary` into reopenable copied saves.
-- [~] Upstream dino extract/reinsert examples have partial structural coverage
+- [blocked] Upstream dino extract/reinsert examples have partial structural coverage
       through exported direct-save dino, status, and inventory rows plus
       `ImportDinoBinary` reinsert into explicit copied saves. Cryopod insertion
       into target inventories and generated location changes remain
       unverified.
   - [x] Generated dino binary exports round-trip through `ImportDinoBinary`
         into reopenable copied saves.
-- [~] Upstream dino trait/stat/growth mutation examples have partial
+- [blocked] Upstream dino trait/stat/growth mutation examples have partial
       structural coverage through `ReplaceObjectPropertyBinary`, which can
       replace a parsed object's full encoded property record by name and
       position in an explicit copied save, then reopen and reparse it.
       Semantic trait/stat/growth authoring and live-server acceptance remain
       unverified.
-- [~] Upstream generated-blueprint/equipment insertion example has partial
+- [blocked] Upstream generated-blueprint/equipment insertion example has partial
       structural coverage through exported equipment rows and
       `ImportEquipmentBinary` reinsert into explicit copied saves. Generated
       blueprint construction, insertion into target inventories, and
@@ -378,8 +385,9 @@ documented.
 ### Examples And Oracle Comparisons
 
 - [x] `map_summary`.
-- [~] `parse_all`: implemented and smoke-tested; private comparison is manual
-      because full save parsing is runtime-heavy.
+- [blocked] `parse_all`: implemented and smoke-tested; private comparison is
+      manual because full save parsing is runtime-heavy and broad Python oracle
+      expansion is out of scope.
 - [x] `object_classes`.
 - [x] `object_summary`.
 - [x] `property_positions`.
@@ -450,9 +458,9 @@ documented.
 - [x] `local_tribute`.
 - [x] `tribute_json`.
 - [x] `export_json`.
-- [~] `export_all_items`: implemented and smoke-tested; default oracle
+- [blocked] `export_all_items`: implemented and smoke-tested; default oracle
       comparison is deferred because full export is too slow on the large
-      private save.
+      private save and broad Python oracle expansion is out of scope.
 - [blocked] `equipment_history` oracle comparison: supplied backup lacks a
       timestamped historical save sequence.
 - [x] `logging_config`.

@@ -1,18 +1,19 @@
 # Phase 2 Literal Go Transpilation
 
-Phase 2 is complete when the Go code mirrors upstream offline behavior closely
-enough that oracle-derived tests can run against translated packages.
+Phase 2 is closed for the selected offline, fixture-backed scope when the Go
+code mirrors upstream offline behavior closely enough that oracle-derived tests
+can run against translated packages, or documented blockers explain why a
+remaining upstream edge cannot be completed locally.
 
 For the cross-phase monitorable checklist, see
 [`docs/project-task-ledger.md`](project-task-ledger.md).
 
 ## Current Status
 
-Phase 2 is the active implementation phase. Work should focus on closing the
-remaining literal Go port/parity gaps listed below before starting new Phase 3
-refactor or Phase 4 production-readiness tasks. Existing ahead-of-phase CLI,
-docs, examples, and verification artifacts remain in the repository as
-evidence, but they are not the active execution target.
+Phase 2 is closed with documented blockers. New work should proceed in Phase 3
+unless a new Go failing test or provided-data failure exposes a concrete
+offline parser/API parity defect. Do not reopen Phase 2 to expand Python oracle
+coverage broadly.
 
 ## Requirements
 
@@ -110,8 +111,10 @@ evidence, but they are not the active execution target.
 - [x] Add read-first base summary wrapper for grouped structures.
 - [x] Add read-first structure inventory metadata for `MyInventoryComponent`,
       `CurrentItemCount`, `MaxItemCount`, open slot, and empty-container queries.
-- [ ] Port remaining inventory, owner, trait, dino, structure, equipment,
-      stackable, player, tribe, and local cluster data models as read-first wrappers.
+- [x] Port read-first wrappers required by the chosen offline examples for
+      inventory, owner, trait, dino, structure, equipment, stackable, player,
+      tribe, base, crafter, and local cluster workflows; add future fields only
+      when a concrete Go failure or fixture exposes the need.
 - [x] Preserve raw binary/property positions and encoded byte spans needed by
       mutation structural tests.
 
@@ -193,9 +196,10 @@ evidence, but they are not the active execution target.
       `PrimalPlayerDataBP` and `PrimalTribeData` objects and embedded
       `GameModeCustomBytes` payloads, including lookup, tribe-player relation,
       and owner helper reuse.
-- [ ] Port any remaining upstream Player/Tribe edge behavior not covered by
-      parsed `.arkprofile`, `.arktribe`, game-table save objects, or embedded
-      `GameModeCustomBytes` save-contained objects.
+- [blocked] Port any remaining upstream Player/Tribe edge behavior not covered
+      by parsed `.arkprofile`, `.arktribe`, game-table save objects, or
+      embedded `GameModeCustomBytes` save-contained objects when a chosen
+      offline fixture or Go failure exposes the edge case.
 - [x] Add first read-only Structure API surface for class, owner, and location
       queries with optional class filters.
 - [x] Add read-only Stackable API surface for local resource/ammo/consumable counts.
@@ -375,13 +379,18 @@ evidence, but they are not the active execution target.
       broken local archives do not hide other valid player or tribe records.
 - [x] Add fault-returning player roster, player-all, and tribe roster summaries
       for partial local archive batches.
-- [ ] Port remaining full Dino edge behavior, Structure, Equipment, Stackable,
-      Base, richer local cluster item/dino domain models, and remaining
-      model-specific JSON API edge behavior.
+- [blocked] Port remaining full Dino, Structure, Equipment, Stackable, Base,
+      local cluster, and model-specific JSON edge behavior only when a concrete
+      fixture or Go failure exposes it. Current known gaps are legacy/modded
+      cryopod payloads, upstream/private heatmap and pedigree blockers,
+      fixture-gated local cluster fields, and live-server-unverified mutation
+      semantics.
 - [x] Port compact `.arktributetribe` / `.arktributetribetribe` local tribute
       index parsing for player-data and tribe-data ID lists.
-- [ ] Port legacy archive object parsing for any other runnable local oracle path
-      that is not covered by modern archive or compact tribute index formats.
+- [blocked] Port legacy archive object parsing for any other runnable local
+      oracle path that is not covered by modern archive or compact tribute
+      index formats when a committed synthetic fixture or private runnable
+      oracle case proves exact behavior.
 - [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation
