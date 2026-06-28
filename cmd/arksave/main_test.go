@@ -96,6 +96,20 @@ func TestBaseAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"playerRoster", "tribeRoster", "playerTribeLinks"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "NewPlayerFromPath") {
+			t.Fatalf("%s() still owns player API lifecycle; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func functionBody(t *testing.T, source string, name string) string {
 	t.Helper()
 	start := strings.Index(source, "func "+name+"(")

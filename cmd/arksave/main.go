@@ -1253,56 +1253,40 @@ func playerInventories(path string, out io.Writer) error {
 }
 
 func playerRoster(path string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackPlayers})
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.PlayerRosterSummary()
+	summary, faults, err := arkapi.PlayerRosterSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(
 		out,
-		"Players: %d\nWith names: %d\nHighest level: %d\n",
+		"Players: %d\nWith names: %d\nHighest level: %d\nParse faults: %d\n",
 		summary.Players,
 		summary.WithNames,
 		summary.HighestLevel,
+		len(faults),
 	)
 	return err
 }
 
 func tribeRoster(path string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackTribes})
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.TribeRosterSummary()
+	summary, faults, err := arkapi.TribeRosterSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(
 		out,
-		"Tribes: %d\nWith names: %d\nMembers: %d\nDinos: %d\n",
+		"Tribes: %d\nWith names: %d\nMembers: %d\nDinos: %d\nParse faults: %d\n",
 		summary.Tribes,
 		summary.WithNames,
 		summary.Members,
 		summary.Dinos,
+		len(faults),
 	)
 	return err
 }
 
 func playerTribeLinks(path string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewPlayerFromPath(path, arkapi.PlayerPathOptions{})
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.TribePlayerRelationSummary()
+	summary, err := arkapi.TribePlayerRelationSummaryFromPath(path)
 	if err != nil {
 		return err
 	}

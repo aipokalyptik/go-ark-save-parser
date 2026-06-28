@@ -708,6 +708,32 @@ func TestPlayerAPIPlayerRosterSummaryWithFaultsKeepsValidLocalProfiles(t *testin
 	}
 }
 
+func TestPlayerRosterSummaryFromPathUsesDirectoryProfiles(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		ExtraCharacterLevel: 9,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        43,
+		ExtraCharacterLevel: 4,
+	})
+
+	summary, faults, err := PlayerRosterSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("PlayerRosterSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerRosterSummaryFromPath() faults = %#v, want none", faults)
+	}
+	want := PlayerRosterSummary{Players: 2, WithNames: 1, HighestLevel: 10}
+	if summary != want {
+		t.Fatalf("PlayerRosterSummaryFromPath() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestPlayerAPIPlayerAllSummaryForData(t *testing.T) {
 	api := NewPlayer(nil)
 	players := []arkobject.Player{
@@ -780,6 +806,35 @@ func TestPlayerAPIPlayerAllSummaryWithFaultsKeepsValidLocalPlayersAndTribes(t *t
 	}
 }
 
+func TestPlayerAllSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		ExtraCharacterLevel: 9,
+		NumDeaths:           3,
+		UnlockedEngrams:     []string{"EngramA", "EngramB"},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:     "Porters",
+		TribeID:  12345,
+		OwnerID:  42,
+		NumDinos: 7,
+	})
+
+	summary, faults, err := PlayerAllSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("PlayerAllSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("PlayerAllSummaryFromPath() faults = %#v, want none", faults)
+	}
+	want := PlayerAllSummary{Players: 1, Tribes: 1, HighestLevel: 10, TotalDeaths: 3, UnlockedEngrams: 2}
+	if summary != want {
+		t.Fatalf("PlayerAllSummaryFromPath() = %#v, want %#v", summary, want)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{
@@ -820,6 +875,36 @@ func TestPlayerAPITribeRosterSummaryWithFaultsKeepsValidLocalTribes(t *testing.T
 	}
 	if len(faults) != 1 || faults[0].Err == nil {
 		t.Fatalf("TribeRosterSummaryWithFaults() faults = %#v, want one tribe fault", faults)
+	}
+}
+
+func TestTribeRosterSummaryFromPathUsesDirectoryTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		TribeID:  222,
+		OwnerID:  43,
+		NumDinos: 3,
+		Members:  []string{"Builder"},
+	})
+
+	summary, faults, err := TribeRosterSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("TribeRosterSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("TribeRosterSummaryFromPath() faults = %#v, want none", faults)
+	}
+	want := TribeRosterSummary{Tribes: 2, WithNames: 1, Members: 3, Dinos: 10}
+	if summary != want {
+		t.Fatalf("TribeRosterSummaryFromPath() = %#v, want %#v", summary, want)
 	}
 }
 
@@ -1380,6 +1465,86 @@ func TestPlayerAPIRelatesLocalPlayersTribesAndOwners(t *testing.T) {
 	if !ok || dinoOwner.PlayerID != 42 || dinoOwner.ImprinterName != "Survivor" || dinoOwner.TamerString != "Porters" {
 		t.Fatalf("DinoOwnerByPlayerDataID() = %#v, %v; want profile-derived dino owner", dinoOwner, ok)
 	}
+}
+
+func TestTribePlayerRelationSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
+	dir := t.TempDir()
+	writeRelationSummaryDirectory(t, dir)
+
+	summary, err := TribePlayerRelationSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("TribePlayerRelationSummaryFromPath() error = %v", err)
+	}
+	want := TribePlayerRelationSummary{
+		Players:             3,
+		Tribes:              2,
+		ActiveLinks:         2,
+		InactiveMembers:     2,
+		PlayersWithoutTribe: 1,
+		TribesWithInactive:  2,
+		TribesWithoutActive: 1,
+	}
+	if summary != want {
+		t.Fatalf("TribePlayerRelationSummaryFromPath() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestPlayerAndTribeDataSummaryFromPathUsesDirectoryPlayersAndTribes(t *testing.T) {
+	dir := t.TempDir()
+	writeRelationSummaryDirectory(t, dir)
+
+	summary, err := PlayerAndTribeDataSummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("PlayerAndTribeDataSummaryFromPath() error = %v", err)
+	}
+	if summary.Players != 3 || summary.Tribes != 2 || summary.ActiveLinks != 2 ||
+		summary.InactiveMembers != 2 || summary.PlayersWithoutTribe != 1 {
+		t.Fatalf("PlayerAndTribeDataSummaryFromPath() aggregate = %#v", summary)
+	}
+	if len(summary.PlayerRows) != 3 || len(summary.TribeRows) != 2 || len(summary.RelationRows) != 2 {
+		t.Fatalf("PlayerAndTribeDataSummaryFromPath() rows = %#v", summary)
+	}
+}
+
+func writeRelationSummaryDirectory(t *testing.T, dir string) {
+	t.Helper()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		UniqueID:      "eos-survivor",
+		TribeID:       12345,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  43,
+		CharacterName: "Scout",
+		PlayerName:    "OtherPlatform",
+		UniqueID:      "eos-scout",
+		TribeID:       12345,
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "789.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  77,
+		CharacterName: "Nomad",
+		PlayerName:    "NoTribe",
+		UniqueID:      "eos-nomad",
+		TribeID:       77777,
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout", "Inactive"},
+		MemberIDs: []int32{42, 43, 99},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Sleepers",
+		TribeID:   67890,
+		OwnerID:   88,
+		NumDinos:  0,
+		Members:   []string{"Gone"},
+		MemberIDs: []int32{88},
+	})
 }
 
 func TestPlayerAPILocalDeathStatistics(t *testing.T) {

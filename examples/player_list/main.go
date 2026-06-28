@@ -12,19 +12,9 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <save.ark-or-save-directory>", os.Args[0])
 	}
-	api, closeAPI, err := arkapi.NewPlayerFromPath(os.Args[1], arkapi.PlayerPathOptions{Fallback: arkapi.PlayerPathFallbackPlayers})
+	summary, faults, err := arkapi.PlayerRosterSummaryFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err := closeAPI(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	summary, err := api.PlayerRosterSummary()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("players=%d with_names=%d highest_level=%d\n", summary.Players, summary.WithNames, summary.HighestLevel)
+	fmt.Printf("players=%d with_names=%d highest_level=%d faults=%d\n", summary.Players, summary.WithNames, summary.HighestLevel, len(faults))
 }

@@ -610,6 +610,13 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.StackableSummaryFromPath`,
           `arkapi.StackableSummaryFromPathWithFaults`, and
           `arkapi.StackableOwnedSummaryFromPath`.
+    - [x] Add path-level typed player/tribe aggregate summaries through
+          `arkapi.PlayerRosterSummaryFromPath`,
+          `arkapi.PlayerAllSummaryFromPath`,
+          `arkapi.TribeRosterSummaryFromPath`,
+          `arkapi.TribePlayerRelationSummaryFromPath`, and
+          `arkapi.PlayerAndTribeDataSummaryFromPath`, then move the roster and
+          relation CLI commands plus matching examples onto those helpers.
     - [x] Move repeated pure StructureAPI example save-open/close handling
           behind typed `arkapi.NewStructureFromPath`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed

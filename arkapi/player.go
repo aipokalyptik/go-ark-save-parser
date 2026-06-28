@@ -336,6 +336,18 @@ func (p *PlayerAPI) PlayerRosterSummaryWithFaults() (PlayerRosterSummary, []arks
 	return p.PlayerRosterSummaryForPlayers(players), faults, nil
 }
 
+func PlayerRosterSummaryFromPath(path string) (PlayerRosterSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		return PlayerRosterSummary{}, nil, err
+	}
+	summary, faults, err := api.PlayerRosterSummaryWithFaults()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return summary, faults, err
+}
+
 func (p *PlayerAPI) PlayerRosterSummaryForPlayers(players []arkobject.Player) PlayerRosterSummary {
 	summary := PlayerRosterSummary{Players: len(players)}
 	for _, player := range players {
@@ -373,6 +385,18 @@ func (p *PlayerAPI) PlayerAllSummaryWithFaults() (PlayerAllSummary, []arksave.Fa
 	faults := append([]arksave.FaultyObjectInfo{}, playerFaults...)
 	faults = append(faults, tribeFaults...)
 	return p.PlayerAllSummaryForData(players, tribes), faults, nil
+}
+
+func PlayerAllSummaryFromPath(path string) (PlayerAllSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		return PlayerAllSummary{}, nil, err
+	}
+	summary, faults, err := api.PlayerAllSummaryWithFaults()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return summary, faults, err
 }
 
 func (p *PlayerAPI) PlayerAllSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe) PlayerAllSummary {
@@ -1145,6 +1169,18 @@ func (p *PlayerAPI) TribeRosterSummaryWithFaults() (TribeRosterSummary, []arksav
 	return p.TribeRosterSummaryForTribes(tribes), faults, nil
 }
 
+func TribeRosterSummaryFromPath(path string) (TribeRosterSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackTribes})
+	if err != nil {
+		return TribeRosterSummary{}, nil, err
+	}
+	summary, faults, err := api.TribeRosterSummaryWithFaults()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return summary, faults, err
+}
+
 func (p *PlayerAPI) TribeRosterSummaryForTribes(tribes []arkobject.Tribe) TribeRosterSummary {
 	summary := TribeRosterSummary{Tribes: len(tribes)}
 	for _, tribe := range tribes {
@@ -1365,6 +1401,18 @@ func (p *PlayerAPI) TribePlayerRelationSummary() (TribePlayerRelationSummary, er
 	return p.TribePlayerRelationSummaryForData(players, tribes, relations), nil
 }
 
+func TribePlayerRelationSummaryFromPath(path string) (TribePlayerRelationSummary, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		return TribePlayerRelationSummary{}, err
+	}
+	summary, err := api.TribePlayerRelationSummary()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return summary, err
+}
+
 func (p *PlayerAPI) TribePlayerRelationSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe, relations []TribePlayerRelation) TribePlayerRelationSummary {
 	summary := TribePlayerRelationSummary{
 		Players: len(players),
@@ -1406,6 +1454,18 @@ func (p *PlayerAPI) PlayerAndTribeDataSummary() (PlayerAndTribeDataSummary, erro
 		return PlayerAndTribeDataSummary{}, err
 	}
 	return p.PlayerAndTribeDataSummaryForData(players, tribes, relations), nil
+}
+
+func PlayerAndTribeDataSummaryFromPath(path string) (PlayerAndTribeDataSummary, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, PlayerPathOptions{Fallback: PlayerPathFallbackPlayers})
+	if err != nil {
+		return PlayerAndTribeDataSummary{}, err
+	}
+	summary, err := api.PlayerAndTribeDataSummary()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return summary, err
 }
 
 func (p *PlayerAPI) PlayerAndTribeDataSummaryForData(players []arkobject.Player, tribes []arkobject.Tribe, relations []TribePlayerRelation) PlayerAndTribeDataSummary {
