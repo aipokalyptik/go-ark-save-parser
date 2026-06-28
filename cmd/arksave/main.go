@@ -110,6 +110,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
 		}
 		return equipmentSummary(args[1], out)
+	case "equipment-saddles":
+		if len(args) != 2 {
+			return fmt.Errorf("equipment-saddles requires a local .ark path")
+		}
+		return equipmentSaddles(args[1], out)
 	case "player-inventories":
 		if len(args) != 2 {
 			return fmt.Errorf("player-inventories requires a local .ark path")
@@ -214,6 +219,7 @@ func usage(out io.Writer) error {
   arksave dino-wild-tamables <save.ark>
   arksave dino-babies <save.ark>
   arksave equipment-summary <save.ark>
+  arksave equipment-saddles <save.ark>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
   arksave tribe-roster <save.ark-or-directory>
@@ -546,6 +552,29 @@ func equipmentSummary(path string, out io.Writer) error {
 		summary.MaxDamage,
 		summary.MaxArmor,
 		summary.MaxCurrentDurability,
+		len(faults),
+	)
+	return err
+}
+
+func equipmentSaddles(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewEquipment(save).SaddleSummaryWithFaults()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Item saddles: %d\nCryopod saddles: %d\nTotal saddles: %d\nMax armor: %.1f\nParse faults: %d\n",
+		summary.ItemSaddles,
+		summary.CryopodSaddles,
+		summary.TotalSaddles,
+		summary.MaxArmor,
 		len(faults),
 	)
 	return err

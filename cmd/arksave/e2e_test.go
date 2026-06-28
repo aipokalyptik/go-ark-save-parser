@@ -117,6 +117,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var equipmentSaddlesOut bytes.Buffer
+	if err := run([]string{"equipment-saddles", data.SavePath}, &equipmentSaddlesOut); err != nil {
+		t.Fatalf("run(equipment-saddles) error = %v", err)
+	}
+	for _, want := range []string{"Item saddles:", "Cryopod saddles:", "Total saddles:", "Parse faults:"} {
+		if !strings.Contains(equipmentSaddlesOut.String(), want) {
+			t.Fatalf("equipment-saddles output missing %q", want)
+		}
+	}
+
 	exportPath := filepath.Join(t.TempDir(), "save-info.json")
 	var exportOut bytes.Buffer
 	if err := run([]string{"--redact", "export-json", data.SavePath, exportPath}, &exportOut); err != nil {

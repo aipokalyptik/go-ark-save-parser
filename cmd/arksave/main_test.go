@@ -321,6 +321,29 @@ func TestDinoBabiesCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestEquipmentSaddlesCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "saddles.ark")
+	createSyntheticSaddleEquipmentSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-saddles", path}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-saddles) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Item saddles: 1",
+		"Cryopod saddles: 0",
+		"Total saddles: 1",
+		"Max armor: 23.2",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-saddles output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -1991,6 +2014,35 @@ func createSyntheticEquipmentSave(t *testing.T, path string) {
 				Stats: map[int32]uint16{
 					2: 1000,
 					3: 1234,
+				},
+			}),
+		},
+	})
+}
+
+func createSyntheticSaddleEquipmentSave(t *testing.T, path string) {
+	t.Helper()
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000e: "BoolProperty",
+			0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_TurtleSaddle.PrimalItemArmor_TurtleSaddle_C'",
+			0x10000010: "ItemRating",
+			0x10000011: "ItemQualityIndex",
+			0x10000012: "SavedDurability",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("40414243-4445-4647-4849-4a4b4c4d4e4f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity: 1,
+				Rating:   4.5,
+				Quality:  3,
+				Stats: map[int32]uint16{
+					1: 800,
 				},
 			}),
 		},

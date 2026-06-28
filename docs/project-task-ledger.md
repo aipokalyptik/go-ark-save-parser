@@ -520,6 +520,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `dino-wild-tamables`.
   - [x] `dino-babies`.
   - [x] `equipment-summary`.
+  - [x] `equipment-saddles`.
   - [x] `player-inventories`.
   - [x] `player-roster`.
   - [x] `tribe-roster`.
