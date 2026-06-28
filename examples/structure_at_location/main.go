@@ -34,16 +34,9 @@ func main() {
 		}
 	}
 
-	api, closeAPI, err := arkapi.NewStructureFromPath(os.Args[1])
+	summary, _, err := arkapi.StructureAtLocationSummaryFromPath(os.Args[1], os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.AtLocationSummaryWithFaults(os.Args[2], arkobject.MapCoords{Lat: lat, Long: lon}, radius, nil)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "find structures: %v\n", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 

@@ -641,8 +641,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `structure_health`, `structure_owner_count`, and
           `structure_owners` example save-open/close handling onto typed
           structure path summary helpers.
-    - [x] Move `structure_at_location` nearby/connected counts onto typed
-          `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
+    - [x] Add `arkapi.StructureAtLocationSummaryFromPath`, then move
+          `structure_at_location` nearby/connected counts onto the typed
+          structure path helper.
     - [x] Move `structure_owner_locations` mixed structure/player save access
           behind typed `arkapi.StructureOwnerLocationsFromPathWithFaults`.
     - [x] Move repeated read-only StackableAPI example save-open/close handling

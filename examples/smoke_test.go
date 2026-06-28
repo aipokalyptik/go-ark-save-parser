@@ -36,6 +36,7 @@ func TestEquipmentExamplesUseTypedPathHelpers(t *testing.T) {
 func TestStructureAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 	for _, path := range []string{
 		filepath.Join("structure_health", "main.go"),
+		filepath.Join("structure_at_location", "main.go"),
 		filepath.Join("structure_owner_count", "main.go"),
 		filepath.Join("structure_owners", "main.go"),
 	} {

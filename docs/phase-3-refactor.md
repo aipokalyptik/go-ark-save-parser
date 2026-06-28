@@ -148,6 +148,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Move dino and structure heatmap path helpers onto shared typed
       `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath` lifecycle
       handling.
+- [x] Add `arkapi.StructureAtLocationSummaryFromPath`, then move
+      `structure_at_location` onto the typed structure path helper while
+      preserving the existing nearby/connected aggregate output.
 - [x] Move `structure-heatmap` and `dino-heatmap` CLI commands onto typed
       heatmap export path helpers, including selected-structure heatmap JSON
       export so the structure command keeps its selected-index semantics.

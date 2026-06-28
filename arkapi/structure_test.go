@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -639,6 +640,38 @@ func TestStructureAPIAtLocationSummaryWithFaultsCountsNearbyAndConnected(t *test
 	}
 	if summary.Structures != 1 || summary.Connected != 2 {
 		t.Fatalf("AtLocationSummaryWithFaults() = %#v, want 1 structure and 2 connected", summary)
+	}
+}
+
+func TestStructureAtLocationSummaryFromPathReturnsTypedSummaryAndFaults(t *testing.T) {
+	save := openSyntheticBaseSave(t)
+	defer save.Close()
+
+	api := NewStructure(save)
+	firstID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	first, ok, err := api.ByID(firstID)
+	if err != nil {
+		t.Fatalf("ByID() error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("ByID() ok = false, want true")
+	}
+	coords := first.Location.AsMapCoords("Valguero")
+
+	summary, faults, err := StructureAtLocationSummaryFromPath(save.Path(), "Valguero", coords, 0.01, nil)
+	if err != nil {
+		t.Fatalf("StructureAtLocationSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("StructureAtLocationSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if summary.Structures != 1 || summary.Connected != 2 {
+		t.Fatalf("StructureAtLocationSummaryFromPath() = %#v, want 1 structure and 2 connected", summary)
+	}
+
+	_, _, err = StructureAtLocationSummaryFromPath(filepath.Join(t.TempDir(), "missing.ark"), "Valguero", coords, 0.01, nil)
+	if err == nil || !strings.HasPrefix(err.Error(), "open save: ") {
+		t.Fatalf("StructureAtLocationSummaryFromPath(missing) error = %v, want open save context", err)
 	}
 }
 

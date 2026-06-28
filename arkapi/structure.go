@@ -96,6 +96,19 @@ func NewStructureFromPath(savePath string) (*StructureAPI, func() error, error) 
 	return NewStructure(save), save.Close, nil
 }
 
+type structurePathError struct {
+	op  string
+	err error
+}
+
+func (e structurePathError) Error() string {
+	return fmt.Sprintf("%s: %v", e.op, e.err)
+}
+
+func (e structurePathError) Unwrap() error {
+	return e.err
+}
+
 func StructureHealthSummaryFromPath(savePath string) (StructureHealthSummary, []arksave.FaultyObjectInfo, error) {
 	api, closeAPI, err := NewStructureFromPath(savePath)
 	if err != nil {
@@ -121,6 +134,19 @@ func StructureTribeOwnershipSummaryFromPath(savePath string, tribeID int32) (Str
 	}
 	defer closeAPI()
 	return api.TribeOwnershipSummaryWithFaults(tribeID)
+}
+
+func StructureAtLocationSummaryFromPath(savePath string, mapName string, coords arkobject.MapCoords, radius float64, blueprints []string) (StructureLocationSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return StructureLocationSummary{}, nil, structurePathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+	summary, faults, err := api.AtLocationSummaryWithFaults(mapName, coords, radius, blueprints)
+	if err != nil {
+		return summary, faults, structurePathError{op: "find structures", err: err}
+	}
+	return summary, faults, nil
 }
 
 func StructureOwnerLocationsFromPathWithFaults(savePath string, mapName string, digits int) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
