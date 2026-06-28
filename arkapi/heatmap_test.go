@@ -141,3 +141,43 @@ func TestExportStructureHeatmapSummaryJSONFromPathWritesSummary(t *testing.T) {
 		t.Fatalf("decoded summary = %#v, want returned summary %#v", decoded, summary)
 	}
 }
+
+func TestExportStructureSelectedHeatmapSummaryJSONFromPathWritesSummary(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+	outputPath := filepath.Join(t.TempDir(), "structure-selected-heatmap.json")
+
+	summary, err := ExportStructureSelectedHeatmapSummaryJSONFromPath(save.Path(), outputPath, StructureHeatmapOptions{
+		MapName:      "Valguero",
+		Resolution:   100,
+		MinInSection: 2,
+	})
+	if err != nil {
+		t.Fatalf("ExportStructureSelectedHeatmapSummaryJSONFromPath() error = %v", err)
+	}
+	if summary.Faults != 0 {
+		t.Fatalf("ExportStructureSelectedHeatmapSummaryJSONFromPath() summary = %#v, want selected-property heatmap without full-parse faults", summary)
+	}
+	fullSummary, err := StructureHeatmapSummaryFromPath(save.Path(), StructureHeatmapOptions{
+		MapName:      "Valguero",
+		Resolution:   100,
+		MinInSection: 1,
+	})
+	if err != nil {
+		t.Fatalf("StructureHeatmapSummaryFromPath() error = %v", err)
+	}
+	if fullSummary.Faults != 1 {
+		t.Fatalf("StructureHeatmapSummaryFromPath() faults = %d, want full-parse helper to report one fault", fullSummary.Faults)
+	}
+	raw, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", outputPath, err)
+	}
+	var decoded HeatmapSummary
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded != summary {
+		t.Fatalf("decoded summary = %#v, want returned summary %#v", decoded, summary)
+	}
+}

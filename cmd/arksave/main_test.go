@@ -109,6 +109,20 @@ func TestGeneralCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestHeatmapCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"structureHeatmap", "dinoHeatmap"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") {
+			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	data, err := os.ReadFile("main.go")
 	if err != nil {

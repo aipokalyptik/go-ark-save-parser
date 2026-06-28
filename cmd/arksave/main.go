@@ -711,30 +711,11 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 }
 
 func structureHeatmap(path string, outPath string, resolution int, minInCell int, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	mapName := ""
-	if save.Context != nil {
-		mapName = save.Context.MapName
-	}
-	summary, _, err := arkapi.NewStructure(save).SelectedHeatmapSummaryWithFaults(arkapi.StructureHeatmapOptions{
-		MapName:      mapName,
+	summary, err := arkapi.ExportStructureSelectedHeatmapSummaryJSONFromPath(path, outPath, arkapi.StructureHeatmapOptions{
 		Resolution:   resolution,
 		MinInSection: minInCell,
 	})
 	if err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(summary, "", "  ")
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-	if err := os.WriteFile(outPath, data, 0o644); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(
@@ -907,31 +888,11 @@ func dinoWildTamed(path string, out io.Writer) error {
 }
 
 func dinoHeatmap(path string, outPath string, resolution int, out io.Writer, opts runOptions) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	includeCryos := !opts.NoCryos
-	mapName := ""
-	if save.Context != nil {
-		mapName = save.Context.MapName
-	}
-	summary, _, err := arkapi.NewDino(save).HeatmapSummaryWithFaults(arkapi.DinoHeatmapOptions{
-		MapName:           mapName,
+	summary, err := arkapi.ExportDinoHeatmapSummaryJSONFromPath(path, outPath, arkapi.DinoHeatmapOptions{
 		Resolution:        resolution,
-		IncludeCryopodded: includeCryos,
+		IncludeCryopodded: !opts.NoCryos,
 	})
 	if err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(summary, "", "  ")
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-	if err := os.WriteFile(outPath, data, 0o644); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintf(

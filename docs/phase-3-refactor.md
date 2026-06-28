@@ -144,6 +144,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Move dino and structure heatmap path helpers onto shared typed
       `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath` lifecycle
       handling.
+- [x] Move `structure-heatmap` and `dino-heatmap` CLI commands onto typed
+      heatmap export path helpers, including selected-structure heatmap JSON
+      export so the structure command keeps its selected-index semantics.
 - [x] Move general CLI commands (`parse`, `map-summary`, `object-classes`,
       `object-summary`, `property-positions`, `class-lookup`,
       `class-property-summary`, and `property-filter`) onto typed general/JSON

@@ -657,6 +657,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move dino and structure heatmap path helpers onto shared typed
           `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath`
           lifecycle handling.
+    - [x] Move `structure-heatmap` and `dino-heatmap` CLI commands onto typed
+          heatmap export path helpers, including selected-structure heatmap
+          JSON export so the structure command keeps selected-index semantics.
     - [x] Add `arkapi.GeneralAPI.SaveInfo`, then move general CLI commands
           (`parse`, `map-summary`, `object-classes`, `object-summary`,
           `property-positions`, `class-lookup`, `class-property-summary`, and

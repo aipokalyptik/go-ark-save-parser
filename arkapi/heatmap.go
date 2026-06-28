@@ -79,8 +79,40 @@ func StructureHeatmapSummaryFromPath(savePath string, opts StructureHeatmapOptio
 	return summary, nil
 }
 
+func StructureSelectedHeatmapSummaryFromPath(savePath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
+	defer closeAPI()
+
+	if opts.MapName == "" && api.save.Context != nil {
+		opts.MapName = api.save.Context.MapName
+	}
+	summary, _, err := api.SelectedHeatmapSummaryWithFaults(opts)
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
+	return summary, nil
+}
+
 func ExportStructureHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
 	summary, err := StructureHeatmapSummaryFromPath(savePath, opts)
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
+	data, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		return HeatmapSummary{}, err
+	}
+	if err := os.WriteFile(outputPath, append(data, '\n'), 0o644); err != nil {
+		return HeatmapSummary{}, err
+	}
+	return summary, nil
+}
+
+func ExportStructureSelectedHeatmapSummaryJSONFromPath(savePath string, outputPath string, opts StructureHeatmapOptions) (HeatmapSummary, error) {
+	summary, err := StructureSelectedHeatmapSummaryFromPath(savePath, opts)
 	if err != nil {
 		return HeatmapSummary{}, err
 	}
