@@ -19,21 +19,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewDinoFromPath(args[0])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	id, dino, stat, points, ok, _, err := api.BestDinoForStatFilteredWithFaults(opts)
+	summary, _, err := arkapi.DinoBestStatSummaryFromPath(args[0], opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read dinos: %v\n", err)
 		os.Exit(1)
 	}
-	if !ok {
+	if !summary.Found {
 		fmt.Println("no_match")
 		return
 	}
-	fmt.Printf("uuid=%s blueprint=%q stat=%s points=%d level=%d\n", id, dino.Blueprint, stat.String(), points, dino.Stats.CurrentLevel)
+	fmt.Printf("uuid=%s blueprint=%q stat=%s points=%d level=%d\n", summary.UUID, summary.Dino.Blueprint, summary.Stat.String(), summary.Points, summary.Level)
 }

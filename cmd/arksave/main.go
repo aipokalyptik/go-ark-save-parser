@@ -829,31 +829,21 @@ func dinoBabies(path string, out io.Writer) error {
 }
 
 func dinoBestStat(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	summary, faults, err := arkapi.DinoBestStatSummaryFromPath(path, arkapi.DinoBestStatOptions{})
 	if err != nil {
 		return err
 	}
-	defer save.Close()
-
-	_, dino, stat, points, ok, faults, err := arkapi.NewDino(save).BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{})
-	if err != nil {
-		return err
-	}
-	if !ok {
+	if !summary.Found {
 		_, err = fmt.Fprintf(out, "Best stat: none\nParse faults: %d\n", len(faults))
 		return err
-	}
-	level := int32(0)
-	if dino.Stats != nil {
-		level = dino.Stats.CurrentLevel
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Best stat: %s\nPoints: %d\nLevel: %d\nBlueprint: %s\nParse faults: %d\n",
-		stat.String(),
-		points,
-		level,
-		dino.ShortName(),
+		summary.Stat.String(),
+		summary.Points,
+		summary.Level,
+		summary.Blueprint,
 		len(faults),
 	)
 	return err
@@ -864,13 +854,7 @@ func dinoBestBaseStat(path string, blueprint string, statName string, out io.Wri
 	if !ok {
 		return fmt.Errorf("unknown dino stat %q", statName)
 	}
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	_, dino, gotStat, points, found, faults, err := arkapi.NewDino(save).BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{
+	summary, faults, err := arkapi.DinoBestStatSummaryFromPath(path, arkapi.DinoBestStatOptions{
 		Blueprints:      []string{blueprint},
 		Stats:           []arkobject.DinoStat{stat},
 		OnlyTamed:       true,
@@ -880,77 +864,52 @@ func dinoBestBaseStat(path string, blueprint string, statName string, out io.Wri
 	if err != nil {
 		return err
 	}
-	if !found {
+	if !summary.Found {
 		_, err = fmt.Fprintf(out, "Best base stat: none\nParse faults: %d\n", len(faults))
 		return err
-	}
-	level := int32(0)
-	if dino.Stats != nil {
-		level = dino.Stats.CurrentLevel
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Best base stat: %s\nPoints: %d\nLevel: %d\nBlueprint: %s\nParse faults: %d\n",
-		gotStat.String(),
-		points,
-		level,
-		dino.ShortName(),
+		summary.Stat.String(),
+		summary.Points,
+		summary.Level,
+		summary.Blueprint,
 		len(faults),
 	)
 	return err
 }
 
 func dinoMostMutated(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	summary, err := arkapi.DinoMostMutatedSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer save.Close()
-
-	_, dino, total, ok, err := arkapi.NewDino(save).MostMutatedTamed()
-	if err != nil {
-		return err
-	}
-	if !ok {
+	if !summary.Found {
 		_, err = fmt.Fprintln(out, "Most mutated: none")
 		return err
-	}
-	level := int32(0)
-	if dino.Stats != nil {
-		level = dino.Stats.CurrentLevel
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Most mutated: %s\nTotal mutation points: %d\nMutation pairs: %d\nLevel: %d\n",
-		dino.ShortName(),
-		total,
-		total/2,
-		level,
+		summary.Blueprint,
+		summary.TotalMutationPoints,
+		summary.MutationPairs,
+		summary.Level,
 	)
 	return err
 }
 
 func dinoWildTamed(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
+	summary, faults, err := arkapi.DinoWildTamedSummaryFromPath(path)
 	if err != nil {
 		return err
-	}
-	defer save.Close()
-
-	api := arkapi.NewDino(save)
-	dinos, faults, err := api.WildTamedWithFaults()
-	if err != nil {
-		return err
-	}
-	maxLevel := int32(0)
-	if level, ok := api.MaxCurrentLevel(dinos); ok {
-		maxLevel = level
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Wild-tamed dinos: %d\nMax level: %d\nParse faults: %d\n",
-		len(dinos),
-		maxLevel,
+		summary.Dinos,
+		summary.MaxLevel,
 		len(faults),
 	)
 	return err

@@ -105,6 +105,11 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Move `dinos`, `dino-wild-tamables`, and `dino-babies` CLI aggregate
       commands onto the typed dino path helpers while preserving parse-fault
       counts.
+- [x] Add `arkapi.DinoBestStatSummaryFromPath`,
+      `arkapi.DinoMostMutatedSummaryFromPath`, and
+      `arkapi.DinoWildTamedSummaryFromPath`, then move the matching CLI
+      commands and examples onto typed dino path helpers while preserving
+      parse-fault reporting.
 - [x] Add `arkapi.EquipmentSummaryFromPath`,
       `arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath`,
       `arkapi.EquipmentSaddleSummaryFromPath`, and

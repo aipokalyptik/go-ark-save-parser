@@ -595,6 +595,12 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `dinos`, `dino-wild-tamables`, and `dino-babies` CLI
           aggregate commands onto typed dino path helpers while preserving
           parse-fault counts.
+    - [x] Add path-level typed dino best-stat, most-mutated, and wild-tamed
+          summaries through `arkapi.DinoBestStatSummaryFromPath`,
+          `arkapi.DinoMostMutatedSummaryFromPath`, and
+          `arkapi.DinoWildTamedSummaryFromPath`, then move matching CLI
+          commands and examples onto typed dino path helpers while preserving
+          parse-fault reporting.
     - [x] Add path-level typed equipment aggregate, cryopod-saddle aggregate,
           saddle, and owned-by summaries through
           `arkapi.EquipmentSummaryFromPath`,

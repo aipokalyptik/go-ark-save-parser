@@ -566,6 +566,22 @@ func TestDinoAPIWildTamedWithFaultsSkipsMalformedCryopods(t *testing.T) {
 	}
 }
 
+func TestDinoWildTamedSummaryFromPathReturnsCountAndFaults(t *testing.T) {
+	save := openSyntheticDinoStatsSaveWithMalformedCryopod(t)
+	defer save.Close()
+
+	summary, faults, err := DinoWildTamedSummaryFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("DinoWildTamedSummaryFromPath() error = %v", err)
+	}
+	if summary.Dinos != 1 || summary.MaxLevel != 12 {
+		t.Fatalf("DinoWildTamedSummaryFromPath() = %#v, want one level 12 wild-tamed dino", summary)
+	}
+	if len(faults) != 1 {
+		t.Fatalf("DinoWildTamedSummaryFromPath() faults = %#v, want malformed cryopod fault", faults)
+	}
+}
+
 func TestDinoAPIHeatmapCountsDinoMapCells(t *testing.T) {
 	api := DinoAPI{}
 	first := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
@@ -1114,6 +1130,31 @@ func TestDinoAPIBestDinoForStatFilteredCanExcludeCryopods(t *testing.T) {
 	}
 }
 
+func TestDinoBestStatSummaryFromPathReturnsTypedWinnerAndFaults(t *testing.T) {
+	save := openSyntheticBestStatCryopodSave(t)
+	defer save.Close()
+
+	summary, faults, err := DinoBestStatSummaryFromPath(save.Path(), DinoBestStatOptions{})
+	if err != nil {
+		t.Fatalf("DinoBestStatSummaryFromPath() error = %v", err)
+	}
+	if !summary.Found || summary.UUID != uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111") ||
+		summary.Stat != arkobject.DinoStatHealth || summary.Points != 6 {
+		t.Fatalf("DinoBestStatSummaryFromPath() = %#v, want cryopod health winner", summary)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("DinoBestStatSummaryFromPath() faults = %#v, want none", faults)
+	}
+
+	direct, _, err := DinoBestStatSummaryFromPath(save.Path(), DinoBestStatOptions{ExcludeCryopods: true})
+	if err != nil {
+		t.Fatalf("DinoBestStatSummaryFromPath(no cryos) error = %v", err)
+	}
+	if !direct.Found || direct.UUID != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || direct.Points != 5 {
+		t.Fatalf("DinoBestStatSummaryFromPath(no cryos) = %#v, want direct dino", direct)
+	}
+}
+
 func TestDinoAPIMostMutatedTamedUsesTotalMutations(t *testing.T) {
 	save := openSyntheticTamedDinoStatsSave(t)
 	defer save.Close()
@@ -1142,6 +1183,20 @@ func TestDinoAPIMostMutatedTamedIgnoresMalformedCryopods(t *testing.T) {
 	}
 	if !ok || id != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") || dino.ID1 != 1001 || total != 1 {
 		t.Fatalf("MostMutatedTamed() = %s, %#v, %d, %v; want direct tamed dino", id, dino, total, ok)
+	}
+}
+
+func TestDinoMostMutatedSummaryFromPathReturnsTypedWinner(t *testing.T) {
+	save := openSyntheticTamedDinoStatsSave(t)
+	defer save.Close()
+
+	summary, err := DinoMostMutatedSummaryFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("DinoMostMutatedSummaryFromPath() error = %v", err)
+	}
+	if !summary.Found || summary.UUID != uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff") ||
+		summary.TotalMutationPoints != 1 || summary.MutationPairs != 0 || summary.Level != 12 {
+		t.Fatalf("DinoMostMutatedSummaryFromPath() = %#v, want synthetic tamed dino", summary)
 	}
 }
 

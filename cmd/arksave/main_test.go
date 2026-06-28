@@ -48,7 +48,7 @@ func TestDinoAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 		t.Fatalf("ReadFile(main.go) error = %v", err)
 	}
 	source := string(data)
-	for _, name := range []string{"dinos", "dinoWildTamables", "dinoBabies"} {
+	for _, name := range []string{"dinos", "dinoWildTamables", "dinoBabies", "dinoBestStat", "dinoBestBaseStat", "dinoMostMutated", "dinoWildTamed"} {
 		body := functionBody(t, source, name)
 		if strings.Contains(body, "arksave.Open") {
 			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)

@@ -17,13 +17,7 @@ func main() {
 	if !ok {
 		log.Fatalf("unknown stat %q", os.Args[3])
 	}
-	api, closeAPI, err := arkapi.NewDinoFromPath(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer closeAPI()
-
-	_, dino, gotStat, points, found, _, err := api.BestDinoForStatFilteredWithFaults(arkapi.DinoBestStatOptions{
+	summary, _, err := arkapi.DinoBestStatSummaryFromPath(os.Args[1], arkapi.DinoBestStatOptions{
 		Blueprints:      []string{os.Args[2]},
 		Stats:           []arkobject.DinoStat{stat},
 		OnlyTamed:       true,
@@ -33,13 +27,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !found {
+	if !summary.Found {
 		fmt.Println("has_result=0")
 		return
 	}
-	level := int32(0)
-	if dino.Stats != nil {
-		level = dino.Stats.CurrentLevel
-	}
-	fmt.Printf("has_result=1 stat=%s points=%d level=%d\n", gotStat.String(), points, level)
+	fmt.Printf("has_result=1 stat=%s points=%d level=%d\n", summary.Stat.String(), summary.Points, summary.Level)
 }

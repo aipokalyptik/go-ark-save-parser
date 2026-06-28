@@ -53,6 +53,31 @@ type DinoPopulationSummary struct {
 	Classes    int
 }
 
+type DinoBestStatSummary struct {
+	UUID      uuid.UUID
+	Dino      arkobject.Dino
+	Stat      arkobject.DinoStat
+	Points    int32
+	Found     bool
+	Level     int32
+	Blueprint string
+}
+
+type DinoMostMutatedSummary struct {
+	UUID                uuid.UUID
+	Dino                arkobject.Dino
+	Found               bool
+	TotalMutationPoints int32
+	MutationPairs       int32
+	Level               int32
+	Blueprint           string
+}
+
+type DinoWildTamedSummary struct {
+	Dinos    int
+	MaxLevel int32
+}
+
 type DinoHeatmapOptions struct {
 	MapName           string
 	Resolution        int
@@ -184,6 +209,82 @@ func DinoBabySummaryFromPath(savePath string, opts BabyFilterOptions) (BabyCount
 	}
 	defer closeAPI()
 	return api.BabySummaryWithFaults(opts)
+}
+
+func DinoBestStatSummaryFromPath(savePath string, opts DinoBestStatOptions) (DinoBestStatSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoBestStatSummary{}, nil, err
+	}
+	defer closeAPI()
+
+	id, dino, stat, points, found, faults, err := api.BestDinoForStatFilteredWithFaults(opts)
+	if err != nil {
+		return DinoBestStatSummary{}, nil, err
+	}
+	return dinoBestStatSummary(id, dino, stat, points, found), faults, nil
+}
+
+func DinoMostMutatedSummaryFromPath(savePath string) (DinoMostMutatedSummary, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoMostMutatedSummary{}, err
+	}
+	defer closeAPI()
+
+	id, dino, total, found, err := api.MostMutatedTamed()
+	if err != nil {
+		return DinoMostMutatedSummary{}, err
+	}
+	return dinoMostMutatedSummary(id, dino, total, found), nil
+}
+
+func DinoWildTamedSummaryFromPath(savePath string) (DinoWildTamedSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoWildTamedSummary{}, nil, err
+	}
+	defer closeAPI()
+
+	dinos, faults, err := api.WildTamedWithFaults()
+	if err != nil {
+		return DinoWildTamedSummary{}, nil, err
+	}
+	summary := DinoWildTamedSummary{Dinos: len(dinos)}
+	if level, ok := api.MaxCurrentLevel(dinos); ok {
+		summary.MaxLevel = level
+	}
+	return summary, faults, nil
+}
+
+func dinoBestStatSummary(id uuid.UUID, dino arkobject.Dino, stat arkobject.DinoStat, points int32, found bool) DinoBestStatSummary {
+	summary := DinoBestStatSummary{
+		UUID:      id,
+		Dino:      dino,
+		Stat:      stat,
+		Points:    points,
+		Found:     found,
+		Blueprint: dino.ShortName(),
+	}
+	if dino.Stats != nil {
+		summary.Level = dino.Stats.CurrentLevel
+	}
+	return summary
+}
+
+func dinoMostMutatedSummary(id uuid.UUID, dino arkobject.Dino, total int32, found bool) DinoMostMutatedSummary {
+	summary := DinoMostMutatedSummary{
+		UUID:                id,
+		Dino:                dino,
+		Found:               found,
+		TotalMutationPoints: total,
+		MutationPairs:       total / 2,
+		Blueprint:           dino.ShortName(),
+	}
+	if dino.Stats != nil {
+		summary.Level = dino.Stats.CurrentLevel
+	}
+	return summary
 }
 
 func (d *DinoAPI) IsApplicableBlueprint(blueprint string) bool {
