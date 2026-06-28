@@ -1,12 +1,14 @@
 package arkapi
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
+	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 )
 
 func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
@@ -86,6 +88,20 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	}
 	if summary.CraftedItems != 1 || summary.TotalQuantity != 0 || summary.MaxRating != 0 || summary.MaxQuality != 0 {
 		t.Fatalf("ItemSummary() aggregates = %#v, want one crafted item and zero quantity/rating/quality", summary)
+	}
+}
+
+func TestNewClusterFromPathOpensLocalClusterFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+
+	api, err := NewClusterFromPath(path)
+	if err != nil {
+		t.Fatalf("NewClusterFromPath() error = %v", err)
+	}
+	summary := api.Summary()
+	if summary.ID != "EOS_abc123" || summary.Path != path || summary.ArchiveVersion == 0 || summary.ObjectCount != 1 {
+		t.Fatalf("NewClusterFromPath() summary = %#v, want opened cluster archive metadata", summary)
 	}
 }
 

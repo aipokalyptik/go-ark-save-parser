@@ -68,6 +68,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       object counts.
 - [x] Add typed local cluster uploaded item short names and uploaded dino
       primary/short class names for JSON/library/CLI consumers.
+- [x] Add `arkapi.NewClusterFromPath` so typed local cluster examples and
+      library consumers open local cluster files without direct `arkcluster`
+      handling.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can

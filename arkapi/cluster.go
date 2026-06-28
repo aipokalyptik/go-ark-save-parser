@@ -60,6 +60,14 @@ func NewCluster(data *arkcluster.Data) *ClusterAPI {
 	return &ClusterAPI{data: data}
 }
 
+func NewClusterFromPath(path string) (*ClusterAPI, error) {
+	data, err := arkcluster.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return NewCluster(data), nil
+}
+
 func (c *ClusterAPI) Items() []arkcluster.Item {
 	if c == nil || c.data == nil {
 		return nil

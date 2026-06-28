@@ -6,18 +6,16 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 )
 
 func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <local-cluster-file>", os.Args[0])
 	}
-	cluster, err := arkcluster.Open(os.Args[1])
+	api, err := arkapi.NewClusterFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	api := arkapi.NewCluster(cluster)
 	summary := api.Summary()
 	items := api.ItemSummary()
 	dinos := api.DinoSummary()

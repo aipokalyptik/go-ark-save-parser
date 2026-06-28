@@ -525,6 +525,8 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `cluster_json` file/directory JSON selection behind typed
           `arkapi.ExportClusterPathJSON` so examples reuse fault-preserving
           directory handling.
+    - [x] Move `cluster_typed` local cluster file opening behind typed
+          `arkapi.NewClusterFromPath`.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed
