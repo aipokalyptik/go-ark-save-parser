@@ -165,7 +165,8 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       example/player-location fixtures; base linked-structure
       object-reference array fixtures use shared ID-table array writers; and
       player/tribe relation directory fixtures plus dino stats/status object
-      byte fixtures are shared by API and CLI tests.
+      byte fixtures are shared by API and CLI tests; stackable API tests and
+      benchmarks use shared stackable object fixtures directly.
       Remaining lower-level domain-specific parser fixtures and non-save
       malformed object-shape fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`

@@ -134,7 +134,10 @@ func createBenchmarkSave(b *testing.B) string {
 		Objects: map[uuid.UUID][]byte{
 			genericID:   syntheticObjectBytes(0x10000001),
 			structureID: syntheticStructureObjectBytes(),
-			stackableID: syntheticStackableObjectBytes(false),
+			stackableID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+				Quantity:    100,
+				IsBlueprint: trueBoolPtr(false),
+			}),
 			equipmentID: syntheticEquipmentObjectBytes(false),
 			dinoID:      syntheticDinoObjectBytes(),
 		},

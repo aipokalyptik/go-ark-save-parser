@@ -1,6 +1,8 @@
 package arkapi
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
@@ -8,6 +10,23 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
 	"github.com/google/uuid"
 )
+
+func TestStackableTestsUseSharedStackableFixtures(t *testing.T) {
+	data, err := os.ReadFile("stackable_test.go")
+	if err != nil {
+		t.Fatalf("ReadFile(stackable_test.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{
+		"\nfunc syntheticStackableObjectBytes(",
+		"\nfunc syntheticStackableObjectBytesWithClass(",
+		"\nfunc syntheticStackableObjectBytesWithOwnerInventory(",
+	} {
+		if strings.Contains(source, name) {
+			t.Fatalf("stackable_test.go still defines %s; use internal/testfixtures.StackableGameObjectBytes directly", name)
+		}
+	}
+}
 
 func TestStackableAPIRecognizesApplicableBlueprints(t *testing.T) {
 	api := StackableAPI{}
@@ -343,8 +362,14 @@ func openSyntheticStackableOwnedByStructureSave(t *testing.T) *arksave.Save {
 	otherInventoryID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
 		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
-		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
-		otherItemID: syntheticStackableObjectBytesWithOwnerInventory(otherInventoryID),
+		ownedItemID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:         100,
+			OwnerInventoryID: inventoryID,
+		}),
+		otherItemID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:         100,
+			OwnerInventoryID: otherInventoryID,
+		}),
 	})
 }
 
@@ -358,7 +383,10 @@ func openSyntheticStackableOwnedByStructureSaveWithFault(t *testing.T) *arksave.
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
 		structureID: syntheticStructureWithInventoryObjectBytes(inventoryID),
 		faultyID:    testfixtures.TruncatedObjectBytes(0x10000005),
-		ownedItemID: syntheticStackableObjectBytesWithOwnerInventory(inventoryID),
+		ownedItemID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:         100,
+			OwnerInventoryID: inventoryID,
+		}),
 	})
 }
 
@@ -368,8 +396,16 @@ func openSyntheticMixedStackableSave(t *testing.T) *arksave.Save {
 	vanillaID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	moddedID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
-		vanillaID: syntheticStackableObjectBytesWithClass(0x1000000b, false),
-		moddedID:  syntheticStackableObjectBytesWithClass(0x10000043, false),
+		vanillaID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			ClassID:     0x1000000b,
+			Quantity:    100,
+			IsBlueprint: trueBoolPtr(false),
+		}),
+		moddedID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			ClassID:     0x10000043,
+			Quantity:    100,
+			IsBlueprint: trueBoolPtr(false),
+		}),
 	})
 }
 
@@ -379,8 +415,14 @@ func openSyntheticStackableSave(t *testing.T) *arksave.Save {
 	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	blueprintID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
-		itemID:      syntheticStackableObjectBytes(false),
-		blueprintID: syntheticStackableObjectBytes(true),
+		itemID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:    100,
+			IsBlueprint: trueBoolPtr(false),
+		}),
+		blueprintID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:    100,
+			IsBlueprint: trueBoolPtr(true),
+		}),
 	})
 }
 
@@ -390,26 +432,10 @@ func openSyntheticStackableSaveWithFault(t *testing.T) *arksave.Save {
 	itemID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	faultyID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
 	return openSyntheticSaveWith(t, "stackables.ark", nil, map[uuid.UUID][]byte{
-		itemID:   syntheticStackableObjectBytes(false),
+		itemID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
+			Quantity:    100,
+			IsBlueprint: trueBoolPtr(false),
+		}),
 		faultyID: testfixtures.TruncatedObjectBytes(0x1000000b),
-	})
-}
-
-func syntheticStackableObjectBytes(isBlueprint bool) []byte {
-	return syntheticStackableObjectBytesWithClass(0x1000000b, isBlueprint)
-}
-
-func syntheticStackableObjectBytesWithClass(className uint32, isBlueprint bool) []byte {
-	return testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
-		ClassID:     className,
-		Quantity:    100,
-		IsBlueprint: trueBoolPtr(isBlueprint),
-	})
-}
-
-func syntheticStackableObjectBytesWithOwnerInventory(ownerInventory uuid.UUID) []byte {
-	return testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
-		Quantity:         100,
-		OwnerInventoryID: ownerInventory,
 	})
 }
