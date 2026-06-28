@@ -222,6 +222,48 @@ func TestStructureAPIHealthSummaryCountsDamagedStructures(t *testing.T) {
 	}
 }
 
+func TestStructureSummaryFromPathHelpersReturnTypedSummariesAndFaults(t *testing.T) {
+	healthSave := openSyntheticStructureHealthSave(t)
+	defer healthSave.Close()
+
+	health, faults, err := StructureHealthSummaryFromPath(healthSave.Path())
+	if err != nil {
+		t.Fatalf("StructureHealthSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("StructureHealthSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if health.Structures != 3 || health.WithHealth != 2 || health.Damaged != 1 {
+		t.Fatalf("StructureHealthSummaryFromPath() = %#v, want damaged structure summary", health)
+	}
+
+	ownedSave := openSyntheticMixedOwnedStructureSave(t)
+	defer ownedSave.Close()
+
+	owners, faults, err := StructureOwnerSummaryFromPath(ownedSave.Path())
+	if err != nil {
+		t.Fatalf("StructureOwnerSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("StructureOwnerSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if owners.Structures != 3 || owners.WithTribeID != 3 || owners.UniqueTribes != 2 {
+		t.Fatalf("StructureOwnerSummaryFromPath() = %#v, want 3 structures and 2 unique tribes", owners)
+	}
+
+	tribe, faults, err := StructureTribeOwnershipSummaryFromPath(ownedSave.Path(), 555)
+	if err != nil {
+		t.Fatalf("StructureTribeOwnershipSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("StructureTribeOwnershipSummaryFromPath() faults = %#v, want none", faults)
+	}
+	wantTribe := StructureTribeOwnershipSummary{TribeID: 555, Structures: 2}
+	if tribe != wantTribe {
+		t.Fatalf("StructureTribeOwnershipSummaryFromPath() = %#v, want %#v", tribe, wantTribe)
+	}
+}
+
 func TestStructureAPIOwnerLocationsGroupsOwnedStructuresByRoundedMapCell(t *testing.T) {
 	save := openSyntheticStructureOwnerLocationSave(t)
 	defer save.Close()

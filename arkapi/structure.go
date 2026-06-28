@@ -96,6 +96,33 @@ func NewStructureFromPath(savePath string) (*StructureAPI, func() error, error) 
 	return NewStructure(save), save.Close, nil
 }
 
+func StructureHealthSummaryFromPath(savePath string) (StructureHealthSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return StructureHealthSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.HealthSummaryWithFaults()
+}
+
+func StructureOwnerSummaryFromPath(savePath string) (StructureOwnerSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return StructureOwnerSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.OwnerSummaryWithFaults()
+}
+
+func StructureTribeOwnershipSummaryFromPath(savePath string, tribeID int32) (StructureTribeOwnershipSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return StructureTribeOwnershipSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.TribeOwnershipSummaryWithFaults(tribeID)
+}
+
 func StructureOwnerLocationsFromPathWithFaults(savePath string, mapName string, digits int) (StructureOwnerLocationExport, []arksave.FaultyObjectInfo, error) {
 	save, err := arksave.Open(savePath)
 	if err != nil {

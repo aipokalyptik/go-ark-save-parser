@@ -623,13 +623,7 @@ func propertyFilter(path string, propertyNames []string, out io.Writer) error {
 }
 
 func structureHealth(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewStructure(save).HealthSummaryWithFaults()
+	summary, faults, err := arkapi.StructureHealthSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -654,13 +648,7 @@ func structureOwnerCount(path string, tribeIDArg string, out io.Writer, opts run
 	if err != nil {
 		return fmt.Errorf("parse tribe id: %w", err)
 	}
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewStructure(save).TribeOwnershipSummaryWithFaults(int32(tribeID64))
+	summary, faults, err := arkapi.StructureTribeOwnershipSummaryFromPath(path, int32(tribeID64))
 	if err != nil {
 		return err
 	}
@@ -675,13 +663,7 @@ func structureOwnerCount(path string, tribeIDArg string, out io.Writer, opts run
 }
 
 func structureOwners(path string, out io.Writer) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	summary, faults, err := arkapi.NewStructure(save).OwnerSummaryWithFaults()
+	summary, faults, err := arkapi.StructureOwnerSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -703,13 +685,7 @@ func structureOwners(path string, out io.Writer) error {
 }
 
 func structureOwnerLocations(path string, mapName string, digits int, out io.Writer, opts runOptions) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	export, _, err := arkapi.NewStructure(save).OwnerLocationsWithFaults(mapName, digits, arkapi.NewPlayer(save))
+	export, _, err := arkapi.StructureOwnerLocationsFromPathWithFaults(path, mapName, digits)
 	if err != nil {
 		return err
 	}

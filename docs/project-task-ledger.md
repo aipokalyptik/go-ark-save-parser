@@ -581,6 +581,13 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.ExportStructureHeatmapSummaryJSONFromPath`.
     - [x] Add path-level typed structure heatmap summaries through
           `arkapi.StructureHeatmapSummaryFromPath`.
+    - [x] Add path-level typed structure health, owner, and tribe-ownership
+          summaries through `arkapi.StructureHealthSummaryFromPath`,
+          `arkapi.StructureOwnerSummaryFromPath`, and
+          `arkapi.StructureTribeOwnershipSummaryFromPath`, then move
+          `structure-health`, `structure-owner-count`, `structure-owners`, and
+          `structure-owner-locations` CLI aggregate commands onto typed
+          structure path helpers.
     - [x] Add path-level typed dino population, wild tamable, and baby
           summaries through `arkapi.DinoPopulationSummaryFromPath`,
           `arkapi.DinoWildTamableSummaryFromPath`, and
