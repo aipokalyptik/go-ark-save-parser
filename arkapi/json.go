@@ -14,6 +14,16 @@ func NewJSON(save *arksave.Save) *JSONAPI {
 	return &JSONAPI{save: save}
 }
 
+func ExportSaveInfoFromPath(savePath string) (SaveInfo, error) {
+	save, err := arksave.Open(savePath)
+	if err != nil {
+		return SaveInfo{}, err
+	}
+	defer save.Close()
+
+	return NewJSON(save).ExportSaveInfo()
+}
+
 type SaveInfo struct {
 	MapName      string       `json:"map_name"`
 	SaveVersion  int16        `json:"save_version"`

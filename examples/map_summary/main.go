@@ -6,20 +6,13 @@ import (
 	"os"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 )
 
 func main() {
 	if len(os.Args) != 2 {
 		log.Fatalf("usage: %s <save.ark>", os.Args[0])
 	}
-	save, err := arksave.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer save.Close()
-
-	info, err := arkapi.NewJSON(save).ExportSaveInfo()
+	info, err := arkapi.ExportSaveInfoFromPath(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}

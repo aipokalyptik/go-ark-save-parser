@@ -39,3 +39,19 @@ func TestJSONAPIExportSaveInfoJSONIsDeterministic(t *testing.T) {
 		t.Fatalf("decoded SaveInfo = %#v", decoded)
 	}
 }
+
+func TestExportSaveInfoFromPathSummarizesLocalSave(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	info, err := ExportSaveInfoFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("ExportSaveInfoFromPath() error = %v", err)
+	}
+	if info.MapName != "Valguero_WP" || info.SaveVersion != 12 || info.ObjectCount != 1 {
+		t.Fatalf("SaveInfo = %#v", info)
+	}
+	if len(info.Objects) != 1 || info.Objects[0].ClassName != "Blueprint'/Game/Test.Test_C'" {
+		t.Fatalf("SaveInfo.Objects = %#v", info.Objects)
+	}
+}
