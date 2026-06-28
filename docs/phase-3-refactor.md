@@ -94,6 +94,11 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.DinoWildTamableSummaryFromPath`, and
       `arkapi.DinoBabySummaryFromPath` so common dino aggregate examples can
       use typed path helpers without manual save lifecycle handling.
+- [x] Add `arkapi.EquipmentSummaryFromPath`,
+      `arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath`,
+      `arkapi.EquipmentSaddleSummaryFromPath`, and
+      `arkapi.EquipmentOwnedSummaryFromPath` so equipment aggregate examples
+      can use typed path helpers without manual save lifecycle handling.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.

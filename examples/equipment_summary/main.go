@@ -14,14 +14,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.SummaryIncludingCryopodSaddlesWithFaults(arkapi.EquipmentFilterOptions{
+	summary, _, err := arkapi.EquipmentSummaryIncludingCryopodSaddlesFromPath(os.Args[1], arkapi.EquipmentFilterOptions{
 		Blueprints: arkapi.CanonicalEquipmentBlueprints(),
 	})
 	if err != nil {

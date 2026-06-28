@@ -991,6 +991,73 @@ func TestEquipmentAPISummaryIncludingCryopodSaddlesWithFaults(t *testing.T) {
 	}
 }
 
+func TestEquipmentSummaryFromPathHelpersReturnTypedSummariesAndFaults(t *testing.T) {
+	directSave := openSyntheticEquipmentFilterSave(t)
+	defer directSave.Close()
+
+	summary, faults, err := EquipmentSummaryFromPath(directSave.Path(), EquipmentFilterOptions{
+		Kinds: []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+	})
+	if err != nil {
+		t.Fatalf("EquipmentSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("EquipmentSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if summary.Items != 2 || summary.ByKind[arkobject.EquipmentWeapon] != 2 || summary.Blueprints != 1 || summary.Equipped != 1 {
+		t.Fatalf("EquipmentSummaryFromPath() = %#v, want two weapons with one blueprint and one equipped", summary)
+	}
+
+	cryopodSave := openSyntheticCryopoddedDinoSaveWithSaddle(t)
+	defer cryopodSave.Close()
+
+	includingCryopods, faults, err := EquipmentSummaryIncludingCryopodSaddlesFromPath(cryopodSave.Path(), EquipmentFilterOptions{
+		Kinds:      []arkobject.EquipmentKind{arkobject.EquipmentSaddle},
+		Blueprints: UpstreamSaddleBlueprints(),
+	})
+	if err != nil {
+		t.Fatalf("EquipmentSummaryIncludingCryopodSaddlesFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("EquipmentSummaryIncludingCryopodSaddlesFromPath() faults = %#v, want none", faults)
+	}
+	if includingCryopods.Items != 1 || includingCryopods.CryopodSaddles != 1 {
+		t.Fatalf("EquipmentSummaryIncludingCryopodSaddlesFromPath() = %#v, want one cryopod saddle", includingCryopods)
+	}
+
+	saddleSave := openSyntheticEquipmentAndCryopodSaddleSave(t)
+	defer saddleSave.Close()
+
+	saddles, faults, err := EquipmentSaddleSummaryFromPath(saddleSave.Path())
+	if err != nil {
+		t.Fatalf("EquipmentSaddleSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("EquipmentSaddleSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if saddles.ItemSaddles != 1 || saddles.CryopodSaddles != 1 || saddles.TotalSaddles != 2 {
+		t.Fatalf("EquipmentSaddleSummaryFromPath() = %#v, want one direct saddle and one cryopod saddle", saddles)
+	}
+
+	ownedSave := openSyntheticEquipmentOwnedBlueprintSave(t)
+	defer ownedSave.Close()
+
+	owned, faults, err := EquipmentOwnedSummaryFromPath(ownedSave.Path(), EquipmentFilterOptions{
+		Kinds:          []arkobject.EquipmentKind{arkobject.EquipmentWeapon},
+		Blueprints:     []string{"Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'"},
+		OnlyBlueprints: true,
+	}, arkobject.ObjectOwner{TribeID: 555})
+	if err != nil {
+		t.Fatalf("EquipmentOwnedSummaryFromPath() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("EquipmentOwnedSummaryFromPath() faults = %#v, want none", faults)
+	}
+	if owned.Items != 1 || owned.MaxDamage != 112.3 {
+		t.Fatalf("EquipmentOwnedSummaryFromPath() = %#v, want one owned blueprint with max damage 112.3", owned)
+	}
+}
+
 func TestEquipmentAPISaddleSummaryWithFaultsCountsDirectAndCryopodSaddles(t *testing.T) {
 	save := openSyntheticEquipmentAndCryopodSaddleSave(t)
 	defer save.Close()

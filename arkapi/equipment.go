@@ -154,6 +154,42 @@ func NewEquipmentFromPath(savePath string) (*EquipmentAPI, func() error, error) 
 	return NewEquipment(save), save.Close, nil
 }
 
+func EquipmentSummaryFromPath(savePath string, opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.SummaryWithFaults(opts)
+}
+
+func EquipmentSummaryIncludingCryopodSaddlesFromPath(savePath string, opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.SummaryIncludingCryopodSaddlesWithFaults(opts)
+}
+
+func EquipmentSaddleSummaryFromPath(savePath string) (EquipmentSaddleSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentSaddleSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.SaddleSummaryWithFaults()
+}
+
+func EquipmentOwnedSummaryFromPath(savePath string, opts EquipmentFilterOptions, owner arkobject.ObjectOwner) (EquipmentOwnedSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return EquipmentOwnedSummary{}, nil, err
+	}
+	defer closeAPI()
+	return api.OwnedSummaryWithFaults(opts, owner)
+}
+
 func UpstreamWeaponBlueprints() []string {
 	return sortedBlueprintKeys(upstreamWeaponBlueprints)
 }

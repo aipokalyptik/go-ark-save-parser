@@ -13,14 +13,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewEquipmentFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
-	summary, _, err := api.SaddleSummaryWithFaults()
+	summary, _, err := arkapi.EquipmentSaddleSummaryFromPath(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read saddles: %v\n", err)
 		os.Exit(1)
