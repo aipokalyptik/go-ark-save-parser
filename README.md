@@ -66,8 +66,8 @@ Implemented:
   `structure-owners`, `structure-owner-locations`, `structure-heatmap`,
   `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
-  `dino-most-mutated`, `dino-wild-tamed`, `equipment-summary`,
-  `equipment-saddles`, `equipment-best`, `equipment-rank`,
+  `dino-most-mutated`, `dino-wild-tamed`, `dino-heatmap`,
+  `equipment-summary`, `equipment-saddles`, `equipment-best`, `equipment-rank`,
   `equipment-ascendant-weapon-bps`, `equipment-history`,
   `equipment-owned-by`, `stackables`, `stackable-owned-by`,
   `player-inventories`, `player-roster`,
@@ -162,6 +162,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave dino-best-stat /path/to/Valguero_WP.ark
 ./bin/arksave dino-most-mutated /path/to/Valguero_WP.ark
 ./bin/arksave dino-wild-tamed /path/to/Valguero_WP.ark
+./bin/arksave --no-cryos dino-heatmap /path/to/Valguero_WP.ark /tmp/dino-heatmap.json 100
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
 ./bin/arksave equipment-best /path/to/Valguero_WP.ark

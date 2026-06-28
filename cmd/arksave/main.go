@@ -36,7 +36,8 @@ var ignoredEquipmentNameParts = []string{
 }
 
 type runOptions struct {
-	Redact bool
+	Redact  bool
+	NoCryos bool
 }
 
 func main() {
@@ -188,6 +189,19 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-wild-tamed requires a local .ark path")
 		}
 		return dinoWildTamed(args[1], out)
+	case "dino-heatmap":
+		if len(args) < 3 || len(args) > 4 {
+			return fmt.Errorf("dino-heatmap requires a local .ark path, explicit output path, and optional resolution")
+		}
+		resolution := 100
+		if len(args) == 4 {
+			value, err := strconv.Atoi(args[3])
+			if err != nil {
+				return fmt.Errorf("parse resolution: %w", err)
+			}
+			resolution = value
+		}
+		return dinoHeatmap(args[1], args[2], resolution, out, opts)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -314,6 +328,8 @@ func splitOptions(args []string) (runOptions, []string, error) {
 		switch arg {
 		case "--redact":
 			opts.Redact = true
+		case "--no-cryos":
+			opts.NoCryos = true
 		default:
 			if strings.HasPrefix(arg, "--") {
 				return opts, nil, fmt.Errorf("unknown option %q", arg)
@@ -347,6 +363,7 @@ func usage(out io.Writer) error {
   arksave dino-best-stat <save.ark>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
+  arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
@@ -936,6 +953,46 @@ func dinoWildTamed(path string, out io.Writer) error {
 		len(dinos),
 		maxLevel,
 		len(faults),
+	)
+	return err
+}
+
+func dinoHeatmap(path string, outPath string, resolution int, out io.Writer, opts runOptions) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	includeCryos := !opts.NoCryos
+	mapName := ""
+	if save.Context != nil {
+		mapName = save.Context.MapName
+	}
+	summary, _, err := arkapi.NewDino(save).HeatmapSummaryWithFaults(arkapi.DinoHeatmapOptions{
+		MapName:           mapName,
+		Resolution:        resolution,
+		IncludeCryopodded: includeCryos,
+	})
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(outPath, data, 0o644); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nWrote: %s\n",
+		summary.NonzeroCells,
+		summary.Total,
+		summary.Max,
+		summary.Faults,
+		outPath,
 	)
 	return err
 }

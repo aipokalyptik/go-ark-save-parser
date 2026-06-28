@@ -530,6 +530,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `dino-best-stat`.
   - [x] `dino-most-mutated`.
   - [x] `dino-wild-tamed`.
+  - [x] `dino-heatmap`.
   - [x] `equipment-summary`.
   - [x] `equipment-saddles`.
   - [x] `equipment-best`.
@@ -615,8 +616,8 @@ without Python or private chat context.
       `ARK_E2E_SAVE_DIR`.
 - [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
       dino, and equipment command/API paths, including ascendant weapon
-      blueprint and equipment-owned-by summaries, plus domain JSON export
-      through both `arkapi.JSONAPI.ExportDomain` and the CLI
+      blueprint, direct-dino heatmap, and equipment-owned-by summaries, plus
+      domain JSON export through both `arkapi.JSONAPI.ExportDomain` and the CLI
       `export-domain-json` path.
 - [x] CLI and example smoke tests cover generated equipment history manifests
       and explicit JSON report output on synthetic fixtures.

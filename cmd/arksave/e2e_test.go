@@ -246,6 +246,34 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	dinoHeatmapPath := filepath.Join(t.TempDir(), "dino-heatmap.json")
+	var dinoHeatmapOut bytes.Buffer
+	if err := run([]string{"--no-cryos", "dino-heatmap", data.SavePath, dinoHeatmapPath, "100"}, &dinoHeatmapOut); err != nil {
+		t.Fatalf("run(dino-heatmap) error = %v", err)
+	}
+	for _, want := range []string{"Cells:", "Total:", "Max:", "Parse faults:", "Wrote:"} {
+		if !strings.Contains(dinoHeatmapOut.String(), want) {
+			t.Fatalf("dino-heatmap output missing %q", want)
+		}
+	}
+	dinoHeatmapData, err := os.ReadFile(dinoHeatmapPath)
+	if err != nil {
+		t.Fatalf("read dino heatmap JSON: %v", err)
+	}
+	var dinoHeatmap struct {
+		Resolution   int `json:"resolution"`
+		NonzeroCells int `json:"nonzero_cells"`
+		Total        int `json:"total"`
+		Max          int `json:"max"`
+		Faults       int `json:"faults"`
+	}
+	if err := json.Unmarshal(dinoHeatmapData, &dinoHeatmap); err != nil {
+		t.Fatalf("unmarshal dino heatmap JSON: %v", err)
+	}
+	if dinoHeatmap.Resolution != 100 || dinoHeatmap.Total < 0 || dinoHeatmap.NonzeroCells < 0 || dinoHeatmap.Max < 0 || dinoHeatmap.Faults < 0 {
+		t.Fatalf("dino heatmap JSON = %#v, want valid aggregate summary", dinoHeatmap)
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)

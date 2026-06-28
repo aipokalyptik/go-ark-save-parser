@@ -15,6 +15,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
@@ -412,6 +413,42 @@ func TestStructureHeatmapCommandWritesSummaryJSON(t *testing.T) {
 	}
 	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 {
 		t.Fatalf("heatmap summary = %#v, want one populated structure cell", summary)
+	}
+}
+
+func TestDinoHeatmapCommandWritesSummaryJSON(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "dinos.ark")
+	outPath := filepath.Join(dir, "dino-heatmap.json")
+	createSyntheticLocatedDinoSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--no-cryos", "dino-heatmap", path, outPath, "100"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-heatmap) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Cells: 1",
+		"Total: 1",
+		"Max: 1",
+		"Parse faults: 0",
+		"Wrote: " + outPath,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-heatmap output %q does not contain %q", got, want)
+		}
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s) error = %v", outPath, err)
+	}
+	var summary arkapi.HeatmapSummary
+	if err := json.Unmarshal(data, &summary); err != nil {
+		t.Fatalf("Unmarshal dino heatmap summary error = %v", err)
+	}
+	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 {
+		t.Fatalf("dino heatmap summary = %#v, want one populated dino cell", summary)
 	}
 }
 
@@ -2377,6 +2414,36 @@ func createSyntheticDinoSave(t *testing.T, path string) {
 			uuid.MustParse("10111213-1415-1617-1819-1a1b1c1d1e1f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1: 1001,
 				ID2: 2002,
+			}),
+		},
+	})
+}
+
+func createSyntheticLocatedDinoSave(t *testing.T, path string) {
+	t.Helper()
+	dinoID := uuid.MustParse("10111213-1415-1617-1819-1a1b1c1d1e1f")
+	transform := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			0x10000015: "DinoID1",
+			0x10000016: "DinoID2",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			dinoID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1: 1001,
+				ID2: 2002,
+			}),
+		},
+		Custom: map[string][]byte{
+			"ActorTransforms": testfixtures.ActorTransforms(testfixtures.ActorTransform{
+				UUID:       dinoID,
+				X:          transform.X,
+				Y:          transform.Y,
+				Z:          transform.Z,
+				Quaternion: 1,
 			}),
 		},
 	})
