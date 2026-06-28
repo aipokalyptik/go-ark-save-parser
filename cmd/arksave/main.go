@@ -1967,25 +1967,28 @@ func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOp
 }
 
 func exportClusterDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
-	entries, err := arkcluster.OpenDirectory(path)
+	entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
 	if err != nil {
 		return err
 	}
 	var raw []byte
 	if opts.Redact {
-		info := arkapi.ExportClusterDirectoryData(entries)
+		info := arkapi.ExportClusterDirectoryDataWithFaults(entries, faults)
 		for i := range info.Files {
 			info.Files[i].ID = redactedValue
 			info.Files[i].Path = redactedValue
 			info.Files[i].Items = nil
 			info.Files[i].Dinos = nil
 		}
+		for i := range info.Faults {
+			info.Faults[i].Path = redactedValue
+		}
 		raw, err = json.MarshalIndent(info, "", "  ")
 		if err != nil {
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportClusterDirectoryDataJSON(entries)
+		raw, err = arkapi.ExportClusterDirectoryDataWithFaultsJSON(entries, faults)
 		if err != nil {
 			return err
 		}

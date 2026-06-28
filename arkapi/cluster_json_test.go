@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -269,5 +270,37 @@ func TestExportClusterDirectoryDataIncludesAggregateSummary(t *testing.T) {
 	}
 	if decoded.Summary.ItemSummary.TotalQuantity != 7 {
 		t.Fatalf("decoded summary = %#v, want total quantity 7", decoded.Summary)
+	}
+}
+
+func TestExportClusterDirectoryDataWithFaultsReportsBrokenFiles(t *testing.T) {
+	entries := []*arkcluster.Data{{
+		ID:      "EOS_valid",
+		Path:    "/tmp/EOS_valid",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+	}}
+	faults := []arkcluster.FileFault{{
+		Path: "/tmp/EOS_broken",
+		Err:  errors.New("not an archive"),
+	}}
+
+	info := ExportClusterDirectoryDataWithFaults(entries, faults)
+	if info.Count != 1 || len(info.Files) != 1 || info.Summary.Files != 1 {
+		t.Fatalf("ClusterDirectoryInfo = %#v, want one valid file", info)
+	}
+	if len(info.Faults) != 1 || info.Faults[0].Path != "/tmp/EOS_broken" || info.Faults[0].Error != "not an archive" {
+		t.Fatalf("ClusterDirectoryInfo.Faults = %#v, want broken file fault", info.Faults)
+	}
+
+	raw, err := ExportClusterDirectoryDataWithFaultsJSON(entries, faults)
+	if err != nil {
+		t.Fatalf("ExportClusterDirectoryDataWithFaultsJSON() error = %v", err)
+	}
+	var decoded ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Error != "not an archive" {
+		t.Fatalf("decoded faults = %#v, want one serialized fault", decoded.Faults)
 	}
 }

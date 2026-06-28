@@ -22,8 +22,14 @@ type ClusterDataInfo struct {
 
 type ClusterDirectoryInfo struct {
 	Count   int                       `json:"count"`
+	Faults  []ClusterFileFaultInfo    `json:"faults,omitempty"`
 	Summary ClusterDirectoryAggregate `json:"summary"`
 	Files   []ClusterDataInfo         `json:"files"`
+}
+
+type ClusterFileFaultInfo struct {
+	Path  string `json:"path"`
+	Error string `json:"error"`
 }
 
 type ClusterItemInfo struct {
@@ -164,17 +170,35 @@ func ExportClusterDataJSON(data *arkcluster.Data) ([]byte, error) {
 }
 
 func ExportClusterDirectoryData(entries []*arkcluster.Data) ClusterDirectoryInfo {
+	return ExportClusterDirectoryDataWithFaults(entries, nil)
+}
+
+func ExportClusterDirectoryDataWithFaults(entries []*arkcluster.Data, faults []arkcluster.FileFault) ClusterDirectoryInfo {
 	info := ClusterDirectoryInfo{
 		Count:   len(entries),
 		Summary: ClusterDirectorySummary(entries),
 		Files:   make([]ClusterDataInfo, 0, len(entries)),
+		Faults:  make([]ClusterFileFaultInfo, 0, len(faults)),
 	}
 	for _, entry := range entries {
 		info.Files = append(info.Files, ExportClusterData(entry))
+	}
+	for _, fault := range faults {
+		if fault.Err == nil {
+			continue
+		}
+		info.Faults = append(info.Faults, ClusterFileFaultInfo{
+			Path:  fault.Path,
+			Error: fault.Err.Error(),
+		})
 	}
 	return info
 }
 
 func ExportClusterDirectoryDataJSON(entries []*arkcluster.Data) ([]byte, error) {
-	return json.MarshalIndent(ExportClusterDirectoryData(entries), "", "  ")
+	return ExportClusterDirectoryDataWithFaultsJSON(entries, nil)
+}
+
+func ExportClusterDirectoryDataWithFaultsJSON(entries []*arkcluster.Data, faults []arkcluster.FileFault) ([]byte, error) {
+	return json.MarshalIndent(ExportClusterDirectoryDataWithFaults(entries, faults), "", "  ")
 }

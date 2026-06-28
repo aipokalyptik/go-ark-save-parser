@@ -1734,6 +1734,36 @@ func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
 	assertPrivateFileMode(t, outPath)
 }
 
+func TestExportClusterJSONDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "clusters.json")
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_valid"), "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"export-cluster-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(export-cluster-json directory) error = %v", err)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(cluster directory json) error = %v", err)
+	}
+	var decoded arkapi.ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(cluster directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].ID != "EOS_valid" {
+		t.Fatalf("decoded valid files = %#v, want one valid cluster file", decoded)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Path != filepath.Join(dir, "EOS_broken") || decoded.Faults[0].Error == "" {
+		t.Fatalf("decoded faults = %#v, want broken cluster file fault", decoded.Faults)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
 func TestExportTributeJSONWritesSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	tributePath := filepath.Join(dir, "abc.arktributetribe")

@@ -295,6 +295,8 @@ documented.
         CLI directory summaries.
   - [x] Add fault-preserving local cluster directory reads so valid cluster
         uploads survive alongside broken local cluster files.
+  - [x] Expose local cluster directory file faults in JSON export and CLI
+        `export-cluster-json` directory output.
   - [ ] Add richer item/dino fields as new local-file oracle fixtures expose
         them.
 - [~] Finish remaining Player/Tribe edge behavior not covered by parsed local
