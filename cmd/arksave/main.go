@@ -65,6 +65,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("parse requires a local .ark path")
 		}
 		return parseSave(args[1], out, opts)
+	case "map-summary":
+		if len(args) != 2 {
+			return fmt.Errorf("map-summary requires a local .ark path")
+		}
+		return mapSummary(args[1], out)
 	case "object-classes":
 		if len(args) != 2 {
 			return fmt.Errorf("object-classes requires a local .ark path")
@@ -308,6 +313,7 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
+  arksave map-summary <save.ark>
   arksave object-classes <save.ark>
   arksave object-summary <save.ark> <object-uuid>
   arksave property-positions <save.ark> <object-uuid>
@@ -414,6 +420,28 @@ func parseSave(path string, out io.Writer, opts runOptions) error {
 		len(ids),
 		len(objects),
 		len(faults),
+	)
+	return err
+}
+
+func mapSummary(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	info, err := arkapi.NewJSON(save).ExportSaveInfo()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"map=%s save_version=%d objects=%d names=%d\n",
+		info.MapName,
+		info.SaveVersion,
+		info.ObjectCount,
+		info.NameCount,
 	)
 	return err
 }

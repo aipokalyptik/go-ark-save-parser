@@ -28,6 +28,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var mapSummaryOut bytes.Buffer
+	if err := run([]string{"map-summary", data.SavePath}, &mapSummaryOut); err != nil {
+		t.Fatalf("run(map-summary) error = %v", err)
+	}
+	for _, want := range []string{"map=", "save_version=", "objects=", "names="} {
+		if !strings.Contains(mapSummaryOut.String(), want) {
+			t.Fatalf("map-summary output missing %q", want)
+		}
+	}
+
 	var objectClassesOut bytes.Buffer
 	if err := run([]string{"object-classes", data.SavePath}, &objectClassesOut); err != nil {
 		t.Fatalf("run(object-classes) error = %v", err)

@@ -60,7 +60,7 @@ Implemented:
   metadata for library callers.
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
-- `arksave inspect`, `parse`, `object-classes`, `object-summary`,
+- `arksave inspect`, `parse`, `map-summary`, `object-classes`, `object-summary`,
   `property-positions`, `class-lookup`, `class-property-summary`,
   `property-filter`, `structure-health`, `structure-owner-count`,
   `structure-owners`, `structure-owner-locations`, `structure-heatmap`,
@@ -126,6 +126,12 @@ Run a fault-tolerant full-object parse smoke check:
 
 ```sh
 ./bin/arksave parse /path/to/Valguero_WP.ark
+```
+
+Summarize local map/save metadata:
+
+```sh
+./bin/arksave map-summary /path/to/Valguero_WP.ark
 ```
 
 Look up save objects by class substring:

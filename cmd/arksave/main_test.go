@@ -84,6 +84,28 @@ func TestParseCommandRedactsPath(t *testing.T) {
 	}
 }
 
+func TestMapSummaryCommandPrintsOfflineSaveSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "synthetic.ark")
+	createSyntheticSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"map-summary", path}, &out)
+	if err != nil {
+		t.Fatalf("run(map-summary) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"map=Valguero_WP",
+		"save_version=12",
+		"objects=1",
+		"names=",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("map-summary output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestObjectClassesCommandPrintsSaveClasses(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "synthetic.ark")
 	createSyntheticSave(t, path)

@@ -511,6 +511,7 @@ CLI tools, and reusable APIs without losing oracle parity.
 - [x] CLI:
   - [x] `inspect`.
   - [x] `parse`.
+  - [x] `map-summary`.
   - [x] `object-classes`.
   - [x] `object-summary`.
   - [x] `property-positions`.
@@ -603,8 +604,9 @@ without Python or private chat context.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
-      commands, object class lists, object summaries, property-position
-      metadata, class/property lookup and class property summaries, local
+      commands, map/save metadata summaries, object class lists, object
+      summaries, property-position metadata, class/property lookup and class
+      property summaries, local
       profile/tribe/tribute file handling, and aggregate-output examples
       through `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
