@@ -651,6 +651,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           `arkapi.ExportEquipmentBinaryFromPath`, and
           `arkapi.ExportBaseBinaryFromPath`, then move their examples onto the
           helpers while preserving explicit output directory handling.
+    - [x] Add `arkapi.NewJSONFromPath`, then move save-info export,
+          all-domain JSON export, and equipment history snapshots onto shared
+          typed JSON path lifecycle handling.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

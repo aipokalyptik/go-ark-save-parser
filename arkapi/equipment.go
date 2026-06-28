@@ -731,13 +731,13 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 }
 
 func EquipmentHistorySnapshotFromPath(path string) (map[string]struct{}, error) {
-	save, err := arksave.Open(path)
+	api, closeAPI, err := NewJSONFromPath(path)
 	if err != nil {
 		return nil, err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	exported, err := NewJSON(save).ExportDomain("equipment")
+	exported, err := api.ExportDomain("equipment")
 	if err != nil {
 		return nil, err
 	}

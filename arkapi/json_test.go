@@ -22,6 +22,25 @@ func TestJSONAPIExportSaveInfoSummarizesLocalSave(t *testing.T) {
 	}
 }
 
+func TestNewJSONFromPathOpensLocalSave(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	api, closeAPI, err := NewJSONFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("NewJSONFromPath() error = %v", err)
+	}
+	defer closeAPI()
+
+	info, err := api.ExportSaveInfo()
+	if err != nil {
+		t.Fatalf("ExportSaveInfo() error = %v", err)
+	}
+	if info.MapName != "Valguero_WP" || info.ObjectCount != 1 {
+		t.Fatalf("SaveInfo = %#v, want synthetic save info", info)
+	}
+}
+
 func TestJSONAPIExportSaveInfoJSONIsDeterministic(t *testing.T) {
 	save := openSyntheticSave(t)
 	defer save.Close()

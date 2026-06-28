@@ -14,14 +14,22 @@ func NewJSON(save *arksave.Save) *JSONAPI {
 	return &JSONAPI{save: save}
 }
 
-func ExportSaveInfoFromPath(savePath string) (SaveInfo, error) {
+func NewJSONFromPath(savePath string) (*JSONAPI, func() error, error) {
 	save, err := arksave.Open(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewJSON(save), save.Close, nil
+}
+
+func ExportSaveInfoFromPath(savePath string) (SaveInfo, error) {
+	api, closeAPI, err := NewJSONFromPath(savePath)
 	if err != nil {
 		return SaveInfo{}, err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	return NewJSON(save).ExportSaveInfo()
+	return api.ExportSaveInfo()
 }
 
 type SaveInfo struct {

@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
-	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
 
@@ -338,13 +337,13 @@ func (j *JSONAPI) ExportAllDomains(outputDir string, domains []string) (JSONExpo
 }
 
 func ExportAllDomainsFromPath(savePath string, outputDir string, domains []string) (JSONExportManifest, error) {
-	save, err := arksave.Open(savePath)
+	api, closeAPI, err := NewJSONFromPath(savePath)
 	if err != nil {
 		return JSONExportManifest{}, err
 	}
-	defer save.Close()
+	defer closeAPI()
 
-	return NewJSON(save).ExportAllDomains(outputDir, domains)
+	return api.ExportAllDomains(outputDir, domains)
 }
 
 func writeJSONExportFile(dir string, name string, data []byte) error {
