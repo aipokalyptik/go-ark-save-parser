@@ -61,9 +61,10 @@ Implemented:
 - Local `.arktributetribe` / `.arktributetribetribe` tribute index parsing
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
-  `structure-owner-locations`, `base-components`, `players`, `tribes`,
-  `cluster`, `tribute`, `export-json`, `export-domain-json`, `export-cluster-json`, and
-  `export-tribute-json` commands.
+  `structure-owners`, `structure-owner-locations`, `base-components`,
+  `players`, `tribes`, `cluster`, `tribute`, `export-json`,
+  `export-domain-json`, `export-cluster-json`, and `export-tribute-json`
+  commands.
 - Go-only provided-data E2E smoke tests for selected read-only APIs, CLI
   commands, and examples, runnable with `ARK_E2E_SAVE` or `ARK_E2E_SAVE_DIR`.
 - Private Python oracle setup and gated private `.ark` integration test.
@@ -125,6 +126,7 @@ Summarize structure health with a selected-property scan:
 ```sh
 ./bin/arksave structure-health /path/to/Valguero_WP.ark
 ./bin/arksave --redact structure-owner-count /path/to/Valguero_WP.ark 555
+./bin/arksave structure-owners /path/to/Valguero_WP.ark
 ./bin/arksave --redact structure-owner-locations /path/to/Valguero_WP.ark Valguero 1
 ./bin/arksave base-components /path/to/Valguero_WP.ark
 ```

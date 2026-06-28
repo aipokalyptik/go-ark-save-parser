@@ -62,6 +62,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("structure-owner-count requires a local .ark path and tribe id")
 		}
 		return structureOwnerCount(args[1], args[2], out, opts)
+	case "structure-owners":
+		if len(args) != 2 {
+			return fmt.Errorf("structure-owners requires a local .ark path")
+		}
+		return structureOwners(args[1], out)
 	case "structure-owner-locations":
 		if len(args) != 2 && len(args) != 3 && len(args) != 4 {
 			return fmt.Errorf("structure-owner-locations requires a local .ark path with optional map and digits")
@@ -156,6 +161,7 @@ func usage(out io.Writer) error {
   arksave [--redact] parse <save.ark>
   arksave structure-health <save.ark>
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
+  arksave structure-owners <save.ark>
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
   arksave base-components <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
@@ -286,6 +292,34 @@ func structureOwnerCount(path string, tribeIDArg string, out io.Writer, opts run
 		"Tribe ID: %v\nStructures: %d\nParse faults: %d\n",
 		displayInt(summary.TribeID, opts),
 		summary.Structures,
+		len(faults),
+	)
+	return err
+}
+
+func structureOwners(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewStructure(save).OwnerSummaryWithFaults()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Structures: %d\nWith tribe ID: %d\nWith player ID: %d\nWith tribe name: %d\nWith player name: %d\nWith original placer ID: %d\nUnique tribes: %d\nUnique players: %d\nUnique original placers: %d\nParse faults: %d\n",
+		summary.Structures,
+		summary.WithTribeID,
+		summary.WithPlayerID,
+		summary.WithTribeName,
+		summary.WithPlayerName,
+		summary.WithOriginalPlacerID,
+		summary.UniqueTribes,
+		summary.UniquePlayers,
+		summary.UniqueOriginalPlacers,
 		len(faults),
 	)
 	return err

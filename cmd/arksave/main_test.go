@@ -163,6 +163,30 @@ func TestStructureOwnerCountCommandRejectsInvalidTribeID(t *testing.T) {
 	}
 }
 
+func TestStructureOwnersCommandPrintsAggregateSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "structures.ark")
+	createSyntheticStructureHealthSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"structure-owners", path}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-owners) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Structures: 1",
+		"With tribe ID: 1",
+		"With player ID: 0",
+		"With tribe name: 0",
+		"Unique tribes: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-owners output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestStructureOwnerLocationsCommandPrintsAggregateSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structures.ark")
 	createSyntheticStructureHealthSave(t, path)

@@ -47,6 +47,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var ownersOut bytes.Buffer
+	if err := run([]string{"structure-owners", data.SavePath}, &ownersOut); err != nil {
+		t.Fatalf("run(structure-owners) error = %v", err)
+	}
+	for _, want := range []string{"Structures:", "With tribe ID:", "Unique tribes:", "Parse faults:"} {
+		if !strings.Contains(ownersOut.String(), want) {
+			t.Fatalf("structure-owners output missing %q", want)
+		}
+	}
+
 	var ownerLocationsOut bytes.Buffer
 	if err := run([]string{"--redact", "structure-owner-locations", data.SavePath}, &ownerLocationsOut); err != nil {
 		t.Fatalf("run(structure-owner-locations) error = %v", err)

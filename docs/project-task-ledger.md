@@ -513,6 +513,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `parse`.
   - [x] `structure-health`.
   - [x] `structure-owner-count`.
+  - [x] `structure-owners`.
   - [x] `structure-owner-locations`.
   - [x] `base-components`.
   - [x] `players`.
