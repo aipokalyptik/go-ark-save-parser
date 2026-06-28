@@ -70,3 +70,24 @@ func TestArkObjectPlayerAndTribeModelsAreSplitByResponsibility(t *testing.T) {
 		}
 	}
 }
+
+func TestArkObjectClusterModelsAreSplitByResponsibility(t *testing.T) {
+	for _, path := range []string{
+		"cluster.go",
+		"cluster_item.go",
+		"cluster_dino.go",
+		"cluster_class_names.go",
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("expected arkobject cluster split file %s: %v", path, err)
+		}
+	}
+
+	contents, err := os.ReadFile("cluster.go")
+	if err != nil {
+		t.Fatalf("read cluster.go: %v", err)
+	}
+	if lines := strings.Count(string(contents), "\n"); lines > 80 {
+		t.Fatalf("cluster.go has %d lines, want <= 80 after responsibility split", lines)
+	}
+}
