@@ -14,6 +14,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
+	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
@@ -94,6 +95,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dinos requires a local .ark path")
 		}
 		return dinos(args[1], out)
+	case "equipment-summary":
+		if len(args) != 2 {
+			return fmt.Errorf("equipment-summary requires a local .ark path")
+		}
+		return equipmentSummary(args[1], out)
 	case "players":
 		if len(args) != 2 {
 			return fmt.Errorf("players requires a local .arkprofile path")
@@ -170,6 +176,7 @@ func usage(out io.Writer) error {
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
   arksave base-components <save.ark>
   arksave dinos <save.ark>
+  arksave equipment-summary <save.ark>
   arksave [--redact] players <player.arkprofile-or-directory>
   arksave [--redact] tribes <tribe.arktribe-or-directory>
   arksave [--redact] cluster <cluster-file-or-directory>
@@ -414,6 +421,42 @@ func dinos(path string, out io.Writer) error {
 		summary.Wild,
 		summary.Cryopodded,
 		summary.Classes,
+		len(faults),
+	)
+	return err
+}
+
+func equipmentSummary(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewEquipment(save).SummaryWithFaults(arkapi.EquipmentFilterOptions{})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Items: %d\nTotal quantity: %d\nWeapon items: %d\nArmor items: %d\nSaddle items: %d\nShield items: %d\nBlueprints: %d\nEquipped: %d\nCrafted: %d\nWith custom data: %d\nCustom data entries: %d\nClasses: %d\nMax quality: %d\nMax rating: %.1f\nMax damage: %.1f\nMax armor: %.1f\nMax durability: %.1f\nParse faults: %d\n",
+		summary.Items,
+		summary.TotalQuantity,
+		summary.ByKind[arkobject.EquipmentWeapon],
+		summary.ByKind[arkobject.EquipmentArmor],
+		summary.ByKind[arkobject.EquipmentSaddle],
+		summary.ByKind[arkobject.EquipmentShield],
+		summary.Blueprints,
+		summary.Equipped,
+		summary.Crafted,
+		summary.WithCustomData,
+		summary.CustomDataEntries,
+		summary.Classes,
+		summary.MaxQuality,
+		summary.MaxRating,
+		summary.MaxDamage,
+		summary.MaxArmor,
+		summary.MaxCurrentDurability,
 		len(faults),
 	)
 	return err

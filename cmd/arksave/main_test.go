@@ -278,6 +278,36 @@ func TestDinosCommandPrintsPopulationSummary(t *testing.T) {
 	}
 }
 
+func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "equipment.ark")
+	createSyntheticEquipmentSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"equipment-summary", path}, &out)
+	if err != nil {
+		t.Fatalf("run(equipment-summary) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Items: 1",
+		"Total quantity: 2",
+		"Weapon items: 1",
+		"Blueprints: 1",
+		"Equipped: 1",
+		"Crafted: 1",
+		"Classes: 1",
+		"Max quality: 3",
+		"Max rating: 7.5",
+		"Max damage: 112.3",
+		"Max durability: 0.8",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("equipment-summary output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestRunRejectsNetworkCommands(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"rcon"}, &out)
@@ -1672,6 +1702,47 @@ func createSyntheticDinoSave(t *testing.T, path string) {
 			uuid.MustParse("10111213-1415-1617-1819-1a1b1c1d1e1f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1: 1001,
 				ID2: 2002,
+			}),
+		},
+	})
+}
+
+func createSyntheticEquipmentSave(t *testing.T, path string) {
+	t.Helper()
+	trueValue := true
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000a: "FloatProperty",
+			0x1000000c: "ItemQuantity",
+			0x1000000d: "bIsBlueprint",
+			0x1000000e: "BoolProperty",
+			0x1000000f: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C'",
+			0x10000010: "ItemRating",
+			0x10000011: "ItemQualityIndex",
+			0x10000012: "SavedDurability",
+			0x1000001a: "StrProperty",
+			0x1000001b: "CrafterCharacterName",
+			0x1000001c: "CrafterTribeName",
+			0x10000022: "bEquippedItem",
+			0x10000040: "ItemStatValues",
+			0x10000041: "UInt16Property",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("20212223-2425-2627-2829-2a2b2c2d2e2f"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				Quantity:             2,
+				Rating:               7.5,
+				Quality:              3,
+				Durability:           0.75,
+				IsBlueprint:          &trueValue,
+				IsEquipped:           &trueValue,
+				CrafterCharacterName: "Survivor",
+				CrafterTribeName:     "Porters",
+				Stats: map[int32]uint16{
+					2: 1000,
+					3: 1234,
+				},
 			}),
 		},
 	})
