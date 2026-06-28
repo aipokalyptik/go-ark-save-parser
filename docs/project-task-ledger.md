@@ -489,6 +489,9 @@ CLI tools, and reusable APIs without losing oracle parity.
           `dino_best_base_stat` onto typed `arkobject.DinoStat` helpers.
     - [x] Move `dino_heatmap` cryopod filtering, fault handling, and summary
           generation onto typed `arkapi.DinoAPI.HeatmapSummaryWithFaults`.
+    - [x] Move `structure_heatmap` structure loading, fault handling, and
+          summary generation onto typed
+          `arkapi.StructureAPI.HeatmapSummaryWithFaults`.
     - [x] Move `structure_at_location` nearby/connected counts onto typed
           `arkapi.StructureAPI.AtLocationSummaryWithFaults`.
     - [x] Move `export_all_items` domain export loop and manifest writing onto

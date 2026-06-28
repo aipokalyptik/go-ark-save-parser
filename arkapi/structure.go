@@ -40,6 +40,14 @@ type StructureLocationSummary struct {
 	Connected  int
 }
 
+type StructureHeatmapOptions struct {
+	MapName      string
+	Resolution   int
+	Blueprints   []string
+	Owner        *arkobject.ObjectOwner
+	MinInSection int
+}
+
 type StructureHealthSummary struct {
 	Structures           int
 	WithHealth           int
@@ -765,6 +773,18 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 		}
 	}
 	return heatmap, nil
+}
+
+func (s *StructureAPI) HeatmapSummaryWithFaults(opts StructureHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
+	structures, faults, err := s.AllWithFaults()
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	heatmap, err := s.Heatmap(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
+	if err != nil {
+		return HeatmapSummary{}, nil, err
+	}
+	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
 }
 
 func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {

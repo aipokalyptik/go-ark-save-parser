@@ -39,15 +39,14 @@ func main() {
 	defer save.Close()
 
 	api := arkapi.NewStructure(save)
-	structures, faults, err := api.AllWithFaults()
+	summary, _, err := api.HeatmapSummaryWithFaults(arkapi.StructureHeatmapOptions{
+		MapName:      save.Context.MapName,
+		Resolution:   resolution,
+		MinInSection: minInCell,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	heatmap, err := api.Heatmap(save.Context.MapName, resolution, structures, nil, nil, minInCell)
-	if err != nil {
-		log.Fatal(err)
-	}
-	summary := arkapi.SummarizeHeatmap(heatmap, len(faults))
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
 		log.Fatal(err)
