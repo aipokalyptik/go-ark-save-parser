@@ -493,8 +493,10 @@ CLI tools, and reusable APIs without losing oracle parity.
         stat calculation, default stat tables, and property coercion helpers
         are now split into focused files; dino construction, colors, lineage,
         traits, and shared object-property coercion helpers are also split with
-        package-shape regression tests, while broader structure, stackable,
-        player, tribe, inventory, and cluster model splits remain.
+        package-shape regression tests; player, tribe, and shared profile
+        property helpers are split with package-shape regression coverage,
+        while broader structure, stackable, inventory, and cluster model splits
+        remain.
   - [x] Replace remaining Python-shaped compatibility helpers where typed Go
         surfaces now exist:
     - [x] Move `object_summary` and `class_property_summary` direct save
