@@ -117,6 +117,14 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var mostMutatedOut bytes.Buffer
+	if err := run([]string{"dino-most-mutated", data.SavePath}, &mostMutatedOut); err != nil {
+		t.Fatalf("run(dino-most-mutated) error = %v", err)
+	}
+	if !strings.Contains(mostMutatedOut.String(), "Most mutated:") {
+		t.Fatalf("dino-most-mutated output missing summary")
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)

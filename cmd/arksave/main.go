@@ -110,6 +110,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-best-stat requires a local .ark path")
 		}
 		return dinoBestStat(args[1], out)
+	case "dino-most-mutated":
+		if len(args) != 2 {
+			return fmt.Errorf("dino-most-mutated requires a local .ark path")
+		}
+		return dinoMostMutated(args[1], out)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -234,6 +239,7 @@ func usage(out io.Writer) error {
   arksave dino-wild-tamables <save.ark>
   arksave dino-babies <save.ark>
   arksave dino-best-stat <save.ark>
+  arksave dino-most-mutated <save.ark>
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
   arksave equipment-best <save.ark>
@@ -566,6 +572,36 @@ func dinoBestStat(path string, out io.Writer) error {
 		level,
 		dino.ShortName(),
 		len(faults),
+	)
+	return err
+}
+
+func dinoMostMutated(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	_, dino, total, ok, err := arkapi.NewDino(save).MostMutatedTamed()
+	if err != nil {
+		return err
+	}
+	if !ok {
+		_, err = fmt.Fprintln(out, "Most mutated: none")
+		return err
+	}
+	level := int32(0)
+	if dino.Stats != nil {
+		level = dino.Stats.CurrentLevel
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Most mutated: %s\nTotal mutation points: %d\nMutation pairs: %d\nLevel: %d\n",
+		dino.ShortName(),
+		total,
+		total/2,
+		level,
 	)
 	return err
 }
