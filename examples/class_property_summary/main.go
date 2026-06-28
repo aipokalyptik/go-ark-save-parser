@@ -13,13 +13,7 @@ func main() {
 		log.Fatalf("usage: %s <save.ark> <class-substring>", os.Args[0])
 	}
 	classSubstring := os.Args[2]
-	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer closeAPI()
-
-	summary, faults, err := api.ClassPropertySummaryWithFaults(classSubstring)
+	summary, faults, err := arkapi.GeneralClassPropertySummaryFromPath(os.Args[1], classSubstring)
 	if err != nil {
 		log.Fatal(err)
 	}

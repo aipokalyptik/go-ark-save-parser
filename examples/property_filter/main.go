@@ -12,13 +12,7 @@ func main() {
 	if len(os.Args) < 3 {
 		log.Fatalf("usage: %s <save.ark> <property> [property...]", os.Args[0])
 	}
-	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer closeAPI()
-
-	summary, err := api.PropertyFilterSummary(os.Args[2:])
+	summary, err := arkapi.GeneralPropertyFilterSummaryFromPath(os.Args[1], os.Args[2:])
 	if err != nil {
 		log.Fatal(err)
 	}

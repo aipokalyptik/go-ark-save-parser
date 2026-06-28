@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -253,16 +254,7 @@ func TestGeneralParseSummaryFromPathLabelsOpenAndParseErrors(t *testing.T) {
 		t.Fatalf("GeneralParseSummaryFromPath(missing) error = %v, want open save label", err)
 	}
 
-	path := filepath.Join(t.TempDir(), "no-game-table.ark")
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		t.Fatalf("open sqlite fixture: %v", err)
-	}
-	testfixtures.MustExec(t, db, `create table custom (key text primary key, value blob)`)
-	testfixtures.MustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
-	if err := db.Close(); err != nil {
-		t.Fatalf("close sqlite fixture: %v", err)
-	}
+	path := writeHeaderOnlySave(t)
 
 	_, _, err = GeneralParseSummaryFromPath(path)
 	if err == nil || !strings.HasPrefix(err.Error(), "parse objects: ") {
@@ -313,6 +305,161 @@ func TestGeneralObjectSummaryReturnsParseErrors(t *testing.T) {
 	_, err := NewGeneral(save).ObjectSummary(id)
 	if err == nil || errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("ObjectSummary(broken) error = %v, want parse error", err)
+	}
+}
+
+func TestGeneralSummaryPathHelpersMatchTypedAPIMethods(t *testing.T) {
+	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	structureID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
+	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
+		objectID:    syntheticObjectBytesWithExtraProperty(0x10000001),
+		structureID: syntheticLookupStructureObjectBytes(0x10000005, false),
+	})
+	defer save.Close()
+	api := NewGeneral(save)
+
+	objectSummary, err := GeneralObjectSummaryFromPath(save.Path(), objectID)
+	if err != nil {
+		t.Fatalf("GeneralObjectSummaryFromPath() error = %v", err)
+	}
+	directObjectSummary, err := api.ObjectSummary(objectID)
+	if err != nil {
+		t.Fatalf("ObjectSummary() error = %v", err)
+	}
+	if !reflect.DeepEqual(objectSummary, directObjectSummary) {
+		t.Fatalf("GeneralObjectSummaryFromPath() = %#v, want direct ObjectSummary %#v", objectSummary, directObjectSummary)
+	}
+
+	positionSummary, err := GeneralPropertyPositionSummaryFromPath(save.Path(), objectID)
+	if err != nil {
+		t.Fatalf("GeneralPropertyPositionSummaryFromPath() error = %v", err)
+	}
+	directPositionSummary, err := api.PropertyPositionSummary(objectID)
+	if err != nil {
+		t.Fatalf("PropertyPositionSummary() error = %v", err)
+	}
+	if !reflect.DeepEqual(positionSummary, directPositionSummary) {
+		t.Fatalf("GeneralPropertyPositionSummaryFromPath() = %#v, want direct PropertyPositionSummary %#v", positionSummary, directPositionSummary)
+	}
+
+	lookupSummary, lookupFaults, err := GeneralClassLookupSummaryFromPath(save.Path(), []string{"Wall_Stone", "Test_C"})
+	if err != nil {
+		t.Fatalf("GeneralClassLookupSummaryFromPath() error = %v", err)
+	}
+	directLookupSummary, directLookupFaults, err := api.ClassLookupSummaryWithFaults([]string{"Wall_Stone", "Test_C"})
+	if err != nil {
+		t.Fatalf("ClassLookupSummaryWithFaults() error = %v", err)
+	}
+	if !reflect.DeepEqual(lookupSummary, directLookupSummary) || !reflect.DeepEqual(lookupFaults, directLookupFaults) {
+		t.Fatalf("GeneralClassLookupSummaryFromPath() = %#v faults=%#v, want direct summary %#v faults=%#v", lookupSummary, lookupFaults, directLookupSummary, directLookupFaults)
+	}
+
+	classSummary, classFaults, err := GeneralClassPropertySummaryFromPath(save.Path(), "Test_C")
+	if err != nil {
+		t.Fatalf("GeneralClassPropertySummaryFromPath() error = %v", err)
+	}
+	directClassSummary, directClassFaults, err := api.ClassPropertySummaryWithFaults("Test_C")
+	if err != nil {
+		t.Fatalf("ClassPropertySummaryWithFaults() error = %v", err)
+	}
+	if !reflect.DeepEqual(classSummary, directClassSummary) || !reflect.DeepEqual(classFaults, directClassFaults) {
+		t.Fatalf("GeneralClassPropertySummaryFromPath() = %#v faults=%#v, want direct summary %#v faults=%#v", classSummary, classFaults, directClassSummary, directClassFaults)
+	}
+
+	filterSummary, err := GeneralPropertyFilterSummaryFromPath(save.Path(), []string{"Health", "MaxHealth"})
+	if err != nil {
+		t.Fatalf("GeneralPropertyFilterSummaryFromPath() error = %v", err)
+	}
+	directFilterSummary, err := api.PropertyFilterSummary([]string{"Health", "MaxHealth"})
+	if err != nil {
+		t.Fatalf("PropertyFilterSummary() error = %v", err)
+	}
+	if !reflect.DeepEqual(filterSummary, directFilterSummary) {
+		t.Fatalf("GeneralPropertyFilterSummaryFromPath() = %#v, want direct PropertyFilterSummary %#v", filterSummary, directFilterSummary)
+	}
+}
+
+func TestGeneralSummaryPathHelpersLabelErrorsByStage(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing.ark")
+	for name, run := range map[string]func() error{
+		"object": func() error {
+			_, err := GeneralObjectSummaryFromPath(missing, uuid.Nil)
+			return err
+		},
+		"property-position": func() error {
+			_, err := GeneralPropertyPositionSummaryFromPath(missing, uuid.Nil)
+			return err
+		},
+		"class-lookup": func() error {
+			_, _, err := GeneralClassLookupSummaryFromPath(missing, []string{"Test_C"})
+			return err
+		},
+		"class-property": func() error {
+			_, _, err := GeneralClassPropertySummaryFromPath(missing, "Test_C")
+			return err
+		},
+		"property-filter": func() error {
+			_, err := GeneralPropertyFilterSummaryFromPath(missing, []string{"Health"})
+			return err
+		},
+	} {
+		err := run()
+		if err == nil || !strings.HasPrefix(err.Error(), "open save: ") {
+			t.Fatalf("%s helper missing-save error = %v, want open save label", name, err)
+		}
+	}
+
+	brokenID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	brokenSave := openSyntheticSaveWith(t, "broken.ark", nil, map[uuid.UUID][]byte{
+		brokenID: syntheticObjectBytes(0x10000001)[:40],
+	})
+	defer brokenSave.Close()
+	headerOnlyPath := writeHeaderOnlySave(t)
+
+	for name, tc := range map[string]struct {
+		wantPrefix string
+		run        func() error
+	}{
+		"object": {
+			wantPrefix: "summarize object: ",
+			run: func() error {
+				_, err := GeneralObjectSummaryFromPath(brokenSave.Path(), brokenID)
+				return err
+			},
+		},
+		"property-position": {
+			wantPrefix: "summarize property positions: ",
+			run: func() error {
+				_, err := GeneralPropertyPositionSummaryFromPath(brokenSave.Path(), brokenID)
+				return err
+			},
+		},
+		"class-lookup": {
+			wantPrefix: "lookup class substring: ",
+			run: func() error {
+				_, _, err := GeneralClassLookupSummaryFromPath(headerOnlyPath, []string{"Test_C"})
+				return err
+			},
+		},
+		"class-property": {
+			wantPrefix: "summarize class properties: ",
+			run: func() error {
+				_, _, err := GeneralClassPropertySummaryFromPath(headerOnlyPath, "Test_C")
+				return err
+			},
+		},
+		"property-filter": {
+			wantPrefix: "filter properties: ",
+			run: func() error {
+				_, err := GeneralPropertyFilterSummaryFromPath(headerOnlyPath, []string{"Health"})
+				return err
+			},
+		},
+	} {
+		err := tc.run()
+		if err == nil || !strings.HasPrefix(err.Error(), tc.wantPrefix) {
+			t.Fatalf("%s helper stage error = %v, want %q label", name, err, tc.wantPrefix)
+		}
 	}
 }
 
@@ -481,6 +628,22 @@ func openSyntheticSaveWith(t *testing.T, name string, custom map[string][]byte, 
 		t.Fatalf("Open() error = %v", err)
 	}
 	return save
+}
+
+func writeHeaderOnlySave(t *testing.T) string {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "no-game-table.ark")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open sqlite fixture: %v", err)
+	}
+	testfixtures.MustExec(t, db, `create table custom (key text primary key, value blob)`)
+	testfixtures.MustExec(t, db, `insert into custom (key, value) values (?, ?)`, "SaveHeader", syntheticHeader())
+	if err := db.Close(); err != nil {
+		t.Fatalf("close sqlite fixture: %v", err)
+	}
+	return path
 }
 
 func syntheticObjectBytes(classNameID uint32) []byte {

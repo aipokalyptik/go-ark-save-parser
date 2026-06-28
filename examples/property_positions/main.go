@@ -17,13 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer closeAPI()
-
-	summary, err := api.PropertyPositionSummary(id)
+	summary, err := arkapi.GeneralPropertyPositionSummaryFromPath(os.Args[1], id)
 	if err != nil {
 		log.Fatal(err)
 	}

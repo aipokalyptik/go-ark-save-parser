@@ -512,11 +512,14 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `parse_all` and `object_classes` save-level counting/listing
           behind typed `arkapi.GeneralAPI` helpers.
     - [x] Move repeated GeneralAPI example save-open/close handling behind
-          typed `arkapi.NewGeneralFromPath`.
+          typed general path helpers.
     - [x] Add `arkapi.GeneralClassesFromPath` and
           `arkapi.GeneralParseSummaryFromPath`, then move `object_classes`
           and `parse_all` example save-open/close handling onto typed path
           helpers while preserving staged parse error labels.
+    - [x] Add path-level typed object, property-position, class-lookup,
+          class-property, and property-filter general summaries, then move the
+          matching general aggregate examples onto typed path helpers.
     - [x] Move `map_summary` save opening and save-info export behind typed
           `arkapi.ExportSaveInfoFromPath`.
     - [x] Move repeated player/tribe save-or-directory fallback logic behind
@@ -675,8 +678,8 @@ CLI tools, and reusable APIs without losing oracle parity.
           JSON export so the structure command keeps selected-index semantics.
     - [x] Add `arkapi.GeneralAPI.SaveInfo` and keep general CLI commands on
           typed `arkapi.GeneralAPI`/JSON summary helpers; dedicated path
-          helpers currently cover save-info export plus the `object_classes`
-          and `parse_all` examples.
+          helpers cover save-info export plus the implemented general
+          aggregate examples.
     - [x] Move `export_all_items` domain export loop, manifest writing, and
           save-open/close handling onto typed
           `arkapi.ExportAllDomainsFromPath`.

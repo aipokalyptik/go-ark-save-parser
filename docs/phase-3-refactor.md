@@ -155,6 +155,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `arkapi.GeneralParseSummaryFromPath`, then move `object_classes` and
       `parse_all` examples onto typed general path helpers while preserving
       staged parse error labels.
+- [x] Add path-level typed general object, property-position, class-lookup,
+      class-property, and property-filter summaries, then move the matching
+      general aggregate examples onto typed path helpers.
 - [x] Move `map-summary` CLI/example save-info export onto typed JSON path
       helpers.
 - [ ] Add typed API layers for full dino, full structure, equipment, full

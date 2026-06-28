@@ -101,6 +101,76 @@ func GeneralParseSummaryFromPath(savePath string) (ParseSummary, []arksave.Fault
 	return summary, faults, nil
 }
 
+func GeneralObjectSummaryFromPath(savePath string, id uuid.UUID) (ObjectSummary, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return ObjectSummary{}, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, err := api.ObjectSummary(id)
+	if err != nil {
+		return ObjectSummary{}, generalPathError{op: "summarize object", err: err}
+	}
+	return summary, nil
+}
+
+func GeneralPropertyPositionSummaryFromPath(savePath string, id uuid.UUID) (PropertyPositionSummary, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return PropertyPositionSummary{}, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, err := api.PropertyPositionSummary(id)
+	if err != nil {
+		return PropertyPositionSummary{}, generalPathError{op: "summarize property positions", err: err}
+	}
+	return summary, nil
+}
+
+func GeneralClassLookupSummaryFromPath(savePath string, classSubstrings []string) (ClassLookupSummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return ClassLookupSummary{}, nil, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, faults, err := api.ClassLookupSummaryWithFaults(classSubstrings)
+	if err != nil {
+		return ClassLookupSummary{}, nil, generalPathError{op: "lookup class substring", err: err}
+	}
+	return summary, faults, nil
+}
+
+func GeneralClassPropertySummaryFromPath(savePath string, classSubstring string) (ClassPropertySummary, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return ClassPropertySummary{}, nil, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, faults, err := api.ClassPropertySummaryWithFaults(classSubstring)
+	if err != nil {
+		return ClassPropertySummary{}, nil, generalPathError{op: "summarize class properties", err: err}
+	}
+	return summary, faults, nil
+}
+
+func GeneralPropertyFilterSummaryFromPath(savePath string, propertyNames []string) (PropertyFilterSummary, error) {
+	api, closeAPI, err := NewGeneralFromPath(savePath)
+	if err != nil {
+		return PropertyFilterSummary{}, generalPathError{op: "open save", err: err}
+	}
+	defer closeAPI()
+
+	summary, err := api.PropertyFilterSummary(propertyNames)
+	if err != nil {
+		return PropertyFilterSummary{}, generalPathError{op: "filter properties", err: err}
+	}
+	return summary, nil
+}
+
 func (g *GeneralAPI) SaveInfo() (SaveInfo, error) {
 	return NewJSON(g.save).ExportSaveInfo()
 }

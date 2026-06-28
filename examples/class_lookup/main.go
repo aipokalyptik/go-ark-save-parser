@@ -13,17 +13,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	api, closeAPI, err := arkapi.NewGeneralFromPath(os.Args[1])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open save: %v\n", err)
-		os.Exit(1)
-	}
-	defer closeAPI()
-
 	substrings := os.Args[2:]
-	summary, _, err := api.ClassLookupSummaryWithFaults(substrings)
+	summary, _, err := arkapi.GeneralClassLookupSummaryFromPath(os.Args[1], substrings)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "lookup class substring: %v\n", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 

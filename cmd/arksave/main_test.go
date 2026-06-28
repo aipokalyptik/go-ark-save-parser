@@ -106,6 +106,9 @@ func TestGeneralCommandsUseTypedPathHelpers(t *testing.T) {
 		if strings.Contains(body, "arksave.Open") {
 			t.Fatalf("%s() still opens saves directly; use typed arkapi path helper", name)
 		}
+		if strings.Contains(body, "NewGeneralFromPath") {
+			t.Fatalf("%s() still owns GeneralAPI lifecycle; use typed arkapi path helper", name)
+		}
 	}
 }
 

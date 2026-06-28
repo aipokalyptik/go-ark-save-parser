@@ -51,8 +51,13 @@ func TestStructureAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 
 func TestGeneralAggregateExamplesUseTypedPathHelpers(t *testing.T) {
 	for _, path := range []string{
+		filepath.Join("class_lookup", "main.go"),
+		filepath.Join("class_property_summary", "main.go"),
 		filepath.Join("object_classes", "main.go"),
+		filepath.Join("object_summary", "main.go"),
 		filepath.Join("parse_all", "main.go"),
+		filepath.Join("property_filter", "main.go"),
+		filepath.Join("property_positions", "main.go"),
 	} {
 		data, err := os.ReadFile(path)
 		if err != nil {

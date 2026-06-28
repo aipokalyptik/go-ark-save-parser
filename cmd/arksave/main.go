@@ -435,17 +435,11 @@ func inspect(path string, out io.Writer) error {
 }
 
 func parseSave(path string, out io.Writer, opts runOptions) error {
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
+	info, err := arkapi.ExportSaveInfoFromPath(path)
 	if err != nil {
 		return err
 	}
-	defer closeAPI()
-
-	info, err := api.SaveInfo()
-	if err != nil {
-		return err
-	}
-	summary, _, err := api.ParseSummaryWithFaults()
+	summary, _, err := arkapi.GeneralParseSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -479,13 +473,7 @@ func mapSummary(path string, out io.Writer) error {
 }
 
 func objectClasses(path string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	classes, err := api.Classes()
+	classes, err := arkapi.GeneralClassesFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -502,13 +490,7 @@ func objectSummary(path string, objectIDArg string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse object uuid: %w", err)
 	}
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.ObjectSummary(objectID)
+	summary, err := arkapi.GeneralObjectSummaryFromPath(path, objectID)
 	if err != nil {
 		return err
 	}
@@ -527,13 +509,7 @@ func propertyPositions(path string, objectIDArg string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse object uuid: %w", err)
 	}
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.PropertyPositionSummary(objectID)
+	summary, err := arkapi.GeneralPropertyPositionSummaryFromPath(path, objectID)
 	if err != nil {
 		return err
 	}
@@ -552,13 +528,7 @@ func propertyPositions(path string, objectIDArg string, out io.Writer) error {
 }
 
 func classLookup(path string, classSubstrings []string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, faults, err := api.ClassLookupSummaryWithFaults(classSubstrings)
+	summary, faults, err := arkapi.GeneralClassLookupSummaryFromPath(path, classSubstrings)
 	if err != nil {
 		return err
 	}
@@ -573,13 +543,7 @@ func classLookup(path string, classSubstrings []string, out io.Writer) error {
 }
 
 func classPropertySummary(path string, classSubstring string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, faults, err := api.ClassPropertySummaryWithFaults(classSubstring)
+	summary, faults, err := arkapi.GeneralClassPropertySummaryFromPath(path, classSubstring)
 	if err != nil {
 		return err
 	}
@@ -594,13 +558,7 @@ func classPropertySummary(path string, classSubstring string, out io.Writer) err
 }
 
 func propertyFilter(path string, propertyNames []string, out io.Writer) error {
-	api, closeAPI, err := arkapi.NewGeneralFromPath(path)
-	if err != nil {
-		return err
-	}
-	defer closeAPI()
-
-	summary, err := api.PropertyFilterSummary(propertyNames)
+	summary, err := arkapi.GeneralPropertyFilterSummaryFromPath(path, propertyNames)
 	if err != nil {
 		return err
 	}
