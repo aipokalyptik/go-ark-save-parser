@@ -100,6 +100,11 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-wild-tamables requires a local .ark path")
 		}
 		return dinoWildTamables(args[1], out)
+	case "dino-babies":
+		if len(args) != 2 {
+			return fmt.Errorf("dino-babies requires a local .ark path")
+		}
+		return dinoBabies(args[1], out)
 	case "equipment-summary":
 		if len(args) != 2 {
 			return fmt.Errorf("equipment-summary requires a local .ark path")
@@ -207,6 +212,7 @@ func usage(out io.Writer) error {
   arksave base-components <save.ark>
   arksave dinos <save.ark>
   arksave dino-wild-tamables <save.ark>
+  arksave dino-babies <save.ark>
   arksave equipment-summary <save.ark>
   arksave player-inventories <save.ark>
   arksave player-roster <save.ark-or-directory>
@@ -478,6 +484,32 @@ func dinoWildTamables(path string, out io.Writer) error {
 		"Wild dinos: %d\nWild tamables: %d\nParse faults: %d\n",
 		summary.WildDinos,
 		summary.WildTamables,
+		len(faults),
+	)
+	return err
+}
+
+func dinoBabies(path string, out io.Writer) error {
+	save, err := arksave.Open(path)
+	if err != nil {
+		return err
+	}
+	defer save.Close()
+
+	summary, faults, err := arkapi.NewDino(save).BabySummaryWithFaults(arkapi.BabyFilterOptions{
+		IncludeTamed:      true,
+		IncludeCryopodded: true,
+		IncludeWild:       true,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(
+		out,
+		"Baby dinos: %d\nTamed babies: %d\nWild babies: %d\nParse faults: %d\n",
+		summary.Tamed+summary.Wild,
+		summary.Tamed,
+		summary.Wild,
 		len(faults),
 	)
 	return err

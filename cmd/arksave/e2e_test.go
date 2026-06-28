@@ -97,6 +97,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 	}
 
+	var babyDinosOut bytes.Buffer
+	if err := run([]string{"dino-babies", data.SavePath}, &babyDinosOut); err != nil {
+		t.Fatalf("run(dino-babies) error = %v", err)
+	}
+	for _, want := range []string{"Baby dinos:", "Tamed babies:", "Wild babies:", "Parse faults:"} {
+		if !strings.Contains(babyDinosOut.String(), want) {
+			t.Fatalf("dino-babies output missing %q", want)
+		}
+	}
+
 	var equipmentSummaryOut bytes.Buffer
 	if err := run([]string{"equipment-summary", data.SavePath}, &equipmentSummaryOut); err != nil {
 		t.Fatalf("run(equipment-summary) error = %v", err)

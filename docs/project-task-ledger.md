@@ -518,6 +518,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `base-components`.
   - [x] `dinos`.
   - [x] `dino-wild-tamables`.
+  - [x] `dino-babies`.
   - [x] `equipment-summary`.
   - [x] `player-inventories`.
   - [x] `player-roster`.

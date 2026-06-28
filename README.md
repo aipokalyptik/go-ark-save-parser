@@ -62,7 +62,7 @@ Implemented:
   plus JSON summaries for files and directories.
 - `arksave inspect`, `parse`, `structure-health`, `structure-owner-count`,
   `structure-owners`, `structure-owner-locations`, `base-components`,
-  `dinos`, `dino-wild-tamables`, `equipment-summary`,
+  `dinos`, `dino-wild-tamables`, `dino-babies`, `equipment-summary`,
   `player-inventories`, `player-roster`, `tribe-roster`,
   `player-tribe-links`, `players`, `tribes`, `cluster`, `cluster-summary`,
   `tribute`, `export-json`, `export-domain-json`, `export-cluster-json`, and
@@ -133,6 +133,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave base-components /path/to/Valguero_WP.ark
 ./bin/arksave dinos /path/to/Valguero_WP.ark
 ./bin/arksave dino-wild-tamables /path/to/Valguero_WP.ark
+./bin/arksave dino-babies /path/to/Valguero_WP.ark
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave player-inventories /path/to/Valguero_WP.ark
 ./bin/arksave player-roster /path/to/Valguero_WP.ark

@@ -299,6 +299,28 @@ func TestDinoWildTamablesCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestDinoBabiesCommandPrintsSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "baby-dinos.ark")
+	createSyntheticBabyDinoSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-babies", path}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-babies) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Baby dinos: 2",
+		"Tamed babies: 1",
+		"Wild babies: 1",
+		"Parse faults: 0",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-babies output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestEquipmentSummaryCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "equipment.ark")
 	createSyntheticEquipmentSave(t, path)
@@ -1898,6 +1920,37 @@ func createSyntheticDinoSave(t *testing.T, path string) {
 			uuid.MustParse("10111213-1415-1617-1819-1a1b1c1d1e1f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1: 1001,
 				ID2: 2002,
+			}),
+		},
+	})
+}
+
+func createSyntheticBabyDinoSave(t *testing.T, path string) {
+	t.Helper()
+	trueValue := true
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x1000000e: "BoolProperty",
+			0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			0x10000015: "DinoID1",
+			0x10000016: "DinoID2",
+			0x10000018: "TamedTimeStamp",
+			0x10000019: "DoubleProperty",
+			0x10000021: "bIsBaby",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			uuid.MustParse("20212223-2425-2627-2829-2a2b2c2d2e2f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:    1001,
+				ID2:    2002,
+				IsBaby: &trueValue,
+				Tamed:  true,
+			}),
+			uuid.MustParse("30313233-3435-3637-3839-3a3b3c3d3e3f"): testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:    3003,
+				ID2:    4004,
+				IsBaby: &trueValue,
 			}),
 		},
 	})
