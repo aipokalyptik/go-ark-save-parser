@@ -50,13 +50,16 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		}
 
 		jsonAPI := NewJSON(save)
-		for _, domain := range []string{"stackables"} {
+		for _, domain := range []string{"dinos", "equipment", "stackables"} {
 			export, err := jsonAPI.ExportDomain(domain)
 			if err != nil {
 				t.Fatalf("ExportDomain(%q) error = %v", domain, err)
 			}
 			if export.Domain != domain {
 				t.Fatalf("ExportDomain(%q).Domain = %q", domain, export.Domain)
+			}
+			if export.Count < 0 {
+				t.Fatalf("ExportDomain(%q).Count = %d", domain, export.Count)
 			}
 			if _, err := json.Marshal(export); err != nil {
 				t.Fatalf("json.Marshal(ExportDomain(%q)) error = %v", domain, err)

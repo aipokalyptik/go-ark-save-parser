@@ -384,6 +384,8 @@ func TestExamplesRunAgainstProvidedData(t *testing.T) {
 
 	if data.SavePath != "" {
 		runProvidedExample(t, "map_summary", "map=", data.SavePath)
+		runProvidedExample(t, "player_all", "players=", data.SavePath)
+		runProvidedExample(t, "equipment_summary", "items=", data.SavePath)
 		runProvidedExample(t, "structure_health", "structures=", data.SavePath)
 	}
 

@@ -63,7 +63,7 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 		t.Fatalf("exported JSON object_count = 0")
 	}
 
-	for _, domain := range []string{"stackables"} {
+	for _, domain := range []string{"dinos", "equipment", "stackables"} {
 		outPath := filepath.Join(t.TempDir(), domain+".json")
 		var domainOut bytes.Buffer
 		if err := run([]string{"--redact", "export-domain-json", data.SavePath, domain, outPath}, &domainOut); err != nil {
@@ -77,14 +77,15 @@ func TestProvidedDataReadOnlyE2E(t *testing.T) {
 			t.Fatalf("read %s domain JSON export: %v", domain, err)
 		}
 		var export struct {
+			Count  int             `json:"count"`
 			Domain string          `json:"domain"`
 			Items  json.RawMessage `json:"items"`
 		}
 		if err := json.Unmarshal(exportData, &export); err != nil {
 			t.Fatalf("unmarshal %s domain JSON export: %v", domain, err)
 		}
-		if export.Domain != domain || len(export.Items) == 0 {
-			t.Fatalf("%s domain JSON export = %#v, want matching domain with items field", domain, export)
+		if export.Domain != domain || export.Count < 0 || !json.Valid(export.Items) {
+			t.Fatalf("%s domain JSON export = %#v, want matching domain with valid items field", domain, export)
 		}
 	}
 
