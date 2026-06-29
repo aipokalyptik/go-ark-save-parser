@@ -32,7 +32,9 @@ Final Phase 4 verification on 2026-06-29:
   `CGO_ENABLED=0 go build -o bin/arksave ./cmd/arksave`.
 - `go test ./examples/... -count=1`: passed.
 - `make e2e-test` with `ARK_E2E_SAVE` set to the private provided `.ark` save
-  by absolute ignored path: passed for `arkapi`, `cmd/arksave`, and `examples`.
+  and `ARK_E2E_SAVE_DIR` set to the private provided save directory by absolute
+  ignored paths: passed for `arkapi`, `cmd/arksave`, and `examples` on the
+  current pushed code.
 - `make oracle-test` with `ARK_ORACLE_SAVE` and `ARK_ORACLE_TRIBUTE` set to
   private ignored paths: passed for save object enumeration and local tribute
   parsing.
@@ -40,8 +42,8 @@ Final Phase 4 verification on 2026-06-29:
 - `./bin/arksave --version`: prints build metadata from the static binary.
 - `.github/workflows/verify.yml`: runs `make verify` on public `main` pushes,
   pull requests, and manual dispatches without private oracle data. Public push
-  run `28346094077` passed on 2026-06-29 after the malformed archive object
-  count guard was added.
+  runs `28346094077` and `28346236879` passed on 2026-06-29 after the malformed
+  archive object count guard and public status docs were added.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
 - `make oracle-compare`: not completed as a full-suite run. The Make target now
