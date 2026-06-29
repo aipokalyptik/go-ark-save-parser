@@ -231,7 +231,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       byte fixtures are shared by API and CLI tests; stackable API tests and
       benchmarks use shared stackable object fixtures directly; and simple
       ID-table int-property object rows use
-      `testfixtures.ObjectBytesWithIntProperty` in save-layer/general tests.
+      `testfixtures.ObjectBytesWithIntProperty` in save-layer/general tests;
+      CLI archive and tribute smoke tests now call shared archive/tribute file
+      fixtures directly instead of local wrapper functions.
       Remaining lower-level domain-specific parser fixtures and non-save
       malformed object-shape fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`

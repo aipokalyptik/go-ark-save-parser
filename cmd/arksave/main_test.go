@@ -1192,7 +1192,7 @@ func TestArchiveSummaryPrintsPropertyErrorCount(t *testing.T) {
 
 func TestPlayersCommandReturnsErrorWhenParsedProfileSummaryMissing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "123.arkprofile")
-	createSyntheticArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+	testfixtures.WriteArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
 
 	var out bytes.Buffer
 	err := run([]string{"players", path}, &out)
@@ -1457,7 +1457,7 @@ func TestTribesCommandPrintsDirectorySummary(t *testing.T) {
 
 func TestTribesCommandReturnsErrorWhenParsedSummaryMissing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "456.arktribe")
-	createSyntheticArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.PrimalTribeData")
 
 	var out bytes.Buffer
 	err := run([]string{"tribes", path}, &out)
@@ -1485,7 +1485,7 @@ func TestTribesCommandReturnsErrorWhenParsedSummaryMissing(t *testing.T) {
 
 func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
-	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"cluster", path}, &out)
@@ -1508,8 +1508,8 @@ func TestClusterCommandPrintsLocalClusterSummary(t *testing.T) {
 
 func TestClusterCommandPrintsDirectoryAggregateSummary(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"cluster", dir}, &out)
@@ -1534,7 +1534,7 @@ func TestClusterCommandPrintsDirectoryAggregateSummary(t *testing.T) {
 
 func TestClusterCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
 	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not a cluster archive"), 0o600); err != nil {
 		t.Fatalf("write broken cluster file: %v", err)
 	}
@@ -1560,7 +1560,7 @@ func TestClusterCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 
 func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
-	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"cluster-summary", path}, &out)
@@ -1588,8 +1588,8 @@ func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 
 func TestClusterSummaryCommandPrintsDirectoryTypedAggregate(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"cluster-summary", dir}, &out)
@@ -1615,7 +1615,7 @@ func TestClusterSummaryCommandPrintsDirectoryTypedAggregate(t *testing.T) {
 
 func TestClusterSummaryCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
 	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not a cluster archive"), 0o600); err != nil {
 		t.Fatalf("write broken cluster file: %v", err)
 	}
@@ -1763,7 +1763,7 @@ func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 
 func TestClusterCommandRedactsPathAndUploadDetails(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
-	createSyntheticArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, path, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"--redact", "cluster", path}, &out)
@@ -1791,7 +1791,7 @@ func TestClusterCommandRedactsPathAndUploadDetails(t *testing.T) {
 
 func TestTributeCommandPrintsLocalTributeSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
-	createSyntheticTribute(t, path, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, path, []uint64{11, 22}, []uint64{33})
 
 	var out bytes.Buffer
 	err := run([]string{"tribute", path}, &out)
@@ -1815,7 +1815,7 @@ func TestTributeCommandPrintsLocalTributeSummary(t *testing.T) {
 
 func TestTributeCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 	dir := t.TempDir()
-	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, []uint64{22})
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, []uint64{22})
 	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
 		t.Fatalf("write broken tribute file: %v", err)
 	}
@@ -1842,7 +1842,7 @@ func TestTributeCommandDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 
 func TestTributeCommandRedactsLocalTributeDetails(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "abc.arktributetribe")
-	createSyntheticTribute(t, path, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, path, []uint64{11, 22}, []uint64{33})
 
 	var out bytes.Buffer
 	err := run([]string{"--redact", "tribute", path}, &out)
@@ -1933,7 +1933,7 @@ func TestExportClusterJSONWritesClusterSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	outPath := filepath.Join(dir, "cluster.json")
-	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"export-cluster-json", clusterPath, outPath}, &out)
@@ -1961,7 +1961,7 @@ func TestExportClusterJSONRedactsIdentifiersWhenRequested(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	outPath := filepath.Join(dir, "cluster.json")
-	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"export-cluster-json", "--redact", clusterPath, outPath}, &out)
@@ -1992,8 +1992,8 @@ func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")
 	outPath := filepath.Join(dir, "clusters.json")
-	createSyntheticArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, clusterPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_def456"), "/Script/ShooterGame.ArkCloudInventoryData")
 
 	var out bytes.Buffer
 	err := run([]string{"export-cluster-json", dir, outPath}, &out)
@@ -2023,7 +2023,7 @@ func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
 func TestExportClusterJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T) {
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "clusters.json")
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
 	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not an archive"), 0o600); err != nil {
 		t.Fatalf("write broken cluster file: %v", err)
 	}
@@ -2061,7 +2061,7 @@ func TestExportClusterJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T)
 func TestExportClusterJSONDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "clusters.json")
-	createSyntheticArchive(t, filepath.Join(dir, "EOS_valid"), "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_valid"), "/Script/ShooterGame.ArkCloudInventoryData")
 	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not an archive"), 0o600); err != nil {
 		t.Fatalf("write broken cluster file: %v", err)
 	}
@@ -2092,7 +2092,7 @@ func TestExportTributeJSONWritesSummaryToExplicitPath(t *testing.T) {
 	dir := t.TempDir()
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	outPath := filepath.Join(dir, "tribute.json")
-	createSyntheticTribute(t, tributePath, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 
 	var out bytes.Buffer
 	err := run([]string{"export-tribute-json", tributePath, outPath}, &out)
@@ -2123,7 +2123,7 @@ func TestExportTributeJSONRedactsIdentifiersWhenRequested(t *testing.T) {
 	dir := t.TempDir()
 	tributePath := filepath.Join(dir, "abc.arktributetribe")
 	outPath := filepath.Join(dir, "tribute.json")
-	createSyntheticTribute(t, tributePath, []uint64{11, 22}, []uint64{33})
+	testfixtures.WriteTributeFile(t, tributePath, []uint64{11, 22}, []uint64{33})
 
 	var out bytes.Buffer
 	err := run([]string{"--redact", "export-tribute-json", tributePath, outPath}, &out)
@@ -2156,8 +2156,8 @@ func TestExportTributeJSONRedactsIdentifiersWhenRequested(t *testing.T) {
 func TestExportTributeJSONWritesDirectorySummary(t *testing.T) {
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "tributes.json")
-	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
-	createSyntheticTribute(t, filepath.Join(dir, "def.arktributetribetribe"), nil, []uint64{22})
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "def.arktributetribetribe"), nil, []uint64{22})
 
 	var out bytes.Buffer
 	err := run([]string{"export-tribute-json", dir, outPath}, &out)
@@ -2187,7 +2187,7 @@ func TestExportTributeJSONWritesDirectorySummary(t *testing.T) {
 func TestExportTributeJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T) {
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "tributes.json")
-	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
 	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
 		t.Fatalf("write broken tribute file: %v", err)
 	}
@@ -2228,7 +2228,7 @@ func TestExportTributeJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T)
 func TestExportTributeJSONDirectoryKeepsValidFilesAndReportsFaults(t *testing.T) {
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "tributes.json")
-	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	testfixtures.WriteTributeFile(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
 	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
 		t.Fatalf("write broken tribute file: %v", err)
 	}
@@ -3297,16 +3297,6 @@ func createSyntheticEmptySave(t *testing.T, path string) {
 		Header:      testfixtures.Header("Valguero_WP", map[uint32]string{1: "Blueprint'/Game/Test.Test_C'"}),
 		EmptyTables: true,
 	})
-}
-
-func createSyntheticArchive(t *testing.T, path string, className string) {
-	t.Helper()
-	testfixtures.WriteArchive(t, path, className)
-}
-
-func createSyntheticTribute(t *testing.T, path string, playerIDs []uint64, tribeIDs []uint64) {
-	t.Helper()
-	testfixtures.WriteTributeFile(t, path, playerIDs, tribeIDs)
 }
 
 func assertPrivateFileMode(t *testing.T, path string) {
