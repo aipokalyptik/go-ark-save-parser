@@ -161,6 +161,15 @@ func NewEquipmentFromPath(savePath string) (*EquipmentAPI, func() error, error) 
 	return NewEquipment(save), save.Close, nil
 }
 
+func AllEquipmentFromPath(savePath string) (map[uuid.UUID]arkobject.EquipmentItem, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewEquipmentFromPath(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeAPI()
+	return api.AllWithFaults()
+}
+
 func EquipmentSummaryFromPath(savePath string, opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
 	api, closeAPI, err := NewEquipmentFromPath(savePath)
 	if err != nil {

@@ -865,6 +865,24 @@ func TestStructureAPIAllWithFaultsKeepsValidStructuresAndReportsParseFaults(t *t
 	}
 }
 
+func TestAllStructuresFromPathReturnsTypedStructuresAndFaults(t *testing.T) {
+	save := openSyntheticStructureSaveWithFault(t)
+	defer save.Close()
+
+	structures, faults, err := AllStructuresFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("AllStructuresFromPath() error = %v", err)
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	structure, ok := structures[id]
+	if len(structures) != 1 || !ok || structure.Owner.TribeID != 555 {
+		t.Fatalf("AllStructuresFromPath() structures = %#v, want valid owned structure %s", structures, id)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("AllStructuresFromPath() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestStructureAPIOwnedByWithFaultsKeepsOwnedStructuresAndReportsFaults(t *testing.T) {
 	save := openSyntheticStructureSaveWithFault(t)
 	defer save.Close()

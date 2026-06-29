@@ -257,6 +257,22 @@ func TestBaseAPIAllWithFaultsKeepsValidBasesAndReportsStructureParseFaults(t *te
 	}
 }
 
+func TestAllBasesFromPathReturnsTypedBasesAndFaults(t *testing.T) {
+	save := openSyntheticBaseSaveWithFault(t)
+	defer save.Close()
+
+	bases, faults, err := AllBasesFromPath(save.Path(), "Valguero")
+	if err != nil {
+		t.Fatalf("AllBasesFromPath() error = %v", err)
+	}
+	if len(bases) != 1 || bases[0].StructureCount != 2 || bases[0].Owner.TribeID != 555 {
+		t.Fatalf("AllBasesFromPath() bases = %#v, want one two-structure tribe base", bases)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("AllBasesFromPath() faults = %#v, want one structure parse fault", faults)
+	}
+}
+
 func TestBaseAPISummaryWithFaultsKeepsValidBasesAndCountsLargestBase(t *testing.T) {
 	save := openSyntheticBaseSaveWithFault(t)
 	defer save.Close()

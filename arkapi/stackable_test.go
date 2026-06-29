@@ -224,6 +224,27 @@ func TestStackableAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	}
 }
 
+func TestAllStackablesFromPathReturnsTypedStackablesAndFaults(t *testing.T) {
+	save := openSyntheticStackableSaveWithFault(t)
+	defer save.Close()
+
+	items, faults, err := AllStackablesFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("AllStackablesFromPath() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("AllStackablesFromPath() items length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Quantity != 100 || item.Blueprint == "" {
+			t.Fatalf("AllStackablesFromPath() item = %#v, want synthetic stackable", item)
+		}
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("AllStackablesFromPath() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestStackableAPIFilterOwnedByCountsItemsThroughOwnerInventory(t *testing.T) {
 	save := openSyntheticStackableOwnedByStructureSave(t)
 	defer save.Close()

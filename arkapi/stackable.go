@@ -30,6 +30,15 @@ func NewStackableFromPath(savePath string) (*StackableAPI, func() error, error) 
 	return NewStackable(save), save.Close, nil
 }
 
+func AllStackablesFromPath(savePath string) (map[uuid.UUID]arkobject.StackableItem, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStackableFromPath(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeAPI()
+	return api.AllStackablesWithFaults()
+}
+
 func StackableSummaryFromPath(savePath string, blueprints []string) (StackableSummary, error) {
 	api, closeAPI, err := NewStackableFromPath(savePath)
 	if err != nil {

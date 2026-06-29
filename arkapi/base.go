@@ -55,6 +55,15 @@ func NewBaseFromPath(savePath string, mapName string) (*BaseAPI, func() error, e
 	return NewBase(save, mapName), save.Close, nil
 }
 
+func AllBasesFromPath(savePath string, mapName string) ([]arkobject.Base, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewBaseFromPath(savePath, mapName)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeAPI()
+	return api.AllWithFaults()
+}
+
 func BaseSummaryFromPath(savePath string) (BaseSummary, []arksave.FaultyObjectInfo, error) {
 	api, closeAPI, err := NewBaseFromPath(savePath, "")
 	if err != nil {

@@ -184,6 +184,15 @@ func NewDinoFromPath(savePath string) (*DinoAPI, func() error, error) {
 	return NewDino(save), save.Close, nil
 }
 
+func AllDinosFromPath(savePath string) (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeAPI()
+	return api.AllWithFaults()
+}
+
 func DinoPopulationSummaryFromPath(savePath string, includeCryopodded bool) (DinoPopulationSummary, []arksave.FaultyObjectInfo, error) {
 	api, closeAPI, err := NewDinoFromPath(savePath)
 	if err != nil {

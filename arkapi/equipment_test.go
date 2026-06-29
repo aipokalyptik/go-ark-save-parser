@@ -341,6 +341,27 @@ func TestEquipmentAPIAllWithFaultsKeepsValidItemsAndReportsParseFaults(t *testin
 	}
 }
 
+func TestAllEquipmentFromPathReturnsTypedItemsAndFaults(t *testing.T) {
+	save := openSyntheticEquipmentSaveWithFault(t)
+	defer save.Close()
+
+	items, faults, err := AllEquipmentFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("AllEquipmentFromPath() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("AllEquipmentFromPath() items length = %d, want 1", len(items))
+	}
+	for _, item := range items {
+		if item.Kind != arkobject.EquipmentWeapon || item.Rating != 7.5 {
+			t.Fatalf("AllEquipmentFromPath() item = %#v, want synthetic weapon", item)
+		}
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("AllEquipmentFromPath() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestEquipmentAPIFilteredWithFaultsKeepsValidFilteredItemsAndReportsParseFaults(t *testing.T) {
 	save := openSyntheticEquipmentSaveWithFault(t)
 	defer save.Close()

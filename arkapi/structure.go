@@ -96,6 +96,15 @@ func NewStructureFromPath(savePath string) (*StructureAPI, func() error, error) 
 	return NewStructure(save), save.Close, nil
 }
 
+func AllStructuresFromPath(savePath string) (map[uuid.UUID]arkobject.Structure, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewStructureFromPath(savePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeAPI()
+	return api.AllWithFaults()
+}
+
 type structurePathError struct {
 	op  string
 	err error

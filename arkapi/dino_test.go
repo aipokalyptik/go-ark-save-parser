@@ -227,6 +227,27 @@ func TestNewDinoFromPathOpensLocalSave(t *testing.T) {
 	}
 }
 
+func TestAllDinosFromPathReturnsTypedDinosAndFaults(t *testing.T) {
+	save := openSyntheticDinoSaveWithFault(t)
+	defer save.Close()
+
+	dinos, faults, err := AllDinosFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("AllDinosFromPath() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("AllDinosFromPath() dinos length = %d, want 1", len(dinos))
+	}
+	id := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	dino, ok := dinos[id]
+	if !ok || dino.ID1 != 1001 || !dino.IsTamed {
+		t.Fatalf("AllDinosFromPath() dino %s = %#v, %v; want synthetic tamed dino", id, dino, ok)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("AllDinosFromPath() faults = %#v, want one parse fault", faults)
+	}
+}
+
 func TestDinoAPIExportBinaryWritesDinoAndLinkedRows(t *testing.T) {
 	save := openSyntheticDinoStatsSave(t)
 	defer save.Close()
