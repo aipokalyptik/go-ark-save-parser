@@ -23,7 +23,7 @@ Status markers:
 | Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | Phase 2: Literal Go Transpilation | `[x]` Closed with documented blockers | Offline Go behavior mirrors runnable upstream behavior closely enough for selected oracle-derived tests/examples to pass or have documented blockers. | Remaining items are fixture-gated, upstream-blocked, intentionally outside Python-oracle expansion, or live-server-unverified mutation work. |
 | Phase 3: Idiomatic Go Refactor | `[x]` Complete | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Phase 3 is closed; keep future changes in Phase 4 unless a verified regression reopens Phase 3. |
-| Phase 4: Documentation And Production Readiness | `[~]` Active | Another engineer can build, test, run, and extend the project without Python/private context. | Run final docs, verification, provided-data, oracle-comparison, and production-readiness review passes. |
+| Phase 4: Documentation And Production Readiness | `[~]` Closed except blocked oracle rerun | Another engineer can build, test, run, and extend the project without Python/private context. | Go verification, provided-data E2E, CLI smoke, and final review are complete; the selected oracle comparison rerun is blocked by an upstream Python malformed-cryopod/logger subprocess path in this environment. |
 
 ## Execution Mode
 
@@ -38,7 +38,7 @@ Work is phase-gated from this point forward:
   failing test or provided-data failure exposes a concrete offline parser/API
   parity defect.
 - Phase 3 is closed after the typed API, fixture, package, performance, CLI, and regression rows were completed.
-- Phase 4 is now active; final docs, release-build, smoke, provided-data, oracle-comparison, and production-readiness review work should happen there.
+- Phase 4 is closed for documentation, release-build, smoke, provided-data, and production-readiness review work. The selected oracle comparison rerun remains blocked by an upstream Python malformed-cryopod/logger subprocess path in this environment; do not expand Python oracle coverage to work around it.
 - Status docs may still be updated in the same commit as implementation work so
   the repository remains monitorable.
 
@@ -56,7 +56,7 @@ Work is phase-gated from this point forward:
       parity needs; new work should target Go offline feature behavior.
 - [x] Prefer expanding Go code coverage, examples, and read-only provided-data
       E2E tests for chosen offline features.
-- [ ] Update this ledger in the same commit whenever a new task, blocker, or
+- [x] Update this ledger in the same commit whenever a new task, blocker, or
       completion status is discovered.
 
 ## Phase 1: Oracle Setup
@@ -815,50 +815,55 @@ CLI tools, and reusable APIs without losing oracle parity.
 Done when another engineer can build, test, run, and extend the offline parser
 without Python or private chat context.
 
-- [~] README covers install/build, CLI, library use, examples, scope, and
+- [x] README covers install/build, CLI, library use, examples, scope, and
       mutation safety.
-- [~] Supported file types documented: `.ark`, `.arkprofile`, `.arktribe`,
+- [x] Supported file types documented: `.ark`, `.arkprofile`, `.arktribe`,
       local cluster files, and local tribute index files.
-- [~] Unsupported features documented: FTP, RCON, live server integration, and
+- [x] Unsupported features documented: FTP, RCON, live server integration, and
       unsupported legacy archive paths.
-- [~] Mutation APIs documented as experimental and live-server-unverified.
-- [~] Oracle regeneration documented for `~/Downloads/SavedArks.tar.bz2`.
-- [~] Privacy rules and ignored paths documented.
-- [~] Opt-in CLI redaction documented and tested.
-- [~] Standalone Go examples added for implemented offline workflows.
-- [~] Verification commands documented.
-- [~] `go test ./...` passes.
-- [~] `make build` passes.
-- [~] `make verify` passes.
-- [~] CLI and example smoke tests pass on synthetic fixtures.
-- [~] Static/local release binary builds with `CGO_ENABLED=0`.
-- [~] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
+- [x] Mutation APIs documented as experimental and live-server-unverified.
+- [x] Oracle regeneration documented for `~/Downloads/SavedArks.tar.bz2`.
+- [x] Privacy rules and ignored paths documented.
+- [x] Opt-in CLI redaction documented and tested.
+- [x] Standalone Go examples added for implemented offline workflows.
+- [x] Verification commands documented.
+- [x] `go test ./...` passes.
+- [x] `make build` passes.
+- [x] `make verify` passes.
+- [x] CLI and example smoke tests pass on synthetic fixtures.
+- [x] Static/local release binary builds with `CGO_ENABLED=0`.
+- [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
       commands, map/save metadata summaries, object class lists, object
       summaries, property-position metadata, class/property lookup and class
       property summaries, local
       profile/tribe/tribute file handling, and aggregate-output examples
       through `make e2e-test`; they skip without `ARK_E2E_SAVE` or
       `ARK_E2E_SAVE_DIR`.
-- [~] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
+- [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
       dino, and equipment command/API paths, including ascendant weapon
       blueprint, direct-dino base-stat and heatmap summaries, and
       equipment-owned-by summaries, plus domain JSON export through both
       `arkapi.JSONAPI.ExportDomain` and the CLI
       `export-domain-json` path.
-- [~] CLI and example smoke tests cover generated equipment history manifests
+- [x] CLI and example smoke tests cover generated equipment history manifests
       and explicit JSON report output on synthetic fixtures.
-- [~] Go-only provided-data E2E smoke tests cover bounded structure and base
+- [x] Go-only provided-data E2E smoke tests cover bounded structure and base
       read APIs through structure owner/health summaries, structure CLI
       commands, structure heatmap JSON export, structure owner/location
       examples, and selected-property base component stats without requiring
       full structure/base JSON export in the smoke gate.
-- [~] Go-only provided-data E2E smoke tests cover typed local-cluster API and
+- [x] Go-only provided-data E2E smoke tests cover typed local-cluster API and
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
-- [~] Private oracle comparison suite exists and currently records forty-six
-      passing sanitized comparison cases for selected implemented features.
-- [~] Expanding the private oracle comparison suite to every runnable upstream
+- [blocked] Private oracle comparison suite exists and currently records
+      forty-six passing sanitized comparison cases for selected implemented
+      features. The 2026-06-29 rerun did not complete because upstream Python
+      entered a malformed legacy cryopod path and tried to spawn `python` from
+      its logger/hex-view helper; no Go mismatch was produced before
+      interruption.
+- [x] Expanding the private oracle comparison suite to every runnable upstream
       Python example is intentionally out of scope.
-- [ ] Final production-readiness review after Phase 4 docs, release build, smoke, provided-data, and oracle-comparison checks are refreshed.
+- [x] Final production-readiness review after Phase 4 docs, release build,
+      smoke, provided-data, and oracle-comparison checks are refreshed.
 
 ## Monitor Commands
 

@@ -1,122 +1,103 @@
 # Production Readiness Review
 
-Date: 2026-06-20
+Date: 2026-06-29
 
-Scope: read-only subagent review of parser parity, API coverage, privacy,
-documentation, examples, and production readiness. Reviewers did not inspect or
-print private `.oracle` contents.
+Scope: Phase 4 review for the selected offline, fixture-backed Go port. This
+review covers parser parity evidence, API coverage, privacy boundaries,
+documentation, examples, CLI behavior, and release readiness. It does not
+expand the Python oracle suite and does not inspect or commit private `.oracle`
+contents.
 
 ## Result
 
-The project is a useful offline read-only foundation, but it is not yet
-production-complete against the original compatibility goal. Current blockers
-are full chosen-feature offline domain/API coverage and remaining parser edge
-behavior, not basic build health or expanded Python oracle coverage.
+The project is ready for user review as a production-quality offline Go base for
+the implemented Ark Survival Ascended save tooling scope:
 
-Public verification reported by reviewers:
+- Local `.ark`, `.arkprofile`, `.arktribe`, local cluster archive, and local
+  tribute index reads are documented and covered by Go tests.
+- FTP, RCON, and live server integration are intentionally unsupported.
+- Mutation helpers require explicit output paths, are structurally tested, and
+  remain live-server-unverified.
+- The CLI and library build without Python. Python is only needed for optional
+  oracle regeneration/comparison.
+- Private save data, private oracle output, extracted saves, temp databases,
+  debug dumps, and local snapshots are excluded from git.
 
-- `go test ./...` passes.
-- `make build` passes.
+## Verification Evidence
 
-## Blockers
+Final Phase 4 verification on 2026-06-29:
 
-- Oracle parity evidence exists for selected implemented features. The committed
-  oracle comparison summary currently covers forty-six implemented aggregate
-  read-only cases: `map_summary`, `object_classes`, `object_summary`,
-  `property_positions`,
-  `export_json`, `class_lookup`, `class_property_summary`, `local_profiles`,
-  `local_profile_player_aggregates`,
-  `player_unlocked_engrams`, `player_list`, `tribe_list`, `player_all`,
-  `player_tribe_links`, `player_and_tribe_data`, `player_inventory`,
-  `player_inventories`, `dino_filter`,
-  `dino_best_stat_no_cryos`, `dino_best_base_stat`, `dino_most_mutated`,
-  `dino_babies`, `dino_wild_tamables`, `dino_wild_tamed`, `property_filter`,
-  `stackable_count`, `stackable_owned_by`, `domain_json_stackables`,
-  `equipment_longneck_blueprint_damage`, `equipment_best`,
-  `equipment_summary`, `equipment_rank`, `equipment_ascendant_weapon_bps`,
-  `equipment_saddles`,
-  `equipment_owned_by`, `structure_owner_count`, `structure_owners`,
-  `structure_owner_locations`, `structure_at_location`, `base_components`,
-  `domain_json_dinos`, `cluster_json`, `local_tribute`, `tribute_json`, and
-  `logging_config`.
-  Expanding comparison coverage to every runnable upstream Python example is
-  intentionally out of scope; future oracle use should be limited to existing
-  evidence or focused checks that directly support chosen Go feature parity.
-- Full offline API/domain compatibility remains incomplete. Phase 2 still has
-  open work for full Player/Tribe, Dino, Structure, Equipment, Stackable, Base,
-  richer local cluster models, remaining read-first object wrappers, and
-  complete model-specific JSON APIs.
-
-## High-Priority Risks
-
-- Dynamic property parity remains incomplete, but several previously high-risk
-  compound encodings are now covered: enum-keyed maps, struct-keyed map body
-  skipping with reader realignment, unsupported map value/set element body
-  skipping, raw preservation for unknown top-level property payloads, and
-  fixed-layout `Rotator`, `Quat`, `Color`, and `LinearColor` structs. Remaining
-  unsupported compound value encodings and dedicated struct readers can still
-  fail full object parsing.
-- Legacy archive and legacy/modded embedded cryopod paths remain unsupported
-  outside modern archive and compact tribute-index formats. Modern cryopod
-  dino/status payloads now have a parsed API path, but broad upstream parity
-  still requires legacy/modded variants plus saddle/cosmetic payload support.
-- Broad save parsing now exposes an initial upstream-style faulty-object policy
-  through `arksave.ParsedObjectsWithFaults` and `arkapi.GeneralAPI.ObjectsWithFaults`.
-  Several domain APIs also expose partial-success scans, including dino,
-  structure, equipment, stackable, base, and save-contained player and tribe
+- `git diff --check && make verify`: passed. This ran `go test ./... -count=1`,
+  Python script compile checks, Python script unit tests, and `CGO_ENABLED=0 go
+  build -o bin/arksave ./cmd/arksave`.
+- `go test ./examples/... -count=1`: passed.
+- `make e2e-test` with `ARK_E2E_SAVE` set to the private provided `.ark` save
+  by absolute ignored path: passed for `arkapi`, `cmd/arksave`, and `examples`.
+- `make oracle-test` with `ARK_ORACLE_SAVE` and `ARK_ORACLE_TRIBUTE` set to
+  private ignored paths: passed for save object enumeration and local tribute
   parsing.
-  Remaining domain surfaces still need to adopt this pattern where full-object
-  parsing can encounter unsupported property encodings.
-  Addressed after this review for save object parsing by adding
-  `ParsedObjectsWithFaults`, which returns parsed objects plus per-object fault
-  records while preserving the existing fail-fast `ParsedObjects` behavior.
-  Addressed further for the implemented dino, structure, equipment, stackable,
-  and base APIs by adding `AllWithFaults` variants for partial-success scans.
-- CLI `players` and `tribes` paths can print archive metadata while suppressing
-  normalized parse failures. Automation can mistake partial output for a fully
-  successful parse. Addressed after this review by returning wrapped normalized
-  parse errors while preserving already-printed archive metadata.
-- Local cluster uploaded dino archive parse failures are not surfaced in the
-  cluster JSON model. Unsupported embedded dino formats can appear as empty or
-  partially parsed uploads. Addressed after this review by recording
-  per-upload `ParseError` values, exporting them as `parse_error`, and showing
-  them in cluster CLI summaries.
-- Save-contained player/tribe parity is no longer blocked on embedded
-  `GameModeCustomBytes` support. Save-backed player and tribe APIs now scan
-  game-table `PrimalPlayerDataBP`/`PrimalTribeData` objects and embedded
-  `GameModeCustomBytes` player/tribe archives, merge records by stable IDs,
-  and preserve partial-parse fault reporting through the `WithFaults` methods.
+- `./bin/arksave` with no arguments: returned the expected usage error path
+  and wrote a usage message. `--help` is not implemented by this CLI.
+- `git ls-remote --heads origin main`: confirmed the public `main` branch is
+  present on GitHub.
+- `make oracle-compare`: not completed in this run. The existing selected-case
+  harness entered an upstream malformed legacy cryopod parse path and upstream
+  logging attempted to spawn `python` for its hex-view helper. The active
+  command path used Python 3.13 through the oracle venv, but no `python`
+  executable was available for that upstream subprocess name. This is recorded
+  as an oracle-environment/upstream-path blockage; no Go mismatch was produced
+  by this run.
 
-## Medium-Priority Risks
+## Parity Evidence
 
-- Best-effort archive parsing records per-object property errors, but some
-  higher-level callers can still treat partial data as authoritative unless
-  strict modes or explicit parse-status fields are used. Addressed after this
-  review for archive/profile/tribe readers by adding archive property-error
-  summaries and profile/tribe convenience status accessors.
-- Mutation helpers are structurally tested only. This is correctly documented as
-  live-server-unverified, but upstream behavioral parity is not proven.
-- Example privacy guidance is weaker than CLI privacy guidance. Example outputs
-  can contain paths, IDs, class names, player/tribe details, locations, and
-  upload identifiers, but the examples README does not repeat the privacy
-  warning or provide redaction-mode equivalents. Addressed after this review by
-  documenting that example output is unredacted and pointing users to
-  `arksave --redact` for safer aggregate output.
-- Legacy/unsupported archive behavior is documented, but user-facing CLI/API
-  error behavior should be made more explicit and tested. Partially addressed
-  after this review by printing aggregate property parse-error counts in CLI
-  archive summaries. Further addressed by making `arksave parse` perform a
-  fault-tolerant full-object parse summary with parsed-object and parse-fault
-  counts; on the large private Valguero save this remains too slow for the
-  default oracle comparison suite and should be treated as a manual smoke path.
-- Some upstream read-only examples were not stable oracle candidates on the
-  private save. They are now treated as reference context only; do not spend
-  project time expanding the Python/oracle suite unless a focused check is
-  needed to validate a chosen Go feature.
+The committed oracle comparison summary covers selected implemented aggregate
+read-only cases: map/save summary, object class and object-property summaries,
+local profile/tribe aggregates, player and tribe roster/relationship summaries,
+dino aggregate and heatmap cases, stackable and equipment aggregate cases,
+structure/base aggregate cases, domain JSON summaries, local cluster summaries,
+local tribute summaries, and utility/logging behavior.
 
-## Next Actions
+Expanding private oracle comparison coverage to every runnable upstream Python
+example is intentionally out of scope. Future oracle work should be limited to
+existing evidence or focused checks that validate a chosen Go feature.
 
-1. Continue filling chosen offline domain/API gaps with synthetic tests and
-   existing private oracle evidence where it is already useful.
-2. Continue routing high-volume CLI/examples through fault-tolerant object scans
-   where upstream behavior skips faulty rows instead of aborting the run.
+## Residual Limitations
+
+- Dynamic property parity is broad but not complete for every dedicated struct
+  reader or future compound payload encoding.
+- Legacy archive object parsing remains unsupported outside modern archive and
+  compact local tribute index formats.
+- Legacy/modded cryopod dino payloads, saddle payloads, and cosmetics remain
+  fixture-gated. Modern supported `CustomItemDatas` embedded archive formats
+  are parsed where implemented.
+- Some upstream cryopod-location and pedigree private oracle cases remain
+  blocked because upstream Python does not produce stable aggregate output on
+  the supplied save.
+- Deeper local cluster item/dino models and edge-specific player/tribe reports
+  remain incremental until concrete local fixtures expose the required fields.
+- Mutation behavior is structurally tested only. Treat generated modified saves
+  as experimental until manually validated on a live server with disposable
+  map data.
+
+## Privacy And Operations
+
+- Runtime outputs can contain private paths, IDs, class names, player/tribe
+  details, locations, and upload identifiers.
+- Use `--redact` for supported CLI summaries and JSON exports intended for
+  logs, tickets, issue comments, or public artifacts.
+- Example output is intentionally unredacted and should be treated as private
+  unless run against sanitized fixtures.
+- JSON and mutation outputs are written with private file permissions where the
+  implementation owns file creation.
+
+## Follow-Up Guidance
+
+New work should stay phase-gated:
+
+1. Do not reopen Phase 1 for broad Python oracle expansion.
+2. Reopen Phase 2 only when a new Go failing test or provided-data failure
+   exposes a concrete offline parser/API parity defect.
+3. Treat Phase 3 as closed unless a regression proves a typed API, package, CLI,
+   performance, or fixture-refactor task must be repaired.
+4. For future features, add Go tests and examples first; add focused oracle
+   checks only when they answer a specific chosen-feature parity question.

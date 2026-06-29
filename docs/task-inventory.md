@@ -16,9 +16,13 @@ Status markers:
 ## Execution Mode
 
 This inventory is phase-gated from this point forward. Phase 1 is closed for
-the selected offline parity scope, and Phase 2 is closed with documented
-blockers for the selected offline, fixture-backed scope. Phase 3 is complete for the selected offline, fixture-backed scope. Phase 4 is now active; final documentation, verification, provided-data, oracle-comparison, and production-readiness review work should happen there. Status docs may
-still be updated with implementation commits so progress stays auditable.
+the selected offline parity scope, Phase 2 is closed with documented blockers
+for the selected offline, fixture-backed scope, and Phase 3 is complete for the
+selected offline, fixture-backed scope. Phase 4 is closed for documentation,
+verification, provided-data checks, and production-readiness review work, with
+the selected-feature oracle comparison rerun blocked by an upstream
+Python/environment path. Status docs may still be updated with implementation
+commits so progress stays auditable.
 
 ## Scope Rules
 
@@ -97,17 +101,17 @@ still be updated with implementation commits so progress stays auditable.
 
 | ID | Status | Requirement | Evidence / Remaining Work |
 | --- | --- | --- | --- |
-| P4-DOC-001 | `[~]` | README covers install, build, CLI, library examples, scope, and mutation safety. | Ahead-of-phase README evidence exists; final Phase 4 documentation pass waits until Phase 3 closes. |
-| P4-DOC-002 | `[~]` | Supported file types and unsupported features are documented. | Ahead-of-phase README/development docs exist; final Phase 4 support matrix pass waits until Phase 3 closes. |
-| P4-DOC-003 | `[~]` | Mutation APIs are documented as experimental and live-server-unverified. | Ahead-of-phase README/docs/package comments exist; final Phase 4 mutation-safety pass waits until Phase 3 closes. |
-| P4-DEV-001 | `[~]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | Ahead-of-phase [`development.md`](development.md) evidence exists; final developer-doc pass waits until Phase 3 closes. |
-| P4-EX-001 | `[~]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | Ahead-of-phase examples exist; final Phase 4 example completeness pass waits until Phase 3 closes. |
-| P4-VERIFY-001 | `[~]` | `go test ./...` passes under the repository verification target. | `make verify` runs full tests during Phase 3 slices; final Phase 4 verification must be rerun after Phase 3 closes. |
-| P4-VERIFY-002 | `[~]` | CLI static/local binary builds. | `make build` uses `CGO_ENABLED=0`; final Phase 4 release build must be rerun after Phase 3 closes. |
-| P4-VERIFY-003 | `[~]` | CLI and example smoke tests pass on synthetic fixtures. | `cmd/arksave` and `examples` tests exist, including equipment history manifest/report output; final Phase 4 smoke verification waits until Phase 3 closes. |
-| P4-VERIFY-004 | `[~]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` exists for selected read-only APIs and skips without env vars; final provided-data Phase 4 pass waits until Phase 3 closes. |
-| P4-VERIFY-005 | `[~]` | Oracle comparison suite is rerunnable for selected implemented features. | Harness exists and records aggregate results; final Phase 4 oracle comparison pass waits until Phase 3 closes, and expanding Python/oracle coverage for every upstream example remains out of scope. |
-| P4-REVIEW-001 | `[ ]` | Final production-readiness review. | Not started; run only after Phase 3 is closed and final Phase 4 docs/verification are refreshed. |
+| P4-DOC-001 | `[x]` | README covers install, build, CLI, library examples, scope, and mutation safety. | README is committed and Phase 4 reviewed. |
+| P4-DOC-002 | `[x]` | Supported file types and unsupported features are documented. | README and development docs cover local `.ark`, `.arkprofile`, `.arktribe`, local cluster, local tribute, and unsupported FTP/RCON/live-server features. |
+| P4-DOC-003 | `[x]` | Mutation APIs are documented as experimental and live-server-unverified. | README, docs, package comments, and Phase 4 review document copied-save-only mutation safety. |
+| P4-DEV-001 | `[x]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | [`development.md`](development.md) and Phase 4 review cover regeneration and privacy boundaries. |
+| P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`; `go test ./examples/... -count=1` passed on 2026-06-29. |
+| P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `git diff --check && make verify` passed on 2026-06-29. |
+| P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make verify` ran `CGO_ENABLED=0 go build -o bin/arksave ./cmd/arksave` successfully on 2026-06-29. |
+| P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `make verify`, `go test ./examples/... -count=1`, and the built-in CLI usage smoke passed on 2026-06-29. |
+| P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` passed on 2026-06-29 with `ARK_E2E_SAVE` set to the private provided `.ark` save by absolute ignored path. |
+| P4-VERIFY-005 | `[blocked]` | Oracle comparison suite is rerunnable for selected implemented features. | Existing committed summary remains reference evidence. The 2026-06-29 rerun did not complete because upstream Python entered a malformed legacy cryopod path and tried to spawn `python` from its logger/hex-view helper; no Go mismatch was produced before interruption. Expanding Python/oracle coverage remains out of scope. |
+| P4-REVIEW-001 | `[x]` | Final production-readiness review. | [`production-readiness-review.md`](production-readiness-review.md) refreshed on 2026-06-29 with verification evidence and residual limitations. |
 
 ## Ledger Detail Map
 
