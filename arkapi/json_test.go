@@ -74,3 +74,32 @@ func TestExportSaveInfoFromPathSummarizesLocalSave(t *testing.T) {
 		t.Fatalf("SaveInfo.Objects = %#v", info.Objects)
 	}
 }
+
+func TestExportSaveInfoJSONFromPathHelpersMarshalLocalSave(t *testing.T) {
+	save := openSyntheticSave(t)
+	defer save.Close()
+
+	raw, err := ExportSaveInfoJSONFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("ExportSaveInfoJSONFromPath() error = %v", err)
+	}
+	var decoded SaveInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.ObjectCount != 1 || len(decoded.Objects) != 1 {
+		t.Fatalf("SaveInfo = %#v, want object detail", decoded)
+	}
+
+	redacted, err := ExportRedactedSaveInfoJSONFromPath(save.Path())
+	if err != nil {
+		t.Fatalf("ExportRedactedSaveInfoJSONFromPath() error = %v", err)
+	}
+	decoded = SaveInfo{}
+	if err := json.Unmarshal(redacted, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(redacted) error = %v; data = %s", err, redacted)
+	}
+	if decoded.ObjectCount != 1 || len(decoded.Objects) != 0 {
+		t.Fatalf("redacted SaveInfo = %#v, want count without object details", decoded)
+	}
+}

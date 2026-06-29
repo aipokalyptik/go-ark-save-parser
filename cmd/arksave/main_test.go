@@ -112,6 +112,20 @@ func TestGeneralCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestJSONExportCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"exportJSON", "exportDomainJSON"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arksave.Open") || strings.Contains(body, "NewJSONFromPath") {
+			t.Fatalf("%s() still owns JSON save lifecycle; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func TestHeatmapCommandsUseTypedPathHelpers(t *testing.T) {
 	data, err := os.ReadFile("main.go")
 	if err != nil {
@@ -1983,6 +1997,44 @@ func TestExportClusterJSONWritesDirectorySummary(t *testing.T) {
 	}
 	if decoded.Files[0].ID != "EOS_abc123" || decoded.Files[1].ID != "EOS_def456" {
 		t.Fatalf("decoded cluster IDs = %#v", decoded.Files)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportClusterJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "clusters.json")
+	createSyntheticArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(filepath.Join(dir, "EOS_broken"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken cluster file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "export-cluster-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact export-cluster-json directory) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-cluster-json directory output %q mentions output path %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted cluster directory json) error = %v", err)
+	}
+	var decoded arkapi.ClusterDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(redacted cluster directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].ID != redactedValue || decoded.Files[0].Path != redactedValue || len(decoded.Files[0].Items) != 0 || len(decoded.Files[0].Dinos) != 0 {
+		t.Fatalf("redacted ClusterDirectoryInfo files = %#v", decoded)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Path != redactedValue || decoded.Faults[0].Error == "" {
+		t.Fatalf("redacted ClusterDirectoryInfo faults = %#v", decoded.Faults)
+	}
+	for _, leaked := range []string{dir, outPath, "EOS_abc123", "EOS_broken"} {
+		if strings.Contains(string(raw), leaked) {
+			t.Fatalf("redacted cluster directory json contains private detail %q: %s", leaked, raw)
+		}
 	}
 	assertPrivateFileMode(t, outPath)
 }

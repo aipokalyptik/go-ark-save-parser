@@ -600,6 +600,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Move `dino_heatmap` save opening, summary JSON encoding, and
           explicit output writing behind typed
           `arkapi.ExportDinoHeatmapSummaryJSONFromPath`.
+    - [x] Add save-info and domain JSON path helpers, including redacted
+          variants, then move `export-json` and `export-domain-json` CLI
+          workflows off direct save lifecycle handling.
     - [x] Add path-level typed dino heatmap summaries through
           `arkapi.DinoHeatmapSummaryFromPath`.
     - [x] Move `structure_heatmap` structure loading, fault handling, and

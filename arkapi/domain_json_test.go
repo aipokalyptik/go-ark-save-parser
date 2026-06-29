@@ -560,6 +560,43 @@ func TestJSONAPIExportDomainJSONIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestExportDomainJSONFromPathHelpersMarshalDomain(t *testing.T) {
+	save := openSyntheticStackableSave(t)
+	defer save.Close()
+
+	export, err := ExportDomainFromPath(save.Path(), "stackables")
+	if err != nil {
+		t.Fatalf("ExportDomainFromPath(stackables) error = %v", err)
+	}
+	if export.Domain != "stackables" || export.Count != 1 || export.Items == nil {
+		t.Fatalf("ExportDomainFromPath(stackables) = %#v", export)
+	}
+
+	raw, err := ExportDomainJSONFromPath(save.Path(), "stackables")
+	if err != nil {
+		t.Fatalf("ExportDomainJSONFromPath(stackables) error = %v", err)
+	}
+	var decoded DomainExport
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; data = %s", err, raw)
+	}
+	if decoded.Domain != "stackables" || decoded.Count != 1 || decoded.Items == nil {
+		t.Fatalf("DomainExport = %#v, want item details", decoded)
+	}
+
+	redacted, err := ExportRedactedDomainJSONFromPath(save.Path(), "stackables")
+	if err != nil {
+		t.Fatalf("ExportRedactedDomainJSONFromPath(stackables) error = %v", err)
+	}
+	decoded = DomainExport{}
+	if err := json.Unmarshal(redacted, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(redacted) error = %v; data = %s", err, redacted)
+	}
+	if decoded.Domain != "stackables" || decoded.Count != 1 || decoded.Items != nil {
+		t.Fatalf("redacted DomainExport = %#v, want count without items", decoded)
+	}
+}
+
 func TestJSONAPIExportAllDomainsWritesManifestAndFiles(t *testing.T) {
 	save := openSyntheticStackableSave(t)
 	defer save.Close()

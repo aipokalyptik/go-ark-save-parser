@@ -1655,26 +1655,15 @@ func tribute(path string, out io.Writer, opts runOptions) error {
 }
 
 func exportJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	api := arkapi.NewJSON(save)
 	var data []byte
+	var err error
 	if opts.Redact {
-		info, err := api.ExportSaveInfo()
-		if err != nil {
-			return err
-		}
-		info.Objects = nil
-		data, err = json.MarshalIndent(info, "", "  ")
+		data, err = arkapi.ExportRedactedSaveInfoJSONFromPath(path)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = api.ExportSaveInfoJSON()
+		data, err = arkapi.ExportSaveInfoJSONFromPath(path)
 		if err != nil {
 			return err
 		}
@@ -1687,26 +1676,15 @@ func exportJSON(path string, outputPath string, out io.Writer, opts runOptions) 
 }
 
 func exportDomainJSON(path string, domain string, outputPath string, out io.Writer, opts runOptions) error {
-	save, err := arksave.Open(path)
-	if err != nil {
-		return err
-	}
-	defer save.Close()
-
-	api := arkapi.NewJSON(save)
 	var data []byte
+	var err error
 	if opts.Redact {
-		export, err := api.ExportDomain(domain)
-		if err != nil {
-			return err
-		}
-		export.Items = nil
-		data, err = json.MarshalIndent(export, "", "  ")
+		data, err = arkapi.ExportRedactedDomainJSONFromPath(path, domain)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = api.ExportDomainJSON(domain)
+		data, err = arkapi.ExportDomainJSONFromPath(path, domain)
 		if err != nil {
 			return err
 		}

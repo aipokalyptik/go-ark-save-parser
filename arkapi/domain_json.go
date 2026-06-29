@@ -296,6 +296,35 @@ func (j *JSONAPI) ExportDomainJSON(domain string) ([]byte, error) {
 	return json.MarshalIndent(data, "", "  ")
 }
 
+func ExportDomainFromPath(savePath string, domain string) (DomainExport, error) {
+	api, closeAPI, err := NewJSONFromPath(savePath)
+	if err != nil {
+		return DomainExport{}, err
+	}
+	defer closeAPI()
+
+	return api.ExportDomain(domain)
+}
+
+func ExportDomainJSONFromPath(savePath string, domain string) ([]byte, error) {
+	api, closeAPI, err := NewJSONFromPath(savePath)
+	if err != nil {
+		return nil, err
+	}
+	defer closeAPI()
+
+	return api.ExportDomainJSON(domain)
+}
+
+func ExportRedactedDomainJSONFromPath(savePath string, domain string) ([]byte, error) {
+	export, err := ExportDomainFromPath(savePath, domain)
+	if err != nil {
+		return nil, err
+	}
+	export.Items = nil
+	return json.MarshalIndent(export, "", "  ")
+}
+
 func (j *JSONAPI) ExportAllDomains(outputDir string, domains []string) (JSONExportManifest, error) {
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return JSONExportManifest{}, err

@@ -161,6 +161,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.NewJSONFromPath`, then move save-info export, all-domain
       JSON export, and equipment history snapshots onto shared typed JSON
       path lifecycle handling.
+- [x] Add save-info and domain JSON path helpers, including redacted variants,
+      then move `export-json` and `export-domain-json` CLI workflows off
+      direct save lifecycle handling.
 - [x] Move dino and structure heatmap path helpers onto shared typed
       `arkapi.NewDinoFromPath` and `arkapi.NewStructureFromPath` lifecycle
       handling.

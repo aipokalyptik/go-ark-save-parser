@@ -32,6 +32,25 @@ func ExportSaveInfoFromPath(savePath string) (SaveInfo, error) {
 	return api.ExportSaveInfo()
 }
 
+func ExportSaveInfoJSONFromPath(savePath string) ([]byte, error) {
+	api, closeAPI, err := NewJSONFromPath(savePath)
+	if err != nil {
+		return nil, err
+	}
+	defer closeAPI()
+
+	return api.ExportSaveInfoJSON()
+}
+
+func ExportRedactedSaveInfoJSONFromPath(savePath string) ([]byte, error) {
+	info, err := ExportSaveInfoFromPath(savePath)
+	if err != nil {
+		return nil, err
+	}
+	info.Objects = nil
+	return json.MarshalIndent(info, "", "  ")
+}
+
 type SaveInfo struct {
 	MapName      string       `json:"map_name"`
 	SaveVersion  int16        `json:"save_version"`
