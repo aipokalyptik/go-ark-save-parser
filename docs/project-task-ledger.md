@@ -770,9 +770,9 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `export-cluster-json`.
   - [x] `export-tribute-json`.
   - [x] Experimental `mutate`.
-- [~] Test fixture cleanup:
+- [x] Test fixture cleanup:
   - [x] Centralize many public fixtures in `internal/testfixtures`.
-  - [~] Continue migrating remaining domain-specific parser fixtures as touched;
+  - [x] Continue migrating remaining domain-specific parser fixtures as touched;
         `arkapi` general/core synthetic save helpers now delegate header and
         object wrapping to `internal/testfixtures`, and `arkprofile` malformed
         archive tests now reuse shared archive framing/string/property writers.
@@ -793,8 +793,9 @@ CLI tools, and reusable APIs without losing oracle parity.
         save-layer and arkapi general/core tests without local wrapper functions;
         embedded `GameModeCustomBytes` player/tribe fixture assembly and
         minimal embedded cryopod archive test payloads now live in shared
-        testfixtures, and API/object-model cryopod dino/saddle payload tests now call shared fixtures directly; save-layer malformed
-        full-object truncation fixtures now use a shared helper; parsed
+        testfixtures, and API/object-model cryopod dino/saddle payload tests
+        now call shared fixtures directly; save-layer malformed full-object
+        truncation fixtures now use a shared helper; parsed
         `CustomItemDatas` cryopod/custom-data fixtures now live in
         `internal/propertyfixtures`, and binary `CustomItemDatas` writers now
         live in shared testfixtures; ID-table Vector struct property writers
@@ -805,9 +806,10 @@ CLI tools, and reusable APIs without losing oracle parity.
         shared by API and CLI tests; stackable API tests and benchmarks use
         shared stackable object fixtures directly; CLI archive and tribute
         smoke tests call shared archive/tribute file fixtures directly instead
-        of local wrapper functions; remaining lower-level
-        dino/equipment parser payload builders and non-save malformed
-        object-shape fixtures still remain.
+        of local wrapper functions. Remaining `synthetic*`/`createSynthetic*`
+        helpers are package-local malformed payloads, purpose-built name-table
+        headers, or domain-specific save graphs that describe the behavior under
+        test.
 - [x] Regression: re-run `make verify` and focused private oracle comparisons
       after each committed behavior slice.
 

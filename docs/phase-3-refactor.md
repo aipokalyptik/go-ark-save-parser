@@ -192,7 +192,7 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity.
-- [ ] Replace duplicated synthetic fixture builders in tests with internal test
+- [x] Replace duplicated synthetic fixture builders in tests with internal test
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive
       payloads, compact local tribute indexes, shared name-table-ID property
@@ -218,9 +218,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       testfixtures helper;
       embedded `GameModeCustomBytes` player/tribe fixture assembly lives in
       shared testfixtures; minimal embedded cryopod archive test payloads use a
-      shared helper;
-      and modern cryopod embedded dino/saddle payload builders are used directly from shared fixtures by API
-      and object-model tests; save-layer malformed full-object truncation
+      shared helper; and modern cryopod embedded dino/saddle payload builders
+      are used directly from shared fixtures by API and object-model tests;
+      save-layer malformed full-object truncation
       fixtures use a shared helper; parsed `CustomItemDatas`
       cryopod/custom-data fixtures live in `internal/propertyfixtures`, and
       binary `CustomItemDatas` writers live in shared testfixtures for API and
@@ -234,7 +234,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `testfixtures.ObjectBytesWithIntProperty` directly in save-layer/general
       tests without local save-layer wrapper functions;
       CLI archive and tribute smoke tests now call shared archive/tribute file
-      fixtures directly instead of local wrapper functions.
+      fixtures directly instead of local wrapper functions. Remaining
+      `synthetic*`/`createSynthetic*` helpers are package-local malformed
+      payloads, purpose-built name-table headers, or domain-specific save graphs
+      that describe the behavior under test.
       Remaining lower-level domain-specific parser fixtures and non-save
       malformed object-shape fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
