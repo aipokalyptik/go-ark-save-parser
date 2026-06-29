@@ -301,6 +301,8 @@ documented.
   - [x] Include embedded uploaded-dino identity, tamed/sex/baby/dead, and stat
         aggregate counts in typed local cluster summaries and `cluster-summary`
         CLI output.
+  - [x] Include embedded uploaded-dino identity/stat aggregate counters in the
+        idiomatic `cluster_typed` Go example.
   - [x] Include uploaded item short names and uploaded dino primary/short class
         names in local cluster CLI summaries.
   - [x] Include uploaded-dino parse-status aggregate counts in local cluster
