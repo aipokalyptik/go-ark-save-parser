@@ -124,6 +124,12 @@ Show command usage:
 ./bin/arksave --help
 ```
 
+Show build metadata:
+
+```sh
+./bin/arksave --version
+```
+
 Inspect a local save:
 
 ```sh

@@ -835,6 +835,8 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
+- [x] Static/local release binary exposes build metadata through
+      `arksave --version`.
 - [x] Go-only provided-data E2E smoke tests cover selected read-only APIs, CLI
       commands, map/save metadata summaries, object class lists, object
       summaries, property-position metadata, class/property lookup and class

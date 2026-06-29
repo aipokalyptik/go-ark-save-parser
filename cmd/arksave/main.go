@@ -19,6 +19,12 @@ import (
 
 const redactedValue = "[redacted]"
 
+var (
+	version = "dev"
+	commit  = "unknown"
+	builtAt = "unknown"
+)
+
 var ignoredEquipmentNameParts = []string{
 	"WeaponCrossbow",
 	"WeaponMetalHatchet",
@@ -32,9 +38,10 @@ var ignoredEquipmentNameParts = []string{
 }
 
 type runOptions struct {
-	Redact  bool
-	NoCryos bool
-	Help    bool
+	Redact   bool
+	NoCryos  bool
+	Help     bool
+	Metadata bool
 }
 
 func main() {
@@ -52,12 +59,17 @@ func run(args []string, out io.Writer) error {
 	if opts.Help {
 		return usage(out)
 	}
+	if opts.Metadata {
+		return printVersion(out)
+	}
 	if len(args) == 0 {
 		return usage(out)
 	}
 	switch args[0] {
 	case "help":
 		return usage(out)
+	case "version":
+		return printVersion(out)
 	case "inspect":
 		if len(args) != 2 {
 			return fmt.Errorf("%s requires a local .ark path", args[0])
@@ -335,6 +347,8 @@ func splitOptions(args []string) (runOptions, []string, error) {
 		switch arg {
 		case "--help", "-h":
 			opts.Help = true
+		case "--version", "-V":
+			opts.Metadata = true
 		case "--redact":
 			opts.Redact = true
 		case "--no-cryos":
@@ -353,6 +367,8 @@ func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
   arksave help
   arksave --help
+  arksave version
+  arksave --version
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
   arksave map-summary <save.ark>
@@ -412,6 +428,11 @@ func usage(out io.Writer) error {
 Offline-only scope: FTP and RCON are intentionally unsupported.
 replace-object-property-hex requires a full encoded property record, not only scalar payload bytes.
 Use --redact to hide local paths and identifier/detail fields in command output and JSON exports.`)
+	return err
+}
+
+func printVersion(out io.Writer) error {
+	_, err := fmt.Fprintf(out, "arksave version=%s commit=%s built_at=%s\n", version, commit, builtAt)
 	return err
 }
 

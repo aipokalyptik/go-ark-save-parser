@@ -37,6 +37,7 @@ Final Phase 4 verification on 2026-06-29:
   private ignored paths: passed for save object enumeration and local tribute
   parsing.
 - `./bin/arksave --help`: prints usage successfully.
+- `./bin/arksave --version`: prints build metadata from the static binary.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
 - `make oracle-compare`: not completed as a full-suite run. The Make target now

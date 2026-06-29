@@ -1187,6 +1187,38 @@ func TestRunPrintsUsageForHelp(t *testing.T) {
 	}
 }
 
+func TestRunPrintsVersion(t *testing.T) {
+	oldVersion, oldCommit, oldBuiltAt := version, commit, builtAt
+	version, commit, builtAt = "test-version", "test-commit", "test-date"
+	defer func() {
+		version, commit, builtAt = oldVersion, oldCommit, oldBuiltAt
+	}()
+
+	for _, args := range [][]string{
+		{"version"},
+		{"--version"},
+		{"-V"},
+	} {
+		t.Run(strings.Join(args, "_"), func(t *testing.T) {
+			var out bytes.Buffer
+			err := run(args, &out)
+			if err != nil {
+				t.Fatalf("run(%v) error = %v", args, err)
+			}
+			got := out.String()
+			for _, want := range []string{
+				"arksave version=test-version",
+				"commit=test-commit",
+				"built_at=test-date",
+			} {
+				if !strings.Contains(got, want) {
+					t.Fatalf("version output %q does not contain %q", got, want)
+				}
+			}
+		})
+	}
+}
+
 func TestRunRejectsUnknownOption(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"--verbose", "inspect", "save.ark"}, &out)
