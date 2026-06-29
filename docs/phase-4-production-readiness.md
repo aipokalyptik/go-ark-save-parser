@@ -44,8 +44,8 @@ work around that blockage.
 - [x] `make verify`
 - [x] Public GitHub Actions `verify` workflow runs `make verify` on `main`
       pushes, pull requests, and manual dispatches. The README badge links to
-      current status; historical passing runs include `28346712289` and
-      `28347063999`.
+      current status; public push run `28353795987` passed for commit
+      `144f253c1207272455105adf606df2b60dfbfe89` on 2026-06-29.
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
