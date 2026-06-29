@@ -737,16 +737,17 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tDINO\tELAPSED\tREMAINING"); err != nil {
+	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tSPECIES\tNAME\tELAPSED\tREMAINING"); err != nil {
 		return err
 	}
 	for _, row := range report.Dinos {
 		if _, err := fmt.Fprintf(
 			out,
-			"%s\t%s\t%s\t%s\t%s\n",
+			"%s\t%s\t%s\t%s\t%s\t%s\n",
 			dinoClaimableOwnerDisplay(row.Owner),
 			demolishableLocationDisplay(row.Location),
 			row.ShortName,
+			dinoNameDisplay(row.TamedName),
 			formatSeconds(row.ElapsedSeconds),
 			formatSeconds(row.RemainingSeconds),
 		); err != nil {
@@ -788,6 +789,9 @@ func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions,
 			if err != nil {
 				return "", opts, false, fmt.Errorf("parse claim multiplier: %w", err)
 			}
+			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
+				return "", opts, false, fmt.Errorf("claim multiplier must be a positive finite number")
+			}
 			opts.ClaimMultiplier = value
 		case "--claim-period":
 			i++
@@ -797,6 +801,9 @@ func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions,
 			value, err := strconv.ParseFloat(args[i], 64)
 			if err != nil {
 				return "", opts, false, fmt.Errorf("parse claim period: %w", err)
+			}
+			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
+				return "", opts, false, fmt.Errorf("claim period must be a positive finite number")
 			}
 			opts.ClaimPeriodSeconds = value
 		default:
@@ -861,6 +868,13 @@ func dinoClaimableOwnerDisplay(owner arkapi.DinoClaimableOwner) string {
 	default:
 		return owner.SortKey
 	}
+}
+
+func dinoNameDisplay(name string) string {
+	if name == "" {
+		return "-"
+	}
+	return name
 }
 
 func structureDemolishable(args []string, out io.Writer, runOpts runOptions) error {

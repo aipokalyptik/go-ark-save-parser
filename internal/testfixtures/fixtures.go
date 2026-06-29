@@ -150,6 +150,7 @@ type DinoGameObjectOptions struct {
 	TribeNameNameID                     uint32
 	TamingTeamIDNameID                  uint32
 	TamerStringNameID                   uint32
+	TamedDinoNameID                     uint32
 	OwningPlayerNameNameID              uint32
 	OwningPlayerIDNameID                uint32
 	TargetingTeamNameID                 uint32
@@ -162,6 +163,7 @@ type DinoGameObjectOptions struct {
 	Tamed                               bool
 	TamedTimestamp                      float64
 	DisableDefaultTamedTimestamp        bool
+	TamedName                           string
 	TribeName                           string
 	TamingTeamID                        int32
 	TamerString                         string
@@ -187,6 +189,9 @@ func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
 	}
 	if opts.Tamed {
 		WriteDoublePropertyID(&props, opts.TamedNameID, opts.DoublePropertyID, opts.TamedTimestamp)
+	}
+	if opts.TamedName != "" {
+		WriteStringPropertyID(&props, opts.TamedDinoNameID, opts.StringPropertyID, opts.TamedName)
 	}
 	if opts.TribeName != "" {
 		WriteStringPropertyID(&props, opts.TribeNameNameID, opts.StringPropertyID, opts.TribeName)
@@ -281,6 +286,9 @@ func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
 	}
 	if opts.TamerStringNameID == 0 {
 		opts.TamerStringNameID = 0x10000028
+	}
+	if opts.TamedDinoNameID == 0 {
+		opts.TamedDinoNameID = 0x10000024
 	}
 	if opts.OwningPlayerNameNameID == 0 {
 		opts.OwningPlayerNameNameID = 0x10000029

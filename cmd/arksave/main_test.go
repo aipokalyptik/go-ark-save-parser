@@ -928,14 +928,15 @@ func TestDinoClaimableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
 	got := out.String()
 	for _, want := range []string{
 		"Computed offline dino claim eligibility using LastInAllyRangeTimeSerialized with TamedTimeStamp fallback",
-		"Dinos: 5",
-		"Owned dinos: 4",
-		"Claimable: 2",
+		"Dinos: 6",
+		"Owned dinos: 5",
+		"Claimable: 3",
 		"Unknown timestamps: 1",
 		"Multiplier: 2.000",
-		"OWNER\tLOCATION\tDINO\tELAPSED\tREMAINING",
-		"Alpha\t10.00,20.00\tRaptor\t200s\t0s",
-		"Beta\t60.00,70.00\tRaptor\t1100s\t0s",
+		"OWNER\tLOCATION\tSPECIES\tNAME\tELAPSED\tREMAINING",
+		"Alpha\t10.00,20.00\tRaptor\t-\t200s\t0s",
+		"Beta\t60.00,70.00\tRaptor\t-\t1100s\t0s",
+		"Delta\t30.00,40.00\tRaptor\tNoTimestamp\t234s\t0s",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("dino-claimable output %q does not contain %q", got, want)
@@ -959,13 +960,13 @@ func TestDinoClaimableCommandPrintsStableJSON(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
 		t.Fatalf("json.Unmarshal(dino-claimable) error = %v; output = %s", err, out.String())
 	}
-	if report.Summary.TotalDinos != 5 || report.Summary.OwnedDinos != 4 || report.Summary.ClaimableDinos != 3 || len(report.Dinos) != 3 {
-		t.Fatalf("json report = %#v, want 5 total, 4 owned, 3 claimable", report)
+	if report.Summary.TotalDinos != 6 || report.Summary.OwnedDinos != 5 || report.Summary.ClaimableDinos != 4 || len(report.Dinos) != 4 {
+		t.Fatalf("json report = %#v, want 6 total, 5 owned, 4 claimable", report)
 	}
-	if report.Dinos[0].Owner.SortKey != "Alpha" || report.Dinos[1].Owner.SortKey != "Alpha" || report.Dinos[2].Owner.SortKey != "Beta" {
+	if report.Dinos[0].Owner.SortKey != "Alpha" || report.Dinos[1].Owner.SortKey != "Alpha" || report.Dinos[2].Owner.SortKey != "Beta" || report.Dinos[3].Owner.SortKey != "Delta" {
 		t.Fatalf("json dinos not owner sorted: %#v", report.Dinos)
 	}
-	if report.Dinos[0].ClaimReferenceSource != "last_in_ally_range_time_serialized" || report.Dinos[2].ClaimReferenceSource != "tamed_time_stamp" {
+	if report.Dinos[0].ClaimReferenceSource != "last_in_ally_range_time_serialized" || report.Dinos[2].ClaimReferenceSource != "tamed_time_stamp" || report.Dinos[3].TamedName != "NoTimestamp" || report.Dinos[3].Location == nil {
 		t.Fatalf("json dinos did not preserve claim clock sources: %#v", report.Dinos)
 	}
 }
@@ -985,7 +986,7 @@ func TestDinoClaimableCommandRedactsOwnersAndIdentifiers(t *testing.T) {
 			t.Fatalf("redacted dino-claimable output leaked %q: %s", leaked, got)
 		}
 	}
-	if !strings.Contains(got, redactedValue) || !strings.Contains(got, `"claimable_dinos": 3`) {
+	if !strings.Contains(got, redactedValue) || !strings.Contains(got, `"claimable_dinos": 4`) {
 		t.Fatalf("redacted output missing redacted marker or aggregate counts: %s", got)
 	}
 }
@@ -1001,7 +1002,9 @@ func TestDinoClaimableCommandRejectsInvalidInputs(t *testing.T) {
 	}{
 		{name: "missing save", args: []string{"dino-claimable"}, want: "requires a local .ark path"},
 		{name: "bad multiplier", args: []string{"dino-claimable", path, "--claim-multiplier", "nope"}, want: "parse claim multiplier"},
+		{name: "zero multiplier", args: []string{"dino-claimable", path, "--claim-multiplier", "0"}, want: "claim multiplier must be a positive finite number"},
 		{name: "bad period", args: []string{"dino-claimable", path, "--claim-period", "nope"}, want: "parse claim period"},
+		{name: "zero period", args: []string{"dino-claimable", path, "--claim-period", "0"}, want: "claim period must be a positive finite number"},
 		{name: "unreadable ini", args: []string{"dino-claimable", path, "--game-user-settings", filepath.Join(t.TempDir(), "missing.ini")}, want: "read game user settings"},
 	}
 	for _, tt := range tests {
@@ -3446,11 +3449,13 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 	betaOldID := uuid.MustParse("22222222-0000-0000-0000-000000000001")
 	wildID := uuid.MustParse("33333333-0000-0000-0000-000000000001")
 	unknownTimeID := uuid.MustParse("44444444-0000-0000-0000-000000000001")
+	noTamedTimestampID := uuid.MustParse("55555555-0000-0000-0000-000000000001")
 	alphaLoc := arkobject.MapCoords{Lat: 10, Long: 20}.AsActorTransform("Valguero")
 	alphaFreshLoc := arkobject.MapCoords{Lat: 10.4, Long: 20.4}.AsActorTransform("Valguero")
 	betaLoc := arkobject.MapCoords{Lat: 60, Long: 70}.AsActorTransform("Valguero")
 	wildLoc := arkobject.MapCoords{Lat: 5, Long: 5}.AsActorTransform("Valguero")
 	unknownLoc := arkobject.MapCoords{Lat: 80, Long: 10}.AsActorTransform("Valguero")
+	noTamedTimestampLoc := arkobject.MapCoords{Lat: 30, Long: 40}.AsActorTransform("Valguero")
 
 	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
 		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
@@ -3463,6 +3468,7 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 			0x10000018: "TamedTimeStamp",
 			0x10000019: "DoubleProperty",
 			0x1000001a: "StrProperty",
+			0x10000024: "TamedName",
 			0x10000026: "TribeName",
 			0x10000027: "TamingTeamID",
 			0x10000028: "TamerString",
@@ -3522,6 +3528,18 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				TamerString:                  "Gamma",
 				TargetingTeam:                888,
 			}),
+			noTamedTimestampID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:                           6001,
+				ID2:                           6002,
+				LastInAllyRangeTimeSerialized: 1000,
+				TribeName:                     "Delta",
+				TamingTeamID:                  999,
+				TamerString:                   "Delta",
+				OwningPlayerName:              "Dana",
+				OwningPlayerID:                123,
+				TargetingTeam:                 999,
+				TamedName:                     "NoTimestamp",
+			}),
 		},
 		Custom: map[string][]byte{
 			"ActorTransforms": testfixtures.ActorTransforms(
@@ -3530,6 +3548,7 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				testfixtures.ActorTransform{UUID: betaOldID, X: betaLoc.X, Y: betaLoc.Y, Z: betaLoc.Z, Quaternion: 1},
 				testfixtures.ActorTransform{UUID: wildID, X: wildLoc.X, Y: wildLoc.Y, Z: wildLoc.Z, Quaternion: 1},
 				testfixtures.ActorTransform{UUID: unknownTimeID, X: unknownLoc.X, Y: unknownLoc.Y, Z: unknownLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: noTamedTimestampID, X: noTamedTimestampLoc.X, Y: noTamedTimestampLoc.Y, Z: noTamedTimestampLoc.Z, Quaternion: 1},
 			),
 		},
 	})

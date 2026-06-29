@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
+	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -95,7 +96,7 @@ func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableRepor
 	if err != nil {
 		return DinoClaimableReport{}, nil, err
 	}
-	dinos, faults, err := d.AllWithFaults()
+	dinos, faults, err := d.selectedClaimableDinoIndexWithFaults()
 	if err != nil {
 		return DinoClaimableReport{}, nil, err
 	}
@@ -185,7 +186,57 @@ func ParsePvEDinoDecayPeriodMultiplier(path string) (float64, bool, error) {
 }
 
 func isOwnedClaimableCandidate(dino arkobject.Dino) bool {
-	return dino.IsTamed && !dino.IsDead && !dino.IsCryopodded
+	return !dino.IsDead && !dino.IsCryopodded && dinoClaimableOwner(dino.Owner).SortKey != "unknown"
+}
+
+func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
+	infos, faults, err := d.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return d.IsApplicableBlueprint(info.ClassName)
+	}, []string{
+		"DinoID1",
+		"DinoID2",
+		"TamedName",
+		"TamedTimeStamp",
+		"LastInAllyRangeTimeSerialized",
+		"TribeName",
+		"TamingTeamID",
+		"TamerString",
+		"OwningPlayerName",
+		"OwningPlayerID",
+		"TargetingTeam",
+		"bIsDead",
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	out := map[uuid.UUID]arkobject.Dino{}
+	for _, info := range infos {
+		if d.IsCryopodBlueprint(info.ClassName) {
+			continue
+		}
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("DinoID1"); !ok {
+			continue
+		}
+		var location *arkobject.ActorTransform
+		if transform, ok := d.save.ActorTransform(info.UUID); ok {
+			location = &transform
+		}
+		out[info.UUID] = arkobject.Dino{
+			UUID:                          info.UUID,
+			Blueprint:                     info.ClassName,
+			ID1:                           uint32(selectedInt32(container, "DinoID1")),
+			ID2:                           uint32(selectedInt32(container, "DinoID2")),
+			IsTamed:                       selectedHasAny(container, "TamedTimeStamp", "LastInAllyRangeTimeSerialized", "TribeName", "TamingTeamID", "TamerString", "OwningPlayerID", "TargetingTeam", "TamedName"),
+			IsDead:                        selectedBoolProperty(container, "bIsDead"),
+			TamedTimeStamp:                selectedFloat64(container, "TamedTimeStamp"),
+			LastInAllyRangeTimeSerialized: selectedFloat64(container, "LastInAllyRangeTimeSerialized"),
+			TamedName:                     selectedString(container, "TamedName"),
+			Owner:                         arkobject.DinoOwnerFromContainer(container),
+			Location:                      location,
+		}
+	}
+	return out, faults, nil
 }
 
 func dinoClaimableRow(id uuid.UUID, dino arkobject.Dino, mapName string, gameTime float64, period float64, adjusted float64) DinoClaimableRow {
@@ -235,6 +286,53 @@ func dinoClaimReferenceSource(dino arkobject.Dino) string {
 		return "tamed_time_stamp"
 	}
 	return ""
+}
+
+func selectedString(container arkproperty.Container, name string) string {
+	value, ok := container.Value(name)
+	if !ok {
+		return ""
+	}
+	out, _ := value.(string)
+	return out
+}
+
+func selectedHasAny(container arkproperty.Container, names ...string) bool {
+	for _, name := range names {
+		value, ok := container.Value(name)
+		if !ok {
+			continue
+		}
+		switch v := value.(type) {
+		case string:
+			if v != "" {
+				return true
+			}
+		case int32:
+			if v != 0 {
+				return true
+			}
+		case uint32:
+			if v != 0 {
+				return true
+			}
+		case float64:
+			if v != 0 {
+				return true
+			}
+		case float32:
+			if v != 0 {
+				return true
+			}
+		case bool:
+			if v {
+				return true
+			}
+		default:
+			return true
+		}
+	}
+	return false
 }
 
 func dinoClaimableOwner(owner arkobject.DinoOwner) DinoClaimableOwner {

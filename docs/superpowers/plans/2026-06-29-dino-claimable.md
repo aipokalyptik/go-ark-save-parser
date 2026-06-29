@@ -4,7 +4,7 @@
 
 **Goal:** Add an offline `arksave dino-claimable` command that reports owned/tamed dinos whose claim timer has expired.
 
-**Architecture:** Mirror `structure-demolishable`: add an `arkapi` report API, expose stable JSON/table CLI output, preserve raw timing fields for auditability, and document that this is an offline computed report rather than live-server truth. Use `GameTime` as now, `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp, and `TamedTimeStamp` as a visible fallback when ally-range data is absent.
+**Architecture:** Mirror `structure-demolishable`: add an `arkapi` report API, use selected-property reads for large-save behavior, expose stable JSON/table CLI output, preserve raw timing fields for auditability, and document that this is an offline computed report rather than live-server truth. Use `GameTime` as now, `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp, and `TamedTimeStamp` as a visible fallback when ally-range data is absent.
 
 **Tech Stack:** Go, existing `arksave`/`arkobject` parsers, `cmd/arksave` CLI, synthetic SQLite save fixtures, `go test`, `make verify`.
 
@@ -31,7 +31,7 @@
 - [x] Add options for map name, claim period, claim multiplier, and optional `GameUserSettings.ini`.
 - [x] Parse `PvEDinoDecayPeriodMultiplier` from settings when supplied; default multiplier to `1`.
 - [x] Default claim period to 8 days and allow `--claim-period` seconds to override it.
-- [x] Filter to owned/tamed, non-dead, non-cryopodded dinos.
+- [x] Filter to dinos with ownership signals, excluding dead and cryopodded dinos.
 - [x] Compute from `LastInAllyRangeTimeSerialized`, falling back to `TamedTimeStamp`.
 - [x] Sort by owner/tribe, then location, then dino short name.
 - [x] Include raw timing fields plus `claim_reference_time` and `claim_reference_source`.

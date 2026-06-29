@@ -218,14 +218,16 @@ from an optional `GameUserSettings.ini` or `--decay-multiplier`.
 Server/mod-specific decay rules can be supplied with `--decay-periods` JSON
 using `exact` and `substring` maps whose values are seconds.
 
-`dino-claimable` is also an offline computed eligibility report. It filters to
-owned, tamed, non-dead, non-cryopodded dinos and uses save `GameTime` plus each
-dino's `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp,
-falling back to `TamedTimeStamp` when ally-range data is unavailable. JSON
-output includes `claim_reference_time` and `claim_reference_source`. The default
-claim period is 8 days, adjusted by `PvEDinoDecayPeriodMultiplier` from an
-optional `GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period`
-with seconds for server/mod-specific timers.
+`dino-claimable` is also an offline computed eligibility report. It uses a
+selected-property scan for large-save behavior, filters to non-dead,
+non-cryopodded dinos with ownership signals, and uses save `GameTime` plus each
+dino's `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp.
+`TamedTimeStamp` is only a fallback when ally-range data is unavailable. Table
+and JSON output include species, tamed name, owner/tribe, map location, and the
+chosen `claim_reference_time`/`claim_reference_source`. The default claim period
+is 8 days, adjusted by `PvEDinoDecayPeriodMultiplier` from an optional
+`GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period` with
+seconds for server/mod-specific timers.
 
 Export save metadata and object classes to JSON:
 
