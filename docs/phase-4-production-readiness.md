@@ -43,16 +43,17 @@ work around that blockage.
 - [x] `make build`
 - [x] `make verify`
 - [x] Public GitHub Actions `verify` workflow runs `make verify` on `main`
-      pushes, pull requests, and manual dispatches; pushed-docs run
-      `28346712289` passed on 2026-06-29.
+      pushes, pull requests, and manual dispatches. The README badge links to
+      current status; historical passing runs include `28346712289` and
+      `28347063999`.
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.
 - [x] Optional provided-data smoke for typed local-cluster API/example coverage
       through `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR`.
-- [x] Provided-data smoke for the current pushed code passed on 2026-06-29 with
-      `ARK_E2E_SAVE` and `ARK_E2E_SAVE_DIR` pointed at the private provided
-      Valguero save and directory under ignored `.oracle`.
+- [x] Provided-data smoke passed on 2026-06-29 with `ARK_E2E_SAVE` and
+      `ARK_E2E_SAVE_DIR` pointed at the private provided Valguero save and
+      directory under ignored `.oracle`.
 - [x] Synthetic domain JSON export tests for dinos, structures, equipment,
       stackables, players, tribes, and bases.
 - [blocked] Private oracle comparison harness for selected implemented read-only Go examples;

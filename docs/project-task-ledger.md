@@ -836,8 +836,9 @@ without Python or private chat context.
 - [x] `make build` passes.
 - [x] `make verify` passes.
 - [x] Public GitHub Actions runs `make verify` on `main` pushes, pull
-      requests, and manual dispatches without private oracle data. Push run
-      `28346712289` passed on 2026-06-29.
+      requests, and manual dispatches without private oracle data. The README
+      badge links to current status; historical passing runs include
+      `28346712289` and `28347063999`.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Static/local release binary exposes build metadata through
@@ -848,8 +849,8 @@ without Python or private chat context.
       property summaries, local
       profile/tribe/tribute file handling, and aggregate-output examples
       through `make e2e-test`; they skip without `ARK_E2E_SAVE` or
-      `ARK_E2E_SAVE_DIR`. The current pushed code passed on 2026-06-29 against
-      the private provided Valguero save and directory under ignored `.oracle`.
+      `ARK_E2E_SAVE_DIR`. A 2026-06-29 provided-data rerun passed against the
+      private provided Valguero save and directory under ignored `.oracle`.
 - [x] Go-only provided-data E2E smoke tests cover stackable, stackable-owned,
       dino, and equipment command/API paths, including ascendant weapon
       blueprint, direct-dino base-stat and heatmap summaries, and
