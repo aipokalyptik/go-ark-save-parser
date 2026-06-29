@@ -24,6 +24,8 @@ the selected-feature oracle comparison full-suite rerun blocked by upstream
 runtime cost in the supplied private save. Status docs may still be updated
 with implementation commits so progress stays auditable.
 
+The accepted-scope evidence audit is [`acceptance-audit.md`](acceptance-audit.md).
+
 ## Scope Rules
 
 | ID | Status | Requirement | Evidence / Remaining Work |

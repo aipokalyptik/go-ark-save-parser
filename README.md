@@ -16,6 +16,8 @@ FTP, RCON, or live server access.
 The up-front stable task inventory is
 [`docs/task-inventory.md`](docs/task-inventory.md). The detailed monitorable
 task ledger is [`docs/project-task-ledger.md`](docs/project-task-ledger.md).
+The accepted-scope evidence audit is
+[`docs/acceptance-audit.md`](docs/acceptance-audit.md).
 Together they are the source of truth for phase status, open tasks, blocked
 tasks, and verification commands.
 
