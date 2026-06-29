@@ -1214,7 +1214,7 @@ func playersDirectory(path string, out io.Writer, opts runOptions) error {
 	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nTotal engram points: %d\nUnlocked engrams: %d\n",
+		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nAverage experience: %.2f\nTotal engram points: %d\nUnlocked engrams: %d\n",
 		displayString(path, opts),
 		summary.Files,
 		len(summary.Players),
@@ -1223,6 +1223,7 @@ func playersDirectory(path string, out io.Writer, opts runOptions) error {
 		summary.TotalLevel,
 		optionalFloat(summary.AverageLevel, summary.HasAverageLevel),
 		summary.TotalExperience,
+		optionalFloat(summary.AverageExperience, summary.HasAverageExperience),
 		summary.TotalEngramPoints,
 		summary.UnlockedEngrams,
 	); err != nil {

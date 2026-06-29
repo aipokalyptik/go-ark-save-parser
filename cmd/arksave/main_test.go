@@ -1371,6 +1371,7 @@ func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
 		"Total level: 15",
 		"Average level: 7.50",
 		"Total experience: 20.00",
+		"Average experience: 10.00",
 		"Total engram points: 20",
 		"Unlocked engrams: 3",
 		"  player id=42 character=Survivor platform=PlatformName tribe=777 level=10 deaths=3",

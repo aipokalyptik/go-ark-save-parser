@@ -1985,7 +1985,7 @@ func TestPlayerDirectorySummaryFromPathUsesDirectoryPlayers(t *testing.T) {
 	if summary.Files != 2 || len(summary.Players) != 2 || summary.TotalDeaths != 4 || summary.TotalLevel != 15 {
 		t.Fatalf("PlayerDirectorySummaryFromPath() = %#v, want two files/players, four deaths, level fifteen", summary)
 	}
-	if !summary.HasAverageDeaths || summary.AverageDeaths != 2 || !summary.HasAverageLevel || summary.AverageLevel != 7.5 {
+	if !summary.HasAverageDeaths || summary.AverageDeaths != 2 || !summary.HasAverageLevel || summary.AverageLevel != 7.5 || !summary.HasAverageExperience || summary.AverageExperience != 10 {
 		t.Fatalf("PlayerDirectorySummaryFromPath() averages = %#v", summary)
 	}
 	if summary.TotalExperience != 20 || summary.TotalEngramPoints != 20 || summary.UnlockedEngrams != 3 {

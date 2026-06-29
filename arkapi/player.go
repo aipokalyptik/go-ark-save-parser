@@ -164,17 +164,19 @@ type PlayerAllSummary struct {
 }
 
 type PlayerDirectorySummary struct {
-	Files             int
-	Players           []arkobject.Player
-	TotalDeaths       int32
-	HasAverageDeaths  bool
-	AverageDeaths     float64
-	TotalLevel        int32
-	HasAverageLevel   bool
-	AverageLevel      float64
-	TotalExperience   float64
-	TotalEngramPoints int32
-	UnlockedEngrams   int
+	Files                int
+	Players              []arkobject.Player
+	TotalDeaths          int32
+	HasAverageDeaths     bool
+	AverageDeaths        float64
+	TotalLevel           int32
+	HasAverageLevel      bool
+	AverageLevel         float64
+	TotalExperience      float64
+	HasAverageExperience bool
+	AverageExperience    float64
+	TotalEngramPoints    int32
+	UnlockedEngrams      int
 }
 
 type TribeRosterSummary struct {
@@ -689,6 +691,8 @@ func (p *PlayerAPI) PlayerDirectorySummary() (PlayerDirectorySummary, error) {
 		summary.AverageDeaths = float64(summary.TotalDeaths) / float64(len(players))
 		summary.HasAverageLevel = true
 		summary.AverageLevel = float64(summary.TotalLevel) / float64(len(players))
+		summary.HasAverageExperience = true
+		summary.AverageExperience = summary.TotalExperience / float64(len(players))
 	}
 	summary.UnlockedEngrams = len(engrams)
 	return summary, nil
