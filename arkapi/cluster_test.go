@@ -1,6 +1,7 @@
 package arkapi
 
 import (
+	"bytes"
 	"path/filepath"
 	"testing"
 
@@ -105,6 +106,43 @@ func TestNewClusterFromPathOpensLocalClusterFile(t *testing.T) {
 	}
 }
 
+func TestClusterItemsFromPathReturnsTypedLocalUploads(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	writeClusterArchiveWithPayload(t, path, clusterItemPayload(t))
+
+	items, err := ClusterItemsFromPath(path)
+	if err != nil {
+		t.Fatalf("ClusterItemsFromPath() error = %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("ClusterItemsFromPath() items length = %d, want 1", len(items))
+	}
+	item := items[0]
+	if item.Blueprint != "/Game/Test/PrimalItem_Test.PrimalItem_Test_C" || item.Quantity != 3 || item.Rating != 7.5 || item.Quality != 2 {
+		t.Fatalf("ClusterItemsFromPath() item = %#v, want typed local item upload", item)
+	}
+	if !item.IsCrafted() || item.Crafter().CharacterName != "Survivor" || item.Crafter().TribeName != "Porters" {
+		t.Fatalf("ClusterItemsFromPath() crafter = %#v crafted=%v, want Survivor/Porters crafted item", item.Crafter(), item.IsCrafted())
+	}
+}
+
+func TestClusterDinosFromPathReturnsTypedLocalUploads(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "EOS_abc123")
+	writeClusterArchiveWithPayload(t, path, clusterMalformedDinoPayload(t))
+
+	dinos, err := ClusterDinosFromPath(path)
+	if err != nil {
+		t.Fatalf("ClusterDinosFromPath() error = %v", err)
+	}
+	if len(dinos) != 1 {
+		t.Fatalf("ClusterDinosFromPath() dinos length = %d, want 1", len(dinos))
+	}
+	dino := dinos[0]
+	if dino.RawSize != len("not an archive") || !dino.HasParseError() || dino.ParseStatus() != arkobject.ClusterDinoParseStatusParseError {
+		t.Fatalf("ClusterDinosFromPath() dino = %#v, want parse-error typed upload", dino)
+	}
+}
+
 func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	api := NewCluster(&arkcluster.Data{
 		ID:      "EOS_abc123",
@@ -167,6 +205,50 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	if dinoSummary.WithStatusComponent != 1 || dinoSummary.WithAIController != 1 || dinoSummary.WithInventoryComponent != 1 || dinoSummary.TotalEmbeddedObjects != 4 || dinoSummary.MaxEmbeddedObjects != 4 {
 		t.Fatalf("DinoSummary() component counts = %#v, want one component-bearing dino with four embedded objects", dinoSummary)
 	}
+}
+
+func writeClusterArchiveWithPayload(t *testing.T, path string, payload []byte) {
+	t.Helper()
+
+	var props bytes.Buffer
+	testfixtures.WriteNameStructProperty(&props, "MyArkData", "ArkInventoryData", payload)
+	testfixtures.WriteArkString(&props, "None")
+	testfixtures.WriteArchiveWithProperties(t, path, "/Script/ShooterGame.ArkCloudInventoryData", props.Bytes())
+}
+
+func clusterItemPayload(t *testing.T) []byte {
+	t.Helper()
+
+	var item bytes.Buffer
+	testfixtures.WriteNameDoubleProperty(&item, "Version", 7)
+	testfixtures.WriteNameDoubleProperty(&item, "UploadTime", 12345)
+	testfixtures.WriteNameObjectPathProperty(&item, "ItemArchetype", "BlueprintGeneratedClass /Game/Test/PrimalItem_Test.PrimalItem_Test_C")
+	testfixtures.WriteNameIntProperty(&item, "ItemQuantity", 3)
+	testfixtures.WriteNameFloatProperty(&item, "ItemRating", 7.5)
+	testfixtures.WriteNameIntProperty(&item, "ItemQualityIndex", 2)
+	testfixtures.WriteNameStringProperty(&item, "CrafterCharacterName", "Survivor")
+	testfixtures.WriteNameStringProperty(&item, "CrafterTribeName", "Porters")
+	testfixtures.WriteArkString(&item, "None")
+
+	var payload bytes.Buffer
+	testfixtures.WriteNameStructArrayProperty(&payload, "ArkItems", "ArkTributeInventoryItem", [][]byte{item.Bytes()})
+	testfixtures.WriteArkString(&payload, "None")
+	return payload.Bytes()
+}
+
+func clusterMalformedDinoPayload(t *testing.T) []byte {
+	t.Helper()
+
+	var dino bytes.Buffer
+	testfixtures.WriteNameDoubleProperty(&dino, "Version", 7)
+	testfixtures.WriteNameDoubleProperty(&dino, "UploadTime", 12345)
+	testfixtures.WriteNameByteArrayProperty(&dino, "DinoData", []byte("not an archive"))
+	testfixtures.WriteArkString(&dino, "None")
+
+	var payload bytes.Buffer
+	testfixtures.WriteNameStructArrayProperty(&payload, "ArkTamedDinosData", "ArkTributeDinoData", [][]byte{dino.Bytes()})
+	testfixtures.WriteArkString(&payload, "None")
+	return payload.Bytes()
 }
 
 func TestClusterAPIDinoParseStatusCounts(t *testing.T) {

@@ -68,6 +68,22 @@ func NewClusterFromPath(path string) (*ClusterAPI, error) {
 	return NewCluster(data), nil
 }
 
+func ClusterItemsFromPath(path string) ([]arkobject.ClusterItem, error) {
+	api, err := NewClusterFromPath(path)
+	if err != nil {
+		return nil, err
+	}
+	return api.ItemsTyped(), nil
+}
+
+func ClusterDinosFromPath(path string) ([]arkobject.ClusterDino, error) {
+	api, err := NewClusterFromPath(path)
+	if err != nil {
+		return nil, err
+	}
+	return api.DinosTyped(), nil
+}
+
 func (c *ClusterAPI) Items() []arkcluster.Item {
 	if c == nil || c.data == nil {
 		return nil
