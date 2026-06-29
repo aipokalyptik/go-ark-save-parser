@@ -911,6 +911,110 @@ func TestDinoWildTamedCommandPrintsSummary(t *testing.T) {
 	}
 }
 
+func TestDinoClaimableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "claimable-dinos.ark")
+	settingsPath := filepath.Join(dir, "GameUserSettings.ini")
+	createSyntheticClaimableDinoCommandSave(t, path)
+	if err := os.WriteFile(settingsPath, []byte("[ServerSettings]\nPvEDinoDecayPeriodMultiplier=2.0\n"), 0o600); err != nil {
+		t.Fatalf("write settings: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"dino-claimable", path, "--game-user-settings", settingsPath, "--claim-period", "100", "--map", "Valguero"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-claimable) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Computed offline dino claim eligibility using LastInAllyRangeTimeSerialized with TamedTimeStamp fallback",
+		"Dinos: 5",
+		"Owned dinos: 4",
+		"Claimable: 2",
+		"Unknown timestamps: 1",
+		"Multiplier: 2.000",
+		"OWNER\tLOCATION\tDINO\tELAPSED\tREMAINING",
+		"Alpha\t10.00,20.00\tRaptor\t200s\t0s",
+		"Beta\t60.00,70.00\tRaptor\t1100s\t0s",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-claimable output %q does not contain %q", got, want)
+		}
+	}
+	if strings.Index(got, "Alpha\t10.00,20.00") > strings.Index(got, "Beta\t60.00,70.00") {
+		t.Fatalf("dino-claimable output not sorted by owner then location: %q", got)
+	}
+}
+
+func TestDinoClaimableCommandPrintsStableJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-claimable", path, "--claim-period", "100", "--claim-multiplier", "1", "--map", "Valguero", "--json"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-claimable --json) error = %v", err)
+	}
+	var report arkapi.DinoClaimableReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("json.Unmarshal(dino-claimable) error = %v; output = %s", err, out.String())
+	}
+	if report.Summary.TotalDinos != 5 || report.Summary.OwnedDinos != 4 || report.Summary.ClaimableDinos != 3 || len(report.Dinos) != 3 {
+		t.Fatalf("json report = %#v, want 5 total, 4 owned, 3 claimable", report)
+	}
+	if report.Dinos[0].Owner.SortKey != "Alpha" || report.Dinos[1].Owner.SortKey != "Alpha" || report.Dinos[2].Owner.SortKey != "Beta" {
+		t.Fatalf("json dinos not owner sorted: %#v", report.Dinos)
+	}
+	if report.Dinos[0].ClaimReferenceSource != "last_in_ally_range_time_serialized" || report.Dinos[2].ClaimReferenceSource != "tamed_time_stamp" {
+		t.Fatalf("json dinos did not preserve claim clock sources: %#v", report.Dinos)
+	}
+}
+
+func TestDinoClaimableCommandRedactsOwnersAndIdentifiers(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "dino-claimable", path, "--claim-period", "100", "--claim-multiplier", "1", "--json"}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact dino-claimable --json) error = %v", err)
+	}
+	got := out.String()
+	for _, leaked := range []string{"Alpha", "Beta", "Alice", "555", "777", "11111111-0000", "1001", "2001"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted dino-claimable output leaked %q: %s", leaked, got)
+		}
+	}
+	if !strings.Contains(got, redactedValue) || !strings.Contains(got, `"claimable_dinos": 3`) {
+		t.Fatalf("redacted output missing redacted marker or aggregate counts: %s", got)
+	}
+}
+
+func TestDinoClaimableCommandRejectsInvalidInputs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "missing save", args: []string{"dino-claimable"}, want: "requires a local .ark path"},
+		{name: "bad multiplier", args: []string{"dino-claimable", path, "--claim-multiplier", "nope"}, want: "parse claim multiplier"},
+		{name: "bad period", args: []string{"dino-claimable", path, "--claim-period", "nope"}, want: "parse claim period"},
+		{name: "unreadable ini", args: []string{"dino-claimable", path, "--game-user-settings", filepath.Join(t.TempDir(), "missing.ini")}, want: "read game user settings"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := run(tt.args, &out)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("run(%v) error = %v, want containing %q", tt.args, err, tt.want)
+			}
+		})
+	}
+}
+
 func TestEquipmentSaddlesCommandPrintsSummary(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "saddles.ark")
 	createSyntheticSaddleEquipmentSave(t, path)
@@ -3330,6 +3434,103 @@ func createSyntheticLocatedDinoSave(t *testing.T, path string) {
 				Z:          transform.Z,
 				Quaternion: 1,
 			}),
+		},
+	})
+}
+
+func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
+	t.Helper()
+
+	alphaOldID := uuid.MustParse("11111111-0000-0000-0000-000000000001")
+	alphaFreshID := uuid.MustParse("11111111-0000-0000-0000-000000000002")
+	betaOldID := uuid.MustParse("22222222-0000-0000-0000-000000000001")
+	wildID := uuid.MustParse("33333333-0000-0000-0000-000000000001")
+	unknownTimeID := uuid.MustParse("44444444-0000-0000-0000-000000000001")
+	alphaLoc := arkobject.MapCoords{Lat: 10, Long: 20}.AsActorTransform("Valguero")
+	alphaFreshLoc := arkobject.MapCoords{Lat: 10.4, Long: 20.4}.AsActorTransform("Valguero")
+	betaLoc := arkobject.MapCoords{Lat: 60, Long: 70}.AsActorTransform("Valguero")
+	wildLoc := arkobject.MapCoords{Lat: 5, Long: 5}.AsActorTransform("Valguero")
+	unknownLoc := arkobject.MapCoords{Lat: 80, Long: 10}.AsActorTransform("Valguero")
+
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000003: "IntProperty",
+			0x10000004: "None",
+			0x10000009: "TargetingTeam",
+			0x10000014: "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'",
+			0x10000015: "DinoID1",
+			0x10000016: "DinoID2",
+			0x10000018: "TamedTimeStamp",
+			0x10000019: "DoubleProperty",
+			0x1000001a: "StrProperty",
+			0x10000026: "TribeName",
+			0x10000027: "TamingTeamID",
+			0x10000028: "TamerString",
+			0x10000029: "OwningPlayerName",
+			0x1000002c: "OwningPlayerID",
+			0x10000067: "LastInAllyRangeTimeSerialized",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			alphaOldID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:                           1001,
+				ID2:                           2001,
+				Tamed:                         true,
+				TamedTimestamp:                1000,
+				LastInAllyRangeTimeSerialized: 1034.5,
+				TribeName:                     "Alpha",
+				TamingTeamID:                  555,
+				TamerString:                   "Alpha",
+				OwningPlayerName:              "Alice",
+				OwningPlayerID:                42,
+				TargetingTeam:                 555,
+			}),
+			alphaFreshID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:                           2001,
+				ID2:                           2002,
+				Tamed:                         true,
+				TamedTimestamp:                900,
+				LastInAllyRangeTimeSerialized: 1100,
+				TribeName:                     "Alpha",
+				TamingTeamID:                  555,
+				TamerString:                   "Alpha",
+				OwningPlayerName:              "Alice",
+				OwningPlayerID:                42,
+				TargetingTeam:                 555,
+			}),
+			betaOldID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:            3001,
+				ID2:            3002,
+				Tamed:          true,
+				TamedTimestamp: 134.5,
+				TribeName:      "Beta",
+				TamingTeamID:   777,
+				TamerString:    "Beta",
+				OwningPlayerID: 99,
+				TargetingTeam:  777,
+			}),
+			wildID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1: 4001,
+				ID2: 4002,
+			}),
+			unknownTimeID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+				ID1:                          5001,
+				ID2:                          5002,
+				Tamed:                        true,
+				DisableDefaultTamedTimestamp: true,
+				TribeName:                    "Gamma",
+				TamingTeamID:                 888,
+				TamerString:                  "Gamma",
+				TargetingTeam:                888,
+			}),
+		},
+		Custom: map[string][]byte{
+			"ActorTransforms": testfixtures.ActorTransforms(
+				testfixtures.ActorTransform{UUID: alphaOldID, X: alphaLoc.X, Y: alphaLoc.Y, Z: alphaLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: alphaFreshID, X: alphaFreshLoc.X, Y: alphaFreshLoc.Y, Z: alphaFreshLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: betaOldID, X: betaLoc.X, Y: betaLoc.Y, Z: betaLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: wildID, X: wildLoc.X, Y: wildLoc.Y, Z: wildLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: unknownTimeID, X: unknownLoc.X, Y: unknownLoc.Y, Z: unknownLoc.Z, Quaternion: 1},
+			),
 		},
 	})
 }

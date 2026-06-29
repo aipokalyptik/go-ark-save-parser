@@ -78,7 +78,8 @@ Implemented:
   `structure-owners`, `structure-owner-locations`, `structure-demolishable`,
   `structure-heatmap`, `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
-  `dino-best-base-stat`, `dino-most-mutated`, `dino-wild-tamed`, `dino-heatmap`,
+  `dino-best-base-stat`, `dino-most-mutated`, `dino-wild-tamed`,
+  `dino-claimable`, `dino-heatmap`,
   `equipment-summary`, `equipment-saddles`, `equipment-best`, `equipment-rank`,
   `equipment-ascendant-weapon-bps`, `equipment-history`,
   `equipment-owned-by`, `stackables`, `stackable-owned-by`,
@@ -189,6 +190,8 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave dino-best-base-stat /path/to/Valguero_WP.ark "Blueprint'/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C'" health
 ./bin/arksave dino-most-mutated /path/to/Valguero_WP.ark
 ./bin/arksave dino-wild-tamed /path/to/Valguero_WP.ark
+./bin/arksave dino-claimable /path/to/Valguero_WP.ark --game-user-settings /path/to/GameUserSettings.ini --map Valguero
+./bin/arksave --redact dino-claimable /path/to/Valguero_WP.ark --claim-multiplier 4 --json
 ./bin/arksave --no-cryos dino-heatmap /path/to/Valguero_WP.ark /tmp/dino-heatmap.json 100
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
@@ -214,6 +217,15 @@ Built-in default decay periods are adjusted by `PvEStructureDecayPeriodMultiplie
 from an optional `GameUserSettings.ini` or `--decay-multiplier`.
 Server/mod-specific decay rules can be supplied with `--decay-periods` JSON
 using `exact` and `substring` maps whose values are seconds.
+
+`dino-claimable` is also an offline computed eligibility report. It filters to
+owned, tamed, non-dead, non-cryopodded dinos and uses save `GameTime` plus each
+dino's `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp,
+falling back to `TamedTimeStamp` when ally-range data is unavailable. JSON
+output includes `claim_reference_time` and `claim_reference_source`. The default
+claim period is 8 days, adjusted by `PvEDinoDecayPeriodMultiplier` from an
+optional `GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period`
+with seconds for server/mod-specific timers.
 
 Export save metadata and object classes to JSON:
 

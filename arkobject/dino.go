@@ -15,32 +15,34 @@ const (
 )
 
 type Dino struct {
-	UUID                   uuid.UUID
-	Blueprint              string
-	Object                 *GameObject
-	ID1                    uint32
-	ID2                    uint32
-	IsFemale               bool
-	IsTamed                bool
-	IsBaby                 bool
-	IsDead                 bool
-	IsCryopodded           bool
-	Generation             int
-	AncestorIDs            []DinoID
-	MaturationPercent      float64
-	BabyStage              BabyStage
-	StatusComponentUUID    *uuid.UUID
-	InventoryUUID          *uuid.UUID
-	TamedName              string
-	IsNeutered             bool
-	ColorSetIndices        [6]int
-	ColorSetNames          [6]string
-	UploadedFromServerName string
-	Stats                  *DinoStats
-	Owner                  DinoOwner
-	GeneTraits             []string
-	ParsedGeneTraits       []GeneTrait
-	Location               *ActorTransform
+	UUID                          uuid.UUID
+	Blueprint                     string
+	Object                        *GameObject
+	ID1                           uint32
+	ID2                           uint32
+	IsFemale                      bool
+	IsTamed                       bool
+	IsBaby                        bool
+	IsDead                        bool
+	IsCryopodded                  bool
+	TamedTimeStamp                float64
+	LastInAllyRangeTimeSerialized float64
+	Generation                    int
+	AncestorIDs                   []DinoID
+	MaturationPercent             float64
+	BabyStage                     BabyStage
+	StatusComponentUUID           *uuid.UUID
+	InventoryUUID                 *uuid.UUID
+	TamedName                     string
+	IsNeutered                    bool
+	ColorSetIndices               [6]int
+	ColorSetNames                 [6]string
+	UploadedFromServerName        string
+	Stats                         *DinoStats
+	Owner                         DinoOwner
+	GeneTraits                    []string
+	ParsedGeneTraits              []GeneTrait
+	Location                      *ActorTransform
 }
 
 type GeneTrait struct {
@@ -72,6 +74,8 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 		dino.BabyStage = babyStageForPercent(dino.MaturationPercent)
 	}
 	_, dino.IsTamed = properties.Value("TamedTimeStamp")
+	dino.TamedTimeStamp = float64Value(properties, "TamedTimeStamp")
+	dino.LastInAllyRangeTimeSerialized = float64Value(properties, "LastInAllyRangeTimeSerialized")
 	if dino.IsTamed {
 		dino.Generation = max(arrayLength(properties, "DinoAncestors"), arrayLength(properties, "DinoAncestorsMale")) + 1
 	}

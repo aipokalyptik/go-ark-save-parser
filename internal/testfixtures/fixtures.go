@@ -139,20 +139,36 @@ type DinoGameObjectOptions struct {
 	IntPropertyID    uint32
 	BoolPropertyID   uint32
 	DoublePropertyID uint32
+	StringPropertyID uint32
 
-	ID1NameID      uint32
-	ID2NameID      uint32
-	FemaleNameID   uint32
-	TamedNameID    uint32
-	DeadNameID     uint32
-	BabyNameID     uint32
-	ID1            int32
-	ID2            int32
-	IsFemale       *bool
-	IsDead         *bool
-	IsBaby         *bool
-	Tamed          bool
-	TamedTimestamp float64
+	ID1NameID                           uint32
+	ID2NameID                           uint32
+	FemaleNameID                        uint32
+	TamedNameID                         uint32
+	DeadNameID                          uint32
+	BabyNameID                          uint32
+	TribeNameNameID                     uint32
+	TamingTeamIDNameID                  uint32
+	TamerStringNameID                   uint32
+	OwningPlayerNameNameID              uint32
+	OwningPlayerIDNameID                uint32
+	TargetingTeamNameID                 uint32
+	LastInAllyRangeTimeSerializedNameID uint32
+	ID1                                 int32
+	ID2                                 int32
+	IsFemale                            *bool
+	IsDead                              *bool
+	IsBaby                              *bool
+	Tamed                               bool
+	TamedTimestamp                      float64
+	DisableDefaultTamedTimestamp        bool
+	TribeName                           string
+	TamingTeamID                        int32
+	TamerString                         string
+	OwningPlayerName                    string
+	OwningPlayerID                      int32
+	TargetingTeam                       int32
+	LastInAllyRangeTimeSerialized       float64
 }
 
 func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
@@ -171,6 +187,27 @@ func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
 	}
 	if opts.Tamed {
 		WriteDoublePropertyID(&props, opts.TamedNameID, opts.DoublePropertyID, opts.TamedTimestamp)
+	}
+	if opts.TribeName != "" {
+		WriteStringPropertyID(&props, opts.TribeNameNameID, opts.StringPropertyID, opts.TribeName)
+	}
+	if opts.TamingTeamID != 0 {
+		WriteIntPropertyID(&props, opts.TamingTeamIDNameID, opts.IntPropertyID, opts.TamingTeamID)
+	}
+	if opts.TamerString != "" {
+		WriteStringPropertyID(&props, opts.TamerStringNameID, opts.StringPropertyID, opts.TamerString)
+	}
+	if opts.OwningPlayerName != "" {
+		WriteStringPropertyID(&props, opts.OwningPlayerNameNameID, opts.StringPropertyID, opts.OwningPlayerName)
+	}
+	if opts.OwningPlayerID != 0 {
+		WriteIntPropertyID(&props, opts.OwningPlayerIDNameID, opts.IntPropertyID, opts.OwningPlayerID)
+	}
+	if opts.TargetingTeam != 0 {
+		WriteIntPropertyID(&props, opts.TargetingTeamNameID, opts.IntPropertyID, opts.TargetingTeam)
+	}
+	if opts.LastInAllyRangeTimeSerialized != 0 {
+		WriteDoublePropertyID(&props, opts.LastInAllyRangeTimeSerializedNameID, opts.DoublePropertyID, opts.LastInAllyRangeTimeSerialized)
 	}
 	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
 }
@@ -215,6 +252,9 @@ func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
 	if opts.DoublePropertyID == 0 {
 		opts.DoublePropertyID = 0x10000019
 	}
+	if opts.StringPropertyID == 0 {
+		opts.StringPropertyID = 0x1000001a
+	}
 	if opts.ID1NameID == 0 {
 		opts.ID1NameID = 0x10000015
 	}
@@ -233,7 +273,28 @@ func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
 	if opts.BabyNameID == 0 {
 		opts.BabyNameID = 0x10000021
 	}
-	if opts.Tamed && opts.TamedTimestamp == 0 {
+	if opts.TribeNameNameID == 0 {
+		opts.TribeNameNameID = 0x10000026
+	}
+	if opts.TamingTeamIDNameID == 0 {
+		opts.TamingTeamIDNameID = 0x10000027
+	}
+	if opts.TamerStringNameID == 0 {
+		opts.TamerStringNameID = 0x10000028
+	}
+	if opts.OwningPlayerNameNameID == 0 {
+		opts.OwningPlayerNameNameID = 0x10000029
+	}
+	if opts.OwningPlayerIDNameID == 0 {
+		opts.OwningPlayerIDNameID = 0x1000002c
+	}
+	if opts.TargetingTeamNameID == 0 {
+		opts.TargetingTeamNameID = 0x10000009
+	}
+	if opts.LastInAllyRangeTimeSerializedNameID == 0 {
+		opts.LastInAllyRangeTimeSerializedNameID = 0x10000067
+	}
+	if opts.Tamed && opts.TamedTimestamp == 0 && !opts.DisableDefaultTamedTimestamp {
 		opts.TamedTimestamp = 42
 	}
 }

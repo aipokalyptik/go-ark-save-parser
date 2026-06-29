@@ -212,6 +212,8 @@ func run(args []string, out io.Writer) error {
 			return fmt.Errorf("dino-wild-tamed requires a local .ark path")
 		}
 		return dinoWildTamed(args[1], out)
+	case "dino-claimable":
+		return dinoClaimable(args[1:], out, opts)
 	case "dino-heatmap":
 		if len(args) < 3 || len(args) > 4 {
 			return fmt.Errorf("dino-heatmap requires a local .ark path, explicit output path, and optional resolution")
@@ -398,6 +400,7 @@ func usage(out io.Writer) error {
   arksave dino-best-base-stat <save.ark> <dino-blueprint> <stat>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
+  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json]
   arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
@@ -700,6 +703,164 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 	}
 	_, err = fmt.Fprintln(out, string(encoded))
 	return err
+}
+
+func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
+	path, opts, jsonOut, err := parseDinoClaimableArgs(args)
+	if err != nil {
+		return err
+	}
+	report, _, err := arkapi.DinoClaimableReportFromPath(path, opts)
+	if err != nil {
+		return err
+	}
+	if runOpts.Redact {
+		redactDinoClaimableReport(&report)
+	}
+	if jsonOut {
+		raw, err := json.MarshalIndent(report, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(out, string(raw))
+		return err
+	}
+	if _, err := fmt.Fprintf(
+		out,
+		"Computed offline dino claim eligibility using LastInAllyRangeTimeSerialized with TamedTimeStamp fallback\nDinos: %d\nOwned dinos: %d\nClaimable: %d\nUnknown timestamps: %d\nMultiplier: %.3f\nParse faults: %d\n",
+		report.Summary.TotalDinos,
+		report.Summary.OwnedDinos,
+		report.Summary.ClaimableDinos,
+		report.Summary.UnknownTimestampDinos,
+		report.Summary.ClaimMultiplier,
+		report.Summary.FaultCount,
+	); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tDINO\tELAPSED\tREMAINING"); err != nil {
+		return err
+	}
+	for _, row := range report.Dinos {
+		if _, err := fmt.Fprintf(
+			out,
+			"%s\t%s\t%s\t%s\t%s\n",
+			dinoClaimableOwnerDisplay(row.Owner),
+			demolishableLocationDisplay(row.Location),
+			row.ShortName,
+			formatSeconds(row.ElapsedSeconds),
+			formatSeconds(row.RemainingSeconds),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions, bool, error) {
+	if len(args) == 0 {
+		return "", arkapi.DinoClaimableOptions{}, false, fmt.Errorf("dino-claimable requires a local .ark path")
+	}
+	path := args[0]
+	opts := arkapi.DinoClaimableOptions{}
+	jsonOut := false
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--json":
+			jsonOut = true
+		case "--map":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--map requires a value")
+			}
+			opts.MapName = args[i]
+		case "--game-user-settings":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--game-user-settings requires a path")
+			}
+			opts.GameUserSettingsPath = args[i]
+		case "--claim-multiplier":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--claim-multiplier requires a value")
+			}
+			value, err := strconv.ParseFloat(args[i], 64)
+			if err != nil {
+				return "", opts, false, fmt.Errorf("parse claim multiplier: %w", err)
+			}
+			opts.ClaimMultiplier = value
+		case "--claim-period":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--claim-period requires a value")
+			}
+			value, err := strconv.ParseFloat(args[i], 64)
+			if err != nil {
+				return "", opts, false, fmt.Errorf("parse claim period: %w", err)
+			}
+			opts.ClaimPeriodSeconds = value
+		default:
+			if strings.HasPrefix(args[i], "--") {
+				return "", opts, false, fmt.Errorf("unknown dino-claimable option %q", args[i])
+			}
+			return "", opts, false, fmt.Errorf("unexpected dino-claimable argument %q", args[i])
+		}
+	}
+	return path, opts, jsonOut, nil
+}
+
+func redactDinoClaimableReport(report *arkapi.DinoClaimableReport) {
+	for i := range report.Dinos {
+		report.Dinos[i].UUID = redactedValue
+		report.Dinos[i].DinoID1 = 0
+		report.Dinos[i].DinoID2 = 0
+		if report.Dinos[i].TamedName != "" {
+			report.Dinos[i].TamedName = redactedValue
+		}
+		report.Dinos[i].Owner = redactedDinoClaimableOwner(report.Dinos[i].Owner)
+	}
+}
+
+func redactedDinoClaimableOwner(owner arkapi.DinoClaimableOwner) arkapi.DinoClaimableOwner {
+	owner.SortKey = redactedValue
+	if owner.TribeName != "" {
+		owner.TribeName = redactedValue
+	}
+	if owner.TamerTribeID != 0 {
+		owner.TamerTribeID = 0
+	}
+	if owner.TamerString != "" {
+		owner.TamerString = redactedValue
+	}
+	if owner.PlayerName != "" {
+		owner.PlayerName = redactedValue
+	}
+	if owner.PlayerID != 0 {
+		owner.PlayerID = 0
+	}
+	if owner.TargetTeam != 0 {
+		owner.TargetTeam = 0
+	}
+	return owner
+}
+
+func dinoClaimableOwnerDisplay(owner arkapi.DinoClaimableOwner) string {
+	switch {
+	case owner.TribeName != "":
+		return owner.TribeName
+	case owner.TamerString != "":
+		return owner.TamerString
+	case owner.TamerTribeID != 0:
+		return strconv.FormatInt(int64(owner.TamerTribeID), 10)
+	case owner.TargetTeam != 0:
+		return strconv.FormatInt(int64(owner.TargetTeam), 10)
+	case owner.PlayerName != "":
+		return owner.PlayerName
+	case owner.PlayerID != 0:
+		return strconv.FormatInt(int64(owner.PlayerID), 10)
+	default:
+		return owner.SortKey
+	}
 }
 
 func structureDemolishable(args []string, out io.Writer, runOpts runOptions) error {

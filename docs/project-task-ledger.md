@@ -263,6 +263,10 @@ documented.
         `LastEnterStasisTime` fallback, external decay settings,
         owner/location sorting, JSON output, redaction, and connected-base
         grouping.
+  - [x] Add computed offline claimable-dino reports using save `GameTime`,
+        dino `LastInAllyRangeTimeSerialized` with `TamedTimeStamp` fallback,
+        external claim settings, owner/location sorting, JSON output, and
+        redaction.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests
@@ -797,6 +801,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `structure-owners`.
   - [x] `structure-owner-locations`.
   - [x] `structure-demolishable`.
+  - [x] `dino-claimable`.
   - [x] `structure-heatmap`.
   - [x] `base-components`.
   - [x] `dinos`.
