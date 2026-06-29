@@ -50,7 +50,7 @@ func TestExportClusterDataSummarizesUploads(t *testing.T) {
 	if info.Items[0].ShortName != "Item" {
 		t.Fatalf("ClusterDataInfo item short name = %q, want Item", info.Items[0].ShortName)
 	}
-	if info.Items[0].Rating != 7.5 || info.Items[0].Quality != 2 || info.Items[0].CrafterCharacterName != "Survivor" || info.Items[0].CrafterTribeName != "Porters" {
+	if info.Items[0].Rating != 7.5 || info.Items[0].Quality != 2 || !info.Items[0].IsCrafted || info.Items[0].CrafterCharacterName != "Survivor" || info.Items[0].CrafterTribeName != "Porters" {
 		t.Fatalf("ClusterDataInfo item metadata = %#v", info.Items[0])
 	}
 	if info.Items[0].Type != "other" {

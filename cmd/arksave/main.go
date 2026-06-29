@@ -12,7 +12,6 @@ import (
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
 	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
-	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
@@ -1425,19 +1424,19 @@ func cluster(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
+		directory, err := arkapi.ClusterDirectorySummaryFromPath(path)
 		if err != nil {
 			return err
 		}
-		if len(entries) == 0 {
-			_, err = fmt.Fprintf(out, "Cluster directory: %s\nFiles: 0\nFile faults: %d\n", displayString(path, opts), len(faults))
+		if len(directory.Files) == 0 {
+			_, err = fmt.Fprintf(out, "Cluster directory: %s\nFiles: 0\nFile faults: %d\n", displayString(path, opts), len(directory.Faults))
 			return err
 		}
-		summary := arkapi.ClusterDirectorySummary(entries)
-		if _, err := fmt.Fprintf(out, "Cluster directory: %s\nFiles: %d\nFile faults: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n\n", displayString(path, opts), summary.Files, len(faults), summary.Objects, summary.Items, summary.Dinos, summary.ParseErrors); err != nil {
+		summary := directory.Summary
+		if _, err := fmt.Fprintf(out, "Cluster directory: %s\nFiles: %d\nFile faults: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n\n", displayString(path, opts), summary.Files, len(directory.Faults), summary.Objects, summary.Items, summary.Dinos, summary.ParseErrors); err != nil {
 			return err
 		}
-		for i, entry := range entries {
+		for i, entry := range directory.Files {
 			if i > 0 {
 				if _, err := fmt.Fprintln(out); err != nil {
 					return err
@@ -1449,7 +1448,7 @@ func cluster(path string, out io.Writer, opts runOptions) error {
 		}
 		return nil
 	}
-	data, err := arkcluster.Open(path)
+	data, err := arkapi.ClusterSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -1462,17 +1461,17 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
+		directory, err := arkapi.ClusterDirectorySummaryFromPath(path)
 		if err != nil {
 			return err
 		}
-		summary := arkapi.ClusterDirectorySummary(entries)
+		summary := directory.Summary
 		if _, err := fmt.Fprintf(
 			out,
 			"Cluster directory: %s\nFiles: %d\nFile faults: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
 			displayString(path, opts),
 			summary.Files,
-			len(faults),
+			len(directory.Faults),
 			summary.Objects,
 			summary.Items,
 			summary.Dinos,
@@ -1482,25 +1481,23 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 		}
 		return printClusterTypedSummaries(out, summary.ItemSummary, summary.DinoSummary)
 	}
-	data, err := arkcluster.Open(path)
+	fileSummary, err := arkapi.ClusterSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
-	fileSummary := arkapi.NewCluster(data).Summary()
 	if _, err := fmt.Fprintf(
 		out,
 		"Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\nParse errors: %d\n",
-		displayString(data.Path, opts),
+		displayString(fileSummary.Path, opts),
 		fileSummary.ArchiveVersion,
 		fileSummary.ObjectCount,
 		fileSummary.ItemCount,
 		fileSummary.DinoCount,
-		fileSummary.ParseErrorCount,
+		clusterInfoParseErrorCount(fileSummary),
 	); err != nil {
 		return err
 	}
-	api := arkapi.NewCluster(data)
-	return printClusterTypedSummaries(out, api.ItemSummary(), api.DinoSummary())
+	return printClusterTypedSummaries(out, clusterInfoItemSummary(fileSummary), clusterInfoDinoSummary(fileSummary))
 }
 
 func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
@@ -1527,6 +1524,96 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		dinos.MaxEmbeddedObjects,
 	)
 	return err
+}
+
+func clusterInfoItemSummary(info arkapi.ClusterDataInfo) arkapi.ClusterItemSummary {
+	summary := arkapi.ClusterItemSummary{Items: len(info.Items)}
+	for _, item := range info.Items {
+		switch item.Type {
+		case "dino":
+			summary.DinoItems++
+		case "equipment":
+			summary.EquipmentItems++
+		default:
+			summary.OtherItems++
+		}
+		if item.SupportedVersion {
+			summary.SupportedVersionItems++
+		}
+		if item.UnsupportedVersion {
+			summary.UnsupportedVersionItems++
+		}
+		if item.IsCrafted {
+			summary.CraftedItems++
+		}
+		summary.TotalQuantity += int64(item.Quantity)
+		if item.Rating > summary.MaxRating {
+			summary.MaxRating = item.Rating
+		}
+		if item.Quality > summary.MaxQuality {
+			summary.MaxQuality = item.Quality
+		}
+	}
+	return summary
+}
+
+func clusterInfoDinoSummary(info arkapi.ClusterDataInfo) arkapi.ClusterDinoSummary {
+	summary := arkapi.ClusterDinoSummary{Dinos: len(info.Dinos)}
+	for _, dino := range info.Dinos {
+		switch dino.ParseStatus {
+		case "parsed":
+			summary.ParsedDinos++
+		case "parse_error":
+			summary.ParseErrorDinos++
+		}
+		if dino.ParseStatus != "parse_error" && dino.ParseError != "" {
+			summary.ParseErrorDinos++
+		}
+		if dino.SupportedVersion {
+			summary.SupportedVersionDinos++
+		}
+		if dino.UnsupportedVersion {
+			summary.UnsupportedVersionDinos++
+		}
+		if len(dino.StatusComponentClassNames) > 0 {
+			summary.WithStatusComponent++
+		}
+		if len(dino.AIControllerClassNames) > 0 {
+			summary.WithAIController++
+		}
+		if len(dino.InventoryComponentClassNames) > 0 {
+			summary.WithInventoryComponent++
+		}
+		summary.TotalEmbeddedObjects += dino.ObjectCount
+		if dino.ObjectCount > summary.MaxEmbeddedObjects {
+			summary.MaxEmbeddedObjects = dino.ObjectCount
+		}
+	}
+	return summary
+}
+
+func clusterInfoParseErrorCount(info arkapi.ClusterDataInfo) int {
+	return clusterInfoDinoSummary(info).ParseErrorDinos
+}
+
+func clusterInfoDinoParseStatusCounts(info arkapi.ClusterDataInfo) map[string]int {
+	counts := map[string]int{
+		"parsed":              0,
+		"unsupported_version": 0,
+		"parse_error":         0,
+		"unparsed":            0,
+	}
+	for _, dino := range info.Dinos {
+		status := dino.ParseStatus
+		if status == "" {
+			status = "unparsed"
+		}
+		if _, ok := counts[status]; !ok {
+			counts[status] = 0
+		}
+		counts[status]++
+	}
+	return counts
 }
 
 func tribute(path string, out io.Writer, opts runOptions) error {
@@ -1639,14 +1726,12 @@ func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOp
 	if info.IsDir() {
 		return exportClusterDirectoryJSON(path, outputPath, out, opts)
 	}
-
-	data, err := arkcluster.Open(path)
-	if err != nil {
-		return err
-	}
 	var raw []byte
 	if opts.Redact {
-		info := arkapi.ExportClusterData(data)
+		info, err := arkapi.ClusterSummaryFromPath(path)
+		if err != nil {
+			return err
+		}
 		info.ID = redactedValue
 		info.Path = redactedValue
 		info.Items = nil
@@ -1656,7 +1741,7 @@ func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOp
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportClusterDataJSON(data)
+		raw, err = arkapi.ExportClusterPathJSON(path)
 		if err != nil {
 			return err
 		}
@@ -1669,13 +1754,13 @@ func exportClusterJSON(path string, outputPath string, out io.Writer, opts runOp
 }
 
 func exportClusterDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
-	entries, faults, err := arkcluster.OpenDirectoryWithFaults(path)
-	if err != nil {
-		return err
-	}
 	var raw []byte
+	var err error
 	if opts.Redact {
-		info := arkapi.ExportClusterDirectoryDataWithFaults(entries, faults)
+		info, err := arkapi.ClusterDirectorySummaryFromPath(path)
+		if err != nil {
+			return err
+		}
 		for i := range info.Files {
 			info.Files[i].ID = redactedValue
 			info.Files[i].Path = redactedValue
@@ -1690,7 +1775,7 @@ func exportClusterDirectoryJSON(path string, outputPath string, out io.Writer, o
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportClusterDirectoryDataWithFaultsJSON(entries, faults)
+		raw, err = arkapi.ExportClusterPathJSON(path)
 		if err != nil {
 			return err
 		}
@@ -1773,12 +1858,12 @@ func exportTributeDirectoryJSON(path string, outputPath string, out io.Writer, o
 	return err
 }
 
-func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) error {
-	if _, err := fmt.Fprintf(out, "Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\n", displayString(data.Path, opts), data.Archive.Version, len(data.Archive.Objects), len(data.Items), len(data.Dinos)); err != nil {
+func printClusterSummary(out io.Writer, data arkapi.ClusterDataInfo, opts runOptions) error {
+	if _, err := fmt.Fprintf(out, "Cluster file: %s\nArchive version: %d\nObjects: %d\nItems: %d\nDinos: %d\n", displayString(data.Path, opts), data.ArchiveVersion, data.ObjectCount, data.ItemCount, data.DinoCount); err != nil {
 		return err
 	}
 	if len(data.Dinos) > 0 {
-		statuses := arkapi.NewCluster(data).DinoParseStatusCounts()
+		statuses := clusterInfoDinoParseStatusCounts(data)
 		if _, err := fmt.Fprintf(
 			out,
 			"Dino parse statuses: parsed=%d unsupported_version=%d parse_error=%d unparsed=%d\n",
@@ -1793,13 +1878,12 @@ func printClusterSummary(out io.Writer, data *arkcluster.Data, opts runOptions) 
 	if opts.Redact {
 		return nil
 	}
-	clusterInfo := arkapi.ExportClusterData(data)
-	for _, item := range clusterInfo.Items {
+	for _, item := range data.Items {
 		if _, err := fmt.Fprintf(out, "  item[%d] type=%s short=%s blueprint=%s quantity=%d upload=%.0f\n", item.Index, item.Type, item.ShortName, item.Blueprint, item.Quantity, item.UploadTime); err != nil {
 			return err
 		}
 	}
-	for _, dino := range clusterInfo.Dinos {
+	for _, dino := range data.Dinos {
 		classNames := ""
 		if len(dino.ClassNames) > 0 {
 			classNames = fmt.Sprintf(" class_names=%s", strings.Join(dino.ClassNames, ","))

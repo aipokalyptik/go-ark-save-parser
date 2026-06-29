@@ -45,6 +45,7 @@ type ClusterItemInfo struct {
 	Quantity             int32   `json:"quantity"`
 	Rating               float64 `json:"rating,omitempty"`
 	Quality              int32   `json:"quality,omitempty"`
+	IsCrafted            bool    `json:"is_crafted,omitempty"`
 	CrafterCharacterName string  `json:"crafter_character_name,omitempty"`
 	CrafterTribeName     string  `json:"crafter_tribe_name,omitempty"`
 }
@@ -95,6 +96,7 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			Quantity:             typed.Quantity,
 			Rating:               typed.Rating,
 			Quality:              typed.Quality,
+			IsCrafted:            typed.IsCrafted(),
 			CrafterCharacterName: typed.CrafterCharacterName,
 			CrafterTribeName:     typed.CrafterTribeName,
 		})

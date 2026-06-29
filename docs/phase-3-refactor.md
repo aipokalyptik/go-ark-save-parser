@@ -74,6 +74,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.ClusterSummaryFromPath` and
       `arkapi.ClusterDirectorySummaryFromPath` so local cluster file and
       directory aggregates are reusable typed results without JSON-only access.
+- [x] Move `cluster`, `cluster-summary`, and `export-cluster-json` CLI
+      lifecycles onto typed cluster path helpers, and expose crafted upload
+      status in cluster JSON item models so typed summaries do not need
+      direct `arkcluster` access.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can

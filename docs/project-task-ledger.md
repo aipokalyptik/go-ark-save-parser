@@ -537,6 +537,10 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add typed local cluster file and directory aggregate helpers through
           `arkapi.ClusterSummaryFromPath` and
           `arkapi.ClusterDirectorySummaryFromPath`.
+    - [x] Move `cluster`, `cluster-summary`, and `export-cluster-json` CLI
+          file/directory lifecycle handling onto typed cluster path helpers,
+          and expose crafted upload status in cluster JSON item models so the
+          CLI does not need direct `arkcluster` access for typed summaries.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed

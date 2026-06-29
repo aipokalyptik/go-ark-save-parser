@@ -148,6 +148,20 @@ func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestClusterCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"cluster", "clusterSummary", "exportClusterJSON", "exportClusterDirectoryJSON"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arkcluster.Open") || strings.Contains(body, "arkcluster.OpenDirectoryWithFaults") {
+			t.Fatalf("%s() still owns cluster file lifecycle; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func functionBody(t *testing.T, source string, name string) string {
 	t.Helper()
 	start := strings.Index(source, "func "+name+"(")
@@ -1595,7 +1609,7 @@ func TestClusterSummaryCommandDirectoryKeepsValidFilesAndReportsFaults(t *testin
 
 func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 	var out bytes.Buffer
-	err := printClusterSummary(&out, &arkcluster.Data{
+	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
 		Path:    "/tmp/EOS_abc123",
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Dinos: []arkcluster.Dino{{
@@ -1604,7 +1618,7 @@ func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 			RawSize:    32,
 			ParseError: "unsupported embedded dino archive",
 		}},
-	}, runOptions{})
+	}), runOptions{})
 	if err != nil {
 		t.Fatalf("printClusterSummary() error = %v", err)
 	}
@@ -1616,7 +1630,7 @@ func TestClusterSummaryPrintsDinoParseErrors(t *testing.T) {
 
 func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 	var out bytes.Buffer
-	err := printClusterSummary(&out, &arkcluster.Data{
+	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
 		Path:    "/tmp/EOS_abc123",
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Dinos: []arkcluster.Dino{{
@@ -1628,7 +1642,7 @@ func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 				{ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C"},
 			}},
 		}},
-	}, runOptions{})
+	}), runOptions{})
 	if err != nil {
 		t.Fatalf("printClusterSummary() error = %v", err)
 	}
@@ -1644,7 +1658,7 @@ func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 
 func TestClusterSummaryPrintsDinoParseStatusCounts(t *testing.T) {
 	var out bytes.Buffer
-	err := printClusterSummary(&out, &arkcluster.Data{
+	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
 		Path:    "/tmp/EOS_abc123",
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Dinos: []arkcluster.Dino{
@@ -1665,7 +1679,7 @@ func TestClusterSummaryPrintsDinoParseStatusCounts(t *testing.T) {
 			{Index: 2, Version: 7, ParseError: "unsupported embedded archive"},
 			{Index: 3, Version: 7},
 		},
-	}, runOptions{})
+	}), runOptions{})
 	if err != nil {
 		t.Fatalf("printClusterSummary() error = %v", err)
 	}
@@ -1678,7 +1692,7 @@ func TestClusterSummaryPrintsDinoParseStatusCounts(t *testing.T) {
 
 func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 	var out bytes.Buffer
-	err := printClusterSummary(&out, &arkcluster.Data{
+	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
 		Path:    "/tmp/EOS_abc123",
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Items: []arkcluster.Item{
@@ -1699,7 +1713,7 @@ func TestClusterSummaryPrintsItemTypes(t *testing.T) {
 				UploadTime: 67890,
 			},
 		},
-	}, runOptions{})
+	}), runOptions{})
 	if err != nil {
 		t.Fatalf("printClusterSummary() error = %v", err)
 	}
