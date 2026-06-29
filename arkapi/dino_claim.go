@@ -28,6 +28,14 @@ type DinoClaimableReport struct {
 	Dinos   []DinoClaimableRow   `json:"dinos"`
 }
 
+type DinoClaimableFieldDebug struct {
+	TotalDinoCandidates int            `json:"total_dino_candidates"`
+	FaultCount          int            `json:"fault_count"`
+	CandidateNames      []string       `json:"candidate_names"`
+	NameTableMatches    []string       `json:"name_table_matches"`
+	FieldCounts         map[string]int `json:"field_counts"`
+}
+
 type DinoClaimableSummary struct {
 	TotalDinos            int     `json:"total_dinos"`
 	OwnedDinos            int     `json:"owned_dinos"`
@@ -81,6 +89,55 @@ func DinoClaimableReportFromPath(savePath string, opts DinoClaimableOptions) (Di
 	return api.ClaimableReport(opts)
 }
 
+func DinoClaimableFieldDebugFromPath(savePath string) (DinoClaimableFieldDebug, error) {
+	api, closeAPI, err := NewDinoFromPath(savePath)
+	if err != nil {
+		return DinoClaimableFieldDebug{}, err
+	}
+	defer closeAPI()
+	return api.ClaimableFieldDebug()
+}
+
+func (d *DinoAPI) ClaimableFieldDebug() (DinoClaimableFieldDebug, error) {
+	names := d.claimableDebugCandidateNames()
+	infos, faults, err := d.save.SelectedObjectPropertiesWithFaults(func(info arksave.ObjectClassInfo) bool {
+		return d.IsApplicableBlueprint(info.ClassName)
+	}, names)
+	if err != nil {
+		return DinoClaimableFieldDebug{}, err
+	}
+	debug := DinoClaimableFieldDebug{
+		FaultCount:       len(faults),
+		CandidateNames:   names,
+		NameTableMatches: names,
+		FieldCounts:      map[string]int{},
+	}
+	seen := map[uuid.UUID]struct{}{}
+	for _, info := range infos {
+		if d.IsCryopodBlueprint(info.ClassName) {
+			continue
+		}
+		container := arkproperty.Container{Properties: info.Properties}
+		if _, ok := container.Value("DinoID1"); !ok {
+			continue
+		}
+		seen[info.UUID] = struct{}{}
+		counted := map[string]struct{}{}
+		for _, property := range info.Properties {
+			if property.Name == "" {
+				continue
+			}
+			if _, ok := counted[property.Name]; ok {
+				continue
+			}
+			debug.FieldCounts[property.Name]++
+			counted[property.Name] = struct{}{}
+		}
+	}
+	debug.TotalDinoCandidates = len(seen)
+	return debug, nil
+}
+
 func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableReport, []arksave.FaultyObjectInfo, error) {
 	if d.save.Context == nil {
 		return DinoClaimableReport{}, nil, fmt.Errorf("save context is nil")
@@ -128,6 +185,67 @@ func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableRepor
 	}
 	sortDinoClaimableRows(report.Dinos)
 	return report, faults, nil
+}
+
+func (d *DinoAPI) claimableDebugCandidateNames() []string {
+	terms := []string{
+		"ally",
+		"claim",
+		"decay",
+		"dino",
+		"enter",
+		"last",
+		"owner",
+		"range",
+		"render",
+		"stasis",
+		"tame",
+		"taming",
+		"team",
+		"time",
+		"tribe",
+	}
+	always := map[string]struct{}{
+		"DinoID1":                       {},
+		"DinoID2":                       {},
+		"TamedName":                     {},
+		"TamedTimeStamp":                {},
+		"LastInAllyRangeTimeSerialized": {},
+		"LastEnterStasisTime":           {},
+		"LastInAllyRangeTime":           {},
+		"LastInAllyRangeTimeStamp":      {},
+		"LastAllyRangeTime":             {},
+		"LastAllyRangeTimeSerialized":   {},
+		"LastTamedAtTime":               {},
+		"TribeName":                     {},
+		"TamingTeamID":                  {},
+		"TamerString":                   {},
+		"OwningPlayerName":              {},
+		"OwningPlayerID":                {},
+		"TargetingTeam":                 {},
+		"bIsDead":                       {},
+	}
+	matches := map[string]struct{}{}
+	for name := range always {
+		matches[name] = struct{}{}
+	}
+	if d.save != nil && d.save.Context != nil {
+		for _, name := range d.save.Context.Names {
+			lower := strings.ToLower(name)
+			for _, term := range terms {
+				if strings.Contains(lower, term) {
+					matches[name] = struct{}{}
+					break
+				}
+			}
+		}
+	}
+	out := make([]string, 0, len(matches))
+	for name := range matches {
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func resolveDinoClaimMultiplier(opts DinoClaimableOptions) (float64, error) {

@@ -400,7 +400,7 @@ func usage(out io.Writer) error {
   arksave dino-best-base-stat <save.ark> <dino-blueprint> <stat>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
-  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json]
+  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json] [--debug-fields]
   arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
@@ -706,9 +706,24 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 }
 
 func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
-	path, opts, jsonOut, err := parseDinoClaimableArgs(args)
+	path, opts, jsonOut, debugFields, err := parseDinoClaimableArgs(args)
 	if err != nil {
 		return err
+	}
+	if debugFields {
+		debug, err := arkapi.DinoClaimableFieldDebugFromPath(path)
+		if err != nil {
+			return err
+		}
+		if jsonOut {
+			raw, err := json.MarshalIndent(debug, "", "  ")
+			if err != nil {
+				return err
+			}
+			_, err = fmt.Fprintln(out, string(raw))
+			return err
+		}
+		return printDinoClaimableFieldDebug(debug, out)
 	}
 	report, _, err := arkapi.DinoClaimableReportFromPath(path, opts)
 	if err != nil {
@@ -757,63 +772,83 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	return nil
 }
 
-func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions, bool, error) {
+func printDinoClaimableFieldDebug(debug arkapi.DinoClaimableFieldDebug, out io.Writer) error {
+	if _, err := fmt.Fprintf(out, "Dino candidates: %d\nParse faults: %d\n", debug.TotalDinoCandidates, debug.FaultCount); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(out, "FIELD\tCOUNT"); err != nil {
+		return err
+	}
+	for _, name := range debug.CandidateNames {
+		if count := debug.FieldCounts[name]; count > 0 {
+			if _, err := fmt.Fprintf(out, "%s\t%d\n", name, count); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions, bool, bool, error) {
 	if len(args) == 0 {
-		return "", arkapi.DinoClaimableOptions{}, false, fmt.Errorf("dino-claimable requires a local .ark path")
+		return "", arkapi.DinoClaimableOptions{}, false, false, fmt.Errorf("dino-claimable requires a local .ark path")
 	}
 	path := args[0]
 	opts := arkapi.DinoClaimableOptions{}
 	jsonOut := false
+	debugFields := false
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
 		case "--json":
 			jsonOut = true
+		case "--debug-fields":
+			debugFields = true
 		case "--map":
 			i++
 			if i >= len(args) {
-				return "", opts, false, fmt.Errorf("--map requires a value")
+				return "", opts, false, false, fmt.Errorf("--map requires a value")
 			}
 			opts.MapName = args[i]
 		case "--game-user-settings":
 			i++
 			if i >= len(args) {
-				return "", opts, false, fmt.Errorf("--game-user-settings requires a path")
+				return "", opts, false, false, fmt.Errorf("--game-user-settings requires a path")
 			}
 			opts.GameUserSettingsPath = args[i]
 		case "--claim-multiplier":
 			i++
 			if i >= len(args) {
-				return "", opts, false, fmt.Errorf("--claim-multiplier requires a value")
+				return "", opts, false, false, fmt.Errorf("--claim-multiplier requires a value")
 			}
 			value, err := strconv.ParseFloat(args[i], 64)
 			if err != nil {
-				return "", opts, false, fmt.Errorf("parse claim multiplier: %w", err)
+				return "", opts, false, false, fmt.Errorf("parse claim multiplier: %w", err)
 			}
 			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-				return "", opts, false, fmt.Errorf("claim multiplier must be a positive finite number")
+				return "", opts, false, false, fmt.Errorf("claim multiplier must be a positive finite number")
 			}
 			opts.ClaimMultiplier = value
 		case "--claim-period":
 			i++
 			if i >= len(args) {
-				return "", opts, false, fmt.Errorf("--claim-period requires a value")
+				return "", opts, false, false, fmt.Errorf("--claim-period requires a value")
 			}
 			value, err := strconv.ParseFloat(args[i], 64)
 			if err != nil {
-				return "", opts, false, fmt.Errorf("parse claim period: %w", err)
+				return "", opts, false, false, fmt.Errorf("parse claim period: %w", err)
 			}
 			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-				return "", opts, false, fmt.Errorf("claim period must be a positive finite number")
+				return "", opts, false, false, fmt.Errorf("claim period must be a positive finite number")
 			}
 			opts.ClaimPeriodSeconds = value
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return "", opts, false, fmt.Errorf("unknown dino-claimable option %q", args[i])
+				return "", opts, false, false, fmt.Errorf("unknown dino-claimable option %q", args[i])
 			}
-			return "", opts, false, fmt.Errorf("unexpected dino-claimable argument %q", args[i])
+			return "", opts, false, false, fmt.Errorf("unexpected dino-claimable argument %q", args[i])
 		}
 	}
-	return path, opts, jsonOut, nil
+	return path, opts, jsonOut, debugFields, nil
 }
 
 func redactDinoClaimableReport(report *arkapi.DinoClaimableReport) {

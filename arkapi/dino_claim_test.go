@@ -116,6 +116,28 @@ func TestDinoClaimableReportUsesSelectedOwnershipAndAllyRangeWithoutTamedTimesta
 	}
 }
 
+func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
+	save := openSyntheticClaimableDinoSave(t)
+	defer save.Close()
+
+	debug, err := NewDino(save).ClaimableFieldDebug()
+	if err != nil {
+		t.Fatalf("ClaimableFieldDebug() error = %v", err)
+	}
+	if debug.TotalDinoCandidates != 6 || debug.FaultCount != 0 {
+		t.Fatalf("ClaimableFieldDebug() summary = %#v, want 6 candidates and no faults", debug)
+	}
+	if debug.FieldCounts["LastInAllyRangeTimeSerialized"] != 3 {
+		t.Fatalf("LastInAllyRangeTimeSerialized count = %d, want 3: %#v", debug.FieldCounts["LastInAllyRangeTimeSerialized"], debug.FieldCounts)
+	}
+	if debug.FieldCounts["TamedTimeStamp"] != 4 {
+		t.Fatalf("TamedTimeStamp count = %d, want 4: %#v", debug.FieldCounts["TamedTimeStamp"], debug.FieldCounts)
+	}
+	if debug.FieldCounts["TargetingTeam"] != 5 {
+		t.Fatalf("TargetingTeam count = %d, want 5: %#v", debug.FieldCounts["TargetingTeam"], debug.FieldCounts)
+	}
+}
+
 func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 	t.Helper()
 

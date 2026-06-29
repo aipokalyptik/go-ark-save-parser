@@ -192,6 +192,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave dino-wild-tamed /path/to/Valguero_WP.ark
 ./bin/arksave dino-claimable /path/to/Valguero_WP.ark --game-user-settings /path/to/GameUserSettings.ini --map Valguero
 ./bin/arksave --redact dino-claimable /path/to/Valguero_WP.ark --claim-multiplier 4 --json
+./bin/arksave dino-claimable /path/to/Valguero_WP.ark --debug-fields
 ./bin/arksave --no-cryos dino-heatmap /path/to/Valguero_WP.ark /tmp/dino-heatmap.json 100
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
@@ -227,7 +228,9 @@ and JSON output include species, tamed name, owner/tribe, map location, and the
 chosen `claim_reference_time`/`claim_reference_source`. The default claim period
 is 8 days, adjusted by `PvEDinoDecayPeriodMultiplier` from an optional
 `GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period` with
-seconds for server/mod-specific timers.
+seconds for server/mod-specific timers. Use `--debug-fields` to print
+dino-scoped candidate property counts when a save has ownership data but no
+recognized timer field.
 
 Export save metadata and object classes to JSON:
 

@@ -991,6 +991,30 @@ func TestDinoClaimableCommandRedactsOwnersAndIdentifiers(t *testing.T) {
 	}
 }
 
+func TestDinoClaimableCommandPrintsDebugFields(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-claimable", path, "--debug-fields"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-claimable --debug-fields) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Dino candidates: 6",
+		"Parse faults: 0",
+		"FIELD\tCOUNT",
+		"DinoID1\t6",
+		"LastInAllyRangeTimeSerialized\t3",
+		"TargetingTeam\t5",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-claimable --debug-fields output %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestDinoClaimableCommandRejectsInvalidInputs(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
 	createSyntheticClaimableDinoCommandSave(t, path)
