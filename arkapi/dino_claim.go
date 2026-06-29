@@ -21,6 +21,7 @@ type DinoClaimableOptions struct {
 	ClaimMultiplier      float64
 	ClaimPeriodSeconds   float64
 	GameUserSettingsPath string
+	IncludeIneligible    bool
 }
 
 type DinoClaimableReport struct {
@@ -181,6 +182,8 @@ func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableRepor
 		}
 		if row.Claimable {
 			report.Summary.ClaimableDinos++
+		}
+		if row.Claimable || opts.IncludeIneligible {
 			report.Dinos = append(report.Dinos, row)
 		}
 	}

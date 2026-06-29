@@ -933,11 +933,11 @@ func TestDinoClaimableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
 		"Claimable: 4",
 		"Unknown timestamps: 1",
 		"Multiplier: 2.000",
-		"OWNER\tLOCATION\tSPECIES\tNAME\tELAPSED\tREMAINING",
-		"Alpha\t10.00,20.00\tRaptor\t-\t200s\t0s",
-		"Beta\t60.00,70.00\tRaptor\t-\t1100s\t0s",
-		"Delta\t30.00,40.00\tRaptor\tNoTimestamp\t234s\t0s",
-		"Epsilon\t35.00,45.00\tRaptor\tAliasTimer\t284s\t0s",
+		"OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE",
+		"Alpha\t10.00,20.00\tRaptor\t-\tlast_in_ally_range_time_serialized\t200s\t0s\ttrue",
+		"Beta\t60.00,70.00\tRaptor\t-\ttamed_time_stamp\t1100s\t0s\ttrue",
+		"Delta\t30.00,40.00\tRaptor\tNoTimestamp\tlast_in_ally_range_time_serialized\t234s\t0s\ttrue",
+		"Epsilon\t35.00,45.00\tRaptor\tAliasTimer\tlast_in_ally_range_serialized\t284s\t0s\ttrue",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("dino-claimable output %q does not contain %q", got, want)
@@ -945,6 +945,35 @@ func TestDinoClaimableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
 	}
 	if strings.Index(got, "Alpha\t10.00,20.00") > strings.Index(got, "Beta\t60.00,70.00") {
 		t.Fatalf("dino-claimable output not sorted by owner then location: %q", got)
+	}
+}
+
+func TestDinoClaimableCommandCanPrintOldestIneligibleRows(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-claimable", path, "--claim-period", "100", "--claim-multiplier", "100", "--map", "Valguero", "--oldest", "2"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-claimable --oldest) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Claimable: 0",
+		"Showing oldest 2 owned dinos, including ineligible rows.",
+		"OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE",
+		"Beta\t60.00,70.00\tRaptor\t-\ttamed_time_stamp\t1100s\t8900s\tfalse",
+		"Epsilon\t35.00,45.00\tRaptor\tAliasTimer\tlast_in_ally_range_serialized\t284s\t9716s\tfalse",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-claimable --oldest output %q does not contain %q", got, want)
+		}
+	}
+	if strings.Index(got, "Beta\t60.00,70.00") > strings.Index(got, "Epsilon\t35.00,45.00") {
+		t.Fatalf("dino-claimable --oldest output not sorted by elapsed desc: %q", got)
+	}
+	if strings.Contains(got, "Alpha\t10.00,20.00") {
+		t.Fatalf("dino-claimable --oldest output was not limited to two rows: %q", got)
 	}
 }
 
@@ -1031,6 +1060,8 @@ func TestDinoClaimableCommandRejectsInvalidInputs(t *testing.T) {
 		{name: "zero multiplier", args: []string{"dino-claimable", path, "--claim-multiplier", "0"}, want: "claim multiplier must be a positive finite number"},
 		{name: "bad period", args: []string{"dino-claimable", path, "--claim-period", "nope"}, want: "parse claim period"},
 		{name: "zero period", args: []string{"dino-claimable", path, "--claim-period", "0"}, want: "claim period must be a positive finite number"},
+		{name: "bad oldest", args: []string{"dino-claimable", path, "--oldest", "nope"}, want: "parse oldest row count"},
+		{name: "zero oldest", args: []string{"dino-claimable", path, "--oldest", "0"}, want: "oldest row count must be positive"},
 		{name: "unreadable ini", args: []string{"dino-claimable", path, "--game-user-settings", filepath.Join(t.TempDir(), "missing.ini")}, want: "read game user settings"},
 	}
 	for _, tt := range tests {

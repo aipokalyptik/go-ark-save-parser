@@ -47,6 +47,7 @@
 - [x] Print table output sorted by owner/location.
 - [x] Emit stable ordered JSON.
 - [x] Redact owner IDs, dino UUIDs, dino IDs, and paths under `--redact`.
+- [x] Add `--oldest N` diagnostics for saves with owned dinos but no claimable rows.
 - [x] Return clear errors for missing save path, bad multiplier, bad period, and unreadable INI.
 
 ### Task 4: Docs And Verification

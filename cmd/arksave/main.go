@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -400,7 +401,7 @@ func usage(out io.Writer) error {
   arksave dino-best-base-stat <save.ark> <dino-blueprint> <stat>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
-  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json] [--debug-fields]
+  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json] [--debug-fields] [--oldest n]
   arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
@@ -706,7 +707,7 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 }
 
 func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
-	path, opts, jsonOut, debugFields, err := parseDinoClaimableArgs(args)
+	path, opts, jsonOut, debugFields, oldestRows, err := parseDinoClaimableArgs(args)
 	if err != nil {
 		return err
 	}
@@ -732,6 +733,12 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	if runOpts.Redact {
 		redactDinoClaimableReport(&report)
 	}
+	if oldestRows > 0 {
+		sortDinoClaimableRowsByOldest(report.Dinos)
+		if len(report.Dinos) > oldestRows {
+			report.Dinos = report.Dinos[:oldestRows]
+		}
+	}
 	if jsonOut {
 		raw, err := json.MarshalIndent(report, "", "  ")
 		if err != nil {
@@ -752,19 +759,26 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tSPECIES\tNAME\tELAPSED\tREMAINING"); err != nil {
+	if oldestRows > 0 {
+		if _, err := fmt.Fprintf(out, "Showing oldest %d owned dinos, including ineligible rows.\n", oldestRows); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE"); err != nil {
 		return err
 	}
 	for _, row := range report.Dinos {
 		if _, err := fmt.Fprintf(
 			out,
-			"%s\t%s\t%s\t%s\t%s\t%s\n",
+			"%s\t%s\t%s\t%s\t%s\t%s\t%s\t%t\n",
 			dinoClaimableOwnerDisplay(row.Owner),
 			demolishableLocationDisplay(row.Location),
 			row.ShortName,
 			dinoNameDisplay(row.TamedName),
+			row.ClaimReferenceSource,
 			formatSeconds(row.ElapsedSeconds),
 			formatSeconds(row.RemainingSeconds),
+			row.Claimable,
 		); err != nil {
 			return err
 		}
@@ -789,66 +803,81 @@ func printDinoClaimableFieldDebug(debug arkapi.DinoClaimableFieldDebug, out io.W
 	return nil
 }
 
-func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions, bool, bool, error) {
+func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions, bool, bool, int, error) {
 	if len(args) == 0 {
-		return "", arkapi.DinoClaimableOptions{}, false, false, fmt.Errorf("dino-claimable requires a local .ark path")
+		return "", arkapi.DinoClaimableOptions{}, false, false, 0, fmt.Errorf("dino-claimable requires a local .ark path")
 	}
 	path := args[0]
 	opts := arkapi.DinoClaimableOptions{}
 	jsonOut := false
 	debugFields := false
+	oldestRows := 0
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
 		case "--json":
 			jsonOut = true
 		case "--debug-fields":
 			debugFields = true
+		case "--oldest":
+			i++
+			if i >= len(args) {
+				return "", opts, false, false, 0, fmt.Errorf("--oldest requires a value")
+			}
+			value, err := strconv.Atoi(args[i])
+			if err != nil {
+				return "", opts, false, false, 0, fmt.Errorf("parse oldest row count: %w", err)
+			}
+			if value <= 0 {
+				return "", opts, false, false, 0, fmt.Errorf("oldest row count must be positive")
+			}
+			oldestRows = value
+			opts.IncludeIneligible = true
 		case "--map":
 			i++
 			if i >= len(args) {
-				return "", opts, false, false, fmt.Errorf("--map requires a value")
+				return "", opts, false, false, 0, fmt.Errorf("--map requires a value")
 			}
 			opts.MapName = args[i]
 		case "--game-user-settings":
 			i++
 			if i >= len(args) {
-				return "", opts, false, false, fmt.Errorf("--game-user-settings requires a path")
+				return "", opts, false, false, 0, fmt.Errorf("--game-user-settings requires a path")
 			}
 			opts.GameUserSettingsPath = args[i]
 		case "--claim-multiplier":
 			i++
 			if i >= len(args) {
-				return "", opts, false, false, fmt.Errorf("--claim-multiplier requires a value")
+				return "", opts, false, false, 0, fmt.Errorf("--claim-multiplier requires a value")
 			}
 			value, err := strconv.ParseFloat(args[i], 64)
 			if err != nil {
-				return "", opts, false, false, fmt.Errorf("parse claim multiplier: %w", err)
+				return "", opts, false, false, 0, fmt.Errorf("parse claim multiplier: %w", err)
 			}
 			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-				return "", opts, false, false, fmt.Errorf("claim multiplier must be a positive finite number")
+				return "", opts, false, false, 0, fmt.Errorf("claim multiplier must be a positive finite number")
 			}
 			opts.ClaimMultiplier = value
 		case "--claim-period":
 			i++
 			if i >= len(args) {
-				return "", opts, false, false, fmt.Errorf("--claim-period requires a value")
+				return "", opts, false, false, 0, fmt.Errorf("--claim-period requires a value")
 			}
 			value, err := strconv.ParseFloat(args[i], 64)
 			if err != nil {
-				return "", opts, false, false, fmt.Errorf("parse claim period: %w", err)
+				return "", opts, false, false, 0, fmt.Errorf("parse claim period: %w", err)
 			}
 			if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-				return "", opts, false, false, fmt.Errorf("claim period must be a positive finite number")
+				return "", opts, false, false, 0, fmt.Errorf("claim period must be a positive finite number")
 			}
 			opts.ClaimPeriodSeconds = value
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return "", opts, false, false, fmt.Errorf("unknown dino-claimable option %q", args[i])
+				return "", opts, false, false, 0, fmt.Errorf("unknown dino-claimable option %q", args[i])
 			}
-			return "", opts, false, false, fmt.Errorf("unexpected dino-claimable argument %q", args[i])
+			return "", opts, false, false, 0, fmt.Errorf("unexpected dino-claimable argument %q", args[i])
 		}
 	}
-	return path, opts, jsonOut, debugFields, nil
+	return path, opts, jsonOut, debugFields, oldestRows, nil
 }
 
 func redactDinoClaimableReport(report *arkapi.DinoClaimableReport) {
@@ -903,6 +932,27 @@ func dinoClaimableOwnerDisplay(owner arkapi.DinoClaimableOwner) string {
 	default:
 		return owner.SortKey
 	}
+}
+
+func sortDinoClaimableRowsByOldest(rows []arkapi.DinoClaimableRow) {
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].UnknownTimestamp != rows[j].UnknownTimestamp {
+			return !rows[i].UnknownTimestamp
+		}
+		if rows[i].ElapsedSeconds != rows[j].ElapsedSeconds {
+			return rows[i].ElapsedSeconds > rows[j].ElapsedSeconds
+		}
+		if rows[i].RemainingSeconds != rows[j].RemainingSeconds {
+			return rows[i].RemainingSeconds < rows[j].RemainingSeconds
+		}
+		if rows[i].Owner.SortKey != rows[j].Owner.SortKey {
+			return rows[i].Owner.SortKey < rows[j].Owner.SortKey
+		}
+		if rows[i].ShortName != rows[j].ShortName {
+			return rows[i].ShortName < rows[j].ShortName
+		}
+		return rows[i].UUID < rows[j].UUID
+	})
 }
 
 func dinoNameDisplay(name string) string {

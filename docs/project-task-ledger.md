@@ -267,7 +267,8 @@ documented.
         selected dino `LastInAllyRangeSerialized` with
         `LastInAllyRangeTimeSerialized` and `TamedTimeStamp` fallbacks,
         ownership signals, external claim settings, owner/location sorting,
-        species/name/owner/location output, JSON output, and redaction.
+        species/name/owner/location output, JSON output, redaction, field
+        diagnostics, and oldest-owned-dino timer diagnostics.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests
