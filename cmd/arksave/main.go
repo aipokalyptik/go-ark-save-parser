@@ -1179,39 +1179,7 @@ func players(path string, out io.Writer, opts runOptions) error {
 }
 
 func playersDirectory(path string, out io.Writer, opts runOptions) error {
-	api, err := arkapi.NewPlayerFromDirectory(path)
-	if err != nil {
-		return err
-	}
-	players, err := api.Players()
-	if err != nil {
-		return err
-	}
-	totalDeaths, err := api.TotalDeaths()
-	if err != nil {
-		return err
-	}
-	averageDeaths, hasAverageDeaths, err := api.AverageDeaths()
-	if err != nil {
-		return err
-	}
-	totalLevel, err := api.TotalLevel()
-	if err != nil {
-		return err
-	}
-	averageLevel, hasAverageLevel, err := api.AverageLevel()
-	if err != nil {
-		return err
-	}
-	totalExperience, err := api.TotalExperience()
-	if err != nil {
-		return err
-	}
-	totalEngramPoints, err := api.TotalEngramPoints()
-	if err != nil {
-		return err
-	}
-	unlockedEngrams, err := api.UnlockedEngrams()
+	summary, err := arkapi.PlayerDirectorySummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -1219,22 +1187,22 @@ func playersDirectory(path string, out io.Writer, opts runOptions) error {
 		out,
 		"Player directory: %s\nProfiles: %d\nPlayers: %d\nTotal deaths: %d\nAverage deaths: %.2f\nTotal level: %d\nAverage level: %.2f\nTotal experience: %.2f\nTotal engram points: %d\nUnlocked engrams: %d\n",
 		displayString(path, opts),
-		len(api.ProfilePaths()),
-		len(players),
-		totalDeaths,
-		optionalFloat(averageDeaths, hasAverageDeaths),
-		totalLevel,
-		optionalFloat(averageLevel, hasAverageLevel),
-		totalExperience,
-		totalEngramPoints,
-		len(unlockedEngrams),
+		summary.Files,
+		len(summary.Players),
+		summary.TotalDeaths,
+		optionalFloat(summary.AverageDeaths, summary.HasAverageDeaths),
+		summary.TotalLevel,
+		optionalFloat(summary.AverageLevel, summary.HasAverageLevel),
+		summary.TotalExperience,
+		summary.TotalEngramPoints,
+		summary.UnlockedEngrams,
 	); err != nil {
 		return err
 	}
 	if opts.Redact {
 		return nil
 	}
-	for _, player := range players {
+	for _, player := range summary.Players {
 		if _, err := fmt.Fprintf(
 			out,
 			"  player id=%d character=%s platform=%s tribe=%d level=%d deaths=%d\n",

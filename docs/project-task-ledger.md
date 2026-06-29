@@ -552,6 +552,9 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add `arkapi.TribeDirectorySummaryFromPath`, then move the `tribes`
           directory CLI aggregate and non-redacted row output onto the typed
           player path helper.
+    - [x] Add `arkapi.PlayerDirectorySummaryFromPath`, then move the `players`
+          directory CLI aggregate, redaction, and non-redacted row output onto
+          the typed player path helper.
     - [x] Move equipment max-damage example aggregation onto existing typed
           `arkapi.EquipmentAPI.BestWeaponDamage`.
     - [x] Move `equipment_best` filter-plus-best selection onto typed

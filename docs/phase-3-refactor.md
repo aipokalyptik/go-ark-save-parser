@@ -144,6 +144,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.TribeDirectorySummaryFromPath`, then move the `tribes`
       directory CLI path onto the typed helper while preserving aggregate and
       non-redacted row output.
+- [x] Add `arkapi.PlayerDirectorySummaryFromPath`, then move the `players`
+      directory CLI path onto the typed helper while preserving redaction,
+      aggregate output, and non-redacted player rows.
 - [x] Add `arkapi.ExportDinoBinaryFromPath` and move
       `dino_export_from_save` onto the typed path helper while preserving the
       explicit output directory contract for structural mutation fixtures.

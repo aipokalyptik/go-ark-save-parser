@@ -1839,6 +1839,52 @@ func TestPlayerAPILocalLevelAndExperienceStatistics(t *testing.T) {
 	}
 }
 
+func TestPlayerDirectorySummaryFromPathUsesDirectoryPlayers(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             777,
+		NumDeaths:           3,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    12.5,
+		TotalEngramPoints:   14,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		},
+	})
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "456.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        43,
+		CharacterName:       "Scout",
+		PlayerName:          "OtherPlatform",
+		TribeID:             888,
+		NumDeaths:           1,
+		ExtraCharacterLevel: 4,
+		ExperiencePoints:    7.5,
+		TotalEngramPoints:   6,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+			"Blueprint'/Game/Engrams/EngramC.EngramC_C'",
+		},
+	})
+
+	summary, err := PlayerDirectorySummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("PlayerDirectorySummaryFromPath() error = %v", err)
+	}
+	if summary.Files != 2 || len(summary.Players) != 2 || summary.TotalDeaths != 4 || summary.TotalLevel != 15 {
+		t.Fatalf("PlayerDirectorySummaryFromPath() = %#v, want two files/players, four deaths, level fifteen", summary)
+	}
+	if !summary.HasAverageDeaths || summary.AverageDeaths != 2 || !summary.HasAverageLevel || summary.AverageLevel != 7.5 {
+		t.Fatalf("PlayerDirectorySummaryFromPath() averages = %#v", summary)
+	}
+	if summary.TotalExperience != 20 || summary.TotalEngramPoints != 20 || summary.UnlockedEngrams != 3 {
+		t.Fatalf("PlayerDirectorySummaryFromPath() totals = %#v, want expected XP, engram points, and unlocked count", summary)
+	}
+}
+
 func TestPlayerAPILoadsLocalClusterArchives(t *testing.T) {
 	dir := t.TempDir()
 	clusterPath := filepath.Join(dir, "EOS_abc123")

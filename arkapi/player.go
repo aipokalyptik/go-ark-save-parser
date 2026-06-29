@@ -144,6 +144,20 @@ type PlayerAllSummary struct {
 	UnlockedEngrams int
 }
 
+type PlayerDirectorySummary struct {
+	Files             int
+	Players           []arkobject.Player
+	TotalDeaths       int32
+	HasAverageDeaths  bool
+	AverageDeaths     float64
+	TotalLevel        int32
+	HasAverageLevel   bool
+	AverageLevel      float64
+	TotalExperience   float64
+	TotalEngramPoints int32
+	UnlockedEngrams   int
+}
+
 type TribeRosterSummary struct {
 	Tribes    int
 	WithNames int
@@ -549,6 +563,45 @@ func (p *PlayerAPI) PlayerAllSummaryForData(players []arkobject.Player, tribes [
 	}
 	summary.UnlockedEngrams = len(engrams)
 	return summary
+}
+
+func PlayerDirectorySummaryFromPath(path string) (PlayerDirectorySummary, error) {
+	api, err := NewPlayerFromDirectory(path)
+	if err != nil {
+		return PlayerDirectorySummary{}, err
+	}
+	return api.PlayerDirectorySummary()
+}
+
+func (p *PlayerAPI) PlayerDirectorySummary() (PlayerDirectorySummary, error) {
+	players, err := p.Players()
+	if err != nil {
+		return PlayerDirectorySummary{}, err
+	}
+	summary := PlayerDirectorySummary{
+		Files:   len(p.ProfilePaths()),
+		Players: players,
+	}
+	engrams := map[string]struct{}{}
+	for _, player := range players {
+		summary.TotalDeaths += player.NumDeaths
+		summary.TotalLevel += player.Level
+		summary.TotalExperience += player.Experience
+		summary.TotalEngramPoints += player.EngramPoints
+		for _, engram := range player.UnlockedEngrams {
+			if engram != "" {
+				engrams[engram] = struct{}{}
+			}
+		}
+	}
+	if len(players) > 0 {
+		summary.HasAverageDeaths = true
+		summary.AverageDeaths = float64(summary.TotalDeaths) / float64(len(players))
+		summary.HasAverageLevel = true
+		summary.AverageLevel = float64(summary.TotalLevel) / float64(len(players))
+	}
+	summary.UnlockedEngrams = len(engrams)
+	return summary, nil
 }
 
 func (p *PlayerAPI) savePlayers() ([]arkobject.Player, error) {

@@ -142,6 +142,10 @@ func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 	if strings.Contains(body, "NewPlayerFromDirectory") {
 		t.Fatalf("tribesDirectory() still owns player directory lifecycle; use typed arkapi path helper")
 	}
+	body = functionBody(t, source, "playersDirectory")
+	if strings.Contains(body, "NewPlayerFromDirectory") {
+		t.Fatalf("playersDirectory() still owns player directory lifecycle; use typed arkapi path helper")
+	}
 }
 
 func functionBody(t *testing.T, source string, name string) string {
@@ -1269,6 +1273,47 @@ func TestPlayersCommandPrintsDirectorySummary(t *testing.T) {
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("players directory output %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestPlayersCommandRedactsDirectoryDetails(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		TribeID:             777,
+		NumDeaths:           3,
+		ExtraCharacterLevel: 9,
+		ExperiencePoints:    12.5,
+		TotalEngramPoints:   14,
+		UnlockedEngrams: []string{
+			"Blueprint'/Game/Engrams/EngramB.EngramB_C'",
+			"Blueprint'/Game/Engrams/EngramA.EngramA_C'",
+		},
+	})
+
+	var out bytes.Buffer
+	err := run([]string{"players", "--redact", dir}, &out)
+	if err != nil {
+		t.Fatalf("run(players --redact directory) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Player directory: [redacted]",
+		"Profiles: 1",
+		"Players: 1",
+		"Total deaths: 3",
+		"Unlocked engrams: 2",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("redacted players directory output %q does not contain %q", got, want)
+		}
+	}
+	for _, leaked := range []string{dir, "Survivor", "PlatformName", "/Game/", "player id=42"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted players directory output %q contains private detail %q", got, leaked)
 		}
 	}
 }
