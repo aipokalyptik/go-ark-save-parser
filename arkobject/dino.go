@@ -26,6 +26,7 @@ type Dino struct {
 	IsDead                        bool
 	IsCryopodded                  bool
 	TamedTimeStamp                float64
+	LastInAllyRangeSerialized     float64
 	LastInAllyRangeTimeSerialized float64
 	Generation                    int
 	AncestorIDs                   []DinoID
@@ -75,6 +76,7 @@ func DinoFromObject(object *GameObject, location *ActorTransform) Dino {
 	}
 	_, dino.IsTamed = properties.Value("TamedTimeStamp")
 	dino.TamedTimeStamp = float64Value(properties, "TamedTimeStamp")
+	dino.LastInAllyRangeSerialized = float64Value(properties, "LastInAllyRangeSerialized")
 	dino.LastInAllyRangeTimeSerialized = float64Value(properties, "LastInAllyRangeTimeSerialized")
 	if dino.IsTamed {
 		dino.Generation = max(arrayLength(properties, "DinoAncestors"), arrayLength(properties, "DinoAncestorsMale")) + 1

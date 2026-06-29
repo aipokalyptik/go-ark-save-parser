@@ -59,25 +59,26 @@ type DinoClaimableOwner struct {
 }
 
 type DinoClaimableRow struct {
-	UUID                  string               `json:"uuid"`
-	Blueprint             string               `json:"blueprint"`
-	ShortName             string               `json:"short_name"`
-	DinoID1               uint32               `json:"dino_id1,omitempty"`
-	DinoID2               uint32               `json:"dino_id2,omitempty"`
-	TamedName             string               `json:"tamed_name,omitempty"`
-	Owner                 DinoClaimableOwner   `json:"owner"`
-	Location              *arkobject.MapCoords `json:"location,omitempty"`
-	GameTime              float64              `json:"game_time"`
-	ClaimReferenceTime    float64              `json:"claim_reference_time,omitempty"`
-	ClaimReferenceSource  string               `json:"claim_reference_source,omitempty"`
-	TamedTimeStamp        float64              `json:"tamed_time_stamp,omitempty"`
-	LastInAllyRangeTime   float64              `json:"last_in_ally_range_time_serialized,omitempty"`
-	ElapsedSeconds        float64              `json:"elapsed_seconds,omitempty"`
-	ClaimPeriodSeconds    float64              `json:"claim_period_seconds"`
-	AdjustedPeriodSeconds float64              `json:"adjusted_period_seconds"`
-	RemainingSeconds      float64              `json:"remaining_seconds"`
-	Claimable             bool                 `json:"claimable"`
-	UnknownTimestamp      bool                 `json:"unknown_timestamp,omitempty"`
+	UUID                      string               `json:"uuid"`
+	Blueprint                 string               `json:"blueprint"`
+	ShortName                 string               `json:"short_name"`
+	DinoID1                   uint32               `json:"dino_id1,omitempty"`
+	DinoID2                   uint32               `json:"dino_id2,omitempty"`
+	TamedName                 string               `json:"tamed_name,omitempty"`
+	Owner                     DinoClaimableOwner   `json:"owner"`
+	Location                  *arkobject.MapCoords `json:"location,omitempty"`
+	GameTime                  float64              `json:"game_time"`
+	ClaimReferenceTime        float64              `json:"claim_reference_time,omitempty"`
+	ClaimReferenceSource      string               `json:"claim_reference_source,omitempty"`
+	TamedTimeStamp            float64              `json:"tamed_time_stamp,omitempty"`
+	LastInAllyRangeSerialized float64              `json:"last_in_ally_range_serialized,omitempty"`
+	LastInAllyRangeTime       float64              `json:"last_in_ally_range_time_serialized,omitempty"`
+	ElapsedSeconds            float64              `json:"elapsed_seconds,omitempty"`
+	ClaimPeriodSeconds        float64              `json:"claim_period_seconds"`
+	AdjustedPeriodSeconds     float64              `json:"adjusted_period_seconds"`
+	RemainingSeconds          float64              `json:"remaining_seconds"`
+	Claimable                 bool                 `json:"claimable"`
+	UnknownTimestamp          bool                 `json:"unknown_timestamp,omitempty"`
 }
 
 func DinoClaimableReportFromPath(savePath string, opts DinoClaimableOptions) (DinoClaimableReport, []arksave.FaultyObjectInfo, error) {
@@ -210,6 +211,7 @@ func (d *DinoAPI) claimableDebugCandidateNames() []string {
 		"DinoID2":                       {},
 		"TamedName":                     {},
 		"TamedTimeStamp":                {},
+		"LastInAllyRangeSerialized":     {},
 		"LastInAllyRangeTimeSerialized": {},
 		"LastEnterStasisTime":           {},
 		"LastInAllyRangeTime":           {},
@@ -315,6 +317,7 @@ func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobjec
 		"DinoID2",
 		"TamedName",
 		"TamedTimeStamp",
+		"LastInAllyRangeSerialized",
 		"LastInAllyRangeTimeSerialized",
 		"TribeName",
 		"TamingTeamID",
@@ -345,9 +348,10 @@ func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobjec
 			Blueprint:                     info.ClassName,
 			ID1:                           uint32(selectedInt32(container, "DinoID1")),
 			ID2:                           uint32(selectedInt32(container, "DinoID2")),
-			IsTamed:                       selectedHasAny(container, "TamedTimeStamp", "LastInAllyRangeTimeSerialized", "TribeName", "TamingTeamID", "TamerString", "OwningPlayerID", "TargetingTeam", "TamedName"),
+			IsTamed:                       selectedHasAny(container, "TamedTimeStamp", "LastInAllyRangeSerialized", "LastInAllyRangeTimeSerialized", "TribeName", "TamingTeamID", "TamerString", "OwningPlayerID", "TargetingTeam", "TamedName"),
 			IsDead:                        selectedBoolProperty(container, "bIsDead"),
 			TamedTimeStamp:                selectedFloat64(container, "TamedTimeStamp"),
+			LastInAllyRangeSerialized:     selectedFloat64(container, "LastInAllyRangeSerialized"),
 			LastInAllyRangeTimeSerialized: selectedFloat64(container, "LastInAllyRangeTimeSerialized"),
 			TamedName:                     selectedString(container, "TamedName"),
 			Owner:                         arkobject.DinoOwnerFromContainer(container),
@@ -359,22 +363,23 @@ func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobjec
 
 func dinoClaimableRow(id uuid.UUID, dino arkobject.Dino, mapName string, gameTime float64, period float64, adjusted float64) DinoClaimableRow {
 	row := DinoClaimableRow{
-		UUID:                  id.String(),
-		Blueprint:             dino.Blueprint,
-		ShortName:             dino.ShortName(),
-		DinoID1:               dino.ID1,
-		DinoID2:               dino.ID2,
-		TamedName:             dino.TamedName,
-		Owner:                 dinoClaimableOwner(dino.Owner),
-		GameTime:              gameTime,
-		ClaimReferenceTime:    dinoClaimReferenceTime(dino),
-		ClaimReferenceSource:  dinoClaimReferenceSource(dino),
-		TamedTimeStamp:        dino.TamedTimeStamp,
-		LastInAllyRangeTime:   dino.LastInAllyRangeTimeSerialized,
-		ClaimPeriodSeconds:    period,
-		AdjustedPeriodSeconds: adjusted,
-		RemainingSeconds:      adjusted,
-		UnknownTimestamp:      dinoClaimReferenceTime(dino) == 0,
+		UUID:                      id.String(),
+		Blueprint:                 dino.Blueprint,
+		ShortName:                 dino.ShortName(),
+		DinoID1:                   dino.ID1,
+		DinoID2:                   dino.ID2,
+		TamedName:                 dino.TamedName,
+		Owner:                     dinoClaimableOwner(dino.Owner),
+		GameTime:                  gameTime,
+		ClaimReferenceTime:        dinoClaimReferenceTime(dino),
+		ClaimReferenceSource:      dinoClaimReferenceSource(dino),
+		TamedTimeStamp:            dino.TamedTimeStamp,
+		LastInAllyRangeSerialized: dino.LastInAllyRangeSerialized,
+		LastInAllyRangeTime:       dino.LastInAllyRangeTimeSerialized,
+		ClaimPeriodSeconds:        period,
+		AdjustedPeriodSeconds:     adjusted,
+		RemainingSeconds:          adjusted,
+		UnknownTimestamp:          dinoClaimReferenceTime(dino) == 0,
 	}
 	if dino.Location != nil {
 		coords := dino.Location.AsMapCoords(mapName)
@@ -390,6 +395,9 @@ func dinoClaimableRow(id uuid.UUID, dino arkobject.Dino, mapName string, gameTim
 }
 
 func dinoClaimReferenceTime(dino arkobject.Dino) float64 {
+	if dino.LastInAllyRangeSerialized != 0 {
+		return dino.LastInAllyRangeSerialized
+	}
 	if dino.LastInAllyRangeTimeSerialized != 0 {
 		return dino.LastInAllyRangeTimeSerialized
 	}
@@ -397,6 +405,9 @@ func dinoClaimReferenceTime(dino arkobject.Dino) float64 {
 }
 
 func dinoClaimReferenceSource(dino arkobject.Dino) string {
+	if dino.LastInAllyRangeSerialized != 0 {
+		return "last_in_ally_range_serialized"
+	}
 	if dino.LastInAllyRangeTimeSerialized != 0 {
 		return "last_in_ally_range_time_serialized"
 	}

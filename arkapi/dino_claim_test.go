@@ -31,14 +31,14 @@ func TestDinoClaimableReportFiltersAndSortsClaimableDinos(t *testing.T) {
 	if len(faults) != 0 {
 		t.Fatalf("ClaimableReport() faults = %#v, want none", faults)
 	}
-	if report.Summary.TotalDinos != 6 || report.Summary.OwnedDinos != 5 || report.Summary.ClaimableDinos != 3 || report.Summary.UnknownTimestampDinos != 1 {
-		t.Fatalf("ClaimableReport() summary = %#v, want total 6 owned 5 claimable 3 unknown 1", report.Summary)
+	if report.Summary.TotalDinos != 7 || report.Summary.OwnedDinos != 6 || report.Summary.ClaimableDinos != 4 || report.Summary.UnknownTimestampDinos != 1 {
+		t.Fatalf("ClaimableReport() summary = %#v, want total 7 owned 6 claimable 4 unknown 1", report.Summary)
 	}
 	if report.Summary.ClaimMultiplier != 2 {
 		t.Fatalf("ClaimMultiplier = %f, want 2", report.Summary.ClaimMultiplier)
 	}
-	if len(report.Dinos) != 3 {
-		t.Fatalf("claimable dinos length = %d, want 3: %#v", len(report.Dinos), report.Dinos)
+	if len(report.Dinos) != 4 {
+		t.Fatalf("claimable dinos length = %d, want 4: %#v", len(report.Dinos), report.Dinos)
 	}
 	if report.Dinos[0].Owner.SortKey != "Alpha" || report.Dinos[0].DinoID1 != 1001 || report.Dinos[0].RemainingSeconds != 0 {
 		t.Fatalf("first dino = %#v, want Alpha raptor claimable with zero remaining", report.Dinos[0])
@@ -75,8 +75,8 @@ func TestDinoClaimableReportFlagMultiplierOverridesSettings(t *testing.T) {
 	if report.Summary.ClaimMultiplier != 1 {
 		t.Fatalf("ClaimMultiplier = %f, want explicit override 1", report.Summary.ClaimMultiplier)
 	}
-	if report.Summary.ClaimableDinos != 4 {
-		t.Fatalf("ClaimableDinos = %d, want 4 with multiplier override", report.Summary.ClaimableDinos)
+	if report.Summary.ClaimableDinos != 5 {
+		t.Fatalf("ClaimableDinos = %d, want 5 with multiplier override", report.Summary.ClaimableDinos)
 	}
 }
 
@@ -116,6 +116,36 @@ func TestDinoClaimableReportUsesSelectedOwnershipAndAllyRangeWithoutTamedTimesta
 	}
 }
 
+func TestDinoClaimableReportUsesLastInAllyRangeSerializedAlias(t *testing.T) {
+	save := openSyntheticClaimableDinoSave(t)
+	defer save.Close()
+
+	report, _, err := NewDino(save).ClaimableReport(DinoClaimableOptions{
+		MapName:            "Valguero",
+		ClaimMultiplier:    1,
+		ClaimPeriodSeconds: 100,
+	})
+	if err != nil {
+		t.Fatalf("ClaimableReport() error = %v", err)
+	}
+	var found *DinoClaimableRow
+	for i := range report.Dinos {
+		if report.Dinos[i].DinoID1 == 7001 {
+			found = &report.Dinos[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("claimable report did not include dino using LastInAllyRangeSerialized alias: %#v", report)
+	}
+	if found.ClaimReferenceSource != "last_in_ally_range_serialized" || found.ClaimReferenceTime != 950 {
+		t.Fatalf("claim clock = source %q time %f, want LastInAllyRangeSerialized alias 950", found.ClaimReferenceSource, found.ClaimReferenceTime)
+	}
+	if found.LastInAllyRangeSerialized != 950 {
+		t.Fatalf("LastInAllyRangeSerialized = %f, want 950", found.LastInAllyRangeSerialized)
+	}
+}
+
 func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	save := openSyntheticClaimableDinoSave(t)
 	defer save.Close()
@@ -124,8 +154,8 @@ func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ClaimableFieldDebug() error = %v", err)
 	}
-	if debug.TotalDinoCandidates != 6 || debug.FaultCount != 0 {
-		t.Fatalf("ClaimableFieldDebug() summary = %#v, want 6 candidates and no faults", debug)
+	if debug.TotalDinoCandidates != 7 || debug.FaultCount != 0 {
+		t.Fatalf("ClaimableFieldDebug() summary = %#v, want 7 candidates and no faults", debug)
 	}
 	if debug.FieldCounts["LastInAllyRangeTimeSerialized"] != 3 {
 		t.Fatalf("LastInAllyRangeTimeSerialized count = %d, want 3: %#v", debug.FieldCounts["LastInAllyRangeTimeSerialized"], debug.FieldCounts)
@@ -133,8 +163,11 @@ func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	if debug.FieldCounts["TamedTimeStamp"] != 4 {
 		t.Fatalf("TamedTimeStamp count = %d, want 4: %#v", debug.FieldCounts["TamedTimeStamp"], debug.FieldCounts)
 	}
-	if debug.FieldCounts["TargetingTeam"] != 5 {
-		t.Fatalf("TargetingTeam count = %d, want 5: %#v", debug.FieldCounts["TargetingTeam"], debug.FieldCounts)
+	if debug.FieldCounts["TargetingTeam"] != 6 {
+		t.Fatalf("TargetingTeam count = %d, want 6: %#v", debug.FieldCounts["TargetingTeam"], debug.FieldCounts)
+	}
+	if debug.FieldCounts["LastInAllyRangeSerialized"] != 1 {
+		t.Fatalf("LastInAllyRangeSerialized count = %d, want 1: %#v", debug.FieldCounts["LastInAllyRangeSerialized"], debug.FieldCounts)
 	}
 }
 
@@ -147,12 +180,14 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 	wildID := uuid.MustParse("33333333-0000-0000-0000-000000000001")
 	unknownTimeID := uuid.MustParse("44444444-0000-0000-0000-000000000001")
 	noTamedTimestampID := uuid.MustParse("55555555-0000-0000-0000-000000000001")
+	aliasTimerID := uuid.MustParse("66666666-0000-0000-0000-000000000001")
 	alphaLoc := arkobject.MapCoords{Lat: 10, Long: 20}.AsActorTransform("Valguero")
 	alphaFreshLoc := arkobject.MapCoords{Lat: 10.4, Long: 20.4}.AsActorTransform("Valguero")
 	betaLoc := arkobject.MapCoords{Lat: 60, Long: 70}.AsActorTransform("Valguero")
 	wildLoc := arkobject.MapCoords{Lat: 5, Long: 5}.AsActorTransform("Valguero")
 	unknownLoc := arkobject.MapCoords{Lat: 80, Long: 10}.AsActorTransform("Valguero")
 	noTamedTimestampLoc := arkobject.MapCoords{Lat: 30, Long: 40}.AsActorTransform("Valguero")
+	aliasTimerLoc := arkobject.MapCoords{Lat: 35, Long: 45}.AsActorTransform("Valguero")
 
 	return openSyntheticSaveWith(t, "claimable-dinos.ark", map[string][]byte{
 		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
@@ -162,6 +197,7 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 			wildID:             {wildLoc.X, wildLoc.Y, wildLoc.Z},
 			unknownTimeID:      {unknownLoc.X, unknownLoc.Y, unknownLoc.Z},
 			noTamedTimestampID: {noTamedTimestampLoc.X, noTamedTimestampLoc.Y, noTamedTimestampLoc.Z},
+			aliasTimerID:       {aliasTimerLoc.X, aliasTimerLoc.Y, aliasTimerLoc.Z},
 		}),
 	}, map[uuid.UUID][]byte{
 		alphaOldID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
@@ -227,6 +263,16 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 			OwningPlayerID:                123,
 			TargetingTeam:                 999,
 			TamedName:                     "NoTimestamp",
+		}),
+		aliasTimerID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+			ID1:                       7001,
+			ID2:                       7002,
+			LastInAllyRangeSerialized: 950,
+			TribeName:                 "Epsilon",
+			TamingTeamID:              1001,
+			TamerString:               "Epsilon",
+			TargetingTeam:             1001,
+			TamedName:                 "AliasTimer",
 		}),
 	})
 }

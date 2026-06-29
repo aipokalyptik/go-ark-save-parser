@@ -222,11 +222,12 @@ using `exact` and `substring` maps whose values are seconds.
 `dino-claimable` is also an offline computed eligibility report. It uses a
 selected-property scan for large-save behavior, filters to non-dead,
 non-cryopodded dinos with ownership signals, and uses save `GameTime` plus each
-dino's `LastInAllyRangeTimeSerialized` as the primary claim reset timestamp.
-`TamedTimeStamp` is only a fallback when ally-range data is unavailable. Table
-and JSON output include species, tamed name, owner/tribe, map location, and the
-chosen `claim_reference_time`/`claim_reference_source`. The default claim period
-is 8 days, adjusted by `PvEDinoDecayPeriodMultiplier` from an optional
+dino's `LastInAllyRangeSerialized` as the primary claim reset timestamp.
+`LastInAllyRangeTimeSerialized` and `TamedTimeStamp` are fallbacks when that
+ally-range field is unavailable. Table and JSON output include species, tamed
+name, owner/tribe, map location, and the chosen `claim_reference_time`/
+`claim_reference_source`. The default claim period is 8 days, adjusted by
+`PvEDinoDecayPeriodMultiplier` from an optional
 `GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period` with
 seconds for server/mod-specific timers. Use `--debug-fields` to print
 dino-scoped candidate property counts when a save has ownership data but no

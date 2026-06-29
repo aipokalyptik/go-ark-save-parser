@@ -22,6 +22,7 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 			{Name: "bIsBaby", Type: arkproperty.TypeBool, Value: true},
 			{Name: "BabyAge", Type: arkproperty.TypeFloat, Value: float32(0.42)},
 			{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+			{Name: "LastInAllyRangeSerialized", Type: arkproperty.TypeDouble, Value: float64(1200.5)},
 			{Name: "LastInAllyRangeTimeSerialized", Type: arkproperty.TypeDouble, Value: float64(1234.5)},
 			{Name: "MyCharacterStatusComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{
 				Type:  arkproperty.ObjectReferenceUUID,
@@ -62,8 +63,8 @@ func TestDinoFromObjectReadsCoreFields(t *testing.T) {
 	if dino.ID1 != 1001 || dino.ID2 != 2002 || !dino.IsFemale || dino.IsDead || !dino.IsBaby || !dino.IsTamed {
 		t.Fatalf("Dino flags/id = %#v", dino)
 	}
-	if dino.TamedTimeStamp != 42 || dino.LastInAllyRangeTimeSerialized != 1234.5 {
-		t.Fatalf("Dino timing fields = %#v, want tamed timestamp 42 and ally-range time 1234.5", dino)
+	if dino.TamedTimeStamp != 42 || dino.LastInAllyRangeSerialized != 1200.5 || dino.LastInAllyRangeTimeSerialized != 1234.5 {
+		t.Fatalf("Dino timing fields = %#v, want tamed timestamp 42 and ally-range times 1200.5/1234.5", dino)
 	}
 	if math.Abs(dino.MaturationPercent-42) > 0.0001 || dino.BabyStage != BabyStageJuvenile {
 		t.Fatalf("Baby maturation fields = %#v", dino)

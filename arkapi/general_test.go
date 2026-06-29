@@ -756,5 +756,6 @@ func syntheticHeader() []byte {
 		0x10000065: "bSavedWhenStasised",
 		0x10000066: "bWasPlacementSnapped",
 		0x10000067: "LastInAllyRangeTimeSerialized",
+		0x10000068: "LastInAllyRangeSerialized",
 	})
 }

@@ -155,6 +155,7 @@ type DinoGameObjectOptions struct {
 	OwningPlayerIDNameID                uint32
 	TargetingTeamNameID                 uint32
 	LastInAllyRangeTimeSerializedNameID uint32
+	LastInAllyRangeSerializedNameID     uint32
 	ID1                                 int32
 	ID2                                 int32
 	IsFemale                            *bool
@@ -171,6 +172,7 @@ type DinoGameObjectOptions struct {
 	OwningPlayerID                      int32
 	TargetingTeam                       int32
 	LastInAllyRangeTimeSerialized       float64
+	LastInAllyRangeSerialized           float64
 }
 
 func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
@@ -213,6 +215,9 @@ func DinoGameObjectBytes(opts DinoGameObjectOptions) []byte {
 	}
 	if opts.LastInAllyRangeTimeSerialized != 0 {
 		WriteDoublePropertyID(&props, opts.LastInAllyRangeTimeSerializedNameID, opts.DoublePropertyID, opts.LastInAllyRangeTimeSerialized)
+	}
+	if opts.LastInAllyRangeSerialized != 0 {
+		WriteDoublePropertyID(&props, opts.LastInAllyRangeSerializedNameID, opts.DoublePropertyID, opts.LastInAllyRangeSerialized)
 	}
 	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
 }
@@ -301,6 +306,9 @@ func defaultDinoGameObjectOptions(opts *DinoGameObjectOptions) {
 	}
 	if opts.LastInAllyRangeTimeSerializedNameID == 0 {
 		opts.LastInAllyRangeTimeSerializedNameID = 0x10000067
+	}
+	if opts.LastInAllyRangeSerializedNameID == 0 {
+		opts.LastInAllyRangeSerializedNameID = 0x10000068
 	}
 	if opts.Tamed && opts.TamedTimestamp == 0 && !opts.DisableDefaultTamedTimestamp {
 		opts.TamedTimestamp = 42
