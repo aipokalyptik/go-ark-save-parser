@@ -10,6 +10,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
+	"github.com/google/uuid"
 )
 
 func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
@@ -207,6 +208,34 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	}
 }
 
+func TestClusterAPISummarizesEmbeddedDinoIdentityAndStats(t *testing.T) {
+	api := NewCluster(&arkcluster.Data{
+		Dinos: []arkcluster.Dino{
+			{
+				Index:   0,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					clusterDinoObjectForSummaryTest(1001, 2002, true, true, false, false, true),
+					clusterStatusObjectForSummaryTest(),
+				}},
+			},
+			{
+				Index:   1,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					clusterDinoObjectForSummaryTest(3003, 4004, false, false, true, true, false),
+				}},
+			},
+			{Index: 2, Version: 7},
+		},
+	})
+
+	summary := api.DinoSummary()
+	if summary.WithDinoID != 2 || summary.TamedDinos != 1 || summary.FemaleDinos != 1 || summary.BabyDinos != 1 || summary.DeadDinos != 1 || summary.WithStats != 1 {
+		t.Fatalf("DinoSummary() identity/stat counts = %#v, want 2 IDs, 1 tamed/female/baby/dead/stats", summary)
+	}
+}
+
 func writeClusterArchiveWithPayload(t *testing.T, path string, payload []byte) {
 	t.Helper()
 
@@ -340,4 +369,77 @@ func TestClusterDirectorySummaryAggregatesFiles(t *testing.T) {
 	if summary.DinoSummary.ParsedDinos != 1 || summary.DinoSummary.ParseErrorDinos != 1 || summary.DinoSummary.TotalEmbeddedObjects != 1 {
 		t.Fatalf("ClusterDirectorySummary() dino summary = %#v", summary.DinoSummary)
 	}
+}
+
+func TestClusterDirectorySummaryAggregatesEmbeddedDinoIdentityAndStats(t *testing.T) {
+	entries := []*arkcluster.Data{
+		{
+			ID: "EOS_one",
+			Dinos: []arkcluster.Dino{{
+				Index:   0,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					clusterDinoObjectForSummaryTest(1001, 2002, true, false, false, false, true),
+					clusterStatusObjectForSummaryTest(),
+				}},
+			}},
+		},
+		{
+			ID: "EOS_two",
+			Dinos: []arkcluster.Dino{{
+				Index:   0,
+				Version: 7,
+				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+					clusterDinoObjectForSummaryTest(3003, 4004, false, true, true, true, false),
+				}},
+			}},
+		},
+	}
+
+	summary := ClusterDirectorySummary(entries)
+	if summary.DinoSummary.WithDinoID != 2 || summary.DinoSummary.TamedDinos != 1 || summary.DinoSummary.FemaleDinos != 1 || summary.DinoSummary.BabyDinos != 1 || summary.DinoSummary.DeadDinos != 1 || summary.DinoSummary.WithStats != 1 {
+		t.Fatalf("ClusterDirectorySummary() dino identity/stat summary = %#v, want aggregated embedded dino counts", summary.DinoSummary)
+	}
+}
+
+func clusterDinoObjectForSummaryTest(id1, id2 uint32, tamed bool, female bool, baby bool, dead bool, withStatus bool) arkarchive.Object {
+	properties := []arkproperty.Property{
+		{Name: "DinoID1", Type: arkproperty.TypeUInt32, Value: id1},
+		{Name: "DinoID2", Type: arkproperty.TypeUInt32, Value: id2},
+	}
+	if tamed {
+		properties = append(properties, arkproperty.Property{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)})
+	}
+	if female {
+		properties = append(properties, arkproperty.Property{Name: "bIsFemale", Type: arkproperty.TypeBool, Value: true})
+	}
+	if baby {
+		properties = append(properties, arkproperty.Property{Name: "bIsBaby", Type: arkproperty.TypeBool, Value: true})
+	}
+	if dead {
+		properties = append(properties, arkproperty.Property{Name: "bIsDead", Type: arkproperty.TypeBool, Value: true})
+	}
+	if withStatus {
+		properties = append(properties, arkproperty.Property{Name: "MyCharacterStatusComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: clusterStatusIDForSummaryTest()}})
+	}
+	return arkarchive.Object{
+		UUID:       uuid.New(),
+		ClassName:  "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+		Properties: properties,
+	}
+}
+
+func clusterStatusObjectForSummaryTest() arkarchive.Object {
+	return arkarchive.Object{
+		UUID:      clusterStatusIDForSummaryTest(),
+		ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C",
+		Properties: []arkproperty.Property{
+			{Name: "BaseCharacterLevel", Type: arkproperty.TypeInt, Value: int32(12)},
+			{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 0, Value: int32(5)},
+		},
+	}
+}
+
+func clusterStatusIDForSummaryTest() uuid.UUID {
+	return uuid.MustParse("11112222-3333-4444-5555-666677778888")
 }

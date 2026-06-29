@@ -1535,7 +1535,7 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
 	_, err := fmt.Fprintf(
 		out,
-		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
+		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
 		items.DinoItems,
 		items.EquipmentItems,
 		items.OtherItems,
@@ -1552,6 +1552,12 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		dinos.WithStatusComponent,
 		dinos.WithAIController,
 		dinos.WithInventoryComponent,
+		dinos.WithDinoID,
+		dinos.TamedDinos,
+		dinos.FemaleDinos,
+		dinos.BabyDinos,
+		dinos.DeadDinos,
+		dinos.WithStats,
 		dinos.TotalEmbeddedObjects,
 		dinos.MaxEmbeddedObjects,
 	)
@@ -1615,6 +1621,24 @@ func clusterInfoDinoSummary(info arkapi.ClusterDataInfo) arkapi.ClusterDinoSumma
 		}
 		if len(dino.InventoryComponentClassNames) > 0 {
 			summary.WithInventoryComponent++
+		}
+		if dino.DinoID1 != 0 || dino.DinoID2 != 0 {
+			summary.WithDinoID++
+		}
+		if dino.IsTamed {
+			summary.TamedDinos++
+		}
+		if dino.IsFemale {
+			summary.FemaleDinos++
+		}
+		if dino.IsBaby {
+			summary.BabyDinos++
+		}
+		if dino.IsDead {
+			summary.DeadDinos++
+		}
+		if dino.HasStats {
+			summary.WithStats++
 		}
 		summary.TotalEmbeddedObjects += dino.ObjectCount
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {

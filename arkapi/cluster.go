@@ -42,6 +42,12 @@ type ClusterDinoSummary struct {
 	WithStatusComponent     int
 	WithAIController        int
 	WithInventoryComponent  int
+	WithDinoID              int
+	TamedDinos              int
+	FemaleDinos             int
+	BabyDinos               int
+	DeadDinos               int
+	WithStats               int
 	TotalEmbeddedObjects    int
 	MaxEmbeddedObjects      int
 }
@@ -290,6 +296,24 @@ func (c *ClusterAPI) DinoSummary() ClusterDinoSummary {
 		if len(dino.InventoryComponentClassNames) > 0 {
 			summary.WithInventoryComponent++
 		}
+		if dino.DinoID1 != 0 || dino.DinoID2 != 0 {
+			summary.WithDinoID++
+		}
+		if dino.IsTamed {
+			summary.TamedDinos++
+		}
+		if dino.IsFemale {
+			summary.FemaleDinos++
+		}
+		if dino.IsBaby {
+			summary.BabyDinos++
+		}
+		if dino.IsDead {
+			summary.DeadDinos++
+		}
+		if dino.HasStats {
+			summary.WithStats++
+		}
 		summary.TotalEmbeddedObjects += dino.ObjectCount
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {
 			summary.MaxEmbeddedObjects = dino.ObjectCount
@@ -356,6 +380,12 @@ func addClusterDinoSummary(total *ClusterDinoSummary, next ClusterDinoSummary) {
 	total.WithStatusComponent += next.WithStatusComponent
 	total.WithAIController += next.WithAIController
 	total.WithInventoryComponent += next.WithInventoryComponent
+	total.WithDinoID += next.WithDinoID
+	total.TamedDinos += next.TamedDinos
+	total.FemaleDinos += next.FemaleDinos
+	total.BabyDinos += next.BabyDinos
+	total.DeadDinos += next.DeadDinos
+	total.WithStats += next.WithStats
 	total.TotalEmbeddedObjects += next.TotalEmbeddedObjects
 	if next.MaxEmbeddedObjects > total.MaxEmbeddedObjects {
 		total.MaxEmbeddedObjects = next.MaxEmbeddedObjects

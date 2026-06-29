@@ -1644,6 +1644,46 @@ func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 	}
 }
 
+func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) {
+	var out bytes.Buffer
+	err := printClusterTypedSummaries(&out, arkapi.ClusterItemSummary{}, arkapi.ClusterDinoSummary{
+		WithDinoID:  2,
+		TamedDinos:  1,
+		FemaleDinos: 1,
+		BabyDinos:   1,
+		DeadDinos:   1,
+		WithStats:   1,
+	})
+	if err != nil {
+		t.Fatalf("printClusterTypedSummaries() error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Dinos with IDs: 2",
+		"Tamed dinos: 1",
+		"Female dinos: 1",
+		"Baby dinos: 1",
+		"Dead dinos: 1",
+		"Dinos with stats: 1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster typed summary %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestClusterInfoDinoSummaryIncludesEmbeddedDinoAggregates(t *testing.T) {
+	summary := clusterInfoDinoSummary(arkapi.ClusterDataInfo{Dinos: []arkapi.ClusterDinoInfo{
+		{DinoID1: 1001, DinoID2: 2002, IsTamed: true, IsFemale: true, HasStats: true},
+		{DinoID1: 3003, DinoID2: 4004, IsBaby: true, IsDead: true},
+		{},
+	}})
+
+	if summary.WithDinoID != 2 || summary.TamedDinos != 1 || summary.FemaleDinos != 1 || summary.BabyDinos != 1 || summary.DeadDinos != 1 || summary.WithStats != 1 {
+		t.Fatalf("clusterInfoDinoSummary() identity/stat counts = %#v, want aggregate counts from exported cluster info", summary)
+	}
+}
+
 func TestClusterSummaryCommandPrintsDirectoryTypedAggregate(t *testing.T) {
 	dir := t.TempDir()
 	testfixtures.WriteArchive(t, filepath.Join(dir, "EOS_abc123"), "/Script/ShooterGame.ArkCloudInventoryData")

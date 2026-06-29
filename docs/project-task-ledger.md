@@ -298,6 +298,9 @@ documented.
         objects.
   - [x] Include embedded uploaded-dino ID, tamed metadata, sex/baby/dead flags,
         and stat level summaries in local cluster CLI detail output.
+  - [x] Include embedded uploaded-dino identity, tamed/sex/baby/dead, and stat
+        aggregate counts in typed local cluster summaries and `cluster-summary`
+        CLI output.
   - [x] Include uploaded item short names and uploaded dino primary/short class
         names in local cluster CLI summaries.
   - [x] Include uploaded-dino parse-status aggregate counts in local cluster
