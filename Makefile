@@ -14,6 +14,7 @@ test:
 
 verify:
 	GOCACHE="$(GO_CACHE)" go test ./... -count=1
+	GOCACHE="$(GO_CACHE)" go vet ./...
 	PYTHONPYCACHEPREFIX="$(PY_CACHE)" python3 -m py_compile scripts/*.py
 	PYTHONPYCACHEPREFIX="$(PY_CACHE)" python3 -m unittest discover -s scripts -p '*_test.py'
 	$(MAKE) build

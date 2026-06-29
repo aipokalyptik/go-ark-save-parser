@@ -19,8 +19,9 @@ Use these commands before committing parser, API, CLI, or docs changes:
 make verify
 ```
 
-`make verify` runs the full Go test suite with repo-local build cache settings,
-compiles the Python oracle helper scripts, and builds the static CLI binary.
+`make verify` runs the full Go test suite, runs `go vet ./...`, compiles the
+Python oracle helper scripts, and builds the static CLI binary with repo-local
+cache settings.
 
 Use benchmarks when changing parser or query paths:
 

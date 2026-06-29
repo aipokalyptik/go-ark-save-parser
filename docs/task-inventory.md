@@ -107,7 +107,7 @@ with implementation commits so progress stays auditable.
 | P4-DOC-004 | `[x]` | Public Go packages have package-level documentation for library consumers. | `doc.go` files exist for the public parser, API, object, archive, profile, cluster, tribute, mutation, and logging packages; `go doc ./arkapi`, `go doc ./arksave`, and `go doc ./arkmutation` were verified on 2026-06-29. |
 | P4-DEV-001 | `[x]` | Oracle regeneration, privacy rules, and safe fixture guidance are documented. | [`development.md`](development.md) and Phase 4 review cover regeneration and privacy boundaries. |
 | P4-EX-001 | `[x]` | Idiomatic Go examples exist for implemented map, player, tribe, dino, structure, equipment, local cluster, JSON, and mutation-copy workflows. | `examples/` and `examples/README.md`; `go test ./examples/... -count=1` passed on 2026-06-29. |
-| P4-VERIFY-001 | `[x]` | `go test ./...` passes under the repository verification target. | `git diff --check && make verify` passed on 2026-06-29. |
+| P4-VERIFY-001 | `[x]` | `go test ./...` and `go vet ./...` pass under the repository verification target. | `git diff --check && make verify` passed on 2026-06-29. |
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make verify` ran `CGO_ENABLED=0 go build -o bin/arksave ./cmd/arksave` successfully on 2026-06-29. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `make verify`, `go test ./examples/... -count=1`, and the built-in CLI usage smoke passed on 2026-06-29. |
 | P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` passed on 2026-06-29 with `ARK_E2E_SAVE` set to the private provided `.ark` save by absolute ignored path. |

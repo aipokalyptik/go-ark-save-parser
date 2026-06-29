@@ -28,8 +28,8 @@ the implemented Ark Survival Ascended save tooling scope:
 Final Phase 4 verification on 2026-06-29:
 
 - `git diff --check && make verify`: passed. This ran `go test ./... -count=1`,
-  Python script compile checks, Python script unit tests, and `CGO_ENABLED=0 go
-  build -o bin/arksave ./cmd/arksave`.
+  `go vet ./...`, Python script compile checks, Python script unit tests, and
+  `CGO_ENABLED=0 go build -o bin/arksave ./cmd/arksave`.
 - `go test ./examples/... -count=1`: passed.
 - `make e2e-test` with `ARK_E2E_SAVE` set to the private provided `.ark` save
   by absolute ignored path: passed for `arkapi`, `cmd/arksave`, and `examples`.

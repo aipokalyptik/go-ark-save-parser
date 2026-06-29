@@ -831,6 +831,7 @@ without Python or private chat context.
       cluster, tribute, object, property, binary, and logging packages.
 - [x] Verification commands documented.
 - [x] `go test ./...` passes.
+- [x] `go vet ./...` passes.
 - [x] `make build` passes.
 - [x] `make verify` passes.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
