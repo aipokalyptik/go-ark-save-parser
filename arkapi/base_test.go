@@ -411,7 +411,7 @@ func openSyntheticBaseSave(t *testing.T) *arksave.Save {
 	}, map[uuid.UUID][]byte{
 		firstID:  syntheticBaseStructureObjectBytes(101, secondID),
 		secondID: syntheticBaseStructureObjectBytes(102, firstID),
-		otherID:  syntheticObjectBytes(0x10000001),
+		otherID:  testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 }
 

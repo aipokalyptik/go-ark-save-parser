@@ -1802,7 +1802,7 @@ func openSyntheticDinoSave(t *testing.T) *arksave.Save {
 		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
 	}, map[uuid.UUID][]byte{
 		dinoID:  syntheticDinoObjectBytes(),
-		otherID: syntheticObjectBytes(0x10000001),
+		otherID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 }
 
@@ -1815,7 +1815,7 @@ func openSyntheticDinoSaveWithEmptyCryopod(t *testing.T) *arksave.Save {
 		"ActorTransforms": syntheticStructureActorTransforms(dinoID),
 	}, map[uuid.UUID][]byte{
 		dinoID: syntheticDinoObjectBytes(),
-		podID:  syntheticObjectBytes(0x10000047),
+		podID:  testfixtures.ObjectBytesWithIntProperty(0x10000047, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 }
 

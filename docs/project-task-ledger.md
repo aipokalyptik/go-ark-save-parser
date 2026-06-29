@@ -790,7 +790,7 @@ CLI tools, and reusable APIs without losing oracle parity.
         custom object-name payloads now use a shared testfixtures helper;
         simple ID-table int-property object rows now use
         `testfixtures.ObjectBytesWithIntProperty` directly in
-        save-layer/general tests without local save-layer wrapper functions;
+        save-layer and arkapi general/core tests without local wrapper functions;
         embedded `GameModeCustomBytes` player/tribe fixture assembly and
         minimal embedded cryopod archive test payloads now live in shared
         testfixtures; save-layer malformed

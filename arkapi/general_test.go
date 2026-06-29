@@ -130,8 +130,8 @@ func TestGeneralObjectsWithAnyPropertyFiltersByPropertyName(t *testing.T) {
 
 func TestGeneralObjectsWithAnyPropertyWithFaultsReportsParseFaults(t *testing.T) {
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
-		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001)[:40],
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -149,8 +149,8 @@ func TestGeneralObjectsWithAnyPropertyWithFaultsReportsParseFaults(t *testing.T)
 
 func TestGeneralObjectsWithFaultsReportsParseFaults(t *testing.T) {
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
-		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001)[:40],
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -168,8 +168,8 @@ func TestGeneralObjectsWithFaultsReportsParseFaults(t *testing.T) {
 
 func TestGeneralClassesReturnsSortedSaveClasses(t *testing.T) {
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000005),
-		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000005, 0x10000004, 0x10000002, 0x10000003, 250),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 	defer save.Close()
 
@@ -188,8 +188,8 @@ func TestGeneralClassesReturnsSortedSaveClasses(t *testing.T) {
 
 func TestGeneralClassesFromPathReturnsSortedSaveClasses(t *testing.T) {
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000005),
-		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): syntheticObjectBytes(0x10000001),
+		uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000005, 0x10000004, 0x10000002, 0x10000003, 250),
+		uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff"): testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 	defer save.Close()
 
@@ -210,8 +210,8 @@ func TestGeneralParseSummaryCountsObjectsParsedAndFaults(t *testing.T) {
 	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		validID:  syntheticObjectBytes(0x10000001),
-		faultyID: syntheticObjectBytes(0x10000001)[:40],
+		validID:  testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
+		faultyID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -231,8 +231,8 @@ func TestGeneralParseSummaryFromPathCountsObjectsParsedAndFaults(t *testing.T) {
 	validID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		validID:  syntheticObjectBytes(0x10000001),
-		faultyID: syntheticObjectBytes(0x10000001)[:40],
+		validID:  testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
+		faultyID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -298,7 +298,7 @@ func TestGeneralObjectSummaryReportsMissingObject(t *testing.T) {
 func TestGeneralObjectSummaryReturnsParseErrors(t *testing.T) {
 	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		id: syntheticObjectBytes(0x10000001)[:40],
+		id: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -411,7 +411,7 @@ func TestGeneralSummaryPathHelpersLabelErrorsByStage(t *testing.T) {
 
 	brokenID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	brokenSave := openSyntheticSaveWith(t, "broken.ark", nil, map[uuid.UUID][]byte{
-		brokenID: syntheticObjectBytes(0x10000001)[:40],
+		brokenID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer brokenSave.Close()
 	headerOnlyPath := writeHeaderOnlySave(t)
@@ -468,9 +468,9 @@ func TestGeneralClassPropertySummaryCountsUniquePropertiesAndFaults(t *testing.T
 	secondID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	faultyID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		firstID:  syntheticObjectBytes(0x10000001),
+		firstID:  testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 		secondID: syntheticObjectBytesWithExtraProperty(0x10000001),
-		faultyID: syntheticObjectBytes(0x10000001)[:40],
+		faultyID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250)[:40],
 	})
 	defer save.Close()
 
@@ -511,7 +511,7 @@ func TestGeneralClassLookupSummaryCountsMatchedStructureClasses(t *testing.T) {
 		wallID:        syntheticLookupStructureObjectBytes(0x10000005, false),
 		testID:        syntheticLookupStructureObjectBytes(0x10000001, false),
 		engramID:      syntheticLookupStructureObjectBytes(0x10000005, true),
-		noStructureID: syntheticObjectBytes(0x10000005),
+		noStructureID: testfixtures.ObjectBytesWithIntProperty(0x10000005, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 	defer save.Close()
 
@@ -548,7 +548,7 @@ func TestGeneralPropertyFilterSummaryCountsObjectsAndClasses(t *testing.T) {
 	secondID := uuid.MustParse("11112233-4455-6677-8899-aabbccddeeff")
 	missingID := uuid.MustParse("22222233-4455-6677-8899-aabbccddeeff")
 	save := openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		firstID:   syntheticObjectBytes(0x10000001),
+		firstID:   testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 		secondID:  syntheticObjectBytesWithExtraProperty(0x10000005),
 		missingID: testfixtures.ObjectBytesWithProperties(0x1000000b, 0x10000004, nil),
 	})
@@ -610,7 +610,7 @@ func openSyntheticSave(t *testing.T) *arksave.Save {
 	t.Helper()
 	objectID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
 	return openSyntheticSaveWith(t, "synthetic.ark", nil, map[uuid.UUID][]byte{
-		objectID: syntheticObjectBytes(0x10000001),
+		objectID: testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 }
 
@@ -644,10 +644,6 @@ func writeHeaderOnlySave(t *testing.T) string {
 		t.Fatalf("close sqlite fixture: %v", err)
 	}
 	return path
-}
-
-func syntheticObjectBytes(classNameID uint32) []byte {
-	return testfixtures.ObjectBytesWithIntProperty(classNameID, 0x10000004, 0x10000002, 0x10000003, 250)
 }
 
 func syntheticObjectBytesWithExtraProperty(classNameID uint32) []byte {

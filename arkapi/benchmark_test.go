@@ -132,7 +132,7 @@ func createBenchmarkSave(b *testing.B) string {
 			"ActorTransforms": benchmarkActorTransforms(structureID, dinoID),
 		},
 		Objects: map[uuid.UUID][]byte{
-			genericID:   syntheticObjectBytes(0x10000001),
+			genericID:   testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 			structureID: syntheticStructureObjectBytes(),
 			stackableID: testfixtures.StackableGameObjectBytes(testfixtures.StackableGameObjectOptions{
 				Quantity:    100,

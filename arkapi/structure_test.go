@@ -958,7 +958,7 @@ func openSyntheticStructureSave(t *testing.T) *arksave.Save {
 		"ActorTransforms": syntheticStructureActorTransforms(structureID),
 	}, map[uuid.UUID][]byte{
 		structureID: syntheticStructureObjectBytes(),
-		otherID:     syntheticObjectBytes(0x10000001),
+		otherID:     testfixtures.ObjectBytesWithIntProperty(0x10000001, 0x10000004, 0x10000002, 0x10000003, 250),
 	})
 }
 
