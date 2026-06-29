@@ -176,6 +176,20 @@ func TestClusterCommandsUseTypedPathHelpers(t *testing.T) {
 	}
 }
 
+func TestTributeCommandsUseTypedPathHelpers(t *testing.T) {
+	data, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("ReadFile(main.go) error = %v", err)
+	}
+	source := string(data)
+	for _, name := range []string{"tribute", "exportTributeJSON", "exportTributeDirectoryJSON"} {
+		body := functionBody(t, source, name)
+		if strings.Contains(body, "arktribute.Open") || strings.Contains(body, "arktribute.OpenDirectoryWithFaults") {
+			t.Fatalf("%s() still owns tribute file lifecycle; use typed arkapi path helper", name)
+		}
+	}
+}
+
 func functionBody(t *testing.T, source string, name string) string {
 	t.Helper()
 	start := strings.Index(source, "func "+name+"(")
@@ -2161,6 +2175,47 @@ func TestExportTributeJSONWritesDirectorySummary(t *testing.T) {
 	}
 	if decoded.Files[0].ID != "abc" || decoded.Files[1].ID != "def" {
 		t.Fatalf("decoded tribute IDs = %#v", decoded.Files)
+	}
+	assertPrivateFileMode(t, outPath)
+}
+
+func TestExportTributeJSONRedactsDirectoryIdentifiersWhenRequested(t *testing.T) {
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "tributes.json")
+	createSyntheticTribute(t, filepath.Join(dir, "abc.arktributetribe"), []uint64{11}, nil)
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktributetribe"), []byte("not a tribute index"), 0o600); err != nil {
+		t.Fatalf("write broken tribute file: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "export-tribute-json", dir, outPath}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact export-tribute-json directory) error = %v", err)
+	}
+	if strings.Contains(out.String(), outPath) {
+		t.Fatalf("redacted export-tribute-json directory output %q mentions output path %q", out.String(), outPath)
+	}
+	raw, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("ReadFile(redacted tribute directory json) error = %v", err)
+	}
+	var decoded arkapi.TributeDirectoryInfo
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(redacted tribute directory) error = %v; data = %s", err, raw)
+	}
+	if decoded.Count != 1 || len(decoded.Files) != 1 || decoded.Files[0].ID != redactedValue || decoded.Files[0].Path != redactedValue {
+		t.Fatalf("redacted TributeDirectoryInfo files = %#v", decoded)
+	}
+	if len(decoded.Files[0].PlayerDataIDs) != 0 || len(decoded.Files[0].TribeDataIDs) != 0 {
+		t.Fatalf("redacted tribute IDs = %#v/%#v, want hidden", decoded.Files[0].PlayerDataIDs, decoded.Files[0].TribeDataIDs)
+	}
+	if len(decoded.Faults) != 1 || decoded.Faults[0].Path != redactedValue || decoded.Faults[0].Error == "" {
+		t.Fatalf("redacted TributeDirectoryInfo faults = %#v", decoded.Faults)
+	}
+	for _, leaked := range []string{dir, outPath, "abc.arktributetribe", "broken.arktributetribe", "11"} {
+		if strings.Contains(string(raw), leaked) {
+			t.Fatalf("redacted tribute directory json contains private detail %q: %s", leaked, raw)
+		}
 	}
 	assertPrivateFileMode(t, outPath)
 }

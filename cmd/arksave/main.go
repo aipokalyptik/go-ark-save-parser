@@ -16,7 +16,6 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
-	"github.com/aipokalyptik/go-ark-save-parser/arktribute"
 	"github.com/google/uuid"
 )
 
@@ -1622,20 +1621,20 @@ func tribute(path string, out io.Writer, opts runOptions) error {
 		return err
 	}
 	if info.IsDir() {
-		entries, faults, err := arktribute.OpenDirectoryWithFaults(path)
+		directory, err := arkapi.TributeDirectorySummaryFromPath(path)
 		if err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(out, "Tribute directory: %s\nFiles: %d\nFile faults: %d\n", displayString(path, opts), len(entries), len(faults)); err != nil {
+		if _, err := fmt.Fprintf(out, "Tribute directory: %s\nFiles: %d\nFile faults: %d\n", displayString(path, opts), len(directory.Files), len(directory.Faults)); err != nil {
 			return err
 		}
-		if len(entries) == 0 {
+		if len(directory.Files) == 0 {
 			return nil
 		}
 		if _, err := fmt.Fprintln(out); err != nil {
 			return err
 		}
-		for i, entry := range entries {
+		for i, entry := range directory.Files {
 			if i > 0 {
 				if _, err := fmt.Fprintln(out); err != nil {
 					return err
@@ -1647,7 +1646,7 @@ func tribute(path string, out io.Writer, opts runOptions) error {
 		}
 		return nil
 	}
-	data, err := arktribute.Open(path)
+	data, err := arkapi.TributeSummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -1773,14 +1772,12 @@ func exportTributeJSON(path string, outputPath string, out io.Writer, opts runOp
 	if info.IsDir() {
 		return exportTributeDirectoryJSON(path, outputPath, out, opts)
 	}
-
-	data, err := arktribute.Open(path)
-	if err != nil {
-		return err
-	}
 	var raw []byte
 	if opts.Redact {
-		info := arkapi.ExportTributeData(data)
+		info, err := arkapi.TributeSummaryFromPath(path)
+		if err != nil {
+			return err
+		}
 		info.ID = redactedValue
 		info.Path = redactedValue
 		info.PlayerDataIDs = nil
@@ -1790,7 +1787,7 @@ func exportTributeJSON(path string, outputPath string, out io.Writer, opts runOp
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportTributeDataJSON(data)
+		raw, err = arkapi.ExportTributePathJSON(path)
 		if err != nil {
 			return err
 		}
@@ -1803,13 +1800,13 @@ func exportTributeJSON(path string, outputPath string, out io.Writer, opts runOp
 }
 
 func exportTributeDirectoryJSON(path string, outputPath string, out io.Writer, opts runOptions) error {
-	entries, faults, err := arktribute.OpenDirectoryWithFaults(path)
-	if err != nil {
-		return err
-	}
 	var raw []byte
+	var err error
 	if opts.Redact {
-		info := arkapi.ExportTributeDirectoryDataWithFaults(entries, faults)
+		info, err := arkapi.TributeDirectorySummaryFromPath(path)
+		if err != nil {
+			return err
+		}
 		for i := range info.Files {
 			info.Files[i].ID = redactedValue
 			info.Files[i].Path = redactedValue
@@ -1824,7 +1821,7 @@ func exportTributeDirectoryJSON(path string, outputPath string, out io.Writer, o
 			return err
 		}
 	} else {
-		raw, err = arkapi.ExportTributeDirectoryDataWithFaultsJSON(entries, faults)
+		raw, err = arkapi.ExportTributePathJSON(path)
 		if err != nil {
 			return err
 		}
@@ -1915,8 +1912,8 @@ func archivePropertyErrorCount(objects []arkarchive.Object) int {
 	return count
 }
 
-func printTributeSummary(out io.Writer, data *arktribute.Data, opts runOptions) error {
-	if _, err := fmt.Fprintf(out, "Tribute file: %s\nPlayer data IDs: %d\nTribe data IDs: %d\n", displayString(data.Path, opts), len(data.PlayerDataIDs), len(data.TribeDataIDs)); err != nil {
+func printTributeSummary(out io.Writer, data arkapi.TributeDataInfo, opts runOptions) error {
+	if _, err := fmt.Fprintf(out, "Tribute file: %s\nPlayer data IDs: %d\nTribe data IDs: %d\n", displayString(data.Path, opts), data.PlayerDataCount, data.TribeDataCount); err != nil {
 		return err
 	}
 	if opts.Redact {

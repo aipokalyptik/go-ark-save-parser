@@ -541,6 +541,10 @@ CLI tools, and reusable APIs without losing oracle parity.
           file/directory lifecycle handling onto typed cluster path helpers,
           and expose crafted upload status in cluster JSON item models so the
           CLI does not need direct `arkcluster` access for typed summaries.
+    - [x] Move `tribute` and `export-tribute-json` CLI file/directory
+          lifecycle handling onto typed tribute path helpers while preserving
+          directory fault reporting, redaction, and explicit output-path
+          behavior.
     - [x] Move `player_all` aggregate counting behind typed
           `arkapi.PlayerAllSummary`.
     - [x] Move `player_inventories` aggregation behind typed

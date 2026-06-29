@@ -78,6 +78,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       lifecycles onto typed cluster path helpers, and expose crafted upload
       status in cluster JSON item models so typed summaries do not need
       direct `arkcluster` access.
+- [x] Move `tribute` and `export-tribute-json` CLI file/directory lifecycles
+      onto typed tribute path helpers while preserving fault reporting,
+      redaction, and explicit output-path behavior.
 - [x] Surface typed player and tribe exports through domain JSON for CLI and
       library consumers.
 - [x] Add `arkapi.NewPlayerFromPath` so examples and library consumers can
