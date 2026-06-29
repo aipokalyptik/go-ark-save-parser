@@ -1904,17 +1904,47 @@ func printClusterSummary(out io.Writer, data arkapi.ClusterDataInfo, opts runOpt
 		if dino.ShortName != "" {
 			shortName = fmt.Sprintf(" short=%s", dino.ShortName)
 		}
+		details := clusterDinoDetailSuffix(dino)
 		if dino.ParseError != "" {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s parse_error=%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames, dino.ParseError); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s%s parse_error=%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames, details, dino.ParseError); err != nil {
 				return err
 			}
 		} else {
-			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames); err != nil {
+			if _, err := fmt.Fprintf(out, "  dino[%d] raw_bytes=%d objects=%d upload=%.0f%s%s%s%s\n", dino.Index, dino.RawSize, dino.ObjectCount, dino.UploadTime, primaryClass, shortName, classNames, details); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func clusterDinoDetailSuffix(dino arkapi.ClusterDinoInfo) string {
+	var parts []string
+	if dino.DinoID1 != 0 || dino.DinoID2 != 0 {
+		parts = append(parts, fmt.Sprintf("dino_id=%d/%d", dino.DinoID1, dino.DinoID2))
+	}
+	if dino.TamedName != "" {
+		parts = append(parts, fmt.Sprintf("tamed_name=%s", dino.TamedName))
+	}
+	if dino.IsTamed {
+		parts = append(parts, "tamed=true")
+	}
+	if dino.IsFemale {
+		parts = append(parts, "female=true")
+	}
+	if dino.IsBaby {
+		parts = append(parts, "baby=true")
+	}
+	if dino.IsDead {
+		parts = append(parts, "dead=true")
+	}
+	if dino.HasStats {
+		parts = append(parts, fmt.Sprintf("base_level=%d current_level=%d", dino.BaseLevel, dino.CurrentLevel))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " " + strings.Join(parts, " ")
 }
 
 func printArchiveSummary(out io.Writer, label string, summary arkapi.LocalArchiveSummary, opts runOptions) error {

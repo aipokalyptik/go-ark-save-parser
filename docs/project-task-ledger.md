@@ -296,6 +296,8 @@ documented.
         stat level summaries in typed local cluster models and JSON exports
         when the local upload archive contains parseable dino and status
         objects.
+  - [x] Include embedded uploaded-dino ID, tamed metadata, sex/baby/dead flags,
+        and stat level summaries in local cluster CLI detail output.
   - [x] Include uploaded item short names and uploaded dino primary/short class
         names in local cluster CLI summaries.
   - [x] Include uploaded-dino parse-status aggregate counts in local cluster

@@ -1747,6 +1747,60 @@ func TestClusterSummaryPrintsDinoClassNames(t *testing.T) {
 	}
 }
 
+func TestClusterSummaryPrintsEmbeddedDinoIdentityAndStats(t *testing.T) {
+	dinoID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	statusID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	var out bytes.Buffer
+	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
+		Path:    "/tmp/EOS_abc123",
+		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
+		Dinos: []arkcluster.Dino{{
+			Index:      0,
+			Version:    7,
+			UploadTime: 12345,
+			RawSize:    64,
+			Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+				{
+					UUID:      dinoID,
+					ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+					Properties: []arkproperty.Property{
+						{Name: "DinoID1", Type: arkproperty.TypeUInt32, Value: uint32(1001)},
+						{Name: "DinoID2", Type: arkproperty.TypeUInt32, Value: uint32(2002)},
+						{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+						{Name: "TamedName", Type: arkproperty.TypeString, Value: "Needle"},
+						{Name: "bIsFemale", Type: arkproperty.TypeBool, Value: true},
+						{Name: "MyCharacterStatusComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: statusID}},
+					},
+				},
+				{
+					UUID:      statusID,
+					ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C",
+					Properties: []arkproperty.Property{
+						{Name: "BaseCharacterLevel", Type: arkproperty.TypeInt, Value: int32(12)},
+						{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 0, Value: int32(5)},
+						{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 8, Value: int32(2)},
+					},
+				},
+			}},
+		}},
+	}), runOptions{})
+	if err != nil {
+		t.Fatalf("printClusterSummary() error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"dino_id=1001/2002",
+		"tamed_name=Needle",
+		"tamed=true",
+		"female=true",
+		"base_level=12 current_level=8",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("cluster summary %q does not contain %q", got, want)
+		}
+	}
+}
+
 func TestClusterSummaryPrintsDinoParseStatusCounts(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterSummary(&out, arkapi.ExportClusterData(&arkcluster.Data{
