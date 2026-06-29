@@ -220,8 +220,9 @@ documented.
 - [blocked] Finish full dino edge behavior:
   - [blocked] Legacy/modded cryopod variants require a concrete supported
         fixture or runnable oracle case.
-  - [blocked] Cryopod-location example parity remains blocked until
-        upstream/private data permits a stable malformed-cryopod-free path.
+  - [x] Fixture-backed cryopod-location fallback uses the containing cryopod
+        item's `ActorTransforms` entry for modern embedded cryopodded dinos
+        while preserving `InCryopod` location semantics.
   - [x] Typed cryopod payload errors classify malformed embedded dino payload
         parse failures while preserving wrapped parser errors for `errors.Is`.
   - [x] Typed cryopod payload errors classify unsupported embedded saddle
@@ -433,8 +434,10 @@ documented.
       inventory rows when present. Cryopod insertion and live-server validation
       remain mutation-copy-adjacent and unverified.
 - [x] `dino_heatmap`.
-- [blocked] `dino_cryopod_location`: upstream/private malformed cryopod path
-      blocks stable oracle output.
+- [blocked] `dino_cryopod_location` oracle comparison: Go now has
+      fixture-backed cryopod item transform fallback for modern embedded
+      cryopodded dinos, but upstream/private malformed cryopod paths still
+      block stable oracle output.
 - [blocked] `dino_pedigrees`: upstream/private malformed cryopod path blocks
       stable oracle output; Go now exposes typed pedigree trees and nested
       domain JSON pedigree branches for parsed tamed dinos.

@@ -76,8 +76,33 @@ func TestDinoAPIAllIncludesModernCryopoddedDinos(t *testing.T) {
 	if dino.Location == nil || !dino.Location.InCryopod {
 		t.Fatalf("cryopodded dino location = %#v, want in cryopod", dino.Location)
 	}
+	if dino.Location.X != 11 || dino.Location.Y != 22 || dino.Location.Z != 33 {
+		t.Fatalf("cryopodded dino location = %#v, want cryopod item transform", dino.Location)
+	}
 	if dino.Stats == nil || dino.Stats.BaseLevel != 12 {
 		t.Fatalf("cryopodded dino stats = %#v, want base level 12", dino.Stats)
+	}
+}
+
+func TestDinoAPIAllWithFaultsIncludesCryopodItemLocation(t *testing.T) {
+	save := openSyntheticCryopoddedDinoSave(t)
+	defer save.Close()
+
+	api := NewDino(save)
+	dinos, faults, err := api.AllWithFaults()
+	if err != nil {
+		t.Fatalf("AllWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("AllWithFaults() faults = %#v, want none", faults)
+	}
+	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	dino, ok := dinos[podID]
+	if !ok {
+		t.Fatalf("AllWithFaults() missing cryopodded dino keyed by cryopod UUID %s: %#v", podID, dinos)
+	}
+	if dino.Location == nil || !dino.Location.InCryopod || dino.Location.X != 11 || dino.Location.Y != 22 || dino.Location.Z != 33 {
+		t.Fatalf("AllWithFaults() cryopodded dino location = %#v, want cryopod item transform", dino.Location)
 	}
 }
 
@@ -1847,7 +1872,9 @@ func openSyntheticCryopoddedDinoSave(t *testing.T) *arksave.Save {
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
 	payload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
-	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
+	return openSyntheticSaveWith(t, "dinos.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransforms(podID),
+	}, map[uuid.UUID][]byte{
 		podID: syntheticCryopodItemObjectBytes(payload),
 	})
 }

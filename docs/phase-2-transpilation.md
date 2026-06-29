@@ -270,6 +270,9 @@ coverage broadly.
       short-name count helpers without changing full-blueprint counts.
 - [x] Add upstream-style cryopodded dino aggregate counts by class with an
       overall `all` total.
+- [x] Add fixture-backed cryopod-location fallback for modern embedded
+      cryopodded dinos by preserving the containing cryopod item's
+      `ActorTransforms` location while marking it as in-cryopod.
 - [x] Add combined read-only Dino API filtering for level bounds, class names,
       tamed state, gene traits, cryopodded state, and stat minimums.
 - [x] Add upstream-compatible tamed dino generation and ancestor ID extraction

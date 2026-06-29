@@ -336,6 +336,7 @@ func (d *DinoAPI) All() (map[uuid.UUID]arkobject.Dino, error) {
 			if !ok {
 				continue
 			}
+			dino = d.withCryopodLocation(info.UUID, dino)
 			out[info.UUID] = dino
 			continue
 		}
@@ -370,6 +371,7 @@ func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fault
 				continue
 			}
 			if ok {
+				dino = d.withCryopodLocation(info.UUID, dino)
 				out[info.UUID] = dino
 			}
 			continue
@@ -387,6 +389,16 @@ func (d *DinoAPI) AllWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.Fault
 		out[info.UUID] = dino
 	}
 	return out, faults, nil
+}
+
+func (d *DinoAPI) withCryopodLocation(id uuid.UUID, dino arkobject.Dino) arkobject.Dino {
+	transform, ok := d.save.ActorTransform(id)
+	if !ok {
+		return dino
+	}
+	transform.InCryopod = true
+	dino.Location = &transform
+	return dino
 }
 
 func (d *DinoAPI) statusObject(id uuid.UUID) (*arkobject.GameObject, error) {
