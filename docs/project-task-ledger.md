@@ -309,6 +309,10 @@ documented.
   - [x] Include embedded uploaded-dino base/current level totals, averages, and
         maxima in typed local cluster summaries, `cluster-summary` CLI output,
         and JSON-derived directory summary aggregation.
+  - [x] Include uploaded-item quantity and rating totals/averages in typed
+        local cluster summaries, `cluster-summary` CLI output, JSON-derived
+        directory summary aggregation, and the idiomatic `cluster_typed`
+        example output.
   - [x] Include embedded uploaded-dino identity/stat aggregate counters in the
         idiomatic `cluster_typed` Go example.
   - [x] Include uploaded item short names and uploaded dino primary/short class

@@ -22,6 +22,8 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 				Index:     0,
 				Version:   7,
 				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				Quantity:  3,
+				Rating:    1.5,
 				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
 					Name:  "CustomItemDatas",
 					Type:  arkproperty.TypeArray,
@@ -32,12 +34,16 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 				Index:                1,
 				Version:              6,
 				Blueprint:            "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
+				Quantity:             2,
+				Rating:               7.5,
 				CrafterCharacterName: "Survivor",
 				CrafterTribeName:     "Porters",
 			},
 			{
 				Index:     2,
 				Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C",
+				Quantity:  4,
+				Rating:    3,
 			},
 		},
 	})
@@ -88,8 +94,11 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	if summary.SupportedVersionItems != 1 || summary.UnsupportedVersionItems != 1 {
 		t.Fatalf("ItemSummary() version counts = %#v, want one supported and one unsupported", summary)
 	}
-	if summary.CraftedItems != 1 || summary.TotalQuantity != 0 || summary.MaxRating != 0 || summary.MaxQuality != 0 {
-		t.Fatalf("ItemSummary() aggregates = %#v, want one crafted item and zero quantity/rating/quality", summary)
+	if summary.CraftedItems != 1 || summary.TotalQuantity != 9 || summary.AverageQuantity != 3 {
+		t.Fatalf("ItemSummary() quantity aggregates = %#v, want one crafted item, total quantity 9, average quantity 3", summary)
+	}
+	if summary.TotalRating != 12 || summary.AverageRating != 4 || summary.MaxRating != 7.5 || summary.MaxQuality != 0 {
+		t.Fatalf("ItemSummary() rating aggregates = %#v, want total rating 12, average rating 4, max rating 7.5", summary)
 	}
 }
 
@@ -366,7 +375,7 @@ func TestClusterDirectorySummaryAggregatesFiles(t *testing.T) {
 	if summary.Files != 2 || summary.Items != 3 || summary.Dinos != 2 || summary.ParseErrors != 1 || summary.Objects != 1 {
 		t.Fatalf("ClusterDirectorySummary() totals = %#v", summary)
 	}
-	if summary.ItemSummary.DinoItems != 1 || summary.ItemSummary.EquipmentItems != 1 || summary.ItemSummary.OtherItems != 1 || summary.ItemSummary.TotalQuantity != 9 || summary.ItemSummary.CraftedItems != 1 {
+	if summary.ItemSummary.DinoItems != 1 || summary.ItemSummary.EquipmentItems != 1 || summary.ItemSummary.OtherItems != 1 || summary.ItemSummary.TotalQuantity != 9 || summary.ItemSummary.AverageQuantity != 3 || summary.ItemSummary.CraftedItems != 1 {
 		t.Fatalf("ClusterDirectorySummary() item summary = %#v", summary.ItemSummary)
 	}
 	if summary.DinoSummary.ParsedDinos != 1 || summary.DinoSummary.ParseErrorDinos != 1 || summary.DinoSummary.TotalEmbeddedObjects != 1 {

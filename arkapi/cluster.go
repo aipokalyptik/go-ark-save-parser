@@ -29,6 +29,9 @@ type ClusterItemSummary struct {
 	UnsupportedVersionItems int
 	CraftedItems            int
 	TotalQuantity           int64
+	AverageQuantity         float64
+	TotalRating             float64
+	AverageRating           float64
 	MaxRating               float64
 	MaxQuality              int32
 }
@@ -242,12 +245,17 @@ func (c *ClusterAPI) ItemSummary() ClusterItemSummary {
 			summary.CraftedItems++
 		}
 		summary.TotalQuantity += int64(item.Quantity)
+		summary.TotalRating += item.Rating
 		if item.Rating > summary.MaxRating {
 			summary.MaxRating = item.Rating
 		}
 		if item.Quality > summary.MaxQuality {
 			summary.MaxQuality = item.Quality
 		}
+	}
+	if summary.Items > 0 {
+		summary.AverageQuantity = float64(summary.TotalQuantity) / float64(summary.Items)
+		summary.AverageRating = summary.TotalRating / float64(summary.Items)
 	}
 	return summary
 }
@@ -381,11 +389,16 @@ func addClusterItemSummary(total *ClusterItemSummary, next ClusterItemSummary) {
 	total.UnsupportedVersionItems += next.UnsupportedVersionItems
 	total.CraftedItems += next.CraftedItems
 	total.TotalQuantity += next.TotalQuantity
+	total.TotalRating += next.TotalRating
 	if next.MaxRating > total.MaxRating {
 		total.MaxRating = next.MaxRating
 	}
 	if next.MaxQuality > total.MaxQuality {
 		total.MaxQuality = next.MaxQuality
+	}
+	if total.Items > 0 {
+		total.AverageQuantity = float64(total.TotalQuantity) / float64(total.Items)
+		total.AverageRating = total.TotalRating / float64(total.Items)
 	}
 }
 

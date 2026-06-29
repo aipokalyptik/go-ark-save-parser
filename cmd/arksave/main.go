@@ -1540,7 +1540,7 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
 	_, err := fmt.Fprintf(
 		out,
-		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nTotal base level: %d\nAverage base level: %.2f\nMax base level: %d\nTotal current level: %d\nAverage current level: %.2f\nMax current level: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
+		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nAverage item quantity: %.2f\nTotal item rating: %.2f\nAverage item rating: %.2f\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nTotal base level: %d\nAverage base level: %.2f\nMax base level: %d\nTotal current level: %d\nAverage current level: %.2f\nMax current level: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
 		items.DinoItems,
 		items.EquipmentItems,
 		items.OtherItems,
@@ -1548,6 +1548,9 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		items.UnsupportedVersionItems,
 		items.CraftedItems,
 		items.TotalQuantity,
+		items.AverageQuantity,
+		items.TotalRating,
+		items.AverageRating,
 		items.MaxRating,
 		items.MaxQuality,
 		dinos.ParsedDinos,
@@ -1596,12 +1599,17 @@ func clusterInfoItemSummary(info arkapi.ClusterDataInfo) arkapi.ClusterItemSumma
 			summary.CraftedItems++
 		}
 		summary.TotalQuantity += int64(item.Quantity)
+		summary.TotalRating += item.Rating
 		if item.Rating > summary.MaxRating {
 			summary.MaxRating = item.Rating
 		}
 		if item.Quality > summary.MaxQuality {
 			summary.MaxQuality = item.Quality
 		}
+	}
+	if summary.Items > 0 {
+		summary.AverageQuantity = float64(summary.TotalQuantity) / float64(summary.Items)
+		summary.AverageRating = summary.TotalRating / float64(summary.Items)
 	}
 	return summary
 }

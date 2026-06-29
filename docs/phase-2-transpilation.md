@@ -182,6 +182,9 @@ coverage broadly.
 - [x] Add local cluster embedded uploaded-dino base/current level totals,
       averages, and maxima to typed dino summaries, CLI output, and
       JSON-derived directory aggregation.
+- [x] Add local cluster uploaded-item quantity and rating totals/averages to
+      typed item summaries, `cluster-summary` CLI output, JSON-derived
+      directory aggregation, and the `cluster_typed` example.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
       summaries in JSON and CLI output.

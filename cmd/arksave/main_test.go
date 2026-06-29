@@ -1651,7 +1651,14 @@ func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 
 func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) {
 	var out bytes.Buffer
-	err := printClusterTypedSummaries(&out, arkapi.ClusterItemSummary{}, arkapi.ClusterDinoSummary{
+	err := printClusterTypedSummaries(&out, arkapi.ClusterItemSummary{
+		Items:           3,
+		TotalQuantity:   9,
+		AverageQuantity: 3,
+		TotalRating:     12,
+		AverageRating:   4,
+		MaxRating:       7.5,
+	}, arkapi.ClusterDinoSummary{
 		WithDinoID:          2,
 		TamedDinos:          1,
 		FemaleDinos:         1,
@@ -1670,6 +1677,11 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 	}
 	got := out.String()
 	for _, want := range []string{
+		"Total item quantity: 9",
+		"Average item quantity: 3.00",
+		"Total item rating: 12.00",
+		"Average item rating: 4.00",
+		"Max item rating: 7.5",
 		"Dinos with IDs: 2",
 		"Tamed dinos: 1",
 		"Female dinos: 1",
@@ -1701,6 +1713,21 @@ func TestClusterInfoDinoSummaryIncludesEmbeddedDinoAggregates(t *testing.T) {
 	}
 	if summary.TotalBaseLevel != 20 || summary.MaxBaseLevel != 12 || summary.AverageBaseLevel != 10 || summary.TotalCurrentLevel != 10 || summary.MaxCurrentLevel != 6 || summary.AverageCurrentLevel != 5 {
 		t.Fatalf("clusterInfoDinoSummary() level aggregates = %#v, want aggregate levels from exported cluster info", summary)
+	}
+}
+
+func TestClusterInfoItemSummaryIncludesAverages(t *testing.T) {
+	summary := clusterInfoItemSummary(arkapi.ClusterDataInfo{Items: []arkapi.ClusterItemInfo{
+		{Quantity: 3, Rating: 1.5},
+		{Quantity: 2, Rating: 7.5},
+		{Quantity: 4, Rating: 3},
+	}})
+
+	if summary.TotalQuantity != 9 || summary.AverageQuantity != 3 {
+		t.Fatalf("clusterInfoItemSummary() quantity aggregates = %#v, want total 9 average 3", summary)
+	}
+	if summary.TotalRating != 12 || summary.AverageRating != 4 || summary.MaxRating != 7.5 {
+		t.Fatalf("clusterInfoItemSummary() rating aggregates = %#v, want total 12 average 4 max 7.5", summary)
 	}
 }
 
