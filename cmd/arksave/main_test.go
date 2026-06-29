@@ -1161,6 +1161,32 @@ func TestRunRejectsNetworkCommands(t *testing.T) {
 	}
 }
 
+func TestRunPrintsUsageForHelp(t *testing.T) {
+	for _, args := range [][]string{
+		{"help"},
+		{"--help"},
+		{"-h"},
+	} {
+		t.Run(strings.Join(args, "_"), func(t *testing.T) {
+			var out bytes.Buffer
+			err := run(args, &out)
+			if err != nil {
+				t.Fatalf("run(%v) error = %v", args, err)
+			}
+			got := out.String()
+			for _, want := range []string{
+				"Usage:",
+				"arksave --help",
+				"Offline-only scope: FTP and RCON are intentionally unsupported.",
+			} {
+				if !strings.Contains(got, want) {
+					t.Fatalf("help output %q does not contain %q", got, want)
+				}
+			}
+		})
+	}
+}
+
 func TestRunRejectsUnknownOption(t *testing.T) {
 	var out bytes.Buffer
 	err := run([]string{"--verbose", "inspect", "save.ark"}, &out)

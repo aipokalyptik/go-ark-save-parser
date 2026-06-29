@@ -118,6 +118,12 @@ Build the CLI:
 make build
 ```
 
+Show command usage:
+
+```sh
+./bin/arksave --help
+```
+
 Inspect a local save:
 
 ```sh

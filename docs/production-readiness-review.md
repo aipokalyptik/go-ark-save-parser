@@ -36,8 +36,7 @@ Final Phase 4 verification on 2026-06-29:
 - `make oracle-test` with `ARK_ORACLE_SAVE` and `ARK_ORACLE_TRIBUTE` set to
   private ignored paths: passed for save object enumeration and local tribute
   parsing.
-- `./bin/arksave` with no arguments: returned the expected usage error path
-  and wrote a usage message. `--help` is not implemented by this CLI.
+- `./bin/arksave --help`: prints usage successfully.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
 - `make oracle-compare`: not completed in this run. The existing selected-case

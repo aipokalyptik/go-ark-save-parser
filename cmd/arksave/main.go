@@ -34,6 +34,7 @@ var ignoredEquipmentNameParts = []string{
 type runOptions struct {
 	Redact  bool
 	NoCryos bool
+	Help    bool
 }
 
 func main() {
@@ -48,10 +49,15 @@ func run(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	if opts.Help {
+		return usage(out)
+	}
 	if len(args) == 0 {
 		return usage(out)
 	}
 	switch args[0] {
+	case "help":
+		return usage(out)
 	case "inspect":
 		if len(args) != 2 {
 			return fmt.Errorf("%s requires a local .ark path", args[0])
@@ -327,6 +333,8 @@ func splitOptions(args []string) (runOptions, []string, error) {
 	filtered := make([]string, 0, len(args))
 	for _, arg := range args {
 		switch arg {
+		case "--help", "-h":
+			opts.Help = true
 		case "--redact":
 			opts.Redact = true
 		case "--no-cryos":
@@ -343,6 +351,8 @@ func splitOptions(args []string) (runOptions, []string, error) {
 
 func usage(out io.Writer) error {
 	_, err := fmt.Fprintln(out, `Usage:
+  arksave help
+  arksave --help
   arksave [--redact] inspect <save.ark>
   arksave [--redact] parse <save.ark>
   arksave map-summary <save.ark>
