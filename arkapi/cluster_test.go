@@ -19,11 +19,12 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 		Path: "/tmp/EOS_abc123",
 		Items: []arkcluster.Item{
 			{
-				Index:     0,
-				Version:   7,
-				Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
-				Quantity:  3,
-				Rating:    1.5,
+				Index:      0,
+				Version:    7,
+				UploadTime: 200,
+				Blueprint:  "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+				Quantity:   3,
+				Rating:     1.5,
 				Properties: arkproperty.Container{Properties: []arkproperty.Property{{
 					Name:  "CustomItemDatas",
 					Type:  arkproperty.TypeArray,
@@ -33,6 +34,7 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 			{
 				Index:                1,
 				Version:              6,
+				UploadTime:           100,
 				Blueprint:            "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C",
 				Quantity:             2,
 				Rating:               7.5,
@@ -40,10 +42,11 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 				CrafterTribeName:     "Porters",
 			},
 			{
-				Index:     2,
-				Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C",
-				Quantity:  4,
-				Rating:    3,
+				Index:      2,
+				UploadTime: 150,
+				Blueprint:  "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C",
+				Quantity:   4,
+				Rating:     3,
 			},
 		},
 	})
@@ -99,6 +102,9 @@ func TestClusterAPIClassifiesAndCountsItems(t *testing.T) {
 	}
 	if summary.TotalRating != 12 || summary.AverageRating != 4 || summary.MaxRating != 7.5 || summary.MaxQuality != 0 {
 		t.Fatalf("ItemSummary() rating aggregates = %#v, want total rating 12, average rating 4, max rating 7.5", summary)
+	}
+	if summary.WithUploadTime != 3 || summary.EarliestUploadTime != 100 || summary.LatestUploadTime != 200 {
+		t.Fatalf("ItemSummary() upload-time aggregates = %#v, want count 3 earliest 100 latest 200", summary)
 	}
 }
 
@@ -160,8 +166,9 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 		Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 		Dinos: []arkcluster.Dino{
 			{
-				Index:   0,
-				Version: 7,
+				Index:      0,
+				Version:    7,
+				UploadTime: 200,
 				Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
 					{ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C"},
 					{ClassName: "/Game/PrimalEarth/CoreBlueprints/CharacterStatusComponent_BP.CharacterStatusComponent_BP_C"},
@@ -170,13 +177,15 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 				}},
 			},
 			{
-				Index:   1,
-				Version: 6,
-				Archive: &arkarchive.Archive{},
+				Index:      1,
+				Version:    6,
+				UploadTime: 100,
+				Archive:    &arkarchive.Archive{},
 			},
 			{
 				Index:      2,
 				Version:    7,
+				UploadTime: 150,
 				ParseError: "unsupported embedded archive",
 			},
 		},
@@ -214,6 +223,9 @@ func TestClusterAPISummarizesDinoParseStatus(t *testing.T) {
 	}
 	if dinoSummary.WithStatusComponent != 1 || dinoSummary.WithAIController != 1 || dinoSummary.WithInventoryComponent != 1 || dinoSummary.TotalEmbeddedObjects != 4 || dinoSummary.MaxEmbeddedObjects != 4 {
 		t.Fatalf("DinoSummary() component counts = %#v, want one component-bearing dino with four embedded objects", dinoSummary)
+	}
+	if dinoSummary.WithUploadTime != 3 || dinoSummary.EarliestUploadTime != 100 || dinoSummary.LatestUploadTime != 200 {
+		t.Fatalf("DinoSummary() upload-time aggregates = %#v, want count 3 earliest 100 latest 200", dinoSummary)
 	}
 }
 
@@ -354,20 +366,20 @@ func TestClusterDirectorySummaryAggregatesFiles(t *testing.T) {
 			Path:    "/tmp/EOS_one",
 			Archive: &arkarchive.Archive{Version: 7, Objects: []arkarchive.Object{{ClassName: "/Script/ShooterGame.ArkCloudInventoryData"}}},
 			Items: []arkcluster.Item{
-				{Index: 0, Version: 7, Quantity: 3, Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C", Properties: arkproperty.Container{Properties: []arkproperty.Property{{
+				{Index: 0, Version: 7, UploadTime: 200, Quantity: 3, Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C", Properties: arkproperty.Container{Properties: []arkproperty.Property{{
 					Name:  "CustomItemDatas",
 					Type:  arkproperty.TypeArray,
 					Value: arkproperty.Array{Values: []any{arkproperty.Container{}}},
 				}}}},
-				{Index: 1, Version: 6, Quantity: 2, Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C", CrafterCharacterName: "Survivor"},
+				{Index: 1, Version: 6, UploadTime: 100, Quantity: 2, Blueprint: "/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponBow.PrimalItem_WeaponBow_C", CrafterCharacterName: "Survivor"},
 			},
-			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{ClassName: "/Game/Test/Dino.Dino_C"}}}}},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, UploadTime: 500, Archive: &arkarchive.Archive{Objects: []arkarchive.Object{{ClassName: "/Game/Test/Dino.Dino_C"}}}}},
 		},
 		{
 			ID:    "EOS_two",
 			Path:  "/tmp/EOS_two",
-			Items: []arkcluster.Item{{Index: 0, Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C", Quantity: 4}},
-			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, ParseError: "unsupported embedded archive"}},
+			Items: []arkcluster.Item{{Index: 0, UploadTime: 150, Blueprint: "/Game/Test/PrimalItemResource_Custom.PrimalItemResource_Custom_C", Quantity: 4}},
+			Dinos: []arkcluster.Dino{{Index: 0, Version: 7, UploadTime: 400, ParseError: "unsupported embedded archive"}},
 		},
 	}
 
@@ -378,8 +390,14 @@ func TestClusterDirectorySummaryAggregatesFiles(t *testing.T) {
 	if summary.ItemSummary.DinoItems != 1 || summary.ItemSummary.EquipmentItems != 1 || summary.ItemSummary.OtherItems != 1 || summary.ItemSummary.TotalQuantity != 9 || summary.ItemSummary.AverageQuantity != 3 || summary.ItemSummary.CraftedItems != 1 {
 		t.Fatalf("ClusterDirectorySummary() item summary = %#v", summary.ItemSummary)
 	}
+	if summary.ItemSummary.WithUploadTime != 3 || summary.ItemSummary.EarliestUploadTime != 100 || summary.ItemSummary.LatestUploadTime != 200 {
+		t.Fatalf("ClusterDirectorySummary() item upload-time summary = %#v", summary.ItemSummary)
+	}
 	if summary.DinoSummary.ParsedDinos != 1 || summary.DinoSummary.ParseErrorDinos != 1 || summary.DinoSummary.TotalEmbeddedObjects != 1 {
 		t.Fatalf("ClusterDirectorySummary() dino summary = %#v", summary.DinoSummary)
+	}
+	if summary.DinoSummary.WithUploadTime != 2 || summary.DinoSummary.EarliestUploadTime != 400 || summary.DinoSummary.LatestUploadTime != 500 {
+		t.Fatalf("ClusterDirectorySummary() dino upload-time summary = %#v", summary.DinoSummary)
 	}
 }
 

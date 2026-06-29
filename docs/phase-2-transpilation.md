@@ -189,6 +189,9 @@ coverage broadly.
 - [x] Add local cluster uploaded-item quantity and rating totals/averages to
       typed item summaries, `cluster-summary` CLI output, JSON-derived
       directory aggregation, and the `cluster_typed` example.
+- [x] Add local cluster uploaded item/dino upload-time counts and
+      earliest/latest upload timestamps to typed summaries,
+      `cluster-summary` CLI output, and JSON-derived directory aggregation.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
       summaries in JSON and CLI output.

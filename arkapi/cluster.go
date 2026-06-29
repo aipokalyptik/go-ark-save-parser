@@ -34,6 +34,9 @@ type ClusterItemSummary struct {
 	AverageRating           float64
 	MaxRating               float64
 	MaxQuality              int32
+	WithUploadTime          int
+	EarliestUploadTime      float64
+	LatestUploadTime        float64
 }
 
 type ClusterDinoSummary struct {
@@ -59,6 +62,9 @@ type ClusterDinoSummary struct {
 	AverageCurrentLevel     float64
 	TotalEmbeddedObjects    int
 	MaxEmbeddedObjects      int
+	WithUploadTime          int
+	EarliestUploadTime      float64
+	LatestUploadTime        float64
 }
 
 type ClusterDirectoryAggregate struct {
@@ -252,6 +258,7 @@ func (c *ClusterAPI) ItemSummary() ClusterItemSummary {
 		if item.Quality > summary.MaxQuality {
 			summary.MaxQuality = item.Quality
 		}
+		addUploadTime(&summary.WithUploadTime, &summary.EarliestUploadTime, &summary.LatestUploadTime, item.UploadTime)
 	}
 	if summary.Items > 0 {
 		summary.AverageQuantity = float64(summary.TotalQuantity) / float64(summary.Items)
@@ -340,6 +347,7 @@ func (c *ClusterAPI) DinoSummary() ClusterDinoSummary {
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {
 			summary.MaxEmbeddedObjects = dino.ObjectCount
 		}
+		addUploadTime(&summary.WithUploadTime, &summary.EarliestUploadTime, &summary.LatestUploadTime, dino.UploadTime)
 	}
 	if summary.WithStats > 0 {
 		summary.AverageBaseLevel = float64(summary.TotalBaseLevel) / float64(summary.WithStats)
@@ -400,6 +408,7 @@ func addClusterItemSummary(total *ClusterItemSummary, next ClusterItemSummary) {
 		total.AverageQuantity = float64(total.TotalQuantity) / float64(total.Items)
 		total.AverageRating = total.TotalRating / float64(total.Items)
 	}
+	mergeUploadTime(&total.WithUploadTime, &total.EarliestUploadTime, &total.LatestUploadTime, next.WithUploadTime, next.EarliestUploadTime, next.LatestUploadTime)
 }
 
 func addClusterDinoSummary(total *ClusterDinoSummary, next ClusterDinoSummary) {
@@ -433,4 +442,31 @@ func addClusterDinoSummary(total *ClusterDinoSummary, next ClusterDinoSummary) {
 		total.AverageBaseLevel = float64(total.TotalBaseLevel) / float64(total.WithStats)
 		total.AverageCurrentLevel = float64(total.TotalCurrentLevel) / float64(total.WithStats)
 	}
+	mergeUploadTime(&total.WithUploadTime, &total.EarliestUploadTime, &total.LatestUploadTime, next.WithUploadTime, next.EarliestUploadTime, next.LatestUploadTime)
+}
+
+func addUploadTime(count *int, earliest *float64, latest *float64, uploadTime float64) {
+	if uploadTime == 0 {
+		return
+	}
+	if *count == 0 || uploadTime < *earliest {
+		*earliest = uploadTime
+	}
+	if *count == 0 || uploadTime > *latest {
+		*latest = uploadTime
+	}
+	*count++
+}
+
+func mergeUploadTime(count *int, earliest *float64, latest *float64, nextCount int, nextEarliest float64, nextLatest float64) {
+	if nextCount == 0 {
+		return
+	}
+	if *count == 0 || nextEarliest < *earliest {
+		*earliest = nextEarliest
+	}
+	if *count == 0 || nextLatest > *latest {
+		*latest = nextLatest
+	}
+	*count += nextCount
 }

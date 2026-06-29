@@ -342,6 +342,9 @@ documented.
         objects, items, dinos, parse errors, uploaded-item summaries, and
         uploaded-dino summaries, and include them in directory JSON exports and
         CLI directory summaries.
+  - [x] Include uploaded item and dino upload-time counts plus earliest/latest
+        upload timestamps in typed cluster summaries, directory aggregates, and
+        `cluster-summary` CLI output.
   - [x] Add fault-preserving local cluster directory reads so valid cluster
         uploads survive alongside broken local cluster files.
   - [x] Expose local cluster directory file faults in JSON export and CLI

@@ -1657,12 +1657,15 @@ func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterTypedSummaries(&out, arkapi.ClusterItemSummary{
-		Items:           3,
-		TotalQuantity:   9,
-		AverageQuantity: 3,
-		TotalRating:     12,
-		AverageRating:   4,
-		MaxRating:       7.5,
+		Items:              3,
+		TotalQuantity:      9,
+		AverageQuantity:    3,
+		TotalRating:        12,
+		AverageRating:      4,
+		MaxRating:          7.5,
+		WithUploadTime:     3,
+		EarliestUploadTime: 100,
+		LatestUploadTime:   200,
 	}, arkapi.ClusterDinoSummary{
 		WithDinoID:          2,
 		TamedDinos:          1,
@@ -1676,6 +1679,9 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 		TotalCurrentLevel:   6,
 		AverageCurrentLevel: 6,
 		MaxCurrentLevel:     6,
+		WithUploadTime:      2,
+		EarliestUploadTime:  300,
+		LatestUploadTime:    400,
 	})
 	if err != nil {
 		t.Fatalf("printClusterTypedSummaries() error = %v", err)
@@ -1687,6 +1693,9 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 		"Total item rating: 12.00",
 		"Average item rating: 4.00",
 		"Max item rating: 7.5",
+		"Items with upload time: 3",
+		"Earliest item upload: 100",
+		"Latest item upload: 200",
 		"Dinos with IDs: 2",
 		"Tamed dinos: 1",
 		"Female dinos: 1",
@@ -1699,6 +1708,9 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 		"Total current level: 6",
 		"Average current level: 6.00",
 		"Max current level: 6",
+		"Dinos with upload time: 2",
+		"Earliest dino upload: 300",
+		"Latest dino upload: 400",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("cluster typed summary %q does not contain %q", got, want)
@@ -1708,8 +1720,8 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 
 func TestClusterInfoDinoSummaryIncludesEmbeddedDinoAggregates(t *testing.T) {
 	summary := clusterInfoDinoSummary(arkapi.ClusterDataInfo{Dinos: []arkapi.ClusterDinoInfo{
-		{DinoID1: 1001, DinoID2: 2002, IsTamed: true, IsFemale: true, HasStats: true, BaseLevel: 12, CurrentLevel: 6},
-		{DinoID1: 3003, DinoID2: 4004, IsBaby: true, IsDead: true, HasStats: true, BaseLevel: 8, CurrentLevel: 4},
+		{DinoID1: 1001, DinoID2: 2002, IsTamed: true, IsFemale: true, HasStats: true, BaseLevel: 12, CurrentLevel: 6, UploadTime: 200},
+		{DinoID1: 3003, DinoID2: 4004, IsBaby: true, IsDead: true, HasStats: true, BaseLevel: 8, CurrentLevel: 4, UploadTime: 100},
 		{},
 	}})
 
@@ -1719,13 +1731,16 @@ func TestClusterInfoDinoSummaryIncludesEmbeddedDinoAggregates(t *testing.T) {
 	if summary.TotalBaseLevel != 20 || summary.MaxBaseLevel != 12 || summary.AverageBaseLevel != 10 || summary.TotalCurrentLevel != 10 || summary.MaxCurrentLevel != 6 || summary.AverageCurrentLevel != 5 {
 		t.Fatalf("clusterInfoDinoSummary() level aggregates = %#v, want aggregate levels from exported cluster info", summary)
 	}
+	if summary.WithUploadTime != 2 || summary.EarliestUploadTime != 100 || summary.LatestUploadTime != 200 {
+		t.Fatalf("clusterInfoDinoSummary() upload-time aggregates = %#v, want count 2 earliest 100 latest 200", summary)
+	}
 }
 
 func TestClusterInfoItemSummaryIncludesAverages(t *testing.T) {
 	summary := clusterInfoItemSummary(arkapi.ClusterDataInfo{Items: []arkapi.ClusterItemInfo{
-		{Quantity: 3, Rating: 1.5},
-		{Quantity: 2, Rating: 7.5},
-		{Quantity: 4, Rating: 3},
+		{Quantity: 3, Rating: 1.5, UploadTime: 200},
+		{Quantity: 2, Rating: 7.5, UploadTime: 100},
+		{Quantity: 4, Rating: 3, UploadTime: 150},
 	}})
 
 	if summary.TotalQuantity != 9 || summary.AverageQuantity != 3 {
@@ -1733,6 +1748,9 @@ func TestClusterInfoItemSummaryIncludesAverages(t *testing.T) {
 	}
 	if summary.TotalRating != 12 || summary.AverageRating != 4 || summary.MaxRating != 7.5 {
 		t.Fatalf("clusterInfoItemSummary() rating aggregates = %#v, want total 12 average 4 max 7.5", summary)
+	}
+	if summary.WithUploadTime != 3 || summary.EarliestUploadTime != 100 || summary.LatestUploadTime != 200 {
+		t.Fatalf("clusterInfoItemSummary() upload-time aggregates = %#v, want count 3 earliest 100 latest 200", summary)
 	}
 }
 

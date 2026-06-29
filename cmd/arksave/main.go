@@ -1545,7 +1545,7 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
 	_, err := fmt.Fprintf(
 		out,
-		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nAverage item quantity: %.2f\nTotal item rating: %.2f\nAverage item rating: %.2f\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nTotal base level: %d\nAverage base level: %.2f\nMax base level: %d\nTotal current level: %d\nAverage current level: %.2f\nMax current level: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
+		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nAverage item quantity: %.2f\nTotal item rating: %.2f\nAverage item rating: %.2f\nMax item rating: %.1f\nMax item quality: %d\nItems with upload time: %d\nEarliest item upload: %.0f\nLatest item upload: %.0f\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nTotal base level: %d\nAverage base level: %.2f\nMax base level: %d\nTotal current level: %d\nAverage current level: %.2f\nMax current level: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\nDinos with upload time: %d\nEarliest dino upload: %.0f\nLatest dino upload: %.0f\n",
 		items.DinoItems,
 		items.EquipmentItems,
 		items.OtherItems,
@@ -1558,6 +1558,9 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		items.AverageRating,
 		items.MaxRating,
 		items.MaxQuality,
+		items.WithUploadTime,
+		items.EarliestUploadTime,
+		items.LatestUploadTime,
 		dinos.ParsedDinos,
 		dinos.ParseErrorDinos,
 		dinos.SupportedVersionDinos,
@@ -1579,6 +1582,9 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		dinos.MaxCurrentLevel,
 		dinos.TotalEmbeddedObjects,
 		dinos.MaxEmbeddedObjects,
+		dinos.WithUploadTime,
+		dinos.EarliestUploadTime,
+		dinos.LatestUploadTime,
 	)
 	return err
 }
@@ -1611,6 +1617,7 @@ func clusterInfoItemSummary(info arkapi.ClusterDataInfo) arkapi.ClusterItemSumma
 		if item.Quality > summary.MaxQuality {
 			summary.MaxQuality = item.Quality
 		}
+		addClusterUploadTime(&summary.WithUploadTime, &summary.EarliestUploadTime, &summary.LatestUploadTime, item.UploadTime)
 	}
 	if summary.Items > 0 {
 		summary.AverageQuantity = float64(summary.TotalQuantity) / float64(summary.Items)
@@ -1676,12 +1683,26 @@ func clusterInfoDinoSummary(info arkapi.ClusterDataInfo) arkapi.ClusterDinoSumma
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {
 			summary.MaxEmbeddedObjects = dino.ObjectCount
 		}
+		addClusterUploadTime(&summary.WithUploadTime, &summary.EarliestUploadTime, &summary.LatestUploadTime, dino.UploadTime)
 	}
 	if summary.WithStats > 0 {
 		summary.AverageBaseLevel = float64(summary.TotalBaseLevel) / float64(summary.WithStats)
 		summary.AverageCurrentLevel = float64(summary.TotalCurrentLevel) / float64(summary.WithStats)
 	}
 	return summary
+}
+
+func addClusterUploadTime(count *int, earliest *float64, latest *float64, uploadTime float64) {
+	if uploadTime == 0 {
+		return
+	}
+	if *count == 0 || uploadTime < *earliest {
+		*earliest = uploadTime
+	}
+	if *count == 0 || uploadTime > *latest {
+		*latest = uploadTime
+	}
+	*count++
 }
 
 func clusterInfoParseErrorCount(info arkapi.ClusterDataInfo) int {
