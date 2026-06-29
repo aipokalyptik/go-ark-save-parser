@@ -889,8 +889,8 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] Public GitHub Actions runs `make verify` on `main` pushes, pull
       requests, and manual dispatches without private oracle data. The README
-      badge links to current status; public push run `28353795987` passed for
-      commit `144f253c1207272455105adf606df2b60dfbfe89`.
+      badge links to current status; recent public push runs `28353795987` and
+      `28353941558` passed.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Static/local release binary exposes build metadata through

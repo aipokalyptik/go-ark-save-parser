@@ -12,7 +12,7 @@ accepted scope.
 | Requirement | Status | Evidence |
 | --- | --- | --- |
 | Public GitHub repository exists. | Met | `gh repo view aipokalyptik/go-ark-save-parser` reports `visibility=PUBLIC`, `isPrivate=false`, URL `https://github.com/aipokalyptik/go-ark-save-parser`. |
-| `main` is the pushed working branch. | Met | `origin` is `https://github.com/aipokalyptik/go-ark-save-parser.git`; the default branch is `main`; pushed `main` is verified with `git ls-remote --heads origin main` at `144f253c1207272455105adf606df2b60dfbfe89`. |
+| `main` is the pushed working branch. | Met | `origin` is `https://github.com/aipokalyptik/go-ark-save-parser.git`; the default branch is `main`; pushed `main` is verified with `git ls-remote --heads origin main`. |
 | Phase 1 oracle setup is recorded. | Met | [`task-inventory.md`](task-inventory.md) rows `P1-001` through `P1-010`; [`phase-1-report.md`](phase-1-report.md); [`oracle-summary.md`](oracle-summary.md). |
 | Phase 2 offline Go transpilation is implemented for selected runnable offline scope. | Met with documented blockers | [`task-inventory.md`](task-inventory.md) Phase 2 rows. Remaining rows are explicitly fixture-gated, upstream-blocked, live-server-unverified, or outside the accepted local-only scope. |
 | Phase 3 idiomatic Go package/API/CLI refactor is closed. | Met | [`phase-3-refactor.md`](phase-3-refactor.md) and `P3-*` rows in [`task-inventory.md`](task-inventory.md). |
@@ -37,7 +37,7 @@ accepted scope.
 | `go test ./...` passes. | Met | `make verify` passed locally on 2026-06-29 and includes `go test ./... -count=1`. |
 | `go vet ./...` passes. | Met | `make verify` passed locally on 2026-06-29 and includes `go vet ./...`. |
 | Static/local CLI builds without system SQLite. | Met | `make verify` passed locally on 2026-06-29 and includes `CGO_ENABLED=0 go build -trimpath -o bin/arksave ./cmd/arksave`. |
-| Public CI verifies the repository without private data. | Met | `.github/workflows/verify.yml` runs `make verify` on `main` pushes, pull requests, and manual dispatch. The README badge links to the current workflow status; the current pushed commit `144f253c1207272455105adf606df2b60dfbfe89` passed run `28353795987`. |
+| Public CI verifies the repository without private data. | Met | `.github/workflows/verify.yml` runs `make verify` on `main` pushes, pull requests, and manual dispatch. The README badge links to the current workflow status; recent public push runs `28353795987` and `28353941558` passed. |
 | Provided-data Go E2E runs against private local save data. | Met | `make e2e-test` passed on 2026-06-29 with `ARK_E2E_SAVE` and `ARK_E2E_SAVE_DIR` pointing at ignored private Valguero save paths, covering `arkapi`, `cmd/arksave`, and `examples`. |
 | Selected Python oracle comparison remains reproducible where practical. | Met with runtime blocker | Focused `make oracle-compare ORACLE_COMPARE_ARGS="--case tribe_list"` passed. The full selected suite rerun is blocked by upstream runtime cost in structure parsing, not by a Go mismatch. |
 
