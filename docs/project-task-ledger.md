@@ -885,6 +885,10 @@ without Python or private chat context.
 Use these commands to monitor progress from the repo:
 
 ```sh
+make status
+```
+
+```sh
 rg -n "^\\s*- \\[ \\]|\\[~\\]|\\[blocked\\]" docs/project-task-ledger.md docs/phase-*.md docs/production-readiness-review.md
 ```
 

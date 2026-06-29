@@ -21,6 +21,12 @@ The accepted-scope evidence audit is
 Together they are the source of truth for phase status, open tasks, blocked
 tasks, and verification commands.
 
+Use the status target to list remaining open, partial, or blocked rows:
+
+```sh
+make status
+```
+
 ## Current Status
 
 Implemented:

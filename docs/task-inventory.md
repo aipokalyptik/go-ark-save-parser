@@ -140,6 +140,13 @@ heading, but every inventory ID belongs to one of these ranges.
 
 ## Monitoring Commands
 
+Use the portable status target to list the remaining open, partial, or blocked
+rows without depending on `rg`:
+
+```sh
+make status
+```
+
 List all open, partial, or blocked inventory rows:
 
 ```sh

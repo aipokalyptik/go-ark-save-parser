@@ -11,6 +11,12 @@ in the same commit whenever a phase task, blocker, or completion status
 changes. Together those files are the repository source of truth for
 monitorable project progress.
 
+Use this target to list the remaining open, partial, or blocked rows:
+
+```sh
+make status
+```
+
 ## Local Verification
 
 Use these commands before committing parser, API, CLI, or docs changes:

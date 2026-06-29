@@ -7,7 +7,7 @@ BUILD_COMMIT ?= $(shell git rev-parse --short=12 HEAD 2>/dev/null || echo unknow
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS ?= -s -w -X main.version=$(BUILD_VERSION) -X main.commit=$(BUILD_COMMIT) -X main.builtAt=$(BUILD_DATE)
 
-.PHONY: test verify e2e-test oracle-test oracle-compare bench build
+.PHONY: test verify e2e-test oracle-test oracle-compare bench build status
 
 test:
 	GOCACHE="$(GO_CACHE)" go test ./...
@@ -37,3 +37,10 @@ bench:
 build:
 	mkdir -p bin
 	GOCACHE="$(GO_CACHE)" GOMODCACHE="$(GO_MOD_CACHE)" CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/arksave ./cmd/arksave
+
+status:
+	@echo "Task inventory open/partial/blocked rows:"
+	@grep -nE '^\| [A-Z0-9-]+ \| `\[( |~|blocked)\]`' docs/task-inventory.md || true
+	@echo
+	@echo "Progress docs open/partial/blocked checklist rows:"
+	@grep -nE '^[[:space:]]*- \[ \]|\[~\]|\[blocked\]' docs/project-task-ledger.md docs/phase-*.md docs/production-readiness-review.md || true
