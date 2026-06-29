@@ -170,9 +170,11 @@ type PlayerDirectorySummary struct {
 	HasAverageDeaths     bool
 	AverageDeaths        float64
 	TotalLevel           int32
+	HighestLevel         int32
 	HasAverageLevel      bool
 	AverageLevel         float64
 	TotalExperience      float64
+	HighestExperience    float64
 	HasAverageExperience bool
 	AverageExperience    float64
 	TotalEngramPoints    int32
@@ -681,7 +683,13 @@ func (p *PlayerAPI) PlayerDirectorySummary() (PlayerDirectorySummary, error) {
 	for _, player := range players {
 		summary.TotalDeaths += player.NumDeaths
 		summary.TotalLevel += player.Level
+		if player.Level > summary.HighestLevel {
+			summary.HighestLevel = player.Level
+		}
 		summary.TotalExperience += player.Experience
+		if player.Experience > summary.HighestExperience {
+			summary.HighestExperience = player.Experience
+		}
 		summary.TotalEngramPoints += player.EngramPoints
 		for _, engram := range player.UnlockedEngrams {
 			if engram != "" {
