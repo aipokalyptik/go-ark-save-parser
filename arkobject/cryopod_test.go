@@ -151,7 +151,7 @@ func TestCryopodPayloadsFromObjectIgnoresMissingOrMalformedCustomData(t *testing
 func TestDinoFromCryopodObjectParsesEmbeddedDinoAndStatus(t *testing.T) {
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
-	payload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	payload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
 	cryopod := &GameObject{
 		UUID:      uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
 		Blueprint: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
@@ -184,7 +184,7 @@ func TestDinoFromCryopodObjectParsesEmbeddedDinoAndStatus(t *testing.T) {
 func TestDinoFromCryopodObjectFindsReversedEmbeddedDinoAndStatus(t *testing.T) {
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
-	payload := syntheticCryopodDinoPayloadWithOrder(t, dinoID, statusID, true)
+	payload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{Reversed: true})
 	cryopod := &GameObject{
 		UUID:       uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
 		Properties: []arkproperty.Property{propertyfixtures.CryopodCustomItemDatasProperty(payload)},
@@ -223,8 +223,8 @@ func TestSaddleFromCryopodObjectParsesModernEmbeddedSaddle(t *testing.T) {
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	cryopodID := uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122")
-	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
-	saddlePayload := syntheticCryopodSaddlePayload()
+	dinoPayload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
+	saddlePayload := testfixtures.CryopodSaddlePayload()
 	cryopod := &GameObject{
 		UUID:      cryopodID,
 		Blueprint: "Blueprint'/Game/Extinction/CoreBlueprints/Weapons/PrimalItem_WeaponEmptyCryopod.PrimalItem_WeaponEmptyCryopod_C'",
@@ -263,16 +263,4 @@ func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	if ok || dino.UUID != uuid.Nil {
 		t.Fatalf("DinoFromCryopodObject() = %#v, %v; want no dino", dino, ok)
 	}
-}
-
-func syntheticCryopodSaddlePayload() []byte {
-	return testfixtures.CryopodSaddlePayload()
-}
-
-func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
-	return syntheticCryopodDinoPayloadWithOrder(t, dinoID, statusID, false)
-}
-
-func syntheticCryopodDinoPayloadWithOrder(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID, reversed bool) []byte {
-	return testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{Reversed: reversed})
 }

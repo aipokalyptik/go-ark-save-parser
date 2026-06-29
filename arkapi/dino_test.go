@@ -1778,7 +1778,7 @@ func openSyntheticBestStatCryopodSave(t *testing.T) *arksave.Save {
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		dinoID:   testfixtures.DinoStatsFixtureObjectBytes(statusID, false),
 		statusID: testfixtures.DinoStatusComponentFixtureBytes(4),
-		podID:    syntheticCryopodItemObjectBytes(syntheticCryopodDinoPayloadWithHealth(t, cryopodDinoID, cryopodStatusID, 6)),
+		podID:    syntheticCryopodItemObjectBytes(testfixtures.CryopodDinoPayload(t, cryopodDinoID, cryopodStatusID, testfixtures.CryopodDinoPayloadOptions{Health: 6})),
 	})
 }
 
@@ -1825,7 +1825,7 @@ func openSyntheticCryopoddedDinoSave(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
-	payload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	payload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		podID: syntheticCryopodItemObjectBytes(payload),
 	})
@@ -1837,8 +1837,8 @@ func openSyntheticCryopoddedDinoSaveWithSaddle(t *testing.T) *arksave.Save {
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
-	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
-	saddlePayload := syntheticCryopodSaddlePayload()
+	dinoPayload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
+	saddlePayload := testfixtures.CryopodSaddlePayload()
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		podID: syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, saddlePayload),
 	})
@@ -1850,7 +1850,7 @@ func openSyntheticCryopoddedDinoSaveWithUnsupportedSaddle(t *testing.T) *arksave
 	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
-	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
+	dinoPayload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		podID: syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, syntheticLegacyCryopodPayload()),
 	})
@@ -1931,7 +1931,7 @@ func openSyntheticDinoPopulationSummarySave(t *testing.T) *arksave.Save {
 	return openSyntheticSaveWith(t, "dinos.ark", nil, map[uuid.UUID][]byte{
 		tamedDinoID: syntheticDinoObjectBytesWithFlags(1001, 2002, true, false, false, true),
 		wildDinoID:  syntheticDinoObjectBytesWithFlags(3003, 4004, false, false, false, false),
-		podID:       syntheticCryopodItemObjectBytes(syntheticCryopodDinoPayload(t, cryopodDinoID, cryopodStatusID)),
+		podID:       syntheticCryopodItemObjectBytes(testfixtures.CryopodDinoPayload(t, cryopodDinoID, cryopodStatusID, testfixtures.CryopodDinoPayloadOptions{})),
 	})
 }
 
@@ -1957,24 +1957,12 @@ func syntheticCryopodItemObjectBytesWithPayloads(payloads ...[]byte) []byte {
 	return buf.Bytes()
 }
 
-func syntheticCryopodDinoPayload(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID) []byte {
-	return testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
-}
-
-func syntheticCryopodDinoPayloadWithHealth(t *testing.T, dinoID uuid.UUID, statusID uuid.UUID, health int32) []byte {
-	return testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{Health: health})
-}
-
 func syntheticLegacyCryopodPayload() []byte {
 	var payload bytes.Buffer
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0x0406))
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
 	_ = binary.Write(&payload, binary.LittleEndian, uint32(0))
 	return payload.Bytes()
-}
-
-func syntheticCryopodSaddlePayload() []byte {
-	return testfixtures.CryopodSaddlePayload()
 }
 
 func syntheticDinoDetailObjectBytes() []byte {

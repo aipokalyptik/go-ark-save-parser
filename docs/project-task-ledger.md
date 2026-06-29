@@ -793,7 +793,7 @@ CLI tools, and reusable APIs without losing oracle parity.
         save-layer and arkapi general/core tests without local wrapper functions;
         embedded `GameModeCustomBytes` player/tribe fixture assembly and
         minimal embedded cryopod archive test payloads now live in shared
-        testfixtures; save-layer malformed
+        testfixtures, and API/object-model cryopod dino/saddle payload tests now call shared fixtures directly; save-layer malformed
         full-object truncation fixtures now use a shared helper; parsed
         `CustomItemDatas` cryopod/custom-data fixtures now live in
         `internal/propertyfixtures`, and binary `CustomItemDatas` writers now

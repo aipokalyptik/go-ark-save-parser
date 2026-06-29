@@ -1287,8 +1287,8 @@ func openSyntheticEquipmentAndCryopodSaddleSave(t *testing.T) *arksave.Save {
 	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
 	saddleID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
 	podID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
-	dinoPayload := syntheticCryopodDinoPayload(t, dinoID, statusID)
-	saddlePayload := syntheticCryopodSaddlePayload()
+	dinoPayload := testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{})
+	saddlePayload := testfixtures.CryopodSaddlePayload()
 	return openSyntheticSaveWith(t, "equipment.ark", nil, map[uuid.UUID][]byte{
 		saddleID: testfixtures.GenericObjectBytes(0x10000053, 0x10000004),
 		podID:    syntheticCryopodItemObjectBytesWithPayloads(dinoPayload, saddlePayload),

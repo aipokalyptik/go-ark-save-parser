@@ -219,7 +219,7 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       embedded `GameModeCustomBytes` player/tribe fixture assembly lives in
       shared testfixtures; minimal embedded cryopod archive test payloads use a
       shared helper;
-      and modern cryopod embedded dino/saddle payload builders are shared by API
+      and modern cryopod embedded dino/saddle payload builders are used directly from shared fixtures by API
       and object-model tests; save-layer malformed full-object truncation
       fixtures use a shared helper; parsed `CustomItemDatas`
       cryopod/custom-data fixtures live in `internal/propertyfixtures`, and
