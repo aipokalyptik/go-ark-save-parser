@@ -20,6 +20,8 @@ const (
 
 var ErrLegacyArchiveUnsupported = errors.New("legacy archive object parsing is not implemented")
 
+const minArchiveObjectBytes = 52
+
 type Options struct {
 	HeaderOnly       bool
 	FromStore        bool
@@ -120,6 +122,9 @@ func Parse(data []byte, opts Options) (*Archive, error) {
 	if count < 0 {
 		return nil, fmt.Errorf("negative archive object count %d", count)
 	}
+	if err := validateArchiveObjectCount(count, r.Size()-r.Position(), "archive"); err != nil {
+		return nil, err
+	}
 	archive.Objects = make([]Object, 0, count)
 	for i := int32(0); i < count; i++ {
 		obj, err := readObject(r, opts.ClusterDino)
@@ -150,6 +155,9 @@ func ParseEmbeddedCryopodPayload(data []byte, maxInflatedBytes int64) (*Archive,
 	if count < 0 {
 		return nil, fmt.Errorf("negative embedded archive object count %d", count)
 	}
+	if err := validateArchiveObjectCount(count, r.Size()-r.Position(), "embedded archive"); err != nil {
+		return nil, err
+	}
 	archive := &Archive{Version: int32(decoded.Version), Objects: make([]Object, 0, count)}
 	for i := int32(0); i < count; i++ {
 		obj, err := readObject(r, false)
@@ -162,6 +170,16 @@ func ParseEmbeddedCryopodPayload(data []byte, maxInflatedBytes int64) (*Archive,
 		return nil, err
 	}
 	return archive, nil
+}
+
+func validateArchiveObjectCount(count int32, remaining int, label string) error {
+	if count == 0 {
+		return nil
+	}
+	if remaining < minArchiveObjectBytes || int(count) > remaining/minArchiveObjectBytes {
+		return fmt.Errorf("%s object count %d exceeds remaining buffer %d", label, count, remaining)
+	}
+	return nil
 }
 
 func readObjectProperties(r *arkbinary.Reader, archive *Archive, format Format, strict bool) error {

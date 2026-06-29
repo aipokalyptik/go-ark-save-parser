@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
@@ -111,6 +112,16 @@ func TestParseArchiveReadsClusterDinoWithoutVersionPrefix(t *testing.T) {
 	}
 	if len(archive.Objects) != 1 || archive.Objects[0].UUID != id {
 		t.Fatalf("Objects = %#v, want one object with id %s", archive.Objects, id)
+	}
+}
+
+func TestParseClusterDinoRejectsImpossibleObjectCount(t *testing.T) {
+	_, err := Parse([]byte("not an archive"), Options{Format: FormatClusterDino})
+	if err == nil {
+		t.Fatalf("Parse() error = nil, want malformed archive object count error")
+	}
+	if !strings.Contains(err.Error(), "archive object count") {
+		t.Fatalf("Parse() error = %v, want archive object count error", err)
 	}
 }
 
