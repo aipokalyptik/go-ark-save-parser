@@ -343,6 +343,9 @@ coverage broadly.
       payloads.
 - [x] Add typed cryopod payload errors for unsupported embedded saddle payload
       versions while preserving skip behavior in plain read APIs.
+- [x] Add `ErrUnsupportedCryopodSaddleVersion` so unsupported embedded saddle
+      payload versions can be matched with `errors.Is` while preserving typed
+      payload kind/version details.
 - [x] Include modern cryopod saddles in equipment domain JSON exports with an
       explicit `in_cryopod` marker.
 - [x] Add first read-only Dino API surface for local class, tamed/wild,

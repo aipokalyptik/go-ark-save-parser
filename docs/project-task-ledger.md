@@ -234,6 +234,9 @@ documented.
   - [x] Typed cryopod payload errors classify unsupported embedded saddle
         versions so fault-tolerant callers can distinguish legacy/modded
         saddle payload failures from generic parse failures.
+  - [x] Unsupported embedded saddle versions expose an
+        `ErrUnsupportedCryopodSaddleVersion` sentinel for `errors.Is` checks
+        while preserving payload kind and version fields.
   - [x] Typed pedigree tree helpers and domain JSON pedigree trees beyond flat
         child/descendant UUID references.
   - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains

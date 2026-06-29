@@ -1,6 +1,7 @@
 package arkobject
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,8 @@ const (
 	CryopodPayloadDinoParse                CryopodPayloadErrorKind = "dino_parse"
 	CryopodPayloadUnsupportedSaddleVersion CryopodPayloadErrorKind = "unsupported_saddle_version"
 )
+
+var ErrUnsupportedCryopodSaddleVersion = errors.New("unsupported embedded cryopod saddle data version")
 
 type CryopodPayloadError struct {
 	Kind    CryopodPayloadErrorKind
@@ -44,6 +47,10 @@ func (e *CryopodPayloadError) Unwrap() error {
 		return nil
 	}
 	return e.Err
+}
+
+func (e *CryopodPayloadError) Is(target error) bool {
+	return target == ErrUnsupportedCryopodSaddleVersion && e != nil && e.Kind == CryopodPayloadUnsupportedSaddleVersion
 }
 
 func CryopodPayloadsFromObject(object *GameObject) [][]byte {

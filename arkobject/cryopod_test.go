@@ -255,6 +255,34 @@ func TestSaddleFromCryopodObjectParsesModernEmbeddedSaddle(t *testing.T) {
 	}
 }
 
+func TestSaddleFromCryopodObjectClassifiesUnsupportedVersion(t *testing.T) {
+	dinoID := uuid.MustParse("01020304-0506-0708-090a-0b0c0d0e0102")
+	statusID := uuid.MustParse("11121314-1516-1718-191a-1b1c1d1e1112")
+	var unsupportedSaddle bytes.Buffer
+	testfixtures.WriteUInt32(&unsupportedSaddle, 8)
+	testfixtures.WriteUInt32(&unsupportedSaddle, 0)
+	testfixtures.WriteUInt32(&unsupportedSaddle, 0)
+	testfixtures.WriteUInt32(&unsupportedSaddle, 0)
+	cryopod := &GameObject{
+		UUID: uuid.MustParse("21222324-2526-2728-292a-2b2c2d2e2122"),
+		Properties: []arkproperty.Property{
+			propertyfixtures.CryopodCustomItemDatasProperty(
+				testfixtures.CryopodDinoPayload(t, dinoID, statusID, testfixtures.CryopodDinoPayloadOptions{}),
+				unsupportedSaddle.Bytes(),
+			),
+		},
+	}
+
+	_, ok, err := SaddleFromCryopodObject(cryopod)
+	if ok || !errors.Is(err, ErrUnsupportedCryopodSaddleVersion) {
+		t.Fatalf("SaddleFromCryopodObject() ok/error = %v/%v, want unsupported saddle version", ok, err)
+	}
+	var cryopodErr *CryopodPayloadError
+	if !errors.As(err, &cryopodErr) || cryopodErr.Kind != CryopodPayloadUnsupportedSaddleVersion || cryopodErr.Version != 0 {
+		t.Fatalf("SaddleFromCryopodObject() typed error = %#v, want unsupported version 0", cryopodErr)
+	}
+}
+
 func TestDinoFromCryopodObjectIgnoresEmptyCryopod(t *testing.T) {
 	dino, ok, err := DinoFromCryopodObject(&GameObject{}, 1<<20)
 	if err != nil {
