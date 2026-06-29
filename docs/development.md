@@ -24,8 +24,8 @@ Python oracle helper scripts, and builds the static CLI binary with repo-local
 cache settings.
 
 The public GitHub Actions workflow runs the same `make verify` target on
-`main` pushes and pull requests. It does not require or access `.oracle/`,
-provided save backups, or any other private local data.
+`main` pushes, pull requests, and manual dispatches. It does not require or
+access `.oracle/`, provided save backups, or any other private local data.
 
 Use benchmarks when changing parser or query paths:
 

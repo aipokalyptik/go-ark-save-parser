@@ -834,8 +834,8 @@ without Python or private chat context.
 - [x] `go vet ./...` passes.
 - [x] `make build` passes.
 - [x] `make verify` passes.
-- [x] Public GitHub Actions runs `make verify` on `main` pushes and pull
-      requests without private oracle data.
+- [x] Public GitHub Actions runs `make verify` on `main` pushes, pull
+      requests, and manual dispatches without private oracle data.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Static/local release binary exposes build metadata through

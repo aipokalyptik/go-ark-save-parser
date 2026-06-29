@@ -38,8 +38,8 @@ Final Phase 4 verification on 2026-06-29:
   parsing.
 - `./bin/arksave --help`: prints usage successfully.
 - `./bin/arksave --version`: prints build metadata from the static binary.
-- `.github/workflows/verify.yml`: runs `make verify` on public `main` pushes
-  and pull requests without private oracle data.
+- `.github/workflows/verify.yml`: runs `make verify` on public `main` pushes,
+  pull requests, and manual dispatches without private oracle data.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
 - `make oracle-compare`: not completed as a full-suite run. The Make target now
