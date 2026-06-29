@@ -2,12 +2,13 @@ GO_CACHE ?= $(CURDIR)/.cache/go-build
 GO_MOD_CACHE ?= $(CURDIR)/.cache/go-mod
 PY_CACHE ?= $(CURDIR)/.cache/pycache
 ORACLE_COMPARE_ARGS ?=
+ORACLE_PROBE_ARGS ?=
 BUILD_VERSION ?= dev
 BUILD_COMMIT ?= $(shell git rev-parse --short=12 HEAD 2>/dev/null || echo unknown)
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS ?= -s -w -X main.version=$(BUILD_VERSION) -X main.commit=$(BUILD_COMMIT) -X main.builtAt=$(BUILD_DATE)
 
-.PHONY: test verify e2e-test oracle-test oracle-compare bench build status
+.PHONY: test verify e2e-test oracle-test oracle-compare oracle-probe bench build status
 
 test:
 	GOCACHE="$(GO_CACHE)" go test ./...
@@ -30,6 +31,10 @@ oracle-test:
 oracle-compare:
 	test -n "$$ARK_ORACLE_SAVE"
 	PATH="$(CURDIR)/.oracle/venv/bin:$$PATH" .oracle/venv/bin/python scripts/oracle_compare.py $(ORACLE_COMPARE_ARGS)
+
+oracle-probe:
+	test -n "$$ARK_ORACLE_SAVE"
+	PATH="$(CURDIR)/.oracle/venv/bin:$$PATH" PYTHONPYCACHEPREFIX="$(PY_CACHE)" .oracle/venv/bin/python scripts/oracle_probe.py $(ORACLE_PROBE_ARGS)
 
 bench:
 	GOCACHE="$(GO_CACHE)" go test ./arkapi -run '^$$' -bench . -benchmem

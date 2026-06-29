@@ -61,8 +61,9 @@ depend on a system SQLite library.
 ## Provided-Data Go E2E
 
 Prefer expanding Go tests, examples, and E2E coverage for chosen offline
-features. Do not add Python oracle cases first unless an existing oracle check
-is the narrowest way to answer a specific parity question.
+features. Narrow, throwaway-style Python oracle probes are allowed only when
+they answer a specific blocked parity question and write detailed values under
+ignored `.oracle/output`.
 
 Run the Go-only provided-data smoke test with either a direct `.ark` path or a
 directory containing provided save files:
@@ -138,6 +139,21 @@ files under `.oracle/output`:
 ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-compare ORACLE_COMPARE_ARGS="--case dino_heatmap"
 ```
 
+Focused oracle probes are narrower than comparisons: they extract private
+aggregate evidence for one blocker without updating committed summaries or
+trying to improve the upstream Python project. Stdout contains only probe names,
+status, and detail metadata; private values are written to
+`.oracle/output/oracle-probe-*.json`.
+
+```sh
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-probe ORACLE_PROBE_ARGS="--probe equipment_rank"
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-probe ORACLE_PROBE_ARGS="--probe dino_cryopod_location"
+```
+
+Use probe output only to choose a concrete Go test or fixture-backed parity
+slice. Do not commit probe JSON, raw values, UUIDs, names, paths, or traceback
+details.
+
 Upstream fixed tests require non-public `tests/test_data` and are recorded as
 blocked in `docs/upstream-oracle-classification.md`. The upstream `testbench/`
 suite is the useful arbitrary-save oracle path for private `.ark` files.
@@ -150,7 +166,8 @@ Never commit:
 - raw save files or extracted save directories
 - private manifests with paths, hashes, object identifiers, player names, or
   tribe names
-- raw oracle output, snapshots, debug dumps, or generated private JSON/text logs
+- raw oracle output, probe output, snapshots, debug dumps, or generated private
+  JSON/text logs
 - mutation outputs created from private saves
 
 Committed oracle documentation must stay aggregate or sanitized. The safe

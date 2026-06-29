@@ -34,7 +34,8 @@ var ignoredEquipmentNameParts = []string{
 	"Hide",
 	"WeaponPike",
 	"WeaponGun",
-	"Cloth",
+	// Preserve the upstream example token exactly; the mixed-case typo is not a Cloth armor filter.
+	"CLoth",
 }
 
 type runOptions struct {

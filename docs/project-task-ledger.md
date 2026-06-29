@@ -290,9 +290,13 @@ documented.
   - [x] Include equipment item quantity and rating totals/averages in typed
         equipment summaries, the `equipment-summary` CLI command, and the
         idiomatic `equipment_summary` example output.
+  - [x] Add a focused oracle probe harness and use it to preserve the upstream
+        `equipment_rank` ignore token exactly, with a synthetic CLI regression
+        test proving cloth armor remains rankable.
   - [blocked] Exact equipment ranking count parity and full private comparison
-        for average-stat aggregates would require expanding the Python oracle
-        suite; Go fixtures cover `Ranked` and `BestAverageStat`.
+        for average-stat aggregates is narrowed to a small ranked-row/stat edge;
+        Go fixtures cover `Ranked`, `BestAverageStat`, and upstream-style
+        candidate filtering.
   - [blocked] Legacy/modded cryopod saddle payloads and cosmetics require
         concrete fixtures or failures.
   - [blocked] Remaining long-tail default armor/stat table parity should resume

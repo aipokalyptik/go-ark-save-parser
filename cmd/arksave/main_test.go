@@ -920,12 +920,12 @@ func TestEquipmentRankCommandPrintsRankStats(t *testing.T) {
 	}
 	got := out.String()
 	for _, want := range []string{
-		"Ranked: 2",
+		"Ranked: 3",
 		"Best rating: 5.5",
 		"Best average stat: 700.0",
 		"Crafted: 0",
 		"Blueprints: 1",
-		"Classes: 2",
+		"Classes: 3",
 		"Parse faults: 0",
 	} {
 		if !strings.Contains(got, want) {
@@ -3464,6 +3464,7 @@ func createSyntheticRankEquipmentSave(t *testing.T, path string) {
 			0x1000001b: "CrafterCharacterName",
 			0x10000040: "ItemStatValues",
 			0x10000041: "UInt16Property",
+			0x10000042: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Cloth/PrimalItemArmor_ClothShirt.PrimalItemArmor_ClothShirt_C'",
 			0x10000050: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Weapons/PrimalItem_WeaponSword.PrimalItem_WeaponSword_C'",
 			0x10000051: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Saddles/PrimalItemArmor_TurtleSaddle.PrimalItemArmor_TurtleSaddle_C'",
 		}),
@@ -3485,6 +3486,14 @@ func createSyntheticRankEquipmentSave(t *testing.T, path string) {
 				Stats: map[int32]uint16{
 					1: 800,
 					2: 600,
+				},
+			}),
+			uuid.MustParse("a0a1a2a3-a4a5-a6a7-a8a9-aaabacadaeaf"): testfixtures.EquipmentGameObjectBytes(testfixtures.EquipmentGameObjectOptions{
+				ClassID:  0x10000042,
+				Quantity: 1,
+				Rating:   4.5,
+				Stats: map[int32]uint16{
+					2: 300,
 				},
 			}),
 		},

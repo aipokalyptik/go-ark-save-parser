@@ -533,9 +533,10 @@ coverage broadly.
 - [x] Compare normalized Go `equipment_summary` aggregate output with upstream
       direct canonical weapon, armor, saddle, and shield class counts.
 - [x] Compare stable normalized Go `equipment_rank` aggregate fields with the
-      upstream high-rating non-crafted equipment ranking workflow; exact ranked
-      count parity and a full private average-stat aggregate comparison remain
-      open because the existing harness has no focused `equipment_rank` case.
+      upstream high-rating non-crafted equipment ranking workflow; a focused
+      oracle probe narrowed and fixed an upstream-token candidate-filter gap.
+      Exact ranked count parity and a full private average-stat aggregate
+      comparison remain open for a small ranked-row/stat edge.
 - [x] Add `equipment_export_from_save` as a read-only structural export for
       equipment item rows. Private oracle comparison for generated blueprint
       insertion remains mutation-copy-only and live-server-unverified.
