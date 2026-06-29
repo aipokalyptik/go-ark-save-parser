@@ -12,6 +12,7 @@ import (
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkproperty"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
+	"github.com/google/uuid"
 )
 
 func TestExportClusterDataSummarizesUploads(t *testing.T) {
@@ -150,6 +151,52 @@ func TestExportClusterDataIncludesTypedDinoStatusFields(t *testing.T) {
 	}
 	if info.Dinos[2].ParseStatus != "unparsed" || info.Dinos[2].ParsedArchive || !info.Dinos[2].SupportedVersion {
 		t.Fatalf("unparsed dino info = %#v", info.Dinos[2])
+	}
+}
+
+func TestExportClusterDataIncludesEmbeddedDinoIdentityAndStats(t *testing.T) {
+	dinoID := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	statusID := uuid.MustParse("11112222-3333-4444-5555-666677778888")
+	data := &arkcluster.Data{
+		ID: "EOS_abc123",
+		Dinos: []arkcluster.Dino{{
+			Index:   0,
+			Version: 7,
+			Archive: &arkarchive.Archive{Objects: []arkarchive.Object{
+				{
+					UUID:      dinoID,
+					ClassName: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+					Properties: []arkproperty.Property{
+						{Name: "DinoID1", Type: arkproperty.TypeUInt32, Value: uint32(1001)},
+						{Name: "DinoID2", Type: arkproperty.TypeUInt32, Value: uint32(2002)},
+						{Name: "TamedTimeStamp", Type: arkproperty.TypeDouble, Value: float64(42)},
+						{Name: "TamedName", Type: arkproperty.TypeString, Value: "Needle"},
+						{Name: "MyCharacterStatusComponent", Type: arkproperty.TypeObject, Value: arkproperty.ObjectReference{Type: arkproperty.ObjectReferenceUUID, Value: statusID}},
+					},
+				},
+				{
+					UUID:      statusID,
+					ClassName: "/Game/PrimalEarth/CoreBlueprints/DinoCharacterStatus_BP.DinoCharacterStatus_BP_C",
+					Properties: []arkproperty.Property{
+						{Name: "BaseCharacterLevel", Type: arkproperty.TypeInt, Value: int32(12)},
+						{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 0, Value: int32(5)},
+						{Name: "NumberOfLevelUpPointsApplied", Type: arkproperty.TypeInt, Position: 8, Value: int32(2)},
+					},
+				},
+			}},
+		}},
+	}
+
+	info := ExportClusterData(data)
+	if len(info.Dinos) != 1 {
+		t.Fatalf("Dinos length = %d, want 1", len(info.Dinos))
+	}
+	dino := info.Dinos[0]
+	if dino.DinoID1 != 1001 || dino.DinoID2 != 2002 || !dino.IsTamed || dino.TamedName != "Needle" {
+		t.Fatalf("exported embedded dino identity = %#v, want parsed ID/name/tamed fields", dino)
+	}
+	if !dino.HasStats || dino.BaseLevel != 12 || dino.CurrentLevel != 8 {
+		t.Fatalf("exported embedded dino stats = %#v, want base/current levels from status object", dino)
 	}
 }
 

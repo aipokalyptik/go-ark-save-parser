@@ -62,6 +62,16 @@ type ClusterDinoInfo struct {
 	ParseStatus                  string   `json:"parse_status"`
 	PrimaryClassName             string   `json:"primary_class_name,omitempty"`
 	ShortName                    string   `json:"short_name,omitempty"`
+	DinoID1                      uint32   `json:"dino_id1,omitempty"`
+	DinoID2                      uint32   `json:"dino_id2,omitempty"`
+	TamedName                    string   `json:"tamed_name,omitempty"`
+	IsTamed                      bool     `json:"is_tamed,omitempty"`
+	IsFemale                     bool     `json:"is_female,omitempty"`
+	IsBaby                       bool     `json:"is_baby,omitempty"`
+	IsDead                       bool     `json:"is_dead,omitempty"`
+	HasStats                     bool     `json:"has_stats,omitempty"`
+	BaseLevel                    int32    `json:"base_level,omitempty"`
+	CurrentLevel                 int32    `json:"current_level,omitempty"`
 	ClassNames                   []string `json:"class_names,omitempty"`
 	StatusComponentClassNames    []string `json:"status_component_class_names,omitempty"`
 	AIControllerClassNames       []string `json:"ai_controller_class_names,omitempty"`
@@ -119,6 +129,16 @@ func ExportClusterData(data *arkcluster.Data) ClusterDataInfo {
 			ParseStatus:                  typed.ParseStatus().String(),
 			PrimaryClassName:             typed.PrimaryClassName(),
 			ShortName:                    typed.ShortName(),
+			DinoID1:                      typed.DinoID1,
+			DinoID2:                      typed.DinoID2,
+			TamedName:                    typed.TamedName,
+			IsTamed:                      typed.IsTamed,
+			IsFemale:                     typed.IsFemale,
+			IsBaby:                       typed.IsBaby,
+			IsDead:                       typed.IsDead,
+			HasStats:                     typed.HasStats,
+			BaseLevel:                    typed.BaseLevel,
+			CurrentLevel:                 typed.CurrentLevel,
 			ClassNames:                   typed.ClassNames,
 			StatusComponentClassNames:    typed.StatusComponentClassNames,
 			AIControllerClassNames:       typed.AIControllerClassNames,

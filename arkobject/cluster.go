@@ -52,6 +52,16 @@ type ClusterDino struct {
 	StatusComponentClassNames    []string
 	AIControllerClassNames       []string
 	InventoryComponentClassNames []string
+	DinoID1                      uint32
+	DinoID2                      uint32
+	TamedName                    string
+	IsTamed                      bool
+	IsFemale                     bool
+	IsBaby                       bool
+	IsDead                       bool
+	HasStats                     bool
+	BaseLevel                    int32
+	CurrentLevel                 int32
 	ParseError                   string
 	Properties                   arkproperty.Container
 }
