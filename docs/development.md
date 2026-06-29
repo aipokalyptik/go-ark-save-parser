@@ -26,6 +26,9 @@ cache settings.
 The public GitHub Actions workflow runs the same `make verify` target on
 `main` pushes, pull requests, and manual dispatches. It does not require or
 access `.oracle/`, provided save backups, or any other private local data.
+Use the README badge or the
+[verify workflow](https://github.com/aipokalyptik/go-ark-save-parser/actions/workflows/verify.yml)
+to inspect the latest public status.
 
 Use benchmarks when changing parser or query paths:
 

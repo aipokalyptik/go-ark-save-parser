@@ -42,6 +42,9 @@ work around that blockage.
 - [x] `go test ./...`
 - [x] `make build`
 - [x] `make verify`
+- [x] Public GitHub Actions `verify` workflow runs `make verify` on `main`
+      pushes, pull requests, and manual dispatches; push run `28346094077`
+      passed on 2026-06-29.
 - [x] `go test ./examples/...`
 - [x] Public local-cluster fixture smoke for `arksave cluster`.
 - [x] Public local-cluster fixture smoke for `arksave export-cluster-json`.

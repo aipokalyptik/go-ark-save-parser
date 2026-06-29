@@ -1,5 +1,7 @@
 # go-ark-save-parser
 
+[![verify](https://github.com/aipokalyptik/go-ark-save-parser/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/aipokalyptik/go-ark-save-parser/actions/workflows/verify.yml)
+
 Offline Go port of
 [`ark-save-parser`](https://github.com/VincentHenauGithub/ark-save-parser) for
 reading Ark Survival Ascended save data from local files.
