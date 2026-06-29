@@ -256,6 +256,30 @@ func NewPlayerFromPath(path string, opts PlayerPathOptions) (*PlayerAPI, func() 
 	return api, save.Close, nil
 }
 
+func PlayersFromPath(path string, opts PlayerPathOptions) ([]arkobject.Player, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	players, faults, err := api.PlayersWithFaults()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return players, faults, err
+}
+
+func TribesFromPath(path string, opts PlayerPathOptions) ([]arkobject.Tribe, []arksave.FaultyObjectInfo, error) {
+	api, closeAPI, err := NewPlayerFromPath(path, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	tribes, faults, err := api.TribeDetailsWithFaults()
+	if closeErr := closeAPI(); err == nil && closeErr != nil {
+		err = closeErr
+	}
+	return tribes, faults, err
+}
+
 func noopPlayerClose() error {
 	return nil
 }

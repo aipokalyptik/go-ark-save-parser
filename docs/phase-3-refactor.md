@@ -192,8 +192,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [ ] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity. Full
-      typed dino, structure, equipment, stackable, base, and local cluster
-      collection path helpers now exist with fault preservation.
+      typed dino, structure, equipment, stackable, base, local cluster,
+      player, and tribe collection path helpers now exist with fault
+      preservation.
 - [x] Replace duplicated synthetic fixture builders in tests with internal test
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive

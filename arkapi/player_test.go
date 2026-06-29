@@ -734,6 +734,30 @@ func TestPlayerRosterSummaryFromPathUsesDirectoryProfiles(t *testing.T) {
 	}
 }
 
+func TestPlayersFromPathReturnsTypedPlayersAndFaults(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WritePlayerArchiveWithOptions(t, filepath.Join(dir, "123.arkprofile"), testfixtures.PlayerArchiveOptions{
+		PlayerDataID:        42,
+		CharacterName:       "Survivor",
+		PlayerName:          "PlatformName",
+		ExtraCharacterLevel: 9,
+	})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arkprofile"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken profile: %v", err)
+	}
+
+	players, faults, err := PlayersFromPath(dir, PlayerPathOptions{})
+	if err != nil {
+		t.Fatalf("PlayersFromPath() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 || players[0].Level != 10 || !players[0].HasName() {
+		t.Fatalf("PlayersFromPath() players = %#v, want typed local player", players)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("PlayersFromPath() faults = %#v, want one local profile fault", faults)
+	}
+}
+
 func TestPlayerAPIPlayerAllSummaryForData(t *testing.T) {
 	api := NewPlayer(nil)
 	players := []arkobject.Player{
@@ -1051,6 +1075,32 @@ func TestTribeRosterSummaryFromPathUsesDirectoryTribes(t *testing.T) {
 	want := TribeRosterSummary{Tribes: 2, WithNames: 1, Members: 3, Dinos: 10}
 	if summary != want {
 		t.Fatalf("TribeRosterSummaryFromPath() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestTribesFromPathReturnsTypedTribesAndFaults(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+	if err := os.WriteFile(filepath.Join(dir, "broken.arktribe"), []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write broken tribe: %v", err)
+	}
+
+	tribes, faults, err := TribesFromPath(dir, PlayerPathOptions{})
+	if err != nil {
+		t.Fatalf("TribesFromPath() error = %v", err)
+	}
+	if len(tribes) != 1 || tribes[0].TribeID != 12345 || tribes[0].Name != "Porters" || len(tribes[0].MemberIDs) != 2 {
+		t.Fatalf("TribesFromPath() tribes = %#v, want typed local tribe", tribes)
+	}
+	if len(faults) != 1 || faults[0].Err == nil {
+		t.Fatalf("TribesFromPath() faults = %#v, want one local tribe fault", faults)
 	}
 }
 
