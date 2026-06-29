@@ -42,8 +42,9 @@ Final Phase 4 verification on 2026-06-29:
 - `./bin/arksave --version`: prints build metadata from the static binary.
 - `.github/workflows/verify.yml`: runs `make verify` on public `main` pushes,
   pull requests, and manual dispatches without private oracle data. Public push
-  runs `28346094077` and `28346236879` passed on 2026-06-29 after the malformed
-  archive object count guard and public status docs were added.
+  runs `28346094077`, `28346236879`, `28346595359`, and `28346712289` passed on
+  2026-06-29 after the malformed archive object count guard, public status
+  docs, and acceptance audit were added.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
 - `make oracle-compare`: not completed as a full-suite run. The Make target now

@@ -837,7 +837,7 @@ without Python or private chat context.
 - [x] `make verify` passes.
 - [x] Public GitHub Actions runs `make verify` on `main` pushes, pull
       requests, and manual dispatches without private oracle data. Push run
-      `28346236879` passed on 2026-06-29.
+      `28346712289` passed on 2026-06-29.
 - [x] CLI and example smoke tests pass on synthetic fixtures.
 - [x] Static/local release binary builds with `CGO_ENABLED=0`.
 - [x] Static/local release binary exposes build metadata through
