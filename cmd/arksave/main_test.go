@@ -595,7 +595,7 @@ func TestStructureDemolishableCommandPrintsOwnerLocationSortedTable(t *testing.T
 	}
 	got := out.String()
 	for _, want := range []string{
-		"Computed offline demolish eligibility using LastEnterStasisTime",
+		"Computed offline demolish eligibility using LastInAllyRangeTimeSerialized with LastEnterStasisTime fallback",
 		"Structures: 5",
 		"Eligible: 2",
 		"Unknown timestamps: 1",
@@ -636,6 +636,9 @@ func TestStructureDemolishableCommandPrintsStableJSONAndGroupsBases(t *testing.T
 	}
 	if report.Structures[0].Owner.SortKey != "Alpha" || report.Structures[1].Owner.SortKey != "Alpha" || report.Structures[2].Owner.SortKey != "Beta" {
 		t.Fatalf("json structures not owner sorted: %#v", report.Structures)
+	}
+	if report.Structures[0].DecayReferenceSource != "last_in_ally_range_time_serialized" || report.Structures[2].DecayReferenceSource != "last_enter_stasis_time" {
+		t.Fatalf("json structures did not preserve decay clock sources: %#v", report.Structures)
 	}
 	if report.Bases[0].Owner.SortKey != "Alpha" || report.Bases[0].EligibleStructures != 2 || report.Bases[0].TotalStructures != 2 {
 		t.Fatalf("first grouped base = %#v, want Alpha base with two eligible structures", report.Bases[0])
@@ -3221,33 +3224,36 @@ func createSyntheticDemolishableStructureCommandSave(t *testing.T, path string) 
 		}),
 		Objects: map[uuid.UUID][]byte{
 			alphaOldID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
-				ClassID:              0x10000005,
-				NoneID:               0x10000002,
-				StructureIDNameID:    0x10000004,
-				StructureID:          101,
-				TribeID:              555,
-				OwnerName:            "Alpha",
-				LastEnterStasisTime:  1034.5,
-				LinkedStructureUUIDs: []uuid.UUID{alphaLinkedID},
+				ClassID:                       0x10000005,
+				NoneID:                        0x10000002,
+				StructureIDNameID:             0x10000004,
+				StructureID:                   101,
+				TribeID:                       555,
+				OwnerName:                     "Alpha",
+				LastEnterStasisTime:           1034.5,
+				LastInAllyRangeTimeSerialized: 1034.5,
+				LinkedStructureUUIDs:          []uuid.UUID{alphaLinkedID},
 			}),
 			alphaLinkedID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
-				ClassID:              0x10000005,
-				NoneID:               0x10000002,
-				StructureIDNameID:    0x10000004,
-				StructureID:          102,
-				TribeID:              555,
-				OwnerName:            "Alpha",
-				LastEnterStasisTime:  1080,
-				LinkedStructureUUIDs: []uuid.UUID{alphaOldID},
+				ClassID:                       0x10000005,
+				NoneID:                        0x10000002,
+				StructureIDNameID:             0x10000004,
+				StructureID:                   102,
+				TribeID:                       555,
+				OwnerName:                     "Alpha",
+				LastEnterStasisTime:           1080,
+				LastInAllyRangeTimeSerialized: 1080,
+				LinkedStructureUUIDs:          []uuid.UUID{alphaOldID},
 			}),
 			alphaFreshID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
-				ClassID:             0x10000005,
-				NoneID:              0x10000002,
-				StructureIDNameID:   0x10000004,
-				StructureID:         104,
-				TribeID:             555,
-				OwnerName:           "Alpha",
-				LastEnterStasisTime: 1200,
+				ClassID:                       0x10000005,
+				NoneID:                        0x10000002,
+				StructureIDNameID:             0x10000004,
+				StructureID:                   104,
+				TribeID:                       555,
+				OwnerName:                     "Alpha",
+				LastEnterStasisTime:           900,
+				LastInAllyRangeTimeSerialized: 1200,
 			}),
 			betaOldID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
 				ClassID:             0x10000060,

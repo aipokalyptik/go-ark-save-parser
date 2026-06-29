@@ -259,7 +259,8 @@ documented.
         the matching examples report skipped coordinate counts for invalid or
         out-of-range map cells.
   - [x] Add computed offline demolishable-structure reports using save
-        `GameTime`, structure `LastEnterStasisTime`, external decay settings,
+        `GameTime`, structure `LastInAllyRangeTimeSerialized` with
+        `LastEnterStasisTime` fallback, external decay settings,
         owner/location sorting, JSON output, redaction, and connected-base
         grouping.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream

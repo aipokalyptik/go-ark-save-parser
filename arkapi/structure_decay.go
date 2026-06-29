@@ -69,6 +69,8 @@ type StructureDemolishableRow struct {
 	Owner                 StructureDemolishableOwner `json:"owner"`
 	Location              *arkobject.MapCoords       `json:"location,omitempty"`
 	GameTime              float64                    `json:"game_time"`
+	DecayReferenceTime    float64                    `json:"decay_reference_time,omitempty"`
+	DecayReferenceSource  string                     `json:"decay_reference_source,omitempty"`
 	LastEnterStasisTime   float64                    `json:"last_enter_stasis_time,omitempty"`
 	ElapsedSeconds        float64                    `json:"elapsed_seconds,omitempty"`
 	DecayPeriodSeconds    float64                    `json:"decay_period_seconds"`
@@ -256,6 +258,8 @@ func structureDemolishableRow(id uuid.UUID, structure arkobject.Structure, mapNa
 		StructureID:           structure.ID,
 		Owner:                 structureDemolishableOwner(structure.Owner),
 		GameTime:              gameTime,
+		DecayReferenceTime:    structureDecayReferenceTime(structure),
+		DecayReferenceSource:  structureDecayReferenceSource(structure),
 		LastEnterStasisTime:   structure.LastEnterStasisTime,
 		DecayPeriodSeconds:    class.PeriodSeconds,
 		AdjustedPeriodSeconds: adjusted,
@@ -267,7 +271,7 @@ func structureDemolishableRow(id uuid.UUID, structure arkobject.Structure, mapNa
 		SavedWhenStasised:     structure.SavedWhenStasised,
 		WasPlacementSnapped:   structure.WasPlacementSnapped,
 		LastInAllyRangeTime:   structure.LastInAllyRangeTimeSerialized,
-		UnknownTimestamp:      structure.LastEnterStasisTime == 0,
+		UnknownTimestamp:      structureDecayReferenceTime(structure) == 0,
 	}
 	if structure.Location != nil {
 		coords := structure.Location.AsMapCoords(mapName)
@@ -276,10 +280,27 @@ func structureDemolishableRow(id uuid.UUID, structure arkobject.Structure, mapNa
 	if row.UnknownTimestamp {
 		return row
 	}
-	row.ElapsedSeconds = gameTime - structure.LastEnterStasisTime
+	row.ElapsedSeconds = gameTime - row.DecayReferenceTime
 	row.RemainingSeconds = math.Max(0, adjusted-row.ElapsedSeconds)
 	row.Eligible = row.ElapsedSeconds >= adjusted
 	return row
+}
+
+func structureDecayReferenceTime(structure arkobject.Structure) float64 {
+	if structure.LastInAllyRangeTimeSerialized != 0 {
+		return structure.LastInAllyRangeTimeSerialized
+	}
+	return structure.LastEnterStasisTime
+}
+
+func structureDecayReferenceSource(structure arkobject.Structure) string {
+	if structure.LastInAllyRangeTimeSerialized != 0 {
+		return "last_in_ally_range_time_serialized"
+	}
+	if structure.LastEnterStasisTime != 0 {
+		return "last_enter_stasis_time"
+	}
+	return ""
 }
 
 func structureDemolishableOwner(owner arkobject.ObjectOwner) StructureDemolishableOwner {

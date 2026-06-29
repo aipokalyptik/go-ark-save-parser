@@ -724,7 +724,7 @@ func structureDemolishable(args []string, out io.Writer, runOpts runOptions) err
 	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Computed offline demolish eligibility using LastEnterStasisTime\nStructures: %d\nEligible: %d\nUnknown timestamps: %d\nMultiplier: %.3f\nParse faults: %d\n",
+		"Computed offline demolish eligibility using LastInAllyRangeTimeSerialized with LastEnterStasisTime fallback\nStructures: %d\nEligible: %d\nUnknown timestamps: %d\nMultiplier: %.3f\nParse faults: %d\n",
 		report.Summary.TotalStructures,
 		report.Summary.EligibleStructures,
 		report.Summary.UnknownTimestampStructures,

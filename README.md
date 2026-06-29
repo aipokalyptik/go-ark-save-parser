@@ -207,11 +207,13 @@ Summarize structure health with a selected-property scan:
 
 `structure-demolishable` is an offline computed eligibility report, not a live
 server check. It uses the save `GameTime`, each structure's
-`LastEnterStasisTime`, built-in default decay periods, and
-`PvEStructureDecayPeriodMultiplier` from an optional `GameUserSettings.ini` or
-`--decay-multiplier`. Server/mod-specific decay rules can be supplied with
-`--decay-periods` JSON using `exact` and `substring` maps whose values are
-seconds.
+`LastInAllyRangeTimeSerialized` as the primary decay reset timestamp, falls
+back to `LastEnterStasisTime` when ally-range data is unavailable, and includes
+the chosen `decay_reference_time`/`decay_reference_source` in JSON output.
+Built-in default decay periods are adjusted by `PvEStructureDecayPeriodMultiplier`
+from an optional `GameUserSettings.ini` or `--decay-multiplier`.
+Server/mod-specific decay rules can be supplied with `--decay-periods` JSON
+using `exact` and `substring` maps whose values are seconds.
 
 Export save metadata and object classes to JSON:
 
