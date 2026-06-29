@@ -826,6 +826,9 @@ without Python or private chat context.
 - [x] Privacy rules and ignored paths documented.
 - [x] Opt-in CLI redaction documented and tested.
 - [x] Standalone Go examples added for implemented offline workflows.
+- [x] Public Go packages have package-level `doc.go` documentation, including
+      scope and safety notes for API, save, mutation, archive, profile,
+      cluster, tribute, object, property, binary, and logging packages.
 - [x] Verification commands documented.
 - [x] `go test ./...` passes.
 - [x] `make build` passes.
