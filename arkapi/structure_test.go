@@ -708,6 +708,9 @@ func TestStructureAPIHeatmapCountsStructureMapCells(t *testing.T) {
 	first := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
 	second := arkobject.MapCoords{Lat: 12.8, Long: 34.1}.AsActorTransform("Valguero")
 	third := arkobject.MapCoords{Lat: 70.2, Long: 10.9}.AsActorTransform("Valguero")
+	zeroBoundary := arkobject.MapCoords{Lat: 0, Long: 0}.AsActorTransform("Valguero")
+	resolutionBoundary := arkobject.MapCoords{Lat: 100, Long: 99.9}.AsActorTransform("Valguero")
+	negative := arkobject.MapCoords{Lat: -0.1, Long: 50}.AsActorTransform("Valguero")
 	owner := arkobject.ObjectOwner{TribeID: 555}
 	structures := map[uuid.UUID]arkobject.Structure{
 		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
@@ -728,9 +731,27 @@ func TestStructureAPIHeatmapCountsStructureMapCells(t *testing.T) {
 			Owner:     arkobject.ObjectOwner{TribeID: 777},
 			Location:  &third,
 		},
+		uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111"): {
+			ID:        104,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Foundation_Stone.PrimalStructure_Foundation_Stone_C'",
+			Owner:     owner,
+			Location:  &zeroBoundary,
+		},
+		uuid.MustParse("eeeeeeee-ffff-0000-1111-222222222222"): {
+			ID:        105,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Ceiling_Stone.PrimalStructure_Ceiling_Stone_C'",
+			Owner:     owner,
+			Location:  &resolutionBoundary,
+		},
+		uuid.MustParse("ffffffff-0000-1111-2222-333333333333"): {
+			ID:        106,
+			Blueprint: "Blueprint'/Game/Structures/Stone/PrimalStructure_Ramp_Stone.PrimalStructure_Ramp_Stone_C'",
+			Owner:     owner,
+			Location:  &negative,
+		},
 	}
 
-	heatmap, err := api.Heatmap("Valguero", 100, structures, nil, &owner, 2)
+	heatmap, err := api.Heatmap("Valguero", 100, structures, nil, &owner, 1)
 	if err != nil {
 		t.Fatalf("Heatmap() error = %v", err)
 	}
@@ -740,8 +761,14 @@ func TestStructureAPIHeatmapCountsStructureMapCells(t *testing.T) {
 	if heatmap[12][34] != 2 {
 		t.Fatalf("Heatmap()[12][34] = %d, want 2", heatmap[12][34])
 	}
+	if heatmap[0][0] != 1 {
+		t.Fatalf("Heatmap()[0][0] = %d, want zero-boundary structure included", heatmap[0][0])
+	}
 	if heatmap[70][10] != 0 {
 		t.Fatalf("Heatmap()[70][10] = %d, want owner-filtered and thresholded 0", heatmap[70][10])
+	}
+	if heatmap[99][99] != 0 || heatmap[50][50] != 0 {
+		t.Fatalf("Heatmap() leaked out-of-range structures into boundary cells: [99][99]=%d [50][50]=%d", heatmap[99][99], heatmap[50][50])
 	}
 }
 

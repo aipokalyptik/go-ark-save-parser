@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 )
 
@@ -28,6 +29,18 @@ func SummarizeHeatmap(heatmap [][]int, faults int) HeatmapSummary {
 		}
 	}
 	return summary
+}
+
+func heatmapCellFromCoords(lat float64, long float64, resolution int) (int, int, bool) {
+	if resolution <= 0 || math.IsNaN(lat) || math.IsNaN(long) || math.IsInf(lat, 0) || math.IsInf(long, 0) {
+		return 0, 0, false
+	}
+	x := int(math.Floor(lat))
+	y := int(math.Floor(long))
+	if x < 0 || x >= resolution || y < 0 || y >= resolution {
+		return 0, 0, false
+	}
+	return x, y, true
 }
 
 func DinoHeatmapSummaryFromPath(savePath string, opts DinoHeatmapOptions) (HeatmapSummary, error) {

@@ -232,7 +232,7 @@ documented.
         child/descendant UUID references.
   - [blocked] Full upstream/private `dino_pedigrees` oracle comparison remains
         blocked by malformed cryopod parsing before stable aggregate output.
-- [blocked] Finish full structure/base edge behavior:
+- [~] Finish full structure/base edge behavior:
   - [x] Add exact full-parse owner/location grouping through
         `StructureAPI.OwnerLocationsFullWithFaults` for fixture-sized parity
         checks while preserving selected-property `structure_owner_locations`
@@ -240,6 +240,10 @@ documented.
   - [x] `structure_owner_locations` reports skipped candidate counts for
         structures without usable owner or location data while preserving valid
         selected-property owner/location buckets.
+  - [x] Shared heatmap cell boundary semantics are covered with synthetic tests:
+        fractional coordinates floor into cells, zero-boundary cells are
+        included, resolution-exact/negative/NaN/Inf values are skipped, and
+        structure and dino heatmaps share the same resolver.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests
@@ -460,7 +464,8 @@ documented.
 - [x] `structure_owner_locations` stable multi-structure cells.
 - [x] `structure_at_location`.
 - [blocked] `structure_heatmap` oracle comparison: upstream out-of-range
-      heatmap indexing on supplied private save.
+      heatmap indexing on supplied private save. Go local boundary semantics
+      are synthetic-covered and shared by structure/dino heatmaps.
 - [x] `structure_export_from_save`: represented as an explicit-output
       structural export that writes copied raw structure rows and structure
       location JSON. Health/owner mutation, binary editing, and live-server

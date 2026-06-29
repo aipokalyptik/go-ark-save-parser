@@ -3,7 +3,6 @@ package arkapi
 import (
 	"errors"
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 
@@ -834,9 +833,8 @@ func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]ar
 			}
 		}
 		coords := dino.Location.AsMapCoords(mapName)
-		x := int(math.Floor(coords.Lat))
-		y := int(math.Floor(coords.Long))
-		if x < 0 || x >= resolution || y < 0 || y >= resolution {
+		x, y, ok := heatmapCellFromCoords(coords.Lat, coords.Long, resolution)
+		if !ok {
 			continue
 		}
 		heatmap[x][y]++

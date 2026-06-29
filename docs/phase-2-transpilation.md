@@ -385,6 +385,12 @@ coverage broadly.
 - [x] Add fast selected-property base component scanning for large saves; full
       structure parsing is too slow for private oracle comparison of connected
       base aggregates.
+- [x] Add shared heatmap cell boundary semantics for structure and dino
+      heatmaps, with synthetic coverage for floor-boundary, zero-boundary,
+      out-of-range, NaN, and infinity coordinates. Upstream/private
+      `structure_heatmap` numeric oracle parity remains blocked by supplied-save
+      out-of-range cell indexing, but Go local behavior is now explicit and
+      regression-tested.
 - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
       broken local archives do not hide other valid player or tribe records.
 - [x] Add fault-returning player roster, player-all, and tribe roster summaries

@@ -858,9 +858,8 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 			continue
 		}
 		coords := structure.Location.AsMapCoords(mapName)
-		x := int(math.Floor(coords.Lat))
-		y := int(math.Floor(coords.Long))
-		if x < 0 || x >= resolution || y < 0 || y >= resolution {
+		x, y, ok := heatmapCellFromCoords(coords.Lat, coords.Long, resolution)
+		if !ok {
 			continue
 		}
 		heatmap[x][y]++

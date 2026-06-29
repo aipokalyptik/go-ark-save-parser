@@ -2,6 +2,7 @@ package arkapi
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,38 @@ func TestSummarizeHeatmapCountsNonzeroCellsTotalsAndMax(t *testing.T) {
 	}
 	if summary != want {
 		t.Fatalf("SummarizeHeatmap() = %#v, want %#v", summary, want)
+	}
+}
+
+func TestHeatmapCellFromCoordsFloorsAndRejectsInvalidCells(t *testing.T) {
+	tests := []struct {
+		name       string
+		lat        float64
+		long       float64
+		resolution int
+		wantX      int
+		wantY      int
+		wantOK     bool
+	}{
+		{name: "floors fractional coordinates", lat: 12.9, long: 34.1, resolution: 100, wantX: 12, wantY: 34, wantOK: true},
+		{name: "includes zero boundary", lat: 0, long: 0, resolution: 100, wantX: 0, wantY: 0, wantOK: true},
+		{name: "rejects resolution exact latitude", lat: 100, long: 50, resolution: 100},
+		{name: "rejects resolution exact longitude", lat: 50, long: 100, resolution: 100},
+		{name: "rejects negative latitude", lat: -0.1, long: 50, resolution: 100},
+		{name: "rejects negative longitude", lat: 50, long: -0.1, resolution: 100},
+		{name: "rejects NaN latitude", lat: math.NaN(), long: 50, resolution: 100},
+		{name: "rejects NaN longitude", lat: 50, long: math.NaN(), resolution: 100},
+		{name: "rejects positive infinity", lat: math.Inf(1), long: 50, resolution: 100},
+		{name: "rejects negative infinity", lat: 50, long: math.Inf(-1), resolution: 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotX, gotY, gotOK := heatmapCellFromCoords(tt.lat, tt.long, tt.resolution)
+			if gotOK != tt.wantOK || gotX != tt.wantX || gotY != tt.wantY {
+				t.Fatalf("heatmapCellFromCoords(%v, %v, %d) = (%d, %d, %v), want (%d, %d, %v)", tt.lat, tt.long, tt.resolution, gotX, gotY, gotOK, tt.wantX, tt.wantY, tt.wantOK)
+			}
+		})
 	}
 }
 
