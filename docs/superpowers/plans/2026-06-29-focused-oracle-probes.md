@@ -72,7 +72,7 @@ make verify
 
 Expected: pass.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 Commit:
 
@@ -115,7 +115,7 @@ Extend `TestEquipmentRankCommandPrintsRankStats` so a synthetic cloth armor blue
 
 Change `ignoredEquipmentNameParts` in `cmd/arksave/main.go` from `Cloth` to the upstream example's exact `CLoth` token.
 
-- [ ] **Step 5: Verify and document**
+- [x] **Step 5: Verify and document**
 
 Run focused Go tests, `make verify`, update status docs, commit, push, and watch CI.
 
