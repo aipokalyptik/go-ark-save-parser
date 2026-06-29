@@ -1648,12 +1648,18 @@ func TestClusterSummaryCommandPrintsTypedAggregate(t *testing.T) {
 func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) {
 	var out bytes.Buffer
 	err := printClusterTypedSummaries(&out, arkapi.ClusterItemSummary{}, arkapi.ClusterDinoSummary{
-		WithDinoID:  2,
-		TamedDinos:  1,
-		FemaleDinos: 1,
-		BabyDinos:   1,
-		DeadDinos:   1,
-		WithStats:   1,
+		WithDinoID:          2,
+		TamedDinos:          1,
+		FemaleDinos:         1,
+		BabyDinos:           1,
+		DeadDinos:           1,
+		WithStats:           1,
+		TotalBaseLevel:      12,
+		AverageBaseLevel:    12,
+		MaxBaseLevel:        12,
+		TotalCurrentLevel:   6,
+		AverageCurrentLevel: 6,
+		MaxCurrentLevel:     6,
 	})
 	if err != nil {
 		t.Fatalf("printClusterTypedSummaries() error = %v", err)
@@ -1666,6 +1672,12 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 		"Baby dinos: 1",
 		"Dead dinos: 1",
 		"Dinos with stats: 1",
+		"Total base level: 12",
+		"Average base level: 12.00",
+		"Max base level: 12",
+		"Total current level: 6",
+		"Average current level: 6.00",
+		"Max current level: 6",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("cluster typed summary %q does not contain %q", got, want)
@@ -1675,13 +1687,16 @@ func TestPrintClusterTypedSummariesIncludesEmbeddedDinoAggregates(t *testing.T) 
 
 func TestClusterInfoDinoSummaryIncludesEmbeddedDinoAggregates(t *testing.T) {
 	summary := clusterInfoDinoSummary(arkapi.ClusterDataInfo{Dinos: []arkapi.ClusterDinoInfo{
-		{DinoID1: 1001, DinoID2: 2002, IsTamed: true, IsFemale: true, HasStats: true},
-		{DinoID1: 3003, DinoID2: 4004, IsBaby: true, IsDead: true},
+		{DinoID1: 1001, DinoID2: 2002, IsTamed: true, IsFemale: true, HasStats: true, BaseLevel: 12, CurrentLevel: 6},
+		{DinoID1: 3003, DinoID2: 4004, IsBaby: true, IsDead: true, HasStats: true, BaseLevel: 8, CurrentLevel: 4},
 		{},
 	}})
 
-	if summary.WithDinoID != 2 || summary.TamedDinos != 1 || summary.FemaleDinos != 1 || summary.BabyDinos != 1 || summary.DeadDinos != 1 || summary.WithStats != 1 {
+	if summary.WithDinoID != 2 || summary.TamedDinos != 1 || summary.FemaleDinos != 1 || summary.BabyDinos != 1 || summary.DeadDinos != 1 || summary.WithStats != 2 {
 		t.Fatalf("clusterInfoDinoSummary() identity/stat counts = %#v, want aggregate counts from exported cluster info", summary)
+	}
+	if summary.TotalBaseLevel != 20 || summary.MaxBaseLevel != 12 || summary.AverageBaseLevel != 10 || summary.TotalCurrentLevel != 10 || summary.MaxCurrentLevel != 6 || summary.AverageCurrentLevel != 5 {
+		t.Fatalf("clusterInfoDinoSummary() level aggregates = %#v, want aggregate levels from exported cluster info", summary)
 	}
 }
 

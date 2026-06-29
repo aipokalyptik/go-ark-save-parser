@@ -1536,7 +1536,7 @@ func clusterSummary(path string, out io.Writer, opts runOptions) error {
 func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, dinos arkapi.ClusterDinoSummary) error {
 	_, err := fmt.Fprintf(
 		out,
-		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
+		"Dino item uploads: %d\nEquipment item uploads: %d\nOther item uploads: %d\nSupported item uploads: %d\nUnsupported item uploads: %d\nCrafted item uploads: %d\nTotal item quantity: %d\nMax item rating: %.1f\nMax item quality: %d\nParsed dinos: %d\nDino parse errors: %d\nSupported dino uploads: %d\nUnsupported dino uploads: %d\nDinos with status component: %d\nDinos with AI controller: %d\nDinos with inventory component: %d\nDinos with IDs: %d\nTamed dinos: %d\nFemale dinos: %d\nBaby dinos: %d\nDead dinos: %d\nDinos with stats: %d\nTotal base level: %d\nAverage base level: %.2f\nMax base level: %d\nTotal current level: %d\nAverage current level: %.2f\nMax current level: %d\nEmbedded dino objects: %d\nMax embedded dino objects: %d\n",
 		items.DinoItems,
 		items.EquipmentItems,
 		items.OtherItems,
@@ -1559,6 +1559,12 @@ func printClusterTypedSummaries(out io.Writer, items arkapi.ClusterItemSummary, 
 		dinos.BabyDinos,
 		dinos.DeadDinos,
 		dinos.WithStats,
+		dinos.TotalBaseLevel,
+		dinos.AverageBaseLevel,
+		dinos.MaxBaseLevel,
+		dinos.TotalCurrentLevel,
+		dinos.AverageCurrentLevel,
+		dinos.MaxCurrentLevel,
 		dinos.TotalEmbeddedObjects,
 		dinos.MaxEmbeddedObjects,
 	)
@@ -1640,11 +1646,23 @@ func clusterInfoDinoSummary(info arkapi.ClusterDataInfo) arkapi.ClusterDinoSumma
 		}
 		if dino.HasStats {
 			summary.WithStats++
+			summary.TotalBaseLevel += int64(dino.BaseLevel)
+			if dino.BaseLevel > summary.MaxBaseLevel {
+				summary.MaxBaseLevel = dino.BaseLevel
+			}
+			summary.TotalCurrentLevel += int64(dino.CurrentLevel)
+			if dino.CurrentLevel > summary.MaxCurrentLevel {
+				summary.MaxCurrentLevel = dino.CurrentLevel
+			}
 		}
 		summary.TotalEmbeddedObjects += dino.ObjectCount
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {
 			summary.MaxEmbeddedObjects = dino.ObjectCount
 		}
+	}
+	if summary.WithStats > 0 {
+		summary.AverageBaseLevel = float64(summary.TotalBaseLevel) / float64(summary.WithStats)
+		summary.AverageCurrentLevel = float64(summary.TotalCurrentLevel) / float64(summary.WithStats)
 	}
 	return summary
 }

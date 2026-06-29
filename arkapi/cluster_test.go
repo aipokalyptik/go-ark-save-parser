@@ -234,6 +234,9 @@ func TestClusterAPISummarizesEmbeddedDinoIdentityAndStats(t *testing.T) {
 	if summary.WithDinoID != 2 || summary.TamedDinos != 1 || summary.FemaleDinos != 1 || summary.BabyDinos != 1 || summary.DeadDinos != 1 || summary.WithStats != 1 {
 		t.Fatalf("DinoSummary() identity/stat counts = %#v, want 2 IDs, 1 tamed/female/baby/dead/stats", summary)
 	}
+	if summary.TotalBaseLevel != 12 || summary.MaxBaseLevel != 12 || summary.AverageBaseLevel != 12 || summary.TotalCurrentLevel != 6 || summary.MaxCurrentLevel != 6 || summary.AverageCurrentLevel != 6 {
+		t.Fatalf("DinoSummary() level aggregates = %#v, want base/current level aggregates from embedded status", summary)
+	}
 }
 
 func writeClusterArchiveWithPayload(t *testing.T, path string, payload []byte) {
@@ -399,6 +402,9 @@ func TestClusterDirectorySummaryAggregatesEmbeddedDinoIdentityAndStats(t *testin
 	summary := ClusterDirectorySummary(entries)
 	if summary.DinoSummary.WithDinoID != 2 || summary.DinoSummary.TamedDinos != 1 || summary.DinoSummary.FemaleDinos != 1 || summary.DinoSummary.BabyDinos != 1 || summary.DinoSummary.DeadDinos != 1 || summary.DinoSummary.WithStats != 1 {
 		t.Fatalf("ClusterDirectorySummary() dino identity/stat summary = %#v, want aggregated embedded dino counts", summary.DinoSummary)
+	}
+	if summary.DinoSummary.TotalBaseLevel != 12 || summary.DinoSummary.MaxBaseLevel != 12 || summary.DinoSummary.AverageBaseLevel != 12 || summary.DinoSummary.TotalCurrentLevel != 6 || summary.DinoSummary.MaxCurrentLevel != 6 || summary.DinoSummary.AverageCurrentLevel != 6 {
+		t.Fatalf("ClusterDirectorySummary() level aggregates = %#v, want base/current level aggregates from embedded status", summary.DinoSummary)
 	}
 }
 

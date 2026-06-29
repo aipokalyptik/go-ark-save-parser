@@ -179,6 +179,9 @@ coverage broadly.
 - [x] Add local cluster uploaded item short names and uploaded dino
       primary/short class names to typed models, JSON exports, and CLI
       summaries.
+- [x] Add local cluster embedded uploaded-dino base/current level totals,
+      averages, and maxima to typed dino summaries, CLI output, and
+      JSON-derived directory aggregation.
 - [x] Add directory-level local cluster aggregate summaries for files, objects,
       items, dinos, parse errors, uploaded-item summaries, and uploaded-dino
       summaries in JSON and CLI output.

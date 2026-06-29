@@ -48,6 +48,12 @@ type ClusterDinoSummary struct {
 	BabyDinos               int
 	DeadDinos               int
 	WithStats               int
+	TotalBaseLevel          int64
+	MaxBaseLevel            int32
+	AverageBaseLevel        float64
+	TotalCurrentLevel       int64
+	MaxCurrentLevel         int32
+	AverageCurrentLevel     float64
 	TotalEmbeddedObjects    int
 	MaxEmbeddedObjects      int
 }
@@ -313,11 +319,23 @@ func (c *ClusterAPI) DinoSummary() ClusterDinoSummary {
 		}
 		if dino.HasStats {
 			summary.WithStats++
+			summary.TotalBaseLevel += int64(dino.BaseLevel)
+			if dino.BaseLevel > summary.MaxBaseLevel {
+				summary.MaxBaseLevel = dino.BaseLevel
+			}
+			summary.TotalCurrentLevel += int64(dino.CurrentLevel)
+			if dino.CurrentLevel > summary.MaxCurrentLevel {
+				summary.MaxCurrentLevel = dino.CurrentLevel
+			}
 		}
 		summary.TotalEmbeddedObjects += dino.ObjectCount
 		if dino.ObjectCount > summary.MaxEmbeddedObjects {
 			summary.MaxEmbeddedObjects = dino.ObjectCount
 		}
+	}
+	if summary.WithStats > 0 {
+		summary.AverageBaseLevel = float64(summary.TotalBaseLevel) / float64(summary.WithStats)
+		summary.AverageCurrentLevel = float64(summary.TotalCurrentLevel) / float64(summary.WithStats)
 	}
 	return summary
 }
@@ -386,8 +404,20 @@ func addClusterDinoSummary(total *ClusterDinoSummary, next ClusterDinoSummary) {
 	total.BabyDinos += next.BabyDinos
 	total.DeadDinos += next.DeadDinos
 	total.WithStats += next.WithStats
+	total.TotalBaseLevel += next.TotalBaseLevel
+	if next.MaxBaseLevel > total.MaxBaseLevel {
+		total.MaxBaseLevel = next.MaxBaseLevel
+	}
+	total.TotalCurrentLevel += next.TotalCurrentLevel
+	if next.MaxCurrentLevel > total.MaxCurrentLevel {
+		total.MaxCurrentLevel = next.MaxCurrentLevel
+	}
 	total.TotalEmbeddedObjects += next.TotalEmbeddedObjects
 	if next.MaxEmbeddedObjects > total.MaxEmbeddedObjects {
 		total.MaxEmbeddedObjects = next.MaxEmbeddedObjects
+	}
+	if total.WithStats > 0 {
+		total.AverageBaseLevel = float64(total.TotalBaseLevel) / float64(total.WithStats)
+		total.AverageCurrentLevel = float64(total.TotalCurrentLevel) / float64(total.WithStats)
 	}
 }
