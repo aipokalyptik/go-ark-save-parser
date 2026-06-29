@@ -331,6 +331,9 @@ coverage broadly.
       `ItemStatValues`, distinct from saved current durability percentage.
 - [x] Add generic equipment `CustomItemDatas` metadata for item rows,
       summaries, JSON export, and the `equipment_summary` example.
+- [x] Add equipment item quantity and rating totals/averages to typed
+      summaries, `equipment-summary` CLI output, and the `equipment_summary`
+      example.
 - [x] Add read-only Equipment API top-damage, top-durability, and ascendant
       weapon-blueprint helper flows for upstream equipment examples.
 - [x] Add equipment model helpers for crafted detection, implemented stat lists,

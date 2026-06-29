@@ -279,6 +279,9 @@ documented.
   - [x] Model generic equipment `CustomItemDatas` presence/count metadata,
         include it in equipment summaries, JSON export rows, and the
         `equipment_summary` example output.
+  - [x] Include equipment item quantity and rating totals/averages in typed
+        equipment summaries, the `equipment-summary` CLI command, and the
+        idiomatic `equipment_summary` example output.
   - [blocked] Exact equipment ranking count parity and full private comparison
         for average-stat aggregates would require expanding the Python oracle
         suite; Go fixtures cover `Ranked` and `BestAverageStat`.

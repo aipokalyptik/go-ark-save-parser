@@ -219,7 +219,7 @@ func TestExamplesRunAgainstLocalSyntheticFixtures(t *testing.T) {
 	runExample(t, "dino_heatmap", "cells=0 total=0 max=0 faults=0 wrote=", "--no-cryos", savePath, dinoHeatmapPath)
 	runExample(t, "stackable_count", "items=1 total=250", savePath, resourceBlueprint)
 	runExample(t, "stackable_owned_by", "tribe_id=555 items=0 total=0", savePath, resourceBlueprint, "555")
-	runExample(t, "equipment_summary", "items=1 weapons=1 armor=0 saddles=0 cryopod_saddles=0 shields=0 with_custom_data=0 custom_data_entries=0", savePath)
+	runExample(t, "equipment_summary", "items=1 total_quantity=1 avg_quantity=1.00 total_rating=1.00 avg_rating=1.00 weapons=1 armor=0 saddles=0 cryopod_saddles=0 shields=0 with_custom_data=0 custom_data_entries=0", savePath)
 	runExample(t, "equipment_best", "weapon_damage=0.0 weapon=WeaponBow weapon_crafted=false\narmor=no_match", savePath)
 	runExample(t, "equipment_rank", "ranked=0 best_rating=0.0 best_average_stat=0.0 crafted=0 blueprints=0 classes=0", savePath)
 	runExample(t, "equipment_ascendant_weapon_bps", "items=0 max_damage=0.0", savePath)

@@ -899,9 +899,10 @@ func equipmentSummary(path string, out io.Writer) error {
 	}
 	_, err = fmt.Fprintf(
 		out,
-		"Items: %d\nTotal quantity: %d\nWeapon items: %d\nArmor items: %d\nSaddle items: %d\nShield items: %d\nBlueprints: %d\nEquipped: %d\nCrafted: %d\nWith custom data: %d\nCustom data entries: %d\nClasses: %d\nMax quality: %d\nMax rating: %.1f\nMax damage: %.1f\nMax armor: %.1f\nMax durability: %.1f\nParse faults: %d\n",
+		"Items: %d\nTotal quantity: %d\nAverage quantity: %.2f\nWeapon items: %d\nArmor items: %d\nSaddle items: %d\nShield items: %d\nBlueprints: %d\nEquipped: %d\nCrafted: %d\nWith custom data: %d\nCustom data entries: %d\nClasses: %d\nMax quality: %d\nTotal rating: %.2f\nAverage rating: %.2f\nMax rating: %.1f\nMax damage: %.1f\nMax armor: %.1f\nMax durability: %.1f\nParse faults: %d\n",
 		summary.Items,
 		summary.TotalQuantity,
+		summary.AverageQuantity,
 		summary.ByKind[arkobject.EquipmentWeapon],
 		summary.ByKind[arkobject.EquipmentArmor],
 		summary.ByKind[arkobject.EquipmentSaddle],
@@ -913,6 +914,8 @@ func equipmentSummary(path string, out io.Writer) error {
 		summary.CustomDataEntries,
 		summary.Classes,
 		summary.MaxQuality,
+		summary.TotalRating,
+		summary.AverageRating,
 		summary.MaxRating,
 		summary.MaxDamage,
 		summary.MaxArmor,

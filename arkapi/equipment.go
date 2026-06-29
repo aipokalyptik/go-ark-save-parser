@@ -52,6 +52,7 @@ type EquipmentBestSummary struct {
 type EquipmentSummary struct {
 	Items                int
 	TotalQuantity        int32
+	AverageQuantity      float64
 	ByKind               map[arkobject.EquipmentKind]int
 	CryopodSaddles       int
 	Blueprints           int
@@ -61,6 +62,8 @@ type EquipmentSummary struct {
 	CustomDataEntries    int
 	Classes              int
 	MaxQuality           int32
+	TotalRating          float64
+	AverageRating        float64
 	MaxRating            float64
 	MaxDamage            float64
 	MaxArmor             float64
@@ -679,6 +682,7 @@ func (e *EquipmentAPI) Summary(items map[uuid.UUID]arkobject.EquipmentItem) Equi
 	for _, item := range items {
 		summary.Items++
 		summary.TotalQuantity += item.Quantity
+		summary.TotalRating += item.Rating
 		summary.ByKind[item.Kind]++
 		if item.IsBlueprint {
 			summary.Blueprints++
@@ -716,7 +720,16 @@ func (e *EquipmentAPI) Summary(items map[uuid.UUID]arkobject.EquipmentItem) Equi
 		}
 	}
 	summary.Classes = len(classes)
+	finalizeEquipmentSummary(&summary)
 	return summary
+}
+
+func finalizeEquipmentSummary(summary *EquipmentSummary) {
+	if summary == nil || summary.Items == 0 {
+		return
+	}
+	summary.AverageQuantity = float64(summary.TotalQuantity) / float64(summary.Items)
+	summary.AverageRating = summary.TotalRating / float64(summary.Items)
 }
 
 func (e *EquipmentAPI) SummaryWithFaults(opts EquipmentFilterOptions) (EquipmentSummary, []arksave.FaultyObjectInfo, error) {
@@ -750,6 +763,7 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 	cryopodSummary := e.Summary(filteredCryopodSaddles)
 	summary.Items += cryopodSummary.Items
 	summary.TotalQuantity += cryopodSummary.TotalQuantity
+	summary.TotalRating += cryopodSummary.TotalRating
 	for kind, count := range cryopodSummary.ByKind {
 		summary.ByKind[kind] += count
 	}
@@ -789,6 +803,7 @@ func (e *EquipmentAPI) SummaryIncludingCryopodSaddlesWithFaults(opts EquipmentFi
 		}
 	}
 	summary.Classes = len(directClasses)
+	finalizeEquipmentSummary(&summary)
 	faults = append(faults, cryopodFaults...)
 	return summary, faults, nil
 }

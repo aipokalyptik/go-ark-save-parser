@@ -1049,6 +1049,12 @@ func TestEquipmentAPISummaryAggregatesInventoryState(t *testing.T) {
 	if summary.Items != 3 || summary.TotalQuantity != 7 {
 		t.Fatalf("Summary() counts = %#v, want 3 items and quantity 7", summary)
 	}
+	if summary.AverageQuantity != float64(7)/3 {
+		t.Fatalf("Summary() AverageQuantity = %f, want 7/3", summary.AverageQuantity)
+	}
+	if summary.TotalRating != 12.2 || summary.AverageRating != 12.2/3 {
+		t.Fatalf("Summary() rating aggregates = %#v, want total 12.2 average 12.2/3", summary)
+	}
 	if summary.ByKind[arkobject.EquipmentWeapon] != 1 || summary.ByKind[arkobject.EquipmentSaddle] != 1 || summary.ByKind[arkobject.EquipmentArmor] != 1 {
 		t.Fatalf("Summary() ByKind = %#v, want one weapon, saddle, and armor", summary.ByKind)
 	}
