@@ -1,6 +1,7 @@
 GO_CACHE ?= $(CURDIR)/.cache/go-build
 GO_MOD_CACHE ?= $(CURDIR)/.cache/go-mod
 PY_CACHE ?= $(CURDIR)/.cache/pycache
+ORACLE_COMPARE_ARGS ?=
 
 .PHONY: test verify e2e-test oracle-test oracle-compare bench build
 
@@ -23,7 +24,7 @@ oracle-test:
 
 oracle-compare:
 	test -n "$$ARK_ORACLE_SAVE"
-	.oracle/venv/bin/python scripts/oracle_compare.py
+	PATH="$(CURDIR)/.oracle/venv/bin:$$PATH" .oracle/venv/bin/python scripts/oracle_compare.py $(ORACLE_COMPARE_ARGS)
 
 bench:
 	GOCACHE="$(GO_CACHE)" go test ./arkapi -run '^$$' -bench . -benchmem

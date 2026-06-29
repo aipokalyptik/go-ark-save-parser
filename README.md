@@ -321,7 +321,7 @@ Run a focused private oracle comparison without overwriting the committed
 aggregate summary:
 
 ```sh
-ARK_ORACLE_SAVE=/absolute/path/to/save.ark .oracle/venv/bin/python scripts/oracle_compare.py --case dino_heatmap
+ARK_ORACLE_SAVE=/absolute/path/to/save.ark make oracle-compare ORACLE_COMPARE_ARGS="--case dino_heatmap"
 ```
 
 Run standalone Go examples:

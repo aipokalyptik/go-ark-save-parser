@@ -11,9 +11,10 @@ For the cross-phase monitorable checklist, see
 Phase 4 is closed for documentation, Go verification, provided-data smoke
 checks, CLI smoke, and production-readiness review. Phase 1, Phase 2, and Phase
 3 are closed for the selected offline, fixture-backed scope. The only remaining
-Phase 4 blocker is the selected oracle comparison rerun, which hit an upstream
-Python malformed-cryopod/logger subprocess path in this environment. Do not
-reopen Python oracle expansion to work around that blockage.
+Phase 4 blocker is the selected oracle comparison full-suite rerun, which now
+gets the oracle venv on `PATH` but still exceeds the practical interactive run
+window in upstream structure parsing. Do not reopen Python oracle expansion to
+work around that blockage.
 
 ## Documentation Tasks
 
@@ -64,12 +65,14 @@ reopen Python oracle expansion to work around that blockage.
       aggregates, dino domain JSON aggregate counts,
       structure owner and map-coordinate/connected counts, local cluster JSON
       aggregate counts, local tribute aggregate counts, and tribute JSON
-      aggregate counts. The 2026-06-29 rerun did not complete: upstream Python
-      entered a malformed legacy cryopod parse path and tried to spawn
-      `python` from its logger/hex-view helper; this environment only exposed
-      the Python 3.13 executable used for the venv command path. This is
-      recorded as an oracle-environment/upstream-path blockage, not a Go
-      mismatch.
+      aggregate counts. The 2026-06-29 rerun did not complete as a full-suite
+      run: the Make target now gives upstream subprocesses access to the oracle
+      venv `python`, and a subsequent rerun progressed past the previous
+      malformed-cryopod/logger failure before being interrupted while CPU-bound
+      in upstream structure parsing. This is recorded as a full-suite runtime
+      blockage, not a Go mismatch. A focused selected-case rerun through
+      `make oracle-compare ORACLE_COMPARE_ARGS="--case tribe_list"` passed with
+      the private provided save.
 - [x] Expanding private oracle comparison coverage to every runnable upstream
       Python example is intentionally out of scope; use existing oracle evidence
       only when it helps selected-feature Go parity.

@@ -20,9 +20,9 @@ the selected offline parity scope, Phase 2 is closed with documented blockers
 for the selected offline, fixture-backed scope, and Phase 3 is complete for the
 selected offline, fixture-backed scope. Phase 4 is closed for documentation,
 verification, provided-data checks, and production-readiness review work, with
-the selected-feature oracle comparison rerun blocked by an upstream
-Python/environment path. Status docs may still be updated with implementation
-commits so progress stays auditable.
+the selected-feature oracle comparison full-suite rerun blocked by upstream
+runtime cost in the supplied private save. Status docs may still be updated
+with implementation commits so progress stays auditable.
 
 ## Scope Rules
 
@@ -110,7 +110,7 @@ commits so progress stays auditable.
 | P4-VERIFY-002 | `[x]` | CLI static/local binary builds. | `make verify` ran `CGO_ENABLED=0 go build -o bin/arksave ./cmd/arksave` successfully on 2026-06-29. |
 | P4-VERIFY-003 | `[x]` | CLI and example smoke tests pass on synthetic fixtures. | `make verify`, `go test ./examples/... -count=1`, and the built-in CLI usage smoke passed on 2026-06-29. |
 | P4-VERIFY-004 | `[x]` | Go-only provided-data E2E smoke test is available. | `make e2e-test` passed on 2026-06-29 with `ARK_E2E_SAVE` set to the private provided `.ark` save by absolute ignored path. |
-| P4-VERIFY-005 | `[blocked]` | Oracle comparison suite is rerunnable for selected implemented features. | Existing committed summary remains reference evidence. The 2026-06-29 rerun did not complete because upstream Python entered a malformed legacy cryopod path and tried to spawn `python` from its logger/hex-view helper; no Go mismatch was produced before interruption. Expanding Python/oracle coverage remains out of scope. |
+| P4-VERIFY-005 | `[blocked]` | Oracle comparison suite is rerunnable for selected implemented features. | Existing committed summary remains reference evidence. The Make target now gives upstream subprocesses access to the oracle venv `python`, and a focused `tribe_list` rerun passed through `make oracle-compare ORACLE_COMPARE_ARGS="--case tribe_list"` with the private provided save. The 2026-06-29 full-suite rerun progressed past the previous malformed-cryopod/logger failure before being interrupted while CPU-bound in upstream structure parsing. Expanding Python/oracle coverage remains out of scope. |
 | P4-REVIEW-001 | `[x]` | Final production-readiness review. | [`production-readiness-review.md`](production-readiness-review.md) refreshed on 2026-06-29 with verification evidence and residual limitations. |
 
 ## Ledger Detail Map

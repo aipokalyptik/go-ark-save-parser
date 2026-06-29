@@ -121,7 +121,7 @@ rerunning every upstream example comparison. Focused output defaults to ignored
 files under `.oracle/output`:
 
 ```sh
-ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark .oracle/venv/bin/python scripts/oracle_compare.py --case dino_heatmap
+ARK_ORACLE_SAVE=/absolute/path/to/private/save.ark make oracle-compare ORACLE_COMPARE_ARGS="--case dino_heatmap"
 ```
 
 Upstream fixed tests require non-public `tests/test_data` and are recorded as

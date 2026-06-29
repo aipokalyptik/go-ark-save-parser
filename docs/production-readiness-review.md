@@ -39,13 +39,15 @@ Final Phase 4 verification on 2026-06-29:
 - `./bin/arksave --help`: prints usage successfully.
 - `git ls-remote --heads origin main`: confirmed the public `main` branch is
   present on GitHub.
-- `make oracle-compare`: not completed in this run. The existing selected-case
-  harness entered an upstream malformed legacy cryopod parse path and upstream
-  logging attempted to spawn `python` for its hex-view helper. The active
-  command path used Python 3.13 through the oracle venv, but no `python`
-  executable was available for that upstream subprocess name. This is recorded
-  as an oracle-environment/upstream-path blockage; no Go mismatch was produced
-  by this run.
+- `make oracle-compare`: not completed as a full-suite run. The Make target now
+  puts `.oracle/venv/bin` on `PATH` so upstream logger subprocesses can resolve
+  `python` from the oracle venv. A subsequent full-suite rerun progressed past
+  the previous malformed-cryopod/logger subprocess failure and was interrupted
+  later while CPU-bound in upstream `StructureApi.get_all`. This is recorded as
+  a full-suite runtime blockage, not a Go mismatch.
+- `make oracle-compare ORACLE_COMPARE_ARGS="--case tribe_list"`: passed with
+  the private provided save, proving focused selected-case reruns work through
+  the documented Make target.
 
 ## Parity Evidence
 

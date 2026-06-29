@@ -23,7 +23,7 @@ Status markers:
 | Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | Phase 2: Literal Go Transpilation | `[x]` Closed with documented blockers | Offline Go behavior mirrors runnable upstream behavior closely enough for selected oracle-derived tests/examples to pass or have documented blockers. | Remaining items are fixture-gated, upstream-blocked, intentionally outside Python-oracle expansion, or live-server-unverified mutation work. |
 | Phase 3: Idiomatic Go Refactor | `[x]` Complete | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Phase 3 is closed; keep future changes in Phase 4 unless a verified regression reopens Phase 3. |
-| Phase 4: Documentation And Production Readiness | `[~]` Closed except blocked oracle rerun | Another engineer can build, test, run, and extend the project without Python/private context. | Go verification, provided-data E2E, CLI smoke, and final review are complete; the selected oracle comparison rerun is blocked by an upstream Python malformed-cryopod/logger subprocess path in this environment. |
+| Phase 4: Documentation And Production Readiness | `[~]` Closed except blocked oracle rerun | Another engineer can build, test, run, and extend the project without Python/private context. | Go verification, provided-data E2E, CLI smoke, and final review are complete; the selected oracle comparison full-suite rerun is blocked by upstream runtime cost in the supplied private save. |
 
 ## Execution Mode
 
@@ -38,7 +38,7 @@ Work is phase-gated from this point forward:
   failing test or provided-data failure exposes a concrete offline parser/API
   parity defect.
 - Phase 3 is closed after the typed API, fixture, package, performance, CLI, and regression rows were completed.
-- Phase 4 is closed for documentation, release-build, smoke, provided-data, and production-readiness review work. The selected oracle comparison rerun remains blocked by an upstream Python malformed-cryopod/logger subprocess path in this environment; do not expand Python oracle coverage to work around it.
+- Phase 4 is closed for documentation, release-build, smoke, provided-data, and production-readiness review work. The selected oracle comparison full-suite rerun remains blocked by upstream runtime cost in the supplied private save; do not expand Python oracle coverage to work around it.
 - Status docs may still be updated in the same commit as implementation work so
   the repository remains monitorable.
 
@@ -856,10 +856,13 @@ without Python or private chat context.
       examples when `ARK_E2E_CLUSTER` or `ARK_E2E_CLUSTER_DIR` is configured.
 - [blocked] Private oracle comparison suite exists and currently records
       forty-six passing sanitized comparison cases for selected implemented
-      features. The 2026-06-29 rerun did not complete because upstream Python
-      entered a malformed legacy cryopod path and tried to spawn `python` from
-      its logger/hex-view helper; no Go mismatch was produced before
-      interruption.
+      features. The Make target now gives upstream subprocesses access to the
+      oracle venv `python`, and the 2026-06-29 rerun progressed past the
+      previous malformed-cryopod/logger failure before being interrupted while
+      CPU-bound in upstream structure parsing; no Go mismatch was produced
+      before interruption. A focused `tribe_list` rerun passed through
+      `make oracle-compare ORACLE_COMPARE_ARGS="--case tribe_list"` with the
+      private provided save.
 - [x] Expanding the private oracle comparison suite to every runnable upstream
       Python example is intentionally out of scope.
 - [x] Final production-readiness review after Phase 4 docs, release build,
@@ -879,9 +882,9 @@ make verify
 
 ```sh
 ARK_ORACLE_SAVE="/path/to/private/save.ark" \
-  .oracle/venv/bin/python scripts/oracle_compare.py
+  make oracle-compare
 ```
 
 The full private oracle comparison can be slow. Focused cases can be run with
-`scripts/oracle_compare.py --case <case>`, where the supported focused cases
-are listed by the script argument parser.
+`make oracle-compare ORACLE_COMPARE_ARGS="--case <case>"`, where the supported
+focused cases are listed by the script argument parser.
