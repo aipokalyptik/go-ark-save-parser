@@ -165,10 +165,16 @@ documented.
 - [blocked] Port remaining compound payload encodings discovered by future
       oracle failures; currently no open Phase 2 failure exposes a concrete
       unported encoding.
-- [blocked] Port legacy property/object parsing where a runnable local oracle
-      path exists. Upstream uses separate legacy binary/property parsers for
-      pre-Unreal-5.5 archives and legacy cryopod payloads; the Go port reports
-      typed unsupported legacy errors until a fixture proves exact behavior.
+- [~] Port legacy property/object parsing where a runnable local oracle path
+      exists:
+  - [x] Parse synthetic legacy archive version/object/class metadata into a
+        typed `LegacyArchiveError` while preserving
+        `errors.Is(err, ErrLegacyArchiveUnsupported)`.
+  - [x] Preserve valid local profile and cluster directory files while
+        reporting legacy neighbors as typed file faults with legacy metadata.
+  - [blocked] Full legacy object/property parsing remains blocked until a
+        committed fixture or private runnable oracle case proves exact behavior
+        for pre-Unreal-5.5 archives or legacy cryopod payloads.
 
 ### Object Model
 

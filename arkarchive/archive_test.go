@@ -71,9 +71,55 @@ func TestParseArchiveRejectsLegacyFormatWhenObjectsRequested(t *testing.T) {
 	testfixtures.WriteInt32(&buf, 6)
 	testfixtures.WriteInt32(&buf, 0)
 
-	_, err := Parse(buf.Bytes(), Options{Format: FormatAuto})
+	archive, err := Parse(buf.Bytes(), Options{Format: FormatAuto})
 	if !errors.Is(err, ErrLegacyArchiveUnsupported) {
 		t.Fatalf("Parse() error = %v, want ErrLegacyArchiveUnsupported", err)
+	}
+	if archive == nil || !archive.Legacy || archive.Version != 6 {
+		t.Fatalf("Parse() archive = %#v, want partial legacy archive metadata", archive)
+	}
+}
+
+func TestParseArchiveReturnsLegacyMetadataBeforeUnsupportedProperties(t *testing.T) {
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var buf bytes.Buffer
+	testfixtures.WriteInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 11)
+	testfixtures.WriteInt32(&buf, 22)
+	testfixtures.WriteInt32(&buf, 1)
+	buf.Write(id[:])
+	testfixtures.WriteArkString(&buf, "/Script/ShooterGame.PrimalLocalProfile")
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteStringArray(&buf, []string{"Profile_0"})
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, -1)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 128)
+	testfixtures.WriteUInt32(&buf, 0)
+
+	archive, err := Parse(buf.Bytes(), Options{Format: FormatAuto})
+	if !errors.Is(err, ErrLegacyArchiveUnsupported) {
+		t.Fatalf("Parse() error = %v, want ErrLegacyArchiveUnsupported", err)
+	}
+	var legacyErr *LegacyArchiveError
+	if !errors.As(err, &legacyErr) {
+		t.Fatalf("Parse() error = %T %[1]v, want LegacyArchiveError", err)
+	}
+	if legacyErr.Version != 6 || legacyErr.ObjectCount != 1 {
+		t.Fatalf("LegacyArchiveError = %#v, want version 6 object count 1", legacyErr)
+	}
+	if len(legacyErr.ClassNames) != 1 || legacyErr.ClassNames[0] != "/Script/ShooterGame.PrimalLocalProfile" {
+		t.Fatalf("LegacyArchiveError class names = %#v, want profile class", legacyErr.ClassNames)
+	}
+	if archive == nil || !archive.Legacy || archive.Version != 6 || len(archive.Objects) != 1 {
+		t.Fatalf("Parse() archive = %#v, want partial legacy object metadata", archive)
+	}
+	object := archive.Objects[0]
+	if object.UUID != id || object.ClassName != "/Script/ShooterGame.PrimalLocalProfile" || object.PropertiesOffset != 128 {
+		t.Fatalf("legacy object = %#v, want parsed metadata for %s", object, id)
+	}
+	if len(object.Properties) != 0 || object.PropertyError != nil {
+		t.Fatalf("legacy object properties = %#v error=%v, want metadata-only parse", object.Properties, object.PropertyError)
 	}
 }
 

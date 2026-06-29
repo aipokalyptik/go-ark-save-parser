@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/safefile"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
+	"github.com/google/uuid"
 )
 
 func TestDiscoverFindsLocalClusterFilesOnly(t *testing.T) {
@@ -94,6 +96,34 @@ func TestOpenDirectoryWithFaultsKeepsValidClusterFiles(t *testing.T) {
 	}
 }
 
+func TestOpenDirectoryWithFaultsReportsLegacyClusterMetadata(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "EOS_valid")
+	legacyPath := filepath.Join(dir, "EOS_legacy")
+	testfixtures.WriteArchive(t, validPath, "/Script/ShooterGame.ArkCloudInventoryData")
+	if err := os.WriteFile(legacyPath, syntheticClusterLegacyArchiveBytes(t), 0o600); err != nil {
+		t.Fatalf("write legacy cluster file: %v", err)
+	}
+
+	entries, faults, err := OpenDirectoryWithFaults(dir)
+	if err != nil {
+		t.Fatalf("OpenDirectoryWithFaults() error = %v", err)
+	}
+	if len(entries) != 1 || entries[0].ID != "EOS_valid" {
+		t.Fatalf("OpenDirectoryWithFaults() entries = %#v, want valid cluster only", entries)
+	}
+	if len(faults) != 1 || faults[0].Path != legacyPath {
+		t.Fatalf("OpenDirectoryWithFaults() faults = %#v, want legacy path fault", faults)
+	}
+	var legacyErr *arkarchive.LegacyArchiveError
+	if !errors.As(faults[0].Err, &legacyErr) {
+		t.Fatalf("OpenDirectoryWithFaults() fault error = %T %[1]v, want LegacyArchiveError", faults[0].Err)
+	}
+	if legacyErr.Version != 6 || legacyErr.ObjectCount != 1 || len(legacyErr.ClassNames) != 1 || legacyErr.ClassNames[0] != "/Script/ShooterGame.ArkCloudInventoryData" {
+		t.Fatalf("LegacyArchiveError = %#v, want cluster metadata", legacyErr)
+	}
+}
+
 func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "EOS_abc123")
 	var item bytes.Buffer
@@ -140,6 +170,27 @@ func TestOpenParsesLocalClusterItemsFromMyArkData(t *testing.T) {
 	if itemData.CrafterCharacterName != "Survivor" || itemData.CrafterTribeName != "Porters" {
 		t.Fatalf("Item crafter = %q/%q, want Survivor/Porters", itemData.CrafterCharacterName, itemData.CrafterTribeName)
 	}
+}
+
+func syntheticClusterLegacyArchiveBytes(t *testing.T) []byte {
+	t.Helper()
+
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var buf bytes.Buffer
+	testfixtures.WriteInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 11)
+	testfixtures.WriteInt32(&buf, 22)
+	testfixtures.WriteInt32(&buf, 1)
+	buf.Write(id[:])
+	testfixtures.WriteArkString(&buf, "/Script/ShooterGame.ArkCloudInventoryData")
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteStringArray(&buf, []string{"Legacy_0"})
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, -1)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 128)
+	testfixtures.WriteUInt32(&buf, 0)
+	return buf.Bytes()
 }
 
 func TestOpenRecordsLocalClusterDinoArchiveParseErrors(t *testing.T) {

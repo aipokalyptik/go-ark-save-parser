@@ -36,6 +36,34 @@ type Archive struct {
 	Objects []Object
 }
 
+type LegacyArchiveError struct {
+	Version     int32
+	ObjectCount int
+	ClassNames  []string
+	Err         error
+}
+
+func (e *LegacyArchiveError) Error() string {
+	if e == nil {
+		return ErrLegacyArchiveUnsupported.Error()
+	}
+	if e.Err != nil && !errors.Is(e.Err, ErrLegacyArchiveUnsupported) {
+		return fmt.Sprintf("%s: %v", ErrLegacyArchiveUnsupported, e.Err)
+	}
+	return ErrLegacyArchiveUnsupported.Error()
+}
+
+func (e *LegacyArchiveError) Unwrap() error {
+	if e == nil || e.Err == nil {
+		return ErrLegacyArchiveUnsupported
+	}
+	return e.Err
+}
+
+func (e *LegacyArchiveError) Is(target error) bool {
+	return target == ErrLegacyArchiveUnsupported
+}
+
 type Object struct {
 	UUID             uuid.UUID
 	ClassName        string
@@ -107,36 +135,63 @@ func Parse(data []byte, opts Options) (*Archive, error) {
 		return archive, nil
 	}
 	if archive.Legacy {
-		return nil, ErrLegacyArchiveUnsupported
-	}
-	if _, err := r.ReadInt32(); err != nil {
-		return nil, err
-	}
-	if _, err := r.ReadInt32(); err != nil {
-		return nil, err
-	}
-	count, err := r.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	if count < 0 {
-		return nil, fmt.Errorf("negative archive object count %d", count)
-	}
-	if err := validateArchiveObjectCount(count, r.Size()-r.Position(), "archive"); err != nil {
-		return nil, err
-	}
-	archive.Objects = make([]Object, 0, count)
-	for i := int32(0); i < count; i++ {
-		obj, err := readObject(r, opts.ClusterDino)
-		if err != nil {
-			return nil, err
+		if err := readArchiveObjectTable(r, archive, false); err != nil {
+			return archive, &LegacyArchiveError{Version: version, Err: err}
 		}
-		archive.Objects = append(archive.Objects, obj)
+		return archive, legacyArchiveUnsupportedError(archive, nil)
+	}
+	if err := readArchiveObjectTable(r, archive, opts.ClusterDino); err != nil {
+		return nil, err
 	}
 	if err := readObjectProperties(r, archive, format, opts.StrictProperties); err != nil {
 		return nil, err
 	}
 	return archive, nil
+}
+
+func legacyArchiveUnsupportedError(archive *Archive, err error) error {
+	if err == nil {
+		err = ErrLegacyArchiveUnsupported
+	}
+	out := &LegacyArchiveError{Err: err}
+	if archive != nil {
+		out.Version = archive.Version
+		out.ObjectCount = len(archive.Objects)
+		for _, object := range archive.Objects {
+			if object.ClassName != "" {
+				out.ClassNames = append(out.ClassNames, object.ClassName)
+			}
+		}
+	}
+	return out
+}
+
+func readArchiveObjectTable(r *arkbinary.Reader, archive *Archive, clusterDino bool) error {
+	if _, err := r.ReadInt32(); err != nil {
+		return err
+	}
+	if _, err := r.ReadInt32(); err != nil {
+		return err
+	}
+	count, err := r.ReadInt32()
+	if err != nil {
+		return err
+	}
+	if count < 0 {
+		return fmt.Errorf("negative archive object count %d", count)
+	}
+	if err := validateArchiveObjectCount(count, r.Size()-r.Position(), "archive"); err != nil {
+		return err
+	}
+	archive.Objects = make([]Object, 0, count)
+	for i := int32(0); i < count; i++ {
+		obj, err := readObject(r, clusterDino)
+		if err != nil {
+			return err
+		}
+		archive.Objects = append(archive.Objects, obj)
+	}
+	return nil
 }
 
 func ParseEmbeddedCryopodPayload(data []byte, maxInflatedBytes int64) (*Archive, error) {

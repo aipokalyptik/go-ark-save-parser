@@ -89,12 +89,14 @@ coverage broadly.
 - [blocked] Port remaining property parsing edge cases for compound payload
       encodings not already covered by generic readers; no current Phase 2
       failure exposes a concrete unported encoding.
-- [x] Isolate legacy archive behavior behind explicit format paths and a typed
-      unsupported-legacy error.
-- [blocked] Port legacy property/object parsing where a runnable offline oracle
-      path exists. Upstream uses separate legacy binary/property parsers for
-      pre-Unreal-5.5 archives and legacy cryopod payloads; Go reports typed
-      unsupported legacy errors until a fixture proves exact behavior.
+- [x] Isolate legacy archive behavior behind explicit format paths, a typed
+      unsupported-legacy error, and synthetic legacy archive metadata parsing
+      for version/object/class fault context.
+- [blocked] Port full legacy property/object parsing where a runnable offline
+      oracle path exists. Upstream uses separate legacy binary/property parsers
+      for pre-Unreal-5.5 archives and legacy cryopod payloads; Go preserves
+      local profile/cluster neighbors and reports typed legacy metadata faults
+      until a fixture proves exact full-property behavior.
 
 ### Object Model
 
@@ -406,10 +408,11 @@ coverage broadly.
       semantics.
 - [x] Port compact `.arktributetribe` / `.arktributetribetribe` local tribute
       index parsing for player-data and tribe-data ID lists.
-- [blocked] Port legacy archive object parsing for any other runnable local
-      oracle path that is not covered by modern archive or compact tribute
-      index formats when a committed synthetic fixture or private runnable
-      oracle case proves exact behavior.
+- [blocked] Port full legacy archive object/property parsing for any other
+      runnable local oracle path that is not covered by modern archive,
+      metadata-only legacy fault reporting, or compact tribute index formats
+      when a committed synthetic fixture or private runnable oracle case proves
+      exact behavior.
 - [x] Mark unsupported FTP/RCON examples as skipped in compatibility docs.
 
 ### Experimental Mutation

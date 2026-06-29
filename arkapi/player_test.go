@@ -1,12 +1,15 @@
 package arkapi
 
 import (
+	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/aipokalyptik/go-ark-save-parser/internal/testfixtures"
@@ -412,6 +415,42 @@ func TestPlayerAPIPlayersWithFaultsKeepsValidLocalProfilesAndReportsFaults(t *te
 	}
 	if len(faults) != 1 || faults[0].ClassName != brokenPath || faults[0].Err == nil {
 		t.Fatalf("PlayersWithFaults() faults = %#v, want broken profile path fault", faults)
+	}
+}
+
+func TestPlayerAPIPlayersWithFaultsReportsLegacyProfileMetadataFaults(t *testing.T) {
+	dir := t.TempDir()
+	validPath := filepath.Join(dir, "123.arkprofile")
+	legacyPath := filepath.Join(dir, "legacy.arkprofile")
+	testfixtures.WritePlayerArchiveWithOptions(t, validPath, testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+	})
+	if err := os.WriteFile(legacyPath, syntheticLegacyArchiveBytes(t, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C"), 0o600); err != nil {
+		t.Fatalf("write legacy profile: %v", err)
+	}
+
+	api, err := NewPlayerFromDirectory(dir)
+	if err != nil {
+		t.Fatalf("NewPlayerFromDirectory() error = %v", err)
+	}
+	players, faults, err := api.PlayersWithFaults()
+	if err != nil {
+		t.Fatalf("PlayersWithFaults() error = %v", err)
+	}
+	if len(players) != 1 || players[0].PlayerDataID != 42 {
+		t.Fatalf("PlayersWithFaults() players = %#v, want valid local profile player", players)
+	}
+	if len(faults) != 1 || faults[0].ClassName != legacyPath {
+		t.Fatalf("PlayersWithFaults() faults = %#v, want legacy profile path fault", faults)
+	}
+	var legacyErr *arkarchive.LegacyArchiveError
+	if !errors.As(faults[0].Err, &legacyErr) {
+		t.Fatalf("PlayersWithFaults() fault error = %T %[1]v, want LegacyArchiveError", faults[0].Err)
+	}
+	if legacyErr.Version != 6 || legacyErr.ObjectCount != 1 || len(legacyErr.ClassNames) != 1 {
+		t.Fatalf("LegacyArchiveError = %#v, want version/object/class metadata", legacyErr)
 	}
 }
 
@@ -2033,4 +2072,25 @@ func TestPlayerAPILoadsLocalTributeIndexes(t *testing.T) {
 	if len(tributes) != 1 || tributes[0].ID != "abc" || len(tributes[0].PlayerDataIDs) != 2 || len(tributes[0].TribeDataIDs) != 1 {
 		t.Fatalf("Tributes() = %#v", tributes)
 	}
+}
+
+func syntheticLegacyArchiveBytes(t *testing.T, className string) []byte {
+	t.Helper()
+
+	id := uuid.MustParse("00112233-4455-6677-8899-aabbccddeeff")
+	var buf bytes.Buffer
+	testfixtures.WriteInt32(&buf, 6)
+	testfixtures.WriteInt32(&buf, 11)
+	testfixtures.WriteInt32(&buf, 22)
+	testfixtures.WriteInt32(&buf, 1)
+	buf.Write(id[:])
+	testfixtures.WriteArkString(&buf, className)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteStringArray(&buf, []string{"Legacy_0"})
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, -1)
+	testfixtures.WriteUInt32(&buf, 0)
+	testfixtures.WriteInt32(&buf, 128)
+	testfixtures.WriteUInt32(&buf, 0)
+	return buf.Bytes()
 }
