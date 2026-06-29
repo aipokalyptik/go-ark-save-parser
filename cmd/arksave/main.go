@@ -1290,10 +1290,12 @@ func tribesDirectory(path string, out io.Writer, opts runOptions) error {
 	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Tribe directory: %s\nTribe files: %d\nTribes: %d\nTotal dinos: %d\nAverage dinos: %.2f\n",
+		"Tribe directory: %s\nTribe files: %d\nTribes: %d\nTotal members: %d\nAverage members: %.2f\nTotal dinos: %d\nAverage dinos: %.2f\n",
 		displayString(path, opts),
 		summary.Files,
 		len(summary.Tribes),
+		summary.TotalMembers,
+		optionalFloat(summary.AverageMembers, summary.HasAverageMembers),
 		summary.TotalDinos,
 		optionalFloat(summary.AverageDinos, summary.HasAverageDinos),
 	); err != nil {

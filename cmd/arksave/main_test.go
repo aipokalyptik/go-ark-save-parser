@@ -1503,6 +1503,8 @@ func TestTribesCommandPrintsDirectorySummary(t *testing.T) {
 		"Tribe directory:",
 		"Tribe files: 2",
 		"Tribes: 2",
+		"Total members: 3",
+		"Average members: 1.50",
 		"Total dinos: 10",
 		"Average dinos: 5.00",
 		"  tribe id=222 name=Builders owner=43 members=1 dinos=3",

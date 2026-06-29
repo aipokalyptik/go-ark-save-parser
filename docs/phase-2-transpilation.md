@@ -195,6 +195,8 @@ coverage broadly.
       directory discovery, local cluster/tribute indexing, lookup filters, and
       aggregate helpers.
 - [x] Add CLI directory summaries for local player profiles and tribe saves.
+- [x] Add typed tribe directory member totals and averages, and expose them in
+      the `tribes <directory>` CLI aggregate output.
 - [x] Port save-contained Player and Tribe API parsing for `.ark` game-table
       `PrimalPlayerDataBP` and `PrimalTribeData` objects and embedded
       `GameModeCustomBytes` payloads, including lookup, tribe-player relation,

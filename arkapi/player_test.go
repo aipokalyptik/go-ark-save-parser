@@ -1126,8 +1126,11 @@ func TestTribeDirectorySummaryFromPathUsesDirectoryTribes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TribeDirectorySummaryFromPath() error = %v", err)
 	}
-	if summary.Files != 2 || len(summary.Tribes) != 2 || summary.TotalDinos != 10 {
-		t.Fatalf("TribeDirectorySummaryFromPath() = %#v, want two files, two tribes, ten dinos", summary)
+	if summary.Files != 2 || len(summary.Tribes) != 2 || summary.TotalMembers != 3 || summary.TotalDinos != 10 {
+		t.Fatalf("TribeDirectorySummaryFromPath() = %#v, want two files, two tribes, three members, ten dinos", summary)
+	}
+	if !summary.HasAverageMembers || summary.AverageMembers != 1.5 {
+		t.Fatalf("TribeDirectorySummaryFromPath() member average = %f, %v; want 1.5, true", summary.AverageMembers, summary.HasAverageMembers)
 	}
 	if !summary.HasAverageDinos || summary.AverageDinos != 5 {
 		t.Fatalf("TribeDirectorySummaryFromPath() average = %f, %v; want 5, true", summary.AverageDinos, summary.HasAverageDinos)

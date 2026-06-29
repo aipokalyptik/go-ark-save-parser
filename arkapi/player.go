@@ -187,11 +187,14 @@ type TribeRosterSummary struct {
 }
 
 type TribeDirectorySummary struct {
-	Files           int
-	Tribes          []arkobject.Tribe
-	TotalDinos      int32
-	HasAverageDinos bool
-	AverageDinos    float64
+	Files             int
+	Tribes            []arkobject.Tribe
+	TotalMembers      int
+	HasAverageMembers bool
+	AverageMembers    float64
+	TotalDinos        int32
+	HasAverageDinos   bool
+	AverageDinos      float64
 }
 
 func NewPlayer(save *arksave.Save) *PlayerAPI {
@@ -1487,15 +1490,20 @@ func (p *PlayerAPI) TribeDirectorySummary() (TribeDirectorySummary, error) {
 		return TribeDirectorySummary{}, err
 	}
 	totalDinos := int32(0)
+	totalMembers := 0
 	for _, tribe := range tribes {
 		totalDinos += tribe.NumDinos
+		totalMembers += tribe.MemberCount()
 	}
 	summary := TribeDirectorySummary{
-		Files:      len(p.TribePaths()),
-		Tribes:     tribes,
-		TotalDinos: totalDinos,
+		Files:        len(p.TribePaths()),
+		Tribes:       tribes,
+		TotalMembers: totalMembers,
+		TotalDinos:   totalDinos,
 	}
 	if len(tribes) > 0 {
+		summary.HasAverageMembers = true
+		summary.AverageMembers = float64(totalMembers) / float64(len(tribes))
 		summary.HasAverageDinos = true
 		summary.AverageDinos = float64(totalDinos) / float64(len(tribes))
 	}

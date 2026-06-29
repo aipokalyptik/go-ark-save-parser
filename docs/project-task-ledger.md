@@ -339,6 +339,8 @@ documented.
         helpers through the `local_profiles` example smoke test.
   - [x] Include average experience in typed player directory summaries and the
         `players <directory>` CLI aggregate output.
+  - [x] Include total and average member counts in typed tribe directory
+        summaries and the `tribes <directory>` CLI aggregate output.
   - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
         valid local player/tribe records survive alongside broken archive files.
   - [x] Add fault-returning player roster, player-all, and tribe roster summary
