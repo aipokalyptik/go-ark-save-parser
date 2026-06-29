@@ -748,5 +748,13 @@ func syntheticHeader() []byte {
 		0x10000051: "Blueprint'/Game/Structures/Storage/PrimalStructureItemContainer_StorageBox_Huge.PrimalStructureItemContainer_StorageBox_Huge_C'",
 		0x10000052: "Blueprint'/Game/PrimalEarth/CoreBlueprints/Items/Armor/Shields/PrimalItemArmor_WoodShield.PrimalItemArmor_WoodShield_C'",
 		0x10000053: "Blueprint'/Game/Extinction/CoreBlueprints/Items/Saddle/PrimalItemArmor_GachaSaddle.PrimalItemArmor_GachaSaddle_C'",
+		0x10000060: "Blueprint'/Game/Structures/Wood/PrimalStructureWall_Wood.PrimalStructureWall_Wood_C'",
+		0x10000061: "OwnerName",
+		0x10000062: "OriginalCreationTime",
+		0x10000063: "LastEnterStasisTime",
+		0x10000064: "bHasResetDecayTime",
+		0x10000065: "bSavedWhenStasised",
+		0x10000066: "bWasPlacementSnapped",
+		0x10000067: "LastInAllyRangeTimeSerialized",
 	})
 }

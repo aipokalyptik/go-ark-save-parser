@@ -258,6 +258,10 @@ documented.
   - [x] Heatmap summaries, `structure-heatmap`/`dino-heatmap` CLI output, and
         the matching examples report skipped coordinate counts for invalid or
         out-of-range map cells.
+  - [x] Add computed offline demolishable-structure reports using save
+        `GameTime`, structure `LastEnterStasisTime`, external decay settings,
+        owner/location sorting, JSON output, redaction, and connected-base
+        grouping.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests
@@ -791,6 +795,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `structure-owner-count`.
   - [x] `structure-owners`.
   - [x] `structure-owner-locations`.
+  - [x] `structure-demolishable`.
   - [x] `structure-heatmap`.
   - [x] `base-components`.
   - [x] `dinos`.

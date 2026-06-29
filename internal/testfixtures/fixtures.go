@@ -43,24 +43,43 @@ type StructureGameObjectOptions struct {
 	IntPropertyID    uint32
 	FloatPropertyID  uint32
 	BoolPropertyID   uint32
+	DoublePropertyID uint32
+	StringPropertyID uint32
+	ArrayPropertyID  uint32
 	ObjectPropertyID uint32
 
-	StructureIDNameID   uint32
-	MaxHealthNameID     uint32
-	CurrentHealthNameID uint32
-	TribeIDNameID       uint32
-	EngramNameID        uint32
-	InventoryNameID     uint32
-	ItemCountNameID     uint32
-	MaxItemCountNameID  uint32
-	StructureID         int32
-	TribeID             int32
-	MaxHealth           float32
-	CurrentHealth       float32
-	IsEngram            *bool
-	InventoryID         uuid.UUID
-	ItemCount           int32
-	MaxItemCount        int32
+	StructureIDNameID                   uint32
+	MaxHealthNameID                     uint32
+	CurrentHealthNameID                 uint32
+	TribeIDNameID                       uint32
+	OwnerNameNameID                     uint32
+	EngramNameID                        uint32
+	InventoryNameID                     uint32
+	ItemCountNameID                     uint32
+	MaxItemCountNameID                  uint32
+	LinkedStructuresNameID              uint32
+	OriginalCreationTimeNameID          uint32
+	LastEnterStasisTimeNameID           uint32
+	HasResetDecayTimeNameID             uint32
+	SavedWhenStasisedNameID             uint32
+	WasPlacementSnappedNameID           uint32
+	LastInAllyRangeTimeSerializedNameID uint32
+	StructureID                         int32
+	TribeID                             int32
+	OwnerName                           string
+	MaxHealth                           float32
+	CurrentHealth                       float32
+	IsEngram                            *bool
+	InventoryID                         uuid.UUID
+	ItemCount                           int32
+	MaxItemCount                        int32
+	LinkedStructureUUIDs                []uuid.UUID
+	OriginalCreationTime                float64
+	LastEnterStasisTime                 float64
+	HasResetDecayTime                   *bool
+	SavedWhenStasised                   *bool
+	WasPlacementSnapped                 *bool
+	LastInAllyRangeTimeSerialized       float64
 }
 
 type EquipmentGameObjectOptions struct {
@@ -360,6 +379,9 @@ func StructureGameObjectBytes(opts StructureGameObjectOptions) []byte {
 	defaultStructureGameObjectOptions(&opts)
 	var props bytes.Buffer
 	WriteIntPropertyID(&props, opts.StructureIDNameID, opts.IntPropertyID, opts.StructureID)
+	if opts.OwnerName != "" {
+		WriteStringPropertyID(&props, opts.OwnerNameNameID, opts.StringPropertyID, opts.OwnerName)
+	}
 	if opts.MaxHealth != 0 {
 		WriteFloatPropertyID(&props, opts.MaxHealthNameID, opts.FloatPropertyID, opts.MaxHealth)
 	}
@@ -378,6 +400,27 @@ func StructureGameObjectBytes(opts StructureGameObjectOptions) []byte {
 	}
 	if opts.MaxItemCount != 0 {
 		WriteIntPropertyID(&props, opts.MaxItemCountNameID, opts.IntPropertyID, opts.MaxItemCount)
+	}
+	if len(opts.LinkedStructureUUIDs) != 0 {
+		WriteObjectReferenceArrayPropertyID(&props, opts.LinkedStructuresNameID, opts.ArrayPropertyID, opts.ObjectPropertyID, opts.LinkedStructureUUIDs)
+	}
+	if opts.OriginalCreationTime != 0 {
+		WriteDoublePropertyID(&props, opts.OriginalCreationTimeNameID, opts.DoublePropertyID, opts.OriginalCreationTime)
+	}
+	if opts.LastEnterStasisTime != 0 {
+		WriteDoublePropertyID(&props, opts.LastEnterStasisTimeNameID, opts.DoublePropertyID, opts.LastEnterStasisTime)
+	}
+	if opts.HasResetDecayTime != nil {
+		WriteBoolPropertyID(&props, opts.HasResetDecayTimeNameID, opts.BoolPropertyID, *opts.HasResetDecayTime)
+	}
+	if opts.SavedWhenStasised != nil {
+		WriteBoolPropertyID(&props, opts.SavedWhenStasisedNameID, opts.BoolPropertyID, *opts.SavedWhenStasised)
+	}
+	if opts.WasPlacementSnapped != nil {
+		WriteBoolPropertyID(&props, opts.WasPlacementSnappedNameID, opts.BoolPropertyID, *opts.WasPlacementSnapped)
+	}
+	if opts.LastInAllyRangeTimeSerialized != 0 {
+		WriteDoublePropertyID(&props, opts.LastInAllyRangeTimeSerializedNameID, opts.DoublePropertyID, opts.LastInAllyRangeTimeSerialized)
 	}
 	return ObjectBytesWithProperties(opts.ClassID, opts.NoneID, props.Bytes())
 }
@@ -398,6 +441,15 @@ func defaultStructureGameObjectOptions(opts *StructureGameObjectOptions) {
 	if opts.BoolPropertyID == 0 {
 		opts.BoolPropertyID = 0x1000000e
 	}
+	if opts.DoublePropertyID == 0 {
+		opts.DoublePropertyID = 0x10000019
+	}
+	if opts.StringPropertyID == 0 {
+		opts.StringPropertyID = 0x1000001a
+	}
+	if opts.ArrayPropertyID == 0 {
+		opts.ArrayPropertyID = 0x1000001e
+	}
 	if opts.ObjectPropertyID == 0 {
 		opts.ObjectPropertyID = 0x1000001f
 	}
@@ -413,6 +465,9 @@ func defaultStructureGameObjectOptions(opts *StructureGameObjectOptions) {
 	if opts.TribeIDNameID == 0 {
 		opts.TribeIDNameID = 0x10000009
 	}
+	if opts.OwnerNameNameID == 0 {
+		opts.OwnerNameNameID = 0x10000061
+	}
 	if opts.EngramNameID == 0 {
 		opts.EngramNameID = 0x10000013
 	}
@@ -424,6 +479,27 @@ func defaultStructureGameObjectOptions(opts *StructureGameObjectOptions) {
 	}
 	if opts.MaxItemCountNameID == 0 {
 		opts.MaxItemCountNameID = 0x10000046
+	}
+	if opts.LinkedStructuresNameID == 0 {
+		opts.LinkedStructuresNameID = 0x1000001d
+	}
+	if opts.OriginalCreationTimeNameID == 0 {
+		opts.OriginalCreationTimeNameID = 0x10000062
+	}
+	if opts.LastEnterStasisTimeNameID == 0 {
+		opts.LastEnterStasisTimeNameID = 0x10000063
+	}
+	if opts.HasResetDecayTimeNameID == 0 {
+		opts.HasResetDecayTimeNameID = 0x10000064
+	}
+	if opts.SavedWhenStasisedNameID == 0 {
+		opts.SavedWhenStasisedNameID = 0x10000065
+	}
+	if opts.WasPlacementSnappedNameID == 0 {
+		opts.WasPlacementSnappedNameID = 0x10000066
+	}
+	if opts.LastInAllyRangeTimeSerializedNameID == 0 {
+		opts.LastInAllyRangeTimeSerializedNameID = 0x10000067
 	}
 }
 

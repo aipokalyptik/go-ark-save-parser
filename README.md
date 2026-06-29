@@ -75,8 +75,8 @@ Implemented:
 - `arksave inspect`, `parse`, `map-summary`, `object-classes`, `object-summary`,
   `property-positions`, `class-lookup`, `class-property-summary`,
   `property-filter`, `structure-health`, `structure-owner-count`,
-  `structure-owners`, `structure-owner-locations`, `structure-heatmap`,
-  `base-components`,
+  `structure-owners`, `structure-owner-locations`, `structure-demolishable`,
+  `structure-heatmap`, `base-components`,
   `dinos`, `dino-wild-tamables`, `dino-babies`, `dino-best-stat`,
   `dino-best-base-stat`, `dino-most-mutated`, `dino-wild-tamed`, `dino-heatmap`,
   `equipment-summary`, `equipment-saddles`, `equipment-best`, `equipment-rank`,
@@ -178,6 +178,8 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave --redact structure-owner-count /path/to/Valguero_WP.ark 555
 ./bin/arksave structure-owners /path/to/Valguero_WP.ark
 ./bin/arksave --redact structure-owner-locations /path/to/Valguero_WP.ark Valguero 1
+./bin/arksave structure-demolishable /path/to/Valguero_WP.ark --game-user-settings /path/to/GameUserSettings.ini --map Valguero
+./bin/arksave structure-demolishable /path/to/Valguero_WP.ark --decay-multiplier 2.0 --json --group-bases
 ./bin/arksave structure-heatmap /path/to/Valguero_WP.ark /tmp/structure-heatmap.json 100 1
 ./bin/arksave base-components /path/to/Valguero_WP.ark
 ./bin/arksave dinos /path/to/Valguero_WP.ark
@@ -202,6 +204,14 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave tribe-roster /path/to/Valguero_WP.ark
 ./bin/arksave player-tribe-links /path/to/save-directory
 ```
+
+`structure-demolishable` is an offline computed eligibility report, not a live
+server check. It uses the save `GameTime`, each structure's
+`LastEnterStasisTime`, built-in default decay periods, and
+`PvEStructureDecayPeriodMultiplier` from an optional `GameUserSettings.ini` or
+`--decay-multiplier`. Server/mod-specific decay rules can be supplied with
+`--decay-periods` JSON using `exact` and `substring` maps whose values are
+seconds.
 
 Export save metadata and object classes to JSON:
 

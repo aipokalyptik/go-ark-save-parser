@@ -579,6 +579,119 @@ func TestStructureHeatmapCommandWritesSummaryJSON(t *testing.T) {
 	}
 }
 
+func TestStructureDemolishableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "demolishable.ark")
+	periodsPath := filepath.Join(dir, "periods.json")
+	createSyntheticDemolishableStructureCommandSave(t, path)
+	if err := os.WriteFile(periodsPath, []byte(`{"substring":{"Stone":100,"Wood":500}}`), 0o600); err != nil {
+		t.Fatalf("write decay periods: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"structure-demolishable", path, "--decay-periods", periodsPath, "--decay-multiplier", "2", "--map", "Valguero"}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-demolishable) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Computed offline demolish eligibility using LastEnterStasisTime",
+		"Structures: 5",
+		"Eligible: 2",
+		"Unknown timestamps: 1",
+		"Multiplier: 2.000",
+		"OWNER\tLOCATION\tSTRUCTURE\tTIER\tELAPSED\tREMAINING",
+		"Alpha\t10.00,20.00\tPrimalStructure_Wall_Stone\tcustom\t200s\t0s",
+		"Beta\t60.00,70.00\tPrimalStructureWall_Wood\tcustom\t1100s\t0s",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("structure-demolishable output %q does not contain %q", got, want)
+		}
+	}
+	if strings.Index(got, "Alpha\t10.00,20.00") > strings.Index(got, "Beta\t60.00,70.00") {
+		t.Fatalf("structure-demolishable output not sorted by owner then location: %q", got)
+	}
+}
+
+func TestStructureDemolishableCommandPrintsStableJSONAndGroupsBases(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "demolishable.ark")
+	periodsPath := filepath.Join(dir, "periods.json")
+	createSyntheticDemolishableStructureCommandSave(t, path)
+	if err := os.WriteFile(periodsPath, []byte(`{"substring":{"Stone":100,"Wood":500}}`), 0o600); err != nil {
+		t.Fatalf("write decay periods: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"structure-demolishable", path, "--decay-periods", periodsPath, "--decay-multiplier", "1", "--map", "Valguero", "--json", "--group-bases"}, &out)
+	if err != nil {
+		t.Fatalf("run(structure-demolishable --json --group-bases) error = %v", err)
+	}
+	var report arkapi.StructureDemolishableReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("json.Unmarshal(structure-demolishable) error = %v; output = %s", err, out.String())
+	}
+	if report.Summary.TotalStructures != 5 || report.Summary.EligibleStructures != 3 || len(report.Structures) != 3 || len(report.Bases) != 2 {
+		t.Fatalf("json report = %#v, want 5 total, 3 eligible, 2 bases", report)
+	}
+	if report.Structures[0].Owner.SortKey != "Alpha" || report.Structures[1].Owner.SortKey != "Alpha" || report.Structures[2].Owner.SortKey != "Beta" {
+		t.Fatalf("json structures not owner sorted: %#v", report.Structures)
+	}
+	if report.Bases[0].Owner.SortKey != "Alpha" || report.Bases[0].EligibleStructures != 2 || report.Bases[0].TotalStructures != 2 {
+		t.Fatalf("first grouped base = %#v, want Alpha base with two eligible structures", report.Bases[0])
+	}
+}
+
+func TestStructureDemolishableCommandRedactsOwnersAndIdentifiers(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "demolishable.ark")
+	periodsPath := filepath.Join(dir, "periods.json")
+	createSyntheticDemolishableStructureCommandSave(t, path)
+	if err := os.WriteFile(periodsPath, []byte(`{"substring":{"Stone":100,"Wood":500}}`), 0o600); err != nil {
+		t.Fatalf("write decay periods: %v", err)
+	}
+
+	var out bytes.Buffer
+	err := run([]string{"--redact", "structure-demolishable", path, "--decay-periods", periodsPath, "--decay-multiplier", "1", "--json"}, &out)
+	if err != nil {
+		t.Fatalf("run(--redact structure-demolishable --json) error = %v", err)
+	}
+	got := out.String()
+	for _, leaked := range []string{"Alpha", "Beta", "555", "777", "aaaaaaaa-0000", "bbbbbbbb-0000"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("redacted structure-demolishable output leaked %q: %s", leaked, got)
+		}
+	}
+	if !strings.Contains(got, redactedValue) || !strings.Contains(got, `"eligible_structures": 3`) {
+		t.Fatalf("redacted output missing redacted marker or aggregate counts: %s", got)
+	}
+}
+
+func TestStructureDemolishableCommandRejectsInvalidInputs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "demolishable.ark")
+	createSyntheticDemolishableStructureCommandSave(t, path)
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "missing save", args: []string{"structure-demolishable"}, want: "requires a local .ark path"},
+		{name: "bad multiplier", args: []string{"structure-demolishable", path, "--decay-multiplier", "nope"}, want: "parse decay multiplier"},
+		{name: "unreadable ini", args: []string{"structure-demolishable", path, "--game-user-settings", filepath.Join(t.TempDir(), "missing.ini")}, want: "read game user settings"},
+		{name: "bad periods", args: []string{"structure-demolishable", path, "--decay-periods", path}, want: "parse decay periods"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := run(tt.args, &out)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("run(%v) error = %v, want containing %q", tt.args, err, tt.want)
+			}
+		})
+	}
+}
+
 func TestDinoHeatmapCommandWritesSummaryJSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "dinos.ark")
@@ -3066,6 +3179,102 @@ func createSyntheticStructureHealthSave(t *testing.T, path string) {
 				Z:          33,
 				Quaternion: 1,
 			}),
+		},
+	})
+}
+
+func createSyntheticDemolishableStructureCommandSave(t *testing.T, path string) {
+	t.Helper()
+
+	alphaOldID := uuid.MustParse("aaaaaaaa-0000-0000-0000-000000000001")
+	alphaLinkedID := uuid.MustParse("aaaaaaaa-0000-0000-0000-000000000002")
+	alphaFreshID := uuid.MustParse("aaaaaaaa-0000-0000-0000-000000000003")
+	betaOldID := uuid.MustParse("bbbbbbbb-0000-0000-0000-000000000001")
+	unknownTimeID := uuid.MustParse("cccccccc-0000-0000-0000-000000000001")
+	alphaLoc := arkobject.MapCoords{Lat: 10, Long: 20}.AsActorTransform("Valguero")
+	alphaLinkedLoc := arkobject.MapCoords{Lat: 10.2, Long: 20.2}.AsActorTransform("Valguero")
+	alphaFreshLoc := arkobject.MapCoords{Lat: 10.4, Long: 20.4}.AsActorTransform("Valguero")
+	betaLoc := arkobject.MapCoords{Lat: 60, Long: 70}.AsActorTransform("Valguero")
+	unknownLoc := arkobject.MapCoords{Lat: 80, Long: 10}.AsActorTransform("Valguero")
+
+	testfixtures.WriteSave(t, path, testfixtures.SaveOptions{
+		Header: testfixtures.Header("Valguero_WP", map[uint32]string{
+			0x10000002: "None",
+			0x10000003: "IntProperty",
+			0x10000004: "StructureID",
+			0x10000005: "Blueprint'/Game/Structures/Stone/PrimalStructure_Wall_Stone.PrimalStructure_Wall_Stone_C'",
+			0x10000009: "TargetingTeam",
+			0x1000000e: "BoolProperty",
+			0x10000019: "DoubleProperty",
+			0x1000001a: "StrProperty",
+			0x1000001d: "LinkedStructures",
+			0x1000001e: "ArrayProperty",
+			0x1000001f: "ObjectProperty",
+			0x10000060: "Blueprint'/Game/Structures/Wood/PrimalStructureWall_Wood.PrimalStructureWall_Wood_C'",
+			0x10000061: "OwnerName",
+			0x10000062: "OriginalCreationTime",
+			0x10000063: "LastEnterStasisTime",
+			0x10000064: "bHasResetDecayTime",
+			0x10000065: "bSavedWhenStasised",
+			0x10000066: "bWasPlacementSnapped",
+			0x10000067: "LastInAllyRangeTimeSerialized",
+		}),
+		Objects: map[uuid.UUID][]byte{
+			alphaOldID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:              0x10000005,
+				NoneID:               0x10000002,
+				StructureIDNameID:    0x10000004,
+				StructureID:          101,
+				TribeID:              555,
+				OwnerName:            "Alpha",
+				LastEnterStasisTime:  1034.5,
+				LinkedStructureUUIDs: []uuid.UUID{alphaLinkedID},
+			}),
+			alphaLinkedID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:              0x10000005,
+				NoneID:               0x10000002,
+				StructureIDNameID:    0x10000004,
+				StructureID:          102,
+				TribeID:              555,
+				OwnerName:            "Alpha",
+				LastEnterStasisTime:  1080,
+				LinkedStructureUUIDs: []uuid.UUID{alphaOldID},
+			}),
+			alphaFreshID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:             0x10000005,
+				NoneID:              0x10000002,
+				StructureIDNameID:   0x10000004,
+				StructureID:         104,
+				TribeID:             555,
+				OwnerName:           "Alpha",
+				LastEnterStasisTime: 1200,
+			}),
+			betaOldID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:             0x10000060,
+				NoneID:              0x10000002,
+				StructureIDNameID:   0x10000004,
+				StructureID:         103,
+				TribeID:             777,
+				OwnerName:           "Beta",
+				LastEnterStasisTime: 134.5,
+			}),
+			unknownTimeID: testfixtures.StructureGameObjectBytes(testfixtures.StructureGameObjectOptions{
+				ClassID:           0x10000005,
+				NoneID:            0x10000002,
+				StructureIDNameID: 0x10000004,
+				StructureID:       105,
+				TribeID:           888,
+				OwnerName:         "Gamma",
+			}),
+		},
+		Custom: map[string][]byte{
+			"ActorTransforms": testfixtures.ActorTransforms(
+				testfixtures.ActorTransform{UUID: alphaOldID, X: alphaLoc.X, Y: alphaLoc.Y, Z: alphaLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: alphaLinkedID, X: alphaLinkedLoc.X, Y: alphaLinkedLoc.Y, Z: alphaLinkedLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: alphaFreshID, X: alphaFreshLoc.X, Y: alphaFreshLoc.Y, Z: alphaFreshLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: betaOldID, X: betaLoc.X, Y: betaLoc.Y, Z: betaLoc.Z, Quaternion: 1},
+				testfixtures.ActorTransform{UUID: unknownTimeID, X: unknownLoc.X, Y: unknownLoc.Y, Z: unknownLoc.Z, Quaternion: 1},
+			),
 		},
 	})
 }

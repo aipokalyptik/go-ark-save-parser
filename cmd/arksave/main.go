@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -148,6 +149,8 @@ func run(args []string, out io.Writer) error {
 			digits = value
 		}
 		return structureOwnerLocations(args[1], mapName, digits, out, opts)
+	case "structure-demolishable":
+		return structureDemolishable(args[1:], out, opts)
 	case "structure-heatmap":
 		if len(args) < 3 || len(args) > 5 {
 			return fmt.Errorf("structure-heatmap requires a local .ark path, explicit output path, optional resolution, and optional min-in-cell")
@@ -344,6 +347,7 @@ func run(args []string, out io.Writer) error {
 func splitOptions(args []string) (runOptions, []string, error) {
 	opts := runOptions{}
 	filtered := make([]string, 0, len(args))
+	seenCommand := false
 	for _, arg := range args {
 		switch arg {
 		case "--help", "-h":
@@ -355,9 +359,10 @@ func splitOptions(args []string) (runOptions, []string, error) {
 		case "--no-cryos":
 			opts.NoCryos = true
 		default:
-			if strings.HasPrefix(arg, "--") {
+			if strings.HasPrefix(arg, "--") && !seenCommand {
 				return opts, nil, fmt.Errorf("unknown option %q", arg)
 			}
+			seenCommand = true
 			filtered = append(filtered, arg)
 		}
 	}
@@ -383,6 +388,7 @@ func usage(out io.Writer) error {
   arksave [--redact] structure-owner-count <save.ark> <tribe-id>
   arksave structure-owners <save.ark>
   arksave [--redact] structure-owner-locations <save.ark> [map] [digits]
+  arksave [--redact] structure-demolishable <save.ark> [--game-user-settings path] [--decay-multiplier n] [--decay-periods path] [--map name] [--json] [--group-bases]
   arksave structure-heatmap <save.ark> <out.json> [resolution] [min-in-cell]
   arksave base-components <save.ark>
   arksave dinos <save.ark>
@@ -694,6 +700,190 @@ func structureOwnerLocations(path string, mapName string, digits int, out io.Wri
 	}
 	_, err = fmt.Fprintln(out, string(encoded))
 	return err
+}
+
+func structureDemolishable(args []string, out io.Writer, runOpts runOptions) error {
+	path, opts, jsonOut, err := parseStructureDemolishableArgs(args)
+	if err != nil {
+		return err
+	}
+	report, _, err := arkapi.StructureDemolishableReportFromPath(path, opts)
+	if err != nil {
+		return err
+	}
+	if runOpts.Redact {
+		redactStructureDemolishableReport(&report)
+	}
+	if jsonOut {
+		raw, err := json.MarshalIndent(report, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(out, string(raw))
+		return err
+	}
+	if _, err := fmt.Fprintf(
+		out,
+		"Computed offline demolish eligibility using LastEnterStasisTime\nStructures: %d\nEligible: %d\nUnknown timestamps: %d\nMultiplier: %.3f\nParse faults: %d\n",
+		report.Summary.TotalStructures,
+		report.Summary.EligibleStructures,
+		report.Summary.UnknownTimestampStructures,
+		report.Summary.DecayMultiplier,
+		report.Summary.FaultCount,
+	); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tSTRUCTURE\tTIER\tELAPSED\tREMAINING"); err != nil {
+		return err
+	}
+	for _, row := range report.Structures {
+		if _, err := fmt.Fprintf(
+			out,
+			"%s\t%s\t%s\t%s\t%s\t%s\n",
+			demolishableOwnerDisplay(row.Owner),
+			demolishableLocationDisplay(row.Location),
+			row.ShortName,
+			row.Tier,
+			formatSeconds(row.ElapsedSeconds),
+			formatSeconds(row.RemainingSeconds),
+		); err != nil {
+			return err
+		}
+	}
+	if len(report.Bases) == 0 {
+		return nil
+	}
+	if _, err := fmt.Fprintln(out, "\nBASE OWNER\tLOCATION\tELIGIBLE\tTOTAL\tOLDEST\tDOMINANT TIER"); err != nil {
+		return err
+	}
+	for _, base := range report.Bases {
+		if _, err := fmt.Fprintf(
+			out,
+			"%s\t%s\t%d\t%d\t%s\t%s\n",
+			demolishableOwnerDisplay(base.Owner),
+			demolishableLocationDisplay(base.AverageLocation),
+			base.EligibleStructures,
+			base.TotalStructures,
+			formatSeconds(base.OldestElapsed),
+			base.DominantTier,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func parseStructureDemolishableArgs(args []string) (string, arkapi.StructureDemolishableOptions, bool, error) {
+	if len(args) == 0 {
+		return "", arkapi.StructureDemolishableOptions{}, false, fmt.Errorf("structure-demolishable requires a local .ark path")
+	}
+	path := args[0]
+	opts := arkapi.StructureDemolishableOptions{}
+	jsonOut := false
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--json":
+			jsonOut = true
+		case "--group-bases":
+			opts.GroupBases = true
+		case "--map":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--map requires a value")
+			}
+			opts.MapName = args[i]
+		case "--game-user-settings":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--game-user-settings requires a path")
+			}
+			opts.GameUserSettingsPath = args[i]
+		case "--decay-periods":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--decay-periods requires a path")
+			}
+			opts.DecayPeriodsPath = args[i]
+		case "--decay-multiplier":
+			i++
+			if i >= len(args) {
+				return "", opts, false, fmt.Errorf("--decay-multiplier requires a value")
+			}
+			value, err := strconv.ParseFloat(args[i], 64)
+			if err != nil {
+				return "", opts, false, fmt.Errorf("parse decay multiplier: %w", err)
+			}
+			opts.DecayMultiplier = value
+		default:
+			if strings.HasPrefix(args[i], "--") {
+				return "", opts, false, fmt.Errorf("unknown structure-demolishable option %q", args[i])
+			}
+			return "", opts, false, fmt.Errorf("unexpected structure-demolishable argument %q", args[i])
+		}
+	}
+	return path, opts, jsonOut, nil
+}
+
+func redactStructureDemolishableReport(report *arkapi.StructureDemolishableReport) {
+	for i := range report.Structures {
+		report.Structures[i].UUID = redactedValue
+		report.Structures[i].Owner = redactedStructureDemolishableOwner(report.Structures[i].Owner)
+	}
+	for i := range report.Bases {
+		report.Bases[i].Owner = redactedStructureDemolishableOwner(report.Bases[i].Owner)
+		for j := range report.Bases[i].StructureUUIDs {
+			report.Bases[i].StructureUUIDs[j] = redactedValue
+		}
+	}
+}
+
+func redactedStructureDemolishableOwner(owner arkapi.StructureDemolishableOwner) arkapi.StructureDemolishableOwner {
+	owner.SortKey = redactedValue
+	if owner.TribeName != "" {
+		owner.TribeName = redactedValue
+	}
+	if owner.TribeID != 0 {
+		owner.TribeID = 0
+	}
+	if owner.PlayerName != "" {
+		owner.PlayerName = redactedValue
+	}
+	if owner.PlayerID != 0 {
+		owner.PlayerID = 0
+	}
+	if owner.OriginalPlacerID != 0 {
+		owner.OriginalPlacerID = 0
+	}
+	return owner
+}
+
+func demolishableOwnerDisplay(owner arkapi.StructureDemolishableOwner) string {
+	switch {
+	case owner.TribeName != "":
+		return owner.TribeName
+	case owner.TribeID != 0:
+		return strconv.FormatInt(int64(owner.TribeID), 10)
+	case owner.PlayerName != "":
+		return owner.PlayerName
+	case owner.PlayerID != 0:
+		return strconv.FormatInt(int64(owner.PlayerID), 10)
+	default:
+		return owner.SortKey
+	}
+}
+
+func demolishableLocationDisplay(location *arkobject.MapCoords) string {
+	if location == nil || location.InCryopod {
+		return "unknown"
+	}
+	return fmt.Sprintf("%.2f,%.2f", location.Lat, location.Long)
+}
+
+func formatSeconds(seconds float64) string {
+	if math.IsNaN(seconds) || math.IsInf(seconds, 0) {
+		return "unknown"
+	}
+	return fmt.Sprintf("%.0fs", seconds)
 }
 
 func structureHeatmap(path string, outPath string, resolution int, minInCell int, out io.Writer) error {

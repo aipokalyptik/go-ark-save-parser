@@ -757,6 +757,12 @@ func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobje
 		"MyInventoryComponent",
 		"CurrentItemCount",
 		"MaxItemCount",
+		"OriginalCreationTime",
+		"LastEnterStasisTime",
+		"bHasResetDecayTime",
+		"bSavedWhenStasised",
+		"bWasPlacementSnapped",
+		"LastInAllyRangeTimeSerialized",
 		"OriginalPlacerPlayerID",
 		"OwnerName",
 		"OwningPlayerName",
@@ -789,14 +795,20 @@ func (s *StructureAPI) selectedStructureIndexWithFaults() (map[uuid.UUID]arkobje
 			location = &transform
 		}
 		structure := arkobject.Structure{
-			UUID:                 info.UUID,
-			Blueprint:            info.ClassName,
-			Owner:                arkobject.ObjectOwnerFromContainer(container),
-			ID:                   selectedInt32(container, "StructureID"),
-			Location:             location,
-			ItemCount:            selectedInt32(container, "CurrentItemCount"),
-			MaxItemCount:         selectedInt32(container, "MaxItemCount"),
-			LinkedStructureUUIDs: selectedLinkedStructureUUIDs(container),
+			UUID:                          info.UUID,
+			Blueprint:                     info.ClassName,
+			Owner:                         arkobject.ObjectOwnerFromContainer(container),
+			ID:                            selectedInt32(container, "StructureID"),
+			Location:                      location,
+			ItemCount:                     selectedInt32(container, "CurrentItemCount"),
+			MaxItemCount:                  selectedInt32(container, "MaxItemCount"),
+			LinkedStructureUUIDs:          selectedLinkedStructureUUIDs(container),
+			OriginalCreationTime:          selectedFloat64(container, "OriginalCreationTime"),
+			LastEnterStasisTime:           selectedFloat64(container, "LastEnterStasisTime"),
+			HasResetDecayTime:             selectedBoolProperty(container, "bHasResetDecayTime"),
+			SavedWhenStasised:             selectedBoolProperty(container, "bSavedWhenStasised"),
+			WasPlacementSnapped:           selectedBoolProperty(container, "bWasPlacementSnapped"),
+			LastInAllyRangeTimeSerialized: selectedFloat64(container, "LastInAllyRangeTimeSerialized"),
 		}
 		if inventoryID, ok := selectedObjectReferenceUUID(container, "MyInventoryComponent"); ok {
 			structure.InventoryUUID = &inventoryID
