@@ -92,18 +92,18 @@ Implemented:
 - Private Python oracle comparison for implemented offline Go examples, currently
   covering forty-six aggregate read-only and utility cases.
 
-Still in progress:
+Known compatibility limits:
 
 - Full dynamic property parity for dedicated struct readers and legacy embedded
-  data.
-- Full domain models and APIs for legacy/modded cryopod variants, legacy/modded
-  saddle payloads and cosmetics inside cryopods, full pedigree rendering/tree
-  exports, richer local cluster item/dino domain models, and remaining
-  model-specific JSON export edges.
+  data remains fixture-gated.
+- Legacy/modded cryopod variants, legacy/modded saddle payloads, cosmetics
+  inside cryopods, richer local cluster item/dino fields, and remaining
+  long-tail model-specific edges require concrete local fixtures or stable
+  focused oracle cases before claiming parity.
 - High-level semantic mutation APIs for trait/stat/growth authoring, generated
-  inventory contents, and live-server-validated edits. Existing mutation
-  helpers are structural copied-save workflows and remain experimental and
-  live-server-unverified.
+  inventory contents, and live-server-validated edits are not production-safe
+  claims. Existing mutation helpers are structural copied-save workflows and
+  remain experimental and live-server-unverified.
 
 ## Scope
 
