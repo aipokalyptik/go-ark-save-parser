@@ -996,6 +996,43 @@ func TestTribeRosterSummaryFromPathUsesDirectoryTribes(t *testing.T) {
 	}
 }
 
+func TestTribeDirectorySummaryFromPathUsesDirectoryTribes(t *testing.T) {
+	dir := t.TempDir()
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "456.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+	testfixtures.WriteTribeArchiveWithOptions(t, filepath.Join(dir, "789.arktribe"), testfixtures.TribeArchiveOptions{
+		Name:     "Builders",
+		TribeID:  222,
+		OwnerID:  43,
+		NumDinos: 3,
+		Members:  []string{"Builder"},
+	})
+
+	summary, err := TribeDirectorySummaryFromPath(dir)
+	if err != nil {
+		t.Fatalf("TribeDirectorySummaryFromPath() error = %v", err)
+	}
+	if summary.Files != 2 || len(summary.Tribes) != 2 || summary.TotalDinos != 10 {
+		t.Fatalf("TribeDirectorySummaryFromPath() = %#v, want two files, two tribes, ten dinos", summary)
+	}
+	if !summary.HasAverageDinos || summary.AverageDinos != 5 {
+		t.Fatalf("TribeDirectorySummaryFromPath() average = %f, %v; want 5, true", summary.AverageDinos, summary.HasAverageDinos)
+	}
+	ids := map[int32]bool{}
+	for _, tribe := range summary.Tribes {
+		ids[tribe.TribeID] = true
+	}
+	if !ids[222] || !ids[12345] {
+		t.Fatalf("TribeDirectorySummaryFromPath() tribes = %#v, want both synthetic tribes", summary.Tribes)
+	}
+}
+
 func TestPlayerAPIPlayerAndTribeDataSummaryForDataSortsPrivacySafeRows(t *testing.T) {
 	api := NewPlayer(nil)
 	players := []arkobject.Player{

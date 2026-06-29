@@ -151,6 +151,14 @@ type TribeRosterSummary struct {
 	Dinos     int32
 }
 
+type TribeDirectorySummary struct {
+	Files           int
+	Tribes          []arkobject.Tribe
+	TotalDinos      int32
+	HasAverageDinos bool
+	AverageDinos    float64
+}
+
 func NewPlayer(save *arksave.Save) *PlayerAPI {
 	return &PlayerAPI{save: save}
 }
@@ -1316,6 +1324,35 @@ func TribeRosterSummaryFromPath(path string) (TribeRosterSummary, []arksave.Faul
 		err = closeErr
 	}
 	return summary, faults, err
+}
+
+func TribeDirectorySummaryFromPath(path string) (TribeDirectorySummary, error) {
+	api, err := NewPlayerFromDirectory(path)
+	if err != nil {
+		return TribeDirectorySummary{}, err
+	}
+	return api.TribeDirectorySummary()
+}
+
+func (p *PlayerAPI) TribeDirectorySummary() (TribeDirectorySummary, error) {
+	tribes, err := p.TribeDetails()
+	if err != nil {
+		return TribeDirectorySummary{}, err
+	}
+	totalDinos := int32(0)
+	for _, tribe := range tribes {
+		totalDinos += tribe.NumDinos
+	}
+	summary := TribeDirectorySummary{
+		Files:      len(p.TribePaths()),
+		Tribes:     tribes,
+		TotalDinos: totalDinos,
+	}
+	if len(tribes) > 0 {
+		summary.HasAverageDinos = true
+		summary.AverageDinos = float64(totalDinos) / float64(len(tribes))
+	}
+	return summary, nil
 }
 
 func (p *PlayerAPI) TribeRosterSummaryForTribes(tribes []arkobject.Tribe) TribeRosterSummary {

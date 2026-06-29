@@ -1284,19 +1284,7 @@ func tribes(path string, out io.Writer, opts runOptions) error {
 }
 
 func tribesDirectory(path string, out io.Writer, opts runOptions) error {
-	api, err := arkapi.NewPlayerFromDirectory(path)
-	if err != nil {
-		return err
-	}
-	tribes, err := api.TribeDetails()
-	if err != nil {
-		return err
-	}
-	totalDinos, err := api.TotalTribeDinos()
-	if err != nil {
-		return err
-	}
-	averageDinos, hasAverageDinos, err := api.AverageTribeDinos()
+	summary, err := arkapi.TribeDirectorySummaryFromPath(path)
 	if err != nil {
 		return err
 	}
@@ -1304,17 +1292,17 @@ func tribesDirectory(path string, out io.Writer, opts runOptions) error {
 		out,
 		"Tribe directory: %s\nTribe files: %d\nTribes: %d\nTotal dinos: %d\nAverage dinos: %.2f\n",
 		displayString(path, opts),
-		len(api.TribePaths()),
-		len(tribes),
-		totalDinos,
-		optionalFloat(averageDinos, hasAverageDinos),
+		summary.Files,
+		len(summary.Tribes),
+		summary.TotalDinos,
+		optionalFloat(summary.AverageDinos, summary.HasAverageDinos),
 	); err != nil {
 		return err
 	}
 	if opts.Redact {
 		return nil
 	}
-	for _, tribe := range tribes {
+	for _, tribe := range summary.Tribes {
 		if _, err := fmt.Fprintf(
 			out,
 			"  tribe id=%d name=%s owner=%d members=%d dinos=%d\n",

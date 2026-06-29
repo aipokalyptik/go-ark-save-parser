@@ -138,6 +138,10 @@ func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 			t.Fatalf("%s() still owns player API lifecycle; use typed arkapi path helper", name)
 		}
 	}
+	body := functionBody(t, source, "tribesDirectory")
+	if strings.Contains(body, "NewPlayerFromDirectory") {
+		t.Fatalf("tribesDirectory() still owns player directory lifecycle; use typed arkapi path helper")
+	}
 }
 
 func functionBody(t *testing.T, source string, name string) string {

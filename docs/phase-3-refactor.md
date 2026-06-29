@@ -141,6 +141,9 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.LocalProfileSummaryFromPath`, then move
       `local_profiles` onto the typed path helper while preserving local file
       counts, aggregate metrics, and per-operation warning behavior.
+- [x] Add `arkapi.TribeDirectorySummaryFromPath`, then move the `tribes`
+      directory CLI path onto the typed helper while preserving aggregate and
+      non-redacted row output.
 - [x] Add `arkapi.ExportDinoBinaryFromPath` and move
       `dino_export_from_save` onto the typed path helper while preserving the
       explicit output directory contract for structural mutation fixtures.
