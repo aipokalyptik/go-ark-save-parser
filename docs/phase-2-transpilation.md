@@ -6,7 +6,9 @@ can run against translated packages, or documented blockers explain why a
 remaining upstream edge cannot be completed locally.
 
 For the cross-phase monitorable checklist, see
-[`docs/project-task-ledger.md`](project-task-ledger.md).
+[`docs/project-task-ledger.md`](project-task-ledger.md). For a compact summary
+of remaining Phase 2 blocked rows and the exact reopening condition for each,
+see [`docs/phase-2-blocker-matrix.md`](phase-2-blocker-matrix.md).
 
 ## Current Status
 

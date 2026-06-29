@@ -18,6 +18,8 @@ The up-front stable task inventory is
 task ledger is [`docs/project-task-ledger.md`](docs/project-task-ledger.md).
 The accepted-scope evidence audit is
 [`docs/acceptance-audit.md`](docs/acceptance-audit.md).
+The remaining Phase 2 blocked rows are summarized in
+[`docs/phase-2-blocker-matrix.md`](docs/phase-2-blocker-matrix.md).
 Together they are the source of truth for phase status, open tasks, blocked
 tasks, and verification commands.
 

@@ -3,7 +3,8 @@
 This is the up-front, stable task inventory for the offline-only Go port. It is
 intended for progress monitoring without reading chat history. Detailed status
 notes live in [`project-task-ledger.md`](project-task-ledger.md); phase-specific
-evidence lives in the linked phase documents.
+evidence lives in the linked phase documents. The compact summary of remaining
+Phase 2 blocked rows is [`phase-2-blocker-matrix.md`](phase-2-blocker-matrix.md).
 
 Status markers:
 

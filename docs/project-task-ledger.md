@@ -6,7 +6,9 @@ without reading chat history.
 
 For stable up-front task IDs across the whole goal, see
 [`docs/task-inventory.md`](task-inventory.md). This ledger carries the detailed
-status notes behind those IDs.
+status notes behind those IDs. For a compact view of the remaining Phase 2
+blocked rows and the exact conditions that would reopen them, see
+[`docs/phase-2-blocker-matrix.md`](phase-2-blocker-matrix.md).
 
 Status markers:
 
