@@ -148,6 +148,10 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
 - [x] Add `arkapi.LocalProfileSummaryFromPath`, then move
       `local_profiles` onto the typed path helper while preserving local file
       counts, aggregate metrics, and per-operation warning behavior.
+- [x] Add typed player profile and tribe file summary helpers, then move the
+      `players <file.arkprofile>` and `tribes <file.arktribe>` CLI paths off
+      direct `arkprofile` lifecycle handling while preserving archive metadata
+      output before parse errors.
 - [x] Add `arkapi.TribeDirectorySummaryFromPath`, then move the `tribes`
       directory CLI path onto the typed helper while preserving aggregate and
       non-redacted row output.

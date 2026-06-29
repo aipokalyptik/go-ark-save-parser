@@ -557,6 +557,10 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Add `arkapi.LocalProfileSummaryFromPath`, then move
           `local_profiles` local file counts, aggregate metrics, and
           per-operation warnings onto the typed player path helper.
+    - [x] Add typed player profile and tribe file summary helpers, then move
+          the `players <file.arkprofile>` and `tribes <file.arktribe>` CLI
+          paths off direct `arkprofile` lifecycle handling while preserving
+          archive metadata output before parse errors.
     - [x] Add `arkapi.TribeDirectorySummaryFromPath`, then move the `tribes`
           directory CLI aggregate and non-redacted row output onto the typed
           player path helper.

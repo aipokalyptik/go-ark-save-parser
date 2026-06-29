@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkcluster"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
 	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
@@ -59,6 +60,24 @@ type LocalProfileSummary struct {
 type LocalProfileFault struct {
 	Operation string
 	Err       error
+}
+
+type LocalArchiveSummary struct {
+	Path                string
+	ArchiveVersion      int32
+	ObjectCount         int
+	PropertyParseErrors int
+	ClassNames          []string
+}
+
+type PlayerProfileFileSummary struct {
+	Archive LocalArchiveSummary
+	Player  arkobject.Player
+}
+
+type TribeFileSummary struct {
+	Archive LocalArchiveSummary
+	Summary arkprofile.TribeSummary
 }
 
 type TribePlayerRelation struct {
@@ -322,6 +341,53 @@ func LocalProfileSummaryFromPath(path string) (LocalProfileSummary, []LocalProfi
 	}
 	summary, faults := api.LocalProfileSummary()
 	return summary, faults, nil
+}
+
+func PlayerProfileFileSummaryFromPath(path string) (PlayerProfileFileSummary, error) {
+	profile, err := arkprofile.OpenPlayerProfile(path)
+	if err != nil {
+		return PlayerProfileFileSummary{}, err
+	}
+	summary := PlayerProfileFileSummary{Archive: LocalArchiveSummaryForArchive(profile.Path, profile.Archive)}
+	player, err := profile.Player()
+	if err != nil {
+		return summary, err
+	}
+	summary.Player = player
+	return summary, nil
+}
+
+func TribeFileSummaryFromPath(path string) (TribeFileSummary, error) {
+	tribe, err := arkprofile.OpenTribeSave(path)
+	if err != nil {
+		return TribeFileSummary{}, err
+	}
+	summary := TribeFileSummary{Archive: LocalArchiveSummaryForArchive(tribe.Path, tribe.Archive)}
+	tribeSummary, err := tribe.Summary()
+	if err != nil {
+		return summary, err
+	}
+	summary.Summary = tribeSummary
+	return summary, nil
+}
+
+func LocalArchiveSummaryForArchive(path string, archive *arkarchive.Archive) LocalArchiveSummary {
+	summary := LocalArchiveSummary{Path: path}
+	if archive == nil {
+		return summary
+	}
+	summary.ArchiveVersion = archive.Version
+	summary.ObjectCount = len(archive.Objects)
+	summary.ClassNames = make([]string, 0, len(archive.Objects))
+	for _, object := range archive.Objects {
+		if object.PropertyError != nil {
+			summary.PropertyParseErrors++
+		}
+		if object.ClassName != "" {
+			summary.ClassNames = append(summary.ClassNames, object.ClassName)
+		}
+	}
+	return summary
 }
 
 func (p *PlayerAPI) LocalProfileSummary() (LocalProfileSummary, []LocalProfileFault) {

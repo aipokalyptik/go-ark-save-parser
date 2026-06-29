@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -146,10 +145,13 @@ func TestPlayerTribeAggregateCommandsUseTypedPathHelpers(t *testing.T) {
 		t.Fatalf("ReadFile(main.go) error = %v", err)
 	}
 	source := string(data)
-	for _, name := range []string{"playerRoster", "tribeRoster", "playerTribeLinks"} {
+	for _, name := range []string{"playerRoster", "tribeRoster", "playerTribeLinks", "players", "tribes"} {
 		body := functionBody(t, source, name)
 		if strings.Contains(body, "NewPlayerFromPath") {
 			t.Fatalf("%s() still owns player API lifecycle; use typed arkapi path helper", name)
+		}
+		if strings.Contains(body, "arkprofile.Open") {
+			t.Fatalf("%s() still owns local profile/tribe file lifecycle; use typed arkapi path helper", name)
 		}
 	}
 	body := functionBody(t, source, "tribesDirectory")
@@ -1172,9 +1174,12 @@ func TestRunRejectsUnknownOption(t *testing.T) {
 
 func TestArchiveSummaryPrintsPropertyErrorCount(t *testing.T) {
 	var out bytes.Buffer
-	err := printArchiveSummary(&out, "Archive", "/tmp/profile.arkprofile", 7, []arkarchive.Object{
-		{ClassName: "/Game/Valid.Valid_C"},
-		{ClassName: "/Game/Broken.Broken_C", PropertyError: errors.New("bad property")},
+	err := printArchiveSummary(&out, "Archive", arkapi.LocalArchiveSummary{
+		Path:                "/tmp/profile.arkprofile",
+		ArchiveVersion:      7,
+		ObjectCount:         2,
+		PropertyParseErrors: 1,
+		ClassNames:          []string{"/Game/Valid.Valid_C", "/Game/Broken.Broken_C"},
 	}, runOptions{})
 	if err != nil {
 		t.Fatalf("printArchiveSummary() error = %v", err)

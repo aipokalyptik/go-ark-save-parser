@@ -11,10 +11,8 @@ import (
 	"strings"
 
 	"github.com/aipokalyptik/go-ark-save-parser/arkapi"
-	"github.com/aipokalyptik/go-ark-save-parser/arkarchive"
 	"github.com/aipokalyptik/go-ark-save-parser/arkmutation"
 	"github.com/aipokalyptik/go-ark-save-parser/arkobject"
-	"github.com/aipokalyptik/go-ark-save-parser/arkprofile"
 	"github.com/aipokalyptik/go-ark-save-parser/arksave"
 	"github.com/google/uuid"
 )
@@ -1153,25 +1151,27 @@ func players(path string, out io.Writer, opts runOptions) error {
 		return playersDirectory(path, out, opts)
 	}
 
-	profile, err := arkprofile.OpenPlayerProfile(path)
+	summary, err := arkapi.PlayerProfileFileSummaryFromPath(path)
 	if err != nil {
-		return err
-	}
-	if err := printArchiveSummary(out, "Player profile", profile.Path, profile.Archive.Version, profile.Archive.Objects, opts); err != nil {
-		return err
-	}
-	player, err := profile.Player()
-	if err != nil {
+		if summary.Archive.Path == "" {
+			return err
+		}
+		if archiveErr := printArchiveSummary(out, "Player profile", summary.Archive, opts); archiveErr != nil {
+			return archiveErr
+		}
 		return fmt.Errorf("parse player profile details: %w", err)
+	}
+	if err := printArchiveSummary(out, "Player profile", summary.Archive, opts); err != nil {
+		return err
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Character name: %s\nPlayer name: %s\nPlayer data ID: %v\nTribe ID: %v\nDeaths: %d\n",
-		displayString(player.CharacterName, opts),
-		displayString(player.PlayerName, opts),
-		displayInt(player.PlayerDataID, opts),
-		displayInt(player.TribeID, opts),
-		player.NumDeaths,
+		displayString(summary.Player.CharacterName, opts),
+		displayString(summary.Player.PlayerName, opts),
+		displayInt(summary.Player.PlayerDataID, opts),
+		displayInt(summary.Player.TribeID, opts),
+		summary.Player.NumDeaths,
 	)
 	return err
 }
@@ -1226,25 +1226,27 @@ func tribes(path string, out io.Writer, opts runOptions) error {
 		return tribesDirectory(path, out, opts)
 	}
 
-	tribe, err := arkprofile.OpenTribeSave(path)
+	fileSummary, err := arkapi.TribeFileSummaryFromPath(path)
 	if err != nil {
-		return err
-	}
-	if err := printArchiveSummary(out, "Tribe save", tribe.Path, tribe.Archive.Version, tribe.Archive.Objects, opts); err != nil {
-		return err
-	}
-	summary, err := tribe.Summary()
-	if err != nil {
+		if fileSummary.Archive.Path == "" {
+			return err
+		}
+		if archiveErr := printArchiveSummary(out, "Tribe save", fileSummary.Archive, opts); archiveErr != nil {
+			return archiveErr
+		}
 		return fmt.Errorf("parse tribe details: %w", err)
+	}
+	if err := printArchiveSummary(out, "Tribe save", fileSummary.Archive, opts); err != nil {
+		return err
 	}
 	_, err = fmt.Fprintf(
 		out,
 		"Tribe name: %s\nTribe ID: %v\nOwner ID: %v\nMembers: %d\nDinos: %d\n",
-		displayString(summary.Name, opts),
-		displayInt(summary.TribeID, opts),
-		displayInt(summary.OwnerID, opts),
-		len(summary.Members),
-		summary.NumDinos,
+		displayString(fileSummary.Summary.Name, opts),
+		displayInt(fileSummary.Summary.TribeID, opts),
+		displayInt(fileSummary.Summary.OwnerID, opts),
+		len(fileSummary.Summary.Members),
+		fileSummary.Summary.NumDinos,
 	)
 	return err
 }
@@ -1884,32 +1886,22 @@ func printClusterSummary(out io.Writer, data arkapi.ClusterDataInfo, opts runOpt
 	return nil
 }
 
-func printArchiveSummary(out io.Writer, label string, path string, version int32, objects []arkarchive.Object, opts runOptions) error {
-	if _, err := fmt.Fprintf(out, "%s: %s\nArchive version: %d\nObjects: %d\nProperty parse errors: %d\n", label, displayString(path, opts), version, len(objects), archivePropertyErrorCount(objects)); err != nil {
+func printArchiveSummary(out io.Writer, label string, summary arkapi.LocalArchiveSummary, opts runOptions) error {
+	if _, err := fmt.Fprintf(out, "%s: %s\nArchive version: %d\nObjects: %d\nProperty parse errors: %d\n", label, displayString(summary.Path, opts), summary.ArchiveVersion, summary.ObjectCount, summary.PropertyParseErrors); err != nil {
 		return err
 	}
-	if len(objects) == 0 || opts.Redact {
+	if len(summary.ClassNames) == 0 || opts.Redact {
 		return nil
 	}
 	if _, err := fmt.Fprintln(out, "Classes:"); err != nil {
 		return err
 	}
-	for _, object := range objects {
-		if _, err := fmt.Fprintf(out, "  %s\n", object.ClassName); err != nil {
+	for _, className := range summary.ClassNames {
+		if _, err := fmt.Fprintf(out, "  %s\n", className); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func archivePropertyErrorCount(objects []arkarchive.Object) int {
-	var count int
-	for _, object := range objects {
-		if object.PropertyError != nil {
-			count++
-		}
-	}
-	return count
 }
 
 func printTributeSummary(out io.Writer, data arkapi.TributeDataInfo, opts runOptions) error {

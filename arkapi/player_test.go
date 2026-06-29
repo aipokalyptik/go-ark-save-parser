@@ -923,6 +923,64 @@ func TestLocalProfileSummaryFromPathUsesDirectoryProfilesAndTribes(t *testing.T)
 	}
 }
 
+func TestPlayerProfileFileSummaryFromPathReturnsArchiveAndPlayer(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	testfixtures.WritePlayerArchiveWithOptions(t, path, testfixtures.PlayerArchiveOptions{
+		PlayerDataID:  42,
+		CharacterName: "Survivor",
+		PlayerName:    "PlatformName",
+		TribeID:       777,
+		NumDeaths:     3,
+	})
+
+	summary, err := PlayerProfileFileSummaryFromPath(path)
+	if err != nil {
+		t.Fatalf("PlayerProfileFileSummaryFromPath() error = %v", err)
+	}
+	if summary.Archive.Path != path || summary.Archive.ArchiveVersion != 7 || summary.Archive.ObjectCount != 1 || len(summary.Archive.ClassNames) != 1 {
+		t.Fatalf("PlayerProfileFileSummaryFromPath() archive = %#v", summary.Archive)
+	}
+	if summary.Player.PlayerDataID != 42 || summary.Player.CharacterName != "Survivor" || summary.Player.PlayerName != "PlatformName" || summary.Player.TribeID != 777 || summary.Player.NumDeaths != 3 {
+		t.Fatalf("PlayerProfileFileSummaryFromPath() player = %#v", summary.Player)
+	}
+}
+
+func TestPlayerProfileFileSummaryFromPathKeepsArchiveOnParseError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "123.arkprofile")
+	testfixtures.WriteArchive(t, path, "/Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C")
+
+	summary, err := PlayerProfileFileSummaryFromPath(path)
+	if err == nil {
+		t.Fatalf("PlayerProfileFileSummaryFromPath() error = nil, want missing player data")
+	}
+	if summary.Archive.Path != path || summary.Archive.ObjectCount != 1 || len(summary.Archive.ClassNames) != 1 {
+		t.Fatalf("PlayerProfileFileSummaryFromPath() archive = %#v, want partial archive summary", summary.Archive)
+	}
+}
+
+func TestTribeFileSummaryFromPathReturnsArchiveAndSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "456.arktribe")
+	testfixtures.WriteTribeArchiveWithOptions(t, path, testfixtures.TribeArchiveOptions{
+		Name:      "Porters",
+		TribeID:   12345,
+		OwnerID:   42,
+		NumDinos:  7,
+		Members:   []string{"Survivor", "Scout"},
+		MemberIDs: []int32{42, 43},
+	})
+
+	summary, err := TribeFileSummaryFromPath(path)
+	if err != nil {
+		t.Fatalf("TribeFileSummaryFromPath() error = %v", err)
+	}
+	if summary.Archive.Path != path || summary.Archive.ArchiveVersion != 7 || summary.Archive.ObjectCount != 1 || len(summary.Archive.ClassNames) != 1 {
+		t.Fatalf("TribeFileSummaryFromPath() archive = %#v", summary.Archive)
+	}
+	if summary.Summary.Name != "Porters" || summary.Summary.TribeID != 12345 || summary.Summary.OwnerID != 42 || summary.Summary.NumDinos != 7 || len(summary.Summary.Members) != 2 {
+		t.Fatalf("TribeFileSummaryFromPath() summary = %#v", summary.Summary)
+	}
+}
+
 func TestPlayerAPITribeRosterSummaryForTribes(t *testing.T) {
 	api := NewPlayer(nil)
 	tribes := []arkobject.Tribe{
