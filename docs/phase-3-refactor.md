@@ -8,9 +8,7 @@ For the cross-phase monitorable checklist, see
 
 ## Current Status
 
-Phase 3 is the active execution phase. Refactor slices should preserve the
-closed Phase 2 behavior, keep tests passing, and avoid reopening Python oracle
-expansion unless a new Go failure exposes a concrete offline parity defect.
+Phase 3 is complete for the selected offline, fixture-backed scope. Future work should move through Phase 4 unless a verified regression reopens a specific Phase 3 refactor row.
 
 ## Current Package Shape
 
@@ -189,12 +187,14 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       general aggregate examples onto typed path helpers.
 - [x] Move `map-summary` CLI/example save-info export onto typed JSON path
       helpers.
-- [ ] Add typed API layers for full dino, full structure, equipment, full
+- [x] Add typed API layers for full dino, full structure, equipment, full
       stackable, base, additional model-specific JSON export, local cluster
       domain modeling, and remaining player/tribe upstream parity. Full
       typed dino, structure, equipment, stackable, base, local cluster,
       player, and tribe collection path helpers now exist with fault
-      preservation.
+      preservation. Remaining upstream-specific player/tribe edge reports stay
+      tracked as Phase 2 fixture-gated blockers, not open Phase 3 refactor
+      work.
 - [x] Replace duplicated synthetic fixture builders in tests with internal test
       helpers. `internal/testfixtures` now centralizes public synthetic SQLite
       saves, generic object payloads, local profile/tribe/cluster archive
@@ -241,8 +241,6 @@ expansion unless a new Go failure exposes a concrete offline parity defect.
       `synthetic*`/`createSynthetic*` helpers are package-local malformed
       payloads, purpose-built name-table headers, or domain-specific save graphs
       that describe the behavior under test.
-      Remaining lower-level domain-specific parser fixtures and non-save
-      malformed object-shape fixtures still need incremental migration.
 - [x] Route `arkapi` synthetic save fixtures through `internal/testfixtures`
       instead of repeated direct SQLite table creation in each domain test.
 - [x] Add benchmarks for full save open/object enumeration, object parse, query

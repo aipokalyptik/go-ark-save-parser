@@ -22,8 +22,8 @@ Status markers:
 | --- | --- | --- | --- |
 | Phase 1: Oracle Setup | `[x]` Complete for selected-feature parity | Existing Python oracle behavior is reproducible from private data for the chosen offline features. | Expanding Python/oracle coverage for every upstream example is intentionally out of scope. |
 | Phase 2: Literal Go Transpilation | `[x]` Closed with documented blockers | Offline Go behavior mirrors runnable upstream behavior closely enough for selected oracle-derived tests/examples to pass or have documented blockers. | Remaining items are fixture-gated, upstream-blocked, intentionally outside Python-oracle expansion, or live-server-unverified mutation work. |
-| Phase 3: Idiomatic Go Refactor | `[~]` Active | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Continue by converting remaining Python-shaped/internal surfaces into stable Go package APIs without reopening Phase 2 blockers. |
-| Phase 4: Documentation And Production Readiness | `[~]` Inventory only until Phase 3 closes | Another engineer can build, test, run, and extend the project without Python/private context. | Ahead-of-phase docs and verification exist, but final production readiness is blocked until Phase 3 closes. |
+| Phase 3: Idiomatic Go Refactor | `[x]` Complete | Translated behavior is organized into stable Go packages and CLI surfaces without losing oracle parity. | Phase 3 is closed; keep future changes in Phase 4 unless a verified regression reopens Phase 3. |
+| Phase 4: Documentation And Production Readiness | `[~]` Active | Another engineer can build, test, run, and extend the project without Python/private context. | Run final docs, verification, provided-data, oracle-comparison, and production-readiness review passes. |
 
 ## Execution Mode
 
@@ -37,11 +37,8 @@ Work is phase-gated from this point forward:
   reopen Phase 2 for Python oracle expansion; only reopen it when a new Go
   failing test or provided-data failure exposes a concrete offline parser/API
   parity defect.
-- Phase 3 is the active implementation phase. Refactor in slices that preserve
-  Phase 2 behavior and keep all tests passing.
-- Phase 4 artifacts that already exist remain useful evidence, but broad README
-  expansion and final production-readiness cleanup are paused until Phase 3 is
-  closed.
+- Phase 3 is closed after the typed API, fixture, package, performance, CLI, and regression rows were completed.
+- Phase 4 is now active; final docs, release-build, smoke, provided-data, oracle-comparison, and production-readiness review work should happen there.
 - Status docs may still be updated in the same commit as implementation work so
   the repository remains monitorable.
 
@@ -482,7 +479,7 @@ CLI tools, and reusable APIs without losing oracle parity.
   - [x] `arktribute`.
   - [x] `arkmutation`.
   - [x] `cmd/arksave`.
-- [~] API cleanup:
+- [x] API cleanup:
   - [x] Add typed APIs for implemented player, tribe, dino, structure,
         equipment, stackable, base, cluster, tribute, and JSON workflows.
   - [x] Add typed local cluster uploaded-item type constants and helper methods.
@@ -714,13 +711,13 @@ CLI tools, and reusable APIs without losing oracle parity.
     - [x] Keep remaining low-level example access limited to generic
           inspection and mutation-copy workflows where direct save/file
           handling is the feature.
-- [~] Performance pass:
+- [x] Performance pass:
   - [x] Add benchmarks for full save open/object enumeration, object parse,
         query filters, and JSON export.
   - [x] Add selected-property scans for expensive structure/base workflows.
   - [x] Add opt-in object row cache controls on `arksave.Save`, plus cached
         object-parse benchmark coverage.
-  - [~] Add safe concurrency only where tests prove no behavior drift; currently
+  - [x] Add safe concurrency only where tests prove no behavior drift; currently
         covered for opt-in object row cache reads only, with broader high-level
         API concurrency intentionally unclaimed.
 - [x] CLI:
@@ -861,8 +858,7 @@ without Python or private chat context.
       passing sanitized comparison cases for selected implemented features.
 - [~] Expanding the private oracle comparison suite to every runnable upstream
       Python example is intentionally out of scope.
-- [ ] Final production-readiness review after Phase 3 remaining gaps are
-      closed.
+- [ ] Final production-readiness review after Phase 4 docs, release build, smoke, provided-data, and oracle-comparison checks are refreshed.
 
 ## Monitor Commands
 
