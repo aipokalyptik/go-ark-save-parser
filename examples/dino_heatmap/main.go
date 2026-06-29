@@ -38,5 +38,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("cells=%d total=%d max=%d faults=%d wrote=%s\n", summary.NonzeroCells, summary.Total, summary.Max, summary.Faults, args[1])
+	fmt.Printf("cells=%d total=%d max=%d faults=%d skipped_coordinates=%d wrote=%s\n", summary.NonzeroCells, summary.Total, summary.Max, summary.Faults, summary.SkippedCoordinates, args[1])
 }

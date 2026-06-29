@@ -7,15 +7,20 @@ import (
 )
 
 type HeatmapSummary struct {
-	Resolution   int `json:"resolution"`
-	NonzeroCells int `json:"nonzero_cells"`
-	Total        int `json:"total"`
-	Max          int `json:"max"`
-	Faults       int `json:"faults"`
+	Resolution         int `json:"resolution"`
+	NonzeroCells       int `json:"nonzero_cells"`
+	Total              int `json:"total"`
+	Max                int `json:"max"`
+	Faults             int `json:"faults"`
+	SkippedCoordinates int `json:"skipped_coordinates"`
 }
 
 func SummarizeHeatmap(heatmap [][]int, faults int) HeatmapSummary {
-	summary := HeatmapSummary{Resolution: len(heatmap), Faults: faults}
+	return SummarizeHeatmapWithSkippedCoordinates(heatmap, faults, 0)
+}
+
+func SummarizeHeatmapWithSkippedCoordinates(heatmap [][]int, faults int, skippedCoordinates int) HeatmapSummary {
+	summary := HeatmapSummary{Resolution: len(heatmap), Faults: faults, SkippedCoordinates: skippedCoordinates}
 	for _, row := range heatmap {
 		for _, value := range row {
 			if value == 0 {

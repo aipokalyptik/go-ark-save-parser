@@ -799,8 +799,13 @@ func (d *DinoAPI) WildTamedWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave
 }
 
 func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]arkobject.Dino, blueprints []string, onlyTamed bool) ([][]int, error) {
+	heatmap, _, err := d.heatmapWithSkippedCoordinates(mapName, resolution, dinos, blueprints, onlyTamed)
+	return heatmap, err
+}
+
+func (d *DinoAPI) heatmapWithSkippedCoordinates(mapName string, resolution int, dinos map[uuid.UUID]arkobject.Dino, blueprints []string, onlyTamed bool) ([][]int, int, error) {
 	if resolution <= 0 {
-		return nil, fmt.Errorf("resolution must be positive")
+		return nil, 0, fmt.Errorf("resolution must be positive")
 	}
 	if mapName == "" && d.save != nil && d.save.Context != nil {
 		mapName = d.save.Context.MapName
@@ -809,7 +814,7 @@ func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]ar
 	if dinos == nil {
 		dinos, err = d.All()
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 	allowed := map[string]struct{}{}
@@ -820,6 +825,7 @@ func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]ar
 	for i := range heatmap {
 		heatmap[i] = make([]int, resolution)
 	}
+	skippedCoordinates := 0
 	for _, dino := range dinos {
 		if dino.Location == nil {
 			continue
@@ -835,11 +841,12 @@ func (d *DinoAPI) Heatmap(mapName string, resolution int, dinos map[uuid.UUID]ar
 		coords := dino.Location.AsMapCoords(mapName)
 		x, y, ok := heatmapCellFromCoords(coords.Lat, coords.Long, resolution)
 		if !ok {
+			skippedCoordinates++
 			continue
 		}
 		heatmap[x][y]++
 	}
-	return heatmap, nil
+	return heatmap, skippedCoordinates, nil
 }
 
 func (d *DinoAPI) HeatmapSummaryWithFaults(opts DinoHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
@@ -855,11 +862,11 @@ func (d *DinoAPI) HeatmapSummaryWithFaults(opts DinoHeatmapOptions) (HeatmapSumm
 		}
 		faults = nil
 	}
-	heatmap, err := d.Heatmap(opts.MapName, opts.Resolution, dinos, opts.Blueprints, opts.OnlyTamed)
+	heatmap, skippedCoordinates, err := d.heatmapWithSkippedCoordinates(opts.MapName, opts.Resolution, dinos, opts.Blueprints, opts.OnlyTamed)
 	if err != nil {
 		return HeatmapSummary{}, nil, err
 	}
-	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
+	return SummarizeHeatmapWithSkippedCoordinates(heatmap, len(faults), skippedCoordinates), faults, nil
 }
 
 func (d *DinoAPI) FilterWildTamed(dinos map[uuid.UUID]arkobject.Dino) map[uuid.UUID]arkobject.Dino {

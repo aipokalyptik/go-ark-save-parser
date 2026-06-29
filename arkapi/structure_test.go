@@ -3,6 +3,7 @@ package arkapi
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -822,6 +823,26 @@ func TestStructureAPIHeatmapSummaryWithFaultsCountsSaveStructures(t *testing.T) 
 	}
 }
 
+func TestStructureAPIHeatmapSummaryWithFaultsCountsSkippedCoordinates(t *testing.T) {
+	save := openSyntheticStructureHeatmapOutOfBoundsSave(t)
+	defer save.Close()
+
+	summary, faults, err := NewStructure(save).HeatmapSummaryWithFaults(StructureHeatmapOptions{
+		MapName:      "Valguero",
+		Resolution:   100,
+		MinInSection: 1,
+	})
+	if err != nil {
+		t.Fatalf("HeatmapSummaryWithFaults() error = %v", err)
+	}
+	if len(faults) != 0 {
+		t.Fatalf("HeatmapSummaryWithFaults() faults = %#v, want none", faults)
+	}
+	if summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.SkippedCoordinates != 3 {
+		t.Fatalf("HeatmapSummaryWithFaults() = %#v, want one valid cell and three skipped coordinates", summary)
+	}
+}
+
 func TestStructureAPISelectedHeatmapSummaryWithFaultsCountsSaveStructures(t *testing.T) {
 	save := openSyntheticStructureOwnerLocationSave(t)
 	defer save.Close()
@@ -1067,6 +1088,31 @@ func openSyntheticStructureOwnerLocationSkippedSave(t *testing.T) *arksave.Save 
 		validID:      syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
 		noOwnerID:    syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 0),
 		noLocationID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 777),
+	})
+}
+
+func openSyntheticStructureHeatmapOutOfBoundsSave(t *testing.T) *arksave.Save {
+	t.Helper()
+
+	validID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff")
+	resolutionBoundaryID := uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+	negativeID := uuid.MustParse("cccccccc-dddd-eeee-ffff-000000000000")
+	nanID := uuid.MustParse("dddddddd-eeee-ffff-0000-111111111111")
+	valid := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	resolutionBoundary := arkobject.MapCoords{Lat: 100, Long: 99.9}.AsActorTransform("Valguero")
+	negative := arkobject.MapCoords{Lat: -0.1, Long: 50}.AsActorTransform("Valguero")
+	return openSyntheticSaveWith(t, "structures.ark", map[string][]byte{
+		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
+			validID:              {valid.X, valid.Y, valid.Z},
+			resolutionBoundaryID: {resolutionBoundary.X, resolutionBoundary.Y, resolutionBoundary.Z},
+			negativeID:           {negative.X, negative.Y, negative.Z},
+			nanID:                {math.NaN(), valid.Y, valid.Z},
+		}),
+	}, map[uuid.UUID][]byte{
+		validID:              syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 101, 555),
+		resolutionBoundaryID: syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 102, 555),
+		negativeID:           syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 103, 555),
+		nanID:                syntheticStructureObjectBytesWithClassAndOwner(0x10000051, 104, 555),
 	})
 }
 

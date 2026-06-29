@@ -719,6 +719,32 @@ func TestDinoAPIHeatmapCountsDinoMapCells(t *testing.T) {
 	}
 }
 
+func TestDinoAPIHeatmapCountsSkippedCoordinates(t *testing.T) {
+	api := DinoAPI{}
+	valid := arkobject.MapCoords{Lat: 12.4, Long: 34.6}.AsActorTransform("Valguero")
+	outside := arkobject.MapCoords{Lat: 150, Long: 150}.AsActorTransform("Valguero")
+	dinos := map[uuid.UUID]arkobject.Dino{
+		uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			IsTamed:   true,
+			Location:  &valid,
+		},
+		uuid.MustParse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"): {
+			Blueprint: "/Game/PrimalEarth/Dinos/Raptor/Raptor_Character_BP.Raptor_Character_BP_C",
+			IsTamed:   true,
+			Location:  &outside,
+		},
+	}
+
+	heatmap, skipped, err := api.heatmapWithSkippedCoordinates("Valguero", 100, dinos, nil, true)
+	if err != nil {
+		t.Fatalf("heatmapWithSkippedCoordinates() error = %v", err)
+	}
+	if heatmap[12][34] != 1 || skipped != 1 {
+		t.Fatalf("heatmapWithSkippedCoordinates() cell/skipped = %d/%d, want 1/1", heatmap[12][34], skipped)
+	}
+}
+
 func TestDinoAPIHeatmapSummaryWithFaultsCanExcludeCryopodsAndClearCryopodFaults(t *testing.T) {
 	save := openSyntheticDinoHeatmapSaveWithMalformedCryopod(t)
 	defer save.Close()

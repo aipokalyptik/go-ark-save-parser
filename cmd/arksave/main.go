@@ -705,11 +705,12 @@ func structureHeatmap(path string, outPath string, resolution int, minInCell int
 	}
 	_, err = fmt.Fprintf(
 		out,
-		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nWrote: %s\n",
+		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nSkipped coordinates: %d\nWrote: %s\n",
 		summary.NonzeroCells,
 		summary.Total,
 		summary.Max,
 		summary.Faults,
+		summary.SkippedCoordinates,
 		outPath,
 	)
 	return err
@@ -882,11 +883,12 @@ func dinoHeatmap(path string, outPath string, resolution int, out io.Writer, opt
 	}
 	_, err = fmt.Fprintf(
 		out,
-		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nWrote: %s\n",
+		"Cells: %d\nTotal: %d\nMax: %d\nParse faults: %d\nSkipped coordinates: %d\nWrote: %s\n",
 		summary.NonzeroCells,
 		summary.Total,
 		summary.Max,
 		summary.Faults,
+		summary.SkippedCoordinates,
 		outPath,
 	)
 	return err

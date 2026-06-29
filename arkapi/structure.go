@@ -823,8 +823,13 @@ func (s *StructureAPI) FilterByLocation(mapName string, coords arkobject.MapCoor
 }
 
 func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uuid.UUID]arkobject.Structure, blueprints []string, owner *arkobject.ObjectOwner, minInSection int) ([][]int, error) {
+	heatmap, _, err := s.heatmapWithSkippedCoordinates(mapName, resolution, structures, blueprints, owner, minInSection)
+	return heatmap, err
+}
+
+func (s *StructureAPI) heatmapWithSkippedCoordinates(mapName string, resolution int, structures map[uuid.UUID]arkobject.Structure, blueprints []string, owner *arkobject.ObjectOwner, minInSection int) ([][]int, int, error) {
 	if resolution <= 0 {
-		return nil, fmt.Errorf("resolution must be positive")
+		return nil, 0, fmt.Errorf("resolution must be positive")
 	}
 	if mapName == "" && s.save != nil && s.save.Context != nil {
 		mapName = s.save.Context.MapName
@@ -837,7 +842,7 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 			structures, err = s.All()
 		}
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 	allowed := blueprintSet(blueprints)
@@ -845,6 +850,7 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 	for i := range heatmap {
 		heatmap[i] = make([]int, resolution)
 	}
+	skippedCoordinates := 0
 	for _, structure := range structures {
 		if structure.Location == nil {
 			continue
@@ -860,6 +866,7 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 		coords := structure.Location.AsMapCoords(mapName)
 		x, y, ok := heatmapCellFromCoords(coords.Lat, coords.Long, resolution)
 		if !ok {
+			skippedCoordinates++
 			continue
 		}
 		heatmap[x][y]++
@@ -871,7 +878,7 @@ func (s *StructureAPI) Heatmap(mapName string, resolution int, structures map[uu
 			}
 		}
 	}
-	return heatmap, nil
+	return heatmap, skippedCoordinates, nil
 }
 
 func (s *StructureAPI) HeatmapSummaryWithFaults(opts StructureHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
@@ -879,11 +886,11 @@ func (s *StructureAPI) HeatmapSummaryWithFaults(opts StructureHeatmapOptions) (H
 	if err != nil {
 		return HeatmapSummary{}, nil, err
 	}
-	heatmap, err := s.Heatmap(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
+	heatmap, skippedCoordinates, err := s.heatmapWithSkippedCoordinates(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
 	if err != nil {
 		return HeatmapSummary{}, nil, err
 	}
-	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
+	return SummarizeHeatmapWithSkippedCoordinates(heatmap, len(faults), skippedCoordinates), faults, nil
 }
 
 func (s *StructureAPI) SelectedHeatmapSummaryWithFaults(opts StructureHeatmapOptions) (HeatmapSummary, []arksave.FaultyObjectInfo, error) {
@@ -891,11 +898,11 @@ func (s *StructureAPI) SelectedHeatmapSummaryWithFaults(opts StructureHeatmapOpt
 	if err != nil {
 		return HeatmapSummary{}, nil, err
 	}
-	heatmap, err := s.Heatmap(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
+	heatmap, skippedCoordinates, err := s.heatmapWithSkippedCoordinates(opts.MapName, opts.Resolution, structures, opts.Blueprints, opts.Owner, opts.MinInSection)
 	if err != nil {
 		return HeatmapSummary{}, nil, err
 	}
-	return SummarizeHeatmap(heatmap, len(faults)), faults, nil
+	return SummarizeHeatmapWithSkippedCoordinates(heatmap, len(faults), skippedCoordinates), faults, nil
 }
 
 func (s *StructureAPI) AllWithInventory() (map[uuid.UUID]arkobject.Structure, error) {

@@ -250,6 +250,9 @@ documented.
         fractional coordinates floor into cells, zero-boundary cells are
         included, resolution-exact/negative/NaN/Inf values are skipped, and
         structure and dino heatmaps share the same resolver.
+  - [x] Heatmap summaries, `structure-heatmap`/`dino-heatmap` CLI output, and
+        the matching examples report skipped coordinate counts for invalid or
+        out-of-range map cells.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests

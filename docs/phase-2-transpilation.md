@@ -399,6 +399,9 @@ coverage broadly.
       `structure_heatmap` numeric oracle parity remains blocked by supplied-save
       out-of-range cell indexing, but Go local behavior is now explicit and
       regression-tested.
+- [x] Surface skipped invalid/out-of-range heatmap coordinates in typed
+      summaries, `structure-heatmap`/`dino-heatmap` CLI output, and the
+      corresponding examples.
 - [x] Add fault-preserving local `.arkprofile` and `.arktribe` batch reads so
       broken local archives do not hide other valid player or tribe records.
 - [x] Add fault-returning player roster, player-all, and tribe roster summaries

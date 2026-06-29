@@ -559,6 +559,7 @@ func TestStructureHeatmapCommandWritesSummaryJSON(t *testing.T) {
 		"Total: 1",
 		"Max: 1",
 		"Parse faults: 0",
+		"Skipped coordinates: 0",
 		"Wrote: " + outPath,
 	} {
 		if !strings.Contains(got, want) {
@@ -573,7 +574,7 @@ func TestStructureHeatmapCommandWritesSummaryJSON(t *testing.T) {
 	if err := json.Unmarshal(data, &summary); err != nil {
 		t.Fatalf("Unmarshal heatmap summary error = %v", err)
 	}
-	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 {
+	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 || summary.SkippedCoordinates != 0 {
 		t.Fatalf("heatmap summary = %#v, want one populated structure cell", summary)
 	}
 }
@@ -595,6 +596,7 @@ func TestDinoHeatmapCommandWritesSummaryJSON(t *testing.T) {
 		"Total: 1",
 		"Max: 1",
 		"Parse faults: 0",
+		"Skipped coordinates: 0",
 		"Wrote: " + outPath,
 	} {
 		if !strings.Contains(got, want) {
@@ -609,7 +611,7 @@ func TestDinoHeatmapCommandWritesSummaryJSON(t *testing.T) {
 	if err := json.Unmarshal(data, &summary); err != nil {
 		t.Fatalf("Unmarshal dino heatmap summary error = %v", err)
 	}
-	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 {
+	if summary.Resolution != 100 || summary.NonzeroCells != 1 || summary.Total != 1 || summary.Max != 1 || summary.Faults != 0 || summary.SkippedCoordinates != 0 {
 		t.Fatalf("dino heatmap summary = %#v, want one populated dino cell", summary)
 	}
 }
