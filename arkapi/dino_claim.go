@@ -23,11 +23,16 @@ const (
 )
 
 type DinoClaimableOptions struct {
-	MapName              string
-	ClaimMultiplier      float64
-	ClaimPeriodSeconds   float64
-	GameUserSettingsPath string
-	IncludeIneligible    bool
+	MapName               string
+	ClaimMultiplier       float64
+	ClaimPeriodSeconds    float64
+	GameUserSettingsPath  string
+	IncludeIneligible     bool
+	IncludeWildDinos      bool
+	IncludeBredDinos      bool
+	IncludeUnclaimedDinos bool
+	IncludeAbandonedDinos bool
+	IncludeSystemDinos    bool
 }
 
 type DinoClaimableReport struct {
@@ -49,6 +54,10 @@ type DinoClaimableSummary struct {
 	ClaimableDinos        int     `json:"claimable_dinos"`
 	UnknownTimestampDinos int     `json:"unknown_timestamp_dinos"`
 	SystemTeamDinos       int     `json:"system_team_dinos"`
+	WildSystemDinos       int     `json:"wild_system_dinos"`
+	UnclaimedDinos        int     `json:"unclaimed_dinos"`
+	AbandonedDinos        int     `json:"abandoned_dinos"`
+	IncludedSystemDinos   int     `json:"included_system_dinos"`
 	ClaimMultiplier       float64 `json:"claim_multiplier"`
 	ClaimPeriodSeconds    float64 `json:"claim_period_seconds"`
 	AdjustedPeriodSeconds float64 `json:"adjusted_period_seconds"`
@@ -73,6 +82,7 @@ type DinoClaimableRow struct {
 	DinoID1                   uint32               `json:"dino_id1,omitempty"`
 	DinoID2                   uint32               `json:"dino_id2,omitempty"`
 	TamedName                 string               `json:"tamed_name,omitempty"`
+	OwnershipCategory         string               `json:"ownership_category"`
 	Owner                     DinoClaimableOwner   `json:"owner"`
 	Location                  *arkobject.MapCoords `json:"location,omitempty"`
 	GameTime                  float64              `json:"game_time"`
@@ -179,15 +189,31 @@ func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableRepor
 	}
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
-		if isSystemDinoClaimTeam(dino.Owner.TargetTeam) {
+		category := dinoClaimOwnershipCategory(dino.Owner)
+		if category != "owned" {
 			report.Summary.SystemTeamDinos++
+			switch category {
+			case "wild_system":
+				report.Summary.WildSystemDinos++
+			case "unclaimed_bred":
+				report.Summary.UnclaimedDinos++
+			case "abandoned":
+				report.Summary.AbandonedDinos++
+			}
+			if !includeDinoClaimSystemCategory(opts, category) {
+				continue
+			}
+		}
+		if !isDinoClaimReportCandidate(dino) {
 			continue
 		}
-		if !isOwnedClaimableCandidate(dino) {
-			continue
+		if category == "owned" {
+			report.Summary.OwnedDinos++
+		} else {
+			report.Summary.IncludedSystemDinos++
 		}
-		report.Summary.OwnedDinos++
 		row := dinoClaimableRow(id, dino, opts.MapName, d.save.Context.GameTime, period, adjusted)
+		row.OwnershipCategory = category
 		if row.UnknownTimestamp {
 			report.Summary.UnknownTimestampDinos++
 		}
@@ -320,14 +346,11 @@ func ParsePvEDinoDecayPeriodMultiplier(path string) (float64, bool, error) {
 }
 
 func isOwnedClaimableCandidate(dino arkobject.Dino) bool {
-	return !dino.IsDead && !dino.IsCryopodded && hasPlayerClaimTeam(dino.Owner) && dinoClaimableOwner(dino.Owner).SortKey != "unknown"
+	return isDinoClaimReportCandidate(dino) && dinoClaimOwnershipCategory(dino.Owner) == "owned"
 }
 
-func hasPlayerClaimTeam(owner arkobject.DinoOwner) bool {
-	if owner.TargetTeam != 0 {
-		return isPlayerDinoClaimTeam(owner.TargetTeam)
-	}
-	return isPlayerDinoClaimTeam(owner.TamerTribeID)
+func isDinoClaimReportCandidate(dino arkobject.Dino) bool {
+	return !dino.IsDead && !dino.IsCryopodded && dinoClaimOwnershipCategory(dino.Owner) != "unknown_system" && dinoClaimableOwner(dino.Owner).SortKey != "unknown"
 }
 
 func isPlayerDinoClaimTeam(teamID int32) bool {
@@ -335,11 +358,41 @@ func isPlayerDinoClaimTeam(teamID int32) bool {
 		(teamID >= dinoClaimTribeTeamStart && teamID < dinoClaimBreedingTeamID)
 }
 
-func isSystemDinoClaimTeam(teamID int32) bool {
+func dinoClaimOwnershipCategory(owner arkobject.DinoOwner) string {
+	teamID := owner.TargetTeam
 	if teamID == 0 {
+		teamID = owner.TamerTribeID
+	}
+	switch {
+	case teamID == dinoClaimAbandonedTeamID:
+		return "abandoned"
+	case teamID == dinoClaimBreedingTeamID:
+		return "unclaimed_bred"
+	case teamID != 0 && teamID < dinoClaimPlayerTeamStart:
+		return "wild_system"
+	case isPlayerDinoClaimTeam(teamID):
+		return "owned"
+	case teamID > dinoClaimBreedingTeamID:
+		return "unknown_system"
+	default:
+		return "unknown_system"
+	}
+}
+
+func includeDinoClaimSystemCategory(opts DinoClaimableOptions, category string) bool {
+	if opts.IncludeSystemDinos {
+		return true
+	}
+	switch category {
+	case "wild_system":
+		return opts.IncludeWildDinos
+	case "unclaimed_bred":
+		return opts.IncludeBredDinos || opts.IncludeUnclaimedDinos
+	case "abandoned":
+		return opts.IncludeAbandonedDinos
+	default:
 		return false
 	}
-	return teamID < dinoClaimPlayerTeamStart || teamID >= dinoClaimBreedingTeamID || teamID == dinoClaimAbandonedTeamID
 }
 
 func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
@@ -402,6 +455,7 @@ func dinoClaimableRow(id uuid.UUID, dino arkobject.Dino, mapName string, gameTim
 		DinoID1:                   dino.ID1,
 		DinoID2:                   dino.ID2,
 		TamedName:                 dino.TamedName,
+		OwnershipCategory:         dinoClaimOwnershipCategory(dino.Owner),
 		Owner:                     dinoClaimableOwner(dino.Owner),
 		GameTime:                  gameTime,
 		ClaimReferenceTime:        dinoClaimReferenceTime(dino),

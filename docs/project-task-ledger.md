@@ -269,7 +269,8 @@ documented.
         ownership signals, external claim settings, owner/location sorting,
         species/name/owner/location output, JSON output, redaction, field
         diagnostics, oldest-owned-dino timer diagnostics, and reserved
-        `TargetingTeam` filtering for wild/unclaimed/abandoned system teams.
+        `TargetingTeam` filtering plus opt-in output flags for
+        wild/unclaimed-bred/abandoned system teams.
   - [blocked] `structure_heatmap` oracle comparison, blocked because upstream
         indexes out-of-range cells on the supplied private save.
   - [x] Base export/import read/write parity where local-copy structural tests

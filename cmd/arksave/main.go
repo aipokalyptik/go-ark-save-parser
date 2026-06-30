@@ -401,7 +401,7 @@ func usage(out io.Writer) error {
   arksave dino-best-base-stat <save.ark> <dino-blueprint> <stat>
   arksave dino-most-mutated <save.ark>
   arksave dino-wild-tamed <save.ark>
-  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json] [--debug-fields] [--oldest n]
+  arksave [--redact] dino-claimable <save.ark> [--game-user-settings path] [--claim-multiplier n] [--claim-period seconds] [--map name] [--json] [--debug-fields] [--oldest n] [--include-wild-dinos] [--include-bred-dinos] [--include-unclaimed-dinos] [--include-abandoned-dinos] [--include-system-dinos]
   arksave [--no-cryos] dino-heatmap <save.ark> <out.json> [resolution]
   arksave equipment-summary <save.ark>
   arksave equipment-saddles <save.ark>
@@ -749,12 +749,16 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Computed offline dino claim eligibility using LastInAllyRangeSerialized with LastInAllyRangeTimeSerialized/TamedTimeStamp fallback\nDinos: %d\nOwned dinos: %d\nClaimable: %d\nUnknown timestamps: %d\nSystem-team dinos: %d\nMultiplier: %.3f\nParse faults: %d\n",
+		"Computed offline dino claim eligibility using LastInAllyRangeSerialized with LastInAllyRangeTimeSerialized/TamedTimeStamp fallback\nDinos: %d\nOwned dinos: %d\nClaimable: %d\nUnknown timestamps: %d\nSystem-team dinos: %d\nIncluded system dinos: %d\nWild/system dinos: %d\nUnclaimed/bred dinos: %d\nAbandoned dinos: %d\nMultiplier: %.3f\nParse faults: %d\n",
 		report.Summary.TotalDinos,
 		report.Summary.OwnedDinos,
 		report.Summary.ClaimableDinos,
 		report.Summary.UnknownTimestampDinos,
 		report.Summary.SystemTeamDinos,
+		report.Summary.IncludedSystemDinos,
+		report.Summary.WildSystemDinos,
+		report.Summary.UnclaimedDinos,
+		report.Summary.AbandonedDinos,
 		report.Summary.ClaimMultiplier,
 		report.Summary.FaultCount,
 	); err != nil {
@@ -765,14 +769,15 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 			return err
 		}
 	}
-	if _, err := fmt.Fprintln(out, "OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE"); err != nil {
+	if _, err := fmt.Fprintln(out, "OWNER\tCATEGORY\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE"); err != nil {
 		return err
 	}
 	for _, row := range report.Dinos {
 		if _, err := fmt.Fprintf(
 			out,
-			"%s\t%s\t%s\t%s\t%s\t%s\t%s\t%t\n",
+			"%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%t\n",
 			dinoClaimableOwnerDisplay(row.Owner),
+			row.OwnershipCategory,
 			demolishableLocationDisplay(row.Location),
 			row.ShortName,
 			dinoNameDisplay(row.TamedName),
@@ -819,6 +824,16 @@ func parseDinoClaimableArgs(args []string) (string, arkapi.DinoClaimableOptions,
 			jsonOut = true
 		case "--debug-fields":
 			debugFields = true
+		case "--include-wild-dinos":
+			opts.IncludeWildDinos = true
+		case "--include-bred-dinos":
+			opts.IncludeBredDinos = true
+		case "--include-unclaimed-dinos":
+			opts.IncludeUnclaimedDinos = true
+		case "--include-abandoned-dinos":
+			opts.IncludeAbandonedDinos = true
+		case "--include-system-dinos":
+			opts.IncludeSystemDinos = true
 		case "--oldest":
 			i++
 			if i >= len(args) {

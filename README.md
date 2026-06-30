@@ -194,6 +194,7 @@ Summarize structure health with a selected-property scan:
 ./bin/arksave --redact dino-claimable /path/to/Valguero_WP.ark --claim-multiplier 4 --json
 ./bin/arksave dino-claimable /path/to/Valguero_WP.ark --debug-fields
 ./bin/arksave dino-claimable /path/to/Valguero_WP.ark --oldest 20
+./bin/arksave dino-claimable /path/to/Valguero_WP.ark --include-unclaimed-dinos --include-abandoned-dinos
 ./bin/arksave --no-cryos dino-heatmap /path/to/Valguero_WP.ark /tmp/dino-heatmap.json 100
 ./bin/arksave equipment-summary /path/to/Valguero_WP.ark
 ./bin/arksave equipment-saddles /path/to/Valguero_WP.ark
@@ -226,9 +227,9 @@ non-cryopodded dinos with ownership signals, and uses save `GameTime` plus each
 dino's `LastInAllyRangeSerialized` as the primary claim reset timestamp.
 `LastInAllyRangeTimeSerialized` and `TamedTimeStamp` are fallbacks when that
 ally-range field is unavailable. Table and JSON output include species, tamed
-name, owner/tribe, map location, and the chosen `claim_reference_time`/
-`claim_reference_source`. The default claim period is 8 days, adjusted by
-`PvEDinoDecayPeriodMultiplier` from an optional
+name, owner/tribe, map location, `ownership_category`, and the chosen
+`claim_reference_time`/`claim_reference_source`. The default claim period is 8
+days, adjusted by `PvEDinoDecayPeriodMultiplier` from an optional
 `GameUserSettings.ini` or `--claim-multiplier`; pass `--claim-period` with
 seconds for server/mod-specific timers. Use `--debug-fields` to print
 dino-scoped candidate property counts when a save has ownership data but no
@@ -240,7 +241,12 @@ For dino claim reports, `TargetingTeam` values below `50000` are treated as
 non-player/system teams and excluded from owned-dino counts. `2000000000` is
 treated as the unclaimed/breeding team and `-2147483648` as abandoned; both are
 excluded from player-owned claim eligibility. Player and tribe teams in the
-`50000..1999999999` range are considered eligible ownership teams.
+`50000..1999999999` range are considered eligible ownership teams. Use
+`--include-wild-dinos`, `--include-unclaimed-dinos`, `--include-bred-dinos`,
+`--include-abandoned-dinos`, or `--include-system-dinos` to include those
+reserved categories in the output. `--include-bred-dinos` and
+`--include-unclaimed-dinos` both include the `2000000000` unclaimed/breeding
+team until a separate ASA team ID is identified.
 
 Export save metadata and object classes to JSON:
 

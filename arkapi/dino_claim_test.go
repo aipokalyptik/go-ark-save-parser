@@ -31,8 +31,8 @@ func TestDinoClaimableReportFiltersAndSortsClaimableDinos(t *testing.T) {
 	if len(faults) != 0 {
 		t.Fatalf("ClaimableReport() faults = %#v, want none", faults)
 	}
-	if report.Summary.TotalDinos != 7 || report.Summary.OwnedDinos != 6 || report.Summary.ClaimableDinos != 4 || report.Summary.UnknownTimestampDinos != 1 || report.Summary.SystemTeamDinos != 1 {
-		t.Fatalf("ClaimableReport() summary = %#v, want total 7 owned 6 claimable 4 unknown 1 system 1", report.Summary)
+	if report.Summary.TotalDinos != 9 || report.Summary.OwnedDinos != 6 || report.Summary.ClaimableDinos != 4 || report.Summary.UnknownTimestampDinos != 1 || report.Summary.SystemTeamDinos != 3 || report.Summary.WildSystemDinos != 1 || report.Summary.UnclaimedDinos != 1 || report.Summary.AbandonedDinos != 1 {
+		t.Fatalf("ClaimableReport() summary = %#v, want total 9 owned 6 claimable 4 unknown 1 system 3 split by category", report.Summary)
 	}
 	if report.Summary.ClaimMultiplier != 2 {
 		t.Fatalf("ClaimMultiplier = %f, want 2", report.Summary.ClaimMultiplier)
@@ -174,6 +174,69 @@ func TestDinoClaimableReportExcludesReservedSystemTeams(t *testing.T) {
 	}
 }
 
+func TestDinoClaimableReportCanIncludeSystemTeamCategories(t *testing.T) {
+	save := openSyntheticClaimableDinoSave(t)
+	defer save.Close()
+
+	report, _, err := NewDino(save).ClaimableReport(DinoClaimableOptions{
+		MapName:               "Valguero",
+		ClaimMultiplier:       1,
+		ClaimPeriodSeconds:    100,
+		IncludeWildDinos:      true,
+		IncludeUnclaimedDinos: true,
+		IncludeAbandonedDinos: true,
+		IncludeIneligible:     true,
+	})
+	if err != nil {
+		t.Fatalf("ClaimableReport() error = %v", err)
+	}
+	if report.Summary.IncludedSystemDinos != 3 || report.Summary.SystemTeamDinos != 3 {
+		t.Fatalf("system summary = %#v, want 3 included system dinos and 3 total system dinos", report.Summary)
+	}
+	wantCategories := map[uint32]string{
+		4001: "wild_system",
+		8001: "unclaimed_bred",
+		9001: "abandoned",
+	}
+	for dinoID, category := range wantCategories {
+		row := findDinoClaimableRow(report.Dinos, dinoID)
+		if row == nil {
+			t.Fatalf("included system report missing dino %d in category %s: %#v", dinoID, category, report.Dinos)
+		}
+		if row.OwnershipCategory != category {
+			t.Fatalf("dino %d ownership category = %q, want %q", dinoID, row.OwnershipCategory, category)
+		}
+	}
+}
+
+func TestDinoClaimableReportBredAndUnclaimedFlagsAreAliases(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		opts DinoClaimableOptions
+	}{
+		{name: "bred", opts: DinoClaimableOptions{IncludeBredDinos: true}},
+		{name: "unclaimed", opts: DinoClaimableOptions{IncludeUnclaimedDinos: true}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			save := openSyntheticClaimableDinoSave(t)
+			defer save.Close()
+
+			opts := tt.opts
+			opts.MapName = "Valguero"
+			opts.ClaimMultiplier = 1
+			opts.ClaimPeriodSeconds = 100
+			report, _, err := NewDino(save).ClaimableReport(opts)
+			if err != nil {
+				t.Fatalf("ClaimableReport() error = %v", err)
+			}
+			row := findDinoClaimableRow(report.Dinos, 8001)
+			if row == nil || row.OwnershipCategory != "unclaimed_bred" {
+				t.Fatalf("unclaimed/bred row = %#v in report %#v, want included unclaimed_bred dino", row, report.Dinos)
+			}
+		})
+	}
+}
+
 func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	save := openSyntheticClaimableDinoSave(t)
 	defer save.Close()
@@ -182,8 +245,8 @@ func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ClaimableFieldDebug() error = %v", err)
 	}
-	if debug.TotalDinoCandidates != 7 || debug.FaultCount != 0 {
-		t.Fatalf("ClaimableFieldDebug() summary = %#v, want 7 candidates and no faults", debug)
+	if debug.TotalDinoCandidates != 9 || debug.FaultCount != 0 {
+		t.Fatalf("ClaimableFieldDebug() summary = %#v, want 9 candidates and no faults", debug)
 	}
 	if debug.FieldCounts["LastInAllyRangeTimeSerialized"] != 3 {
 		t.Fatalf("LastInAllyRangeTimeSerialized count = %d, want 3: %#v", debug.FieldCounts["LastInAllyRangeTimeSerialized"], debug.FieldCounts)
@@ -191,12 +254,21 @@ func TestDinoClaimableFieldDebugCountsCandidateProperties(t *testing.T) {
 	if debug.FieldCounts["TamedTimeStamp"] != 4 {
 		t.Fatalf("TamedTimeStamp count = %d, want 4: %#v", debug.FieldCounts["TamedTimeStamp"], debug.FieldCounts)
 	}
-	if debug.FieldCounts["TargetingTeam"] != 7 {
-		t.Fatalf("TargetingTeam count = %d, want 7: %#v", debug.FieldCounts["TargetingTeam"], debug.FieldCounts)
+	if debug.FieldCounts["TargetingTeam"] != 9 {
+		t.Fatalf("TargetingTeam count = %d, want 9: %#v", debug.FieldCounts["TargetingTeam"], debug.FieldCounts)
 	}
-	if debug.FieldCounts["LastInAllyRangeSerialized"] != 2 {
-		t.Fatalf("LastInAllyRangeSerialized count = %d, want 2: %#v", debug.FieldCounts["LastInAllyRangeSerialized"], debug.FieldCounts)
+	if debug.FieldCounts["LastInAllyRangeSerialized"] != 4 {
+		t.Fatalf("LastInAllyRangeSerialized count = %d, want 4: %#v", debug.FieldCounts["LastInAllyRangeSerialized"], debug.FieldCounts)
 	}
+}
+
+func findDinoClaimableRow(rows []DinoClaimableRow, dinoID uint32) *DinoClaimableRow {
+	for i := range rows {
+		if rows[i].DinoID1 == dinoID {
+			return &rows[i]
+		}
+	}
+	return nil
 }
 
 func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
@@ -209,6 +281,8 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 	unknownTimeID := uuid.MustParse("44444444-0000-0000-0000-000000000001")
 	noTamedTimestampID := uuid.MustParse("55555555-0000-0000-0000-000000000001")
 	aliasTimerID := uuid.MustParse("66666666-0000-0000-0000-000000000001")
+	unclaimedID := uuid.MustParse("77777777-0000-0000-0000-000000000001")
+	abandonedID := uuid.MustParse("88888888-0000-0000-0000-000000000001")
 	alphaLoc := arkobject.MapCoords{Lat: 10, Long: 20}.AsActorTransform("Valguero")
 	alphaFreshLoc := arkobject.MapCoords{Lat: 10.4, Long: 20.4}.AsActorTransform("Valguero")
 	betaLoc := arkobject.MapCoords{Lat: 60, Long: 70}.AsActorTransform("Valguero")
@@ -216,6 +290,8 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 	unknownLoc := arkobject.MapCoords{Lat: 80, Long: 10}.AsActorTransform("Valguero")
 	noTamedTimestampLoc := arkobject.MapCoords{Lat: 30, Long: 40}.AsActorTransform("Valguero")
 	aliasTimerLoc := arkobject.MapCoords{Lat: 35, Long: 45}.AsActorTransform("Valguero")
+	unclaimedLoc := arkobject.MapCoords{Lat: 6, Long: 7}.AsActorTransform("Valguero")
+	abandonedLoc := arkobject.MapCoords{Lat: 8, Long: 9}.AsActorTransform("Valguero")
 
 	return openSyntheticSaveWith(t, "claimable-dinos.ark", map[string][]byte{
 		"ActorTransforms": syntheticStructureActorTransformsFor(map[uuid.UUID][3]float64{
@@ -226,6 +302,8 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 			unknownTimeID:      {unknownLoc.X, unknownLoc.Y, unknownLoc.Z},
 			noTamedTimestampID: {noTamedTimestampLoc.X, noTamedTimestampLoc.Y, noTamedTimestampLoc.Z},
 			aliasTimerID:       {aliasTimerLoc.X, aliasTimerLoc.Y, aliasTimerLoc.Z},
+			unclaimedID:        {unclaimedLoc.X, unclaimedLoc.Y, unclaimedLoc.Z},
+			abandonedID:        {abandonedLoc.X, abandonedLoc.Y, abandonedLoc.Z},
 		}),
 	}, map[uuid.UUID][]byte{
 		alphaOldID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
@@ -303,6 +381,20 @@ func openSyntheticClaimableDinoSave(t *testing.T) *arksave.Save {
 			TamerString:               "Epsilon",
 			TargetingTeam:             1000001001,
 			TamedName:                 "AliasTimer",
+		}),
+		unclaimedID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+			ID1:                       8001,
+			ID2:                       8002,
+			LastInAllyRangeSerialized: 900,
+			TargetingTeam:             2000000000,
+			TamedName:                 "UnclaimedBaby",
+		}),
+		abandonedID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
+			ID1:                       9001,
+			ID2:                       9002,
+			LastInAllyRangeSerialized: 850,
+			TargetingTeam:             -2147483648,
+			TamedName:                 "Abandoned",
 		}),
 	})
 }

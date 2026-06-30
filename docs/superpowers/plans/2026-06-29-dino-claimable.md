@@ -45,6 +45,7 @@
 
 - [x] Add `dino-claimable` usage and dispatch.
 - [x] Support `--game-user-settings`, `--claim-multiplier`, `--claim-period`, `--map`, and `--json`.
+- [x] Support `--include-wild-dinos`, `--include-bred-dinos`, `--include-unclaimed-dinos`, `--include-abandoned-dinos`, and `--include-system-dinos`.
 - [x] Print table output sorted by owner/location.
 - [x] Emit stable ordered JSON.
 - [x] Redact owner IDs, dino UUIDs, dino IDs, and paths under `--redact`.
