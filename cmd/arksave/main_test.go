@@ -1003,6 +1003,30 @@ func TestDinoClaimableCommandCanIncludeSystemCategories(t *testing.T) {
 	}
 }
 
+func TestDinoClaimableCommandOldestWithSystemCategoriesLabelsIncludedRows(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "claimable-dinos.ark")
+	createSyntheticClaimableDinoCommandSave(t, path)
+
+	var out bytes.Buffer
+	err := run([]string{"dino-claimable", path, "--claim-period", "100", "--claim-multiplier", "100", "--map", "Valguero", "--oldest", "2", "--include-system-dinos"}, &out)
+	if err != nil {
+		t.Fatalf("run(dino-claimable --oldest --include-system-dinos) error = %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"Included system dinos: 3",
+		"Showing oldest 2 included dinos, including ineligible rows.",
+		"5\twild_system\t5.00,5.00\tRaptor\t-\tlast_in_ally_range_serialized\t1224s\t8776s\tfalse",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("dino-claimable --oldest --include-system-dinos output %q does not contain %q", got, want)
+		}
+	}
+	if strings.Contains(got, "Showing oldest 2 owned dinos") {
+		t.Fatalf("dino-claimable --oldest --include-system-dinos used owned-only label: %q", got)
+	}
+}
+
 func TestDinoClaimableCommandBredAndUnclaimedFlagsAreAliases(t *testing.T) {
 	for _, flag := range []string{"--include-bred-dinos", "--include-unclaimed-dinos"} {
 		t.Run(flag, func(t *testing.T) {

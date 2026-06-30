@@ -765,7 +765,11 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 		return err
 	}
 	if oldestRows > 0 {
-		if _, err := fmt.Fprintf(out, "Showing oldest %d owned dinos, including ineligible rows.\n", oldestRows); err != nil {
+		population := "owned"
+		if dinoClaimIncludesSystemRows(opts) {
+			population = "included"
+		}
+		if _, err := fmt.Fprintf(out, "Showing oldest %d %s dinos, including ineligible rows.\n", oldestRows, population); err != nil {
 			return err
 		}
 	}
@@ -790,6 +794,14 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 		}
 	}
 	return nil
+}
+
+func dinoClaimIncludesSystemRows(opts arkapi.DinoClaimableOptions) bool {
+	return opts.IncludeWildDinos ||
+		opts.IncludeBredDinos ||
+		opts.IncludeUnclaimedDinos ||
+		opts.IncludeAbandonedDinos ||
+		opts.IncludeSystemDinos
 }
 
 func printDinoClaimableFieldDebug(debug arkapi.DinoClaimableFieldDebug, out io.Writer) error {
