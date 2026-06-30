@@ -236,6 +236,12 @@ recognized timer field. Use `--oldest N` to include the oldest owned dinos even
 when they are not yet claimable, which is useful for checking timer source and
 remaining time.
 
+For dino claim reports, `TargetingTeam` values below `50000` are treated as
+non-player/system teams and excluded from owned-dino counts. `2000000000` is
+treated as the unclaimed/breeding team and `-2147483648` as abandoned; both are
+excluded from player-owned claim eligibility. Player and tribe teams in the
+`50000..1999999999` range are considered eligible ownership teams.
+
 Export save metadata and object classes to JSON:
 
 ```sh

@@ -749,11 +749,12 @@ func dinoClaimable(args []string, out io.Writer, runOpts runOptions) error {
 	}
 	if _, err := fmt.Fprintf(
 		out,
-		"Computed offline dino claim eligibility using LastInAllyRangeSerialized with LastInAllyRangeTimeSerialized/TamedTimeStamp fallback\nDinos: %d\nOwned dinos: %d\nClaimable: %d\nUnknown timestamps: %d\nMultiplier: %.3f\nParse faults: %d\n",
+		"Computed offline dino claim eligibility using LastInAllyRangeSerialized with LastInAllyRangeTimeSerialized/TamedTimeStamp fallback\nDinos: %d\nOwned dinos: %d\nClaimable: %d\nUnknown timestamps: %d\nSystem-team dinos: %d\nMultiplier: %.3f\nParse faults: %d\n",
 		report.Summary.TotalDinos,
 		report.Summary.OwnedDinos,
 		report.Summary.ClaimableDinos,
 		report.Summary.UnknownTimestampDinos,
+		report.Summary.SystemTeamDinos,
 		report.Summary.ClaimMultiplier,
 		report.Summary.FaultCount,
 	); err != nil {

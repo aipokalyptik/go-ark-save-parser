@@ -932,6 +932,7 @@ func TestDinoClaimableCommandPrintsOwnerLocationSortedTable(t *testing.T) {
 		"Owned dinos: 6",
 		"Claimable: 4",
 		"Unknown timestamps: 1",
+		"System-team dinos: 1",
 		"Multiplier: 2.000",
 		"OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE",
 		"Alpha\t10.00,20.00\tRaptor\t-\tlast_in_ally_range_time_serialized\t200s\t0s\ttrue",
@@ -960,6 +961,7 @@ func TestDinoClaimableCommandCanPrintOldestIneligibleRows(t *testing.T) {
 	got := out.String()
 	for _, want := range []string{
 		"Claimable: 0",
+		"System-team dinos: 1",
 		"Showing oldest 2 owned dinos, including ineligible rows.",
 		"OWNER\tLOCATION\tSPECIES\tNAME\tSOURCE\tELAPSED\tREMAINING\tCLAIMABLE",
 		"Beta\t60.00,70.00\tRaptor\t-\ttamed_time_stamp\t1100s\t8900s\tfalse",
@@ -990,8 +992,8 @@ func TestDinoClaimableCommandPrintsStableJSON(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
 		t.Fatalf("json.Unmarshal(dino-claimable) error = %v; output = %s", err, out.String())
 	}
-	if report.Summary.TotalDinos != 7 || report.Summary.OwnedDinos != 6 || report.Summary.ClaimableDinos != 5 || len(report.Dinos) != 5 {
-		t.Fatalf("json report = %#v, want 7 total, 6 owned, 5 claimable", report)
+	if report.Summary.TotalDinos != 7 || report.Summary.OwnedDinos != 6 || report.Summary.ClaimableDinos != 5 || report.Summary.SystemTeamDinos != 1 || len(report.Dinos) != 5 {
+		t.Fatalf("json report = %#v, want 7 total, 6 owned, 5 claimable, 1 system", report)
 	}
 	if report.Dinos[0].Owner.SortKey != "Alpha" || report.Dinos[1].Owner.SortKey != "Alpha" || report.Dinos[2].Owner.SortKey != "Beta" || report.Dinos[3].Owner.SortKey != "Delta" || report.Dinos[4].Owner.SortKey != "Epsilon" {
 		t.Fatalf("json dinos not owner sorted: %#v", report.Dinos)
@@ -1036,9 +1038,9 @@ func TestDinoClaimableCommandPrintsDebugFields(t *testing.T) {
 		"Parse faults: 0",
 		"FIELD\tCOUNT",
 		"DinoID1\t7",
-		"LastInAllyRangeSerialized\t1",
+		"LastInAllyRangeSerialized\t2",
 		"LastInAllyRangeTimeSerialized\t3",
-		"TargetingTeam\t6",
+		"TargetingTeam\t7",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("dino-claimable --debug-fields output %q does not contain %q", got, want)
@@ -3544,11 +3546,11 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				TamedTimestamp:                1000,
 				LastInAllyRangeTimeSerialized: 1034.5,
 				TribeName:                     "Alpha",
-				TamingTeamID:                  555,
+				TamingTeamID:                  1000000555,
 				TamerString:                   "Alpha",
 				OwningPlayerName:              "Alice",
 				OwningPlayerID:                42,
-				TargetingTeam:                 555,
+				TargetingTeam:                 1000000555,
 			}),
 			alphaFreshID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1:                           2001,
@@ -3557,11 +3559,11 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				TamedTimestamp:                900,
 				LastInAllyRangeTimeSerialized: 1100,
 				TribeName:                     "Alpha",
-				TamingTeamID:                  555,
+				TamingTeamID:                  1000000555,
 				TamerString:                   "Alpha",
 				OwningPlayerName:              "Alice",
 				OwningPlayerID:                42,
-				TargetingTeam:                 555,
+				TargetingTeam:                 1000000555,
 			}),
 			betaOldID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1:            3001,
@@ -3569,14 +3571,16 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				Tamed:          true,
 				TamedTimestamp: 134.5,
 				TribeName:      "Beta",
-				TamingTeamID:   777,
+				TamingTeamID:   1000000777,
 				TamerString:    "Beta",
 				OwningPlayerID: 99,
-				TargetingTeam:  777,
+				TargetingTeam:  1000000777,
 			}),
 			wildID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
-				ID1: 4001,
-				ID2: 4002,
+				ID1:                       4001,
+				ID2:                       4002,
+				LastInAllyRangeSerialized: 10,
+				TargetingTeam:             5,
 			}),
 			unknownTimeID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1:                          5001,
@@ -3584,20 +3588,20 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				Tamed:                        true,
 				DisableDefaultTamedTimestamp: true,
 				TribeName:                    "Gamma",
-				TamingTeamID:                 888,
+				TamingTeamID:                 1000000888,
 				TamerString:                  "Gamma",
-				TargetingTeam:                888,
+				TargetingTeam:                1000000888,
 			}),
 			noTamedTimestampID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
 				ID1:                           6001,
 				ID2:                           6002,
 				LastInAllyRangeTimeSerialized: 1000,
 				TribeName:                     "Delta",
-				TamingTeamID:                  999,
+				TamingTeamID:                  1000000999,
 				TamerString:                   "Delta",
 				OwningPlayerName:              "Dana",
 				OwningPlayerID:                123,
-				TargetingTeam:                 999,
+				TargetingTeam:                 1000000999,
 				TamedName:                     "NoTimestamp",
 			}),
 			aliasTimerID: testfixtures.DinoGameObjectBytes(testfixtures.DinoGameObjectOptions{
@@ -3605,9 +3609,9 @@ func createSyntheticClaimableDinoCommandSave(t *testing.T, path string) {
 				ID2:                       7002,
 				LastInAllyRangeSerialized: 950,
 				TribeName:                 "Epsilon",
-				TamingTeamID:              1001,
+				TamingTeamID:              1000001001,
 				TamerString:               "Epsilon",
-				TargetingTeam:             1001,
+				TargetingTeam:             1000001001,
 				TamedName:                 "AliasTimer",
 			}),
 		},

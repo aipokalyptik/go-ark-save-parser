@@ -32,6 +32,7 @@
 - [x] Parse `PvEDinoDecayPeriodMultiplier` from settings when supplied; default multiplier to `1`.
 - [x] Default claim period to 8 days and allow `--claim-period` seconds to override it.
 - [x] Filter to dinos with ownership signals, excluding dead and cryopodded dinos.
+- [x] Exclude reserved/system `TargetingTeam` ranges: wild/non-player `<50000`, unclaimed/breeding `2000000000`, and abandoned `-2147483648`.
 - [x] Compute from `LastInAllyRangeSerialized`, falling back to `LastInAllyRangeTimeSerialized` and then `TamedTimeStamp`.
 - [x] Sort by owner/tribe, then location, then dino short name.
 - [x] Include raw timing fields plus `claim_reference_time` and `claim_reference_source`.

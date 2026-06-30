@@ -15,6 +15,12 @@ import (
 )
 
 const defaultDinoClaimPeriodSeconds = 8 * secondsPerDay
+const (
+	dinoClaimPlayerTeamStart = int32(50_000)
+	dinoClaimTribeTeamStart  = int32(1_000_000_000)
+	dinoClaimBreedingTeamID  = int32(2_000_000_000)
+	dinoClaimAbandonedTeamID = int32(-2147483648)
+)
 
 type DinoClaimableOptions struct {
 	MapName              string
@@ -42,6 +48,7 @@ type DinoClaimableSummary struct {
 	OwnedDinos            int     `json:"owned_dinos"`
 	ClaimableDinos        int     `json:"claimable_dinos"`
 	UnknownTimestampDinos int     `json:"unknown_timestamp_dinos"`
+	SystemTeamDinos       int     `json:"system_team_dinos"`
 	ClaimMultiplier       float64 `json:"claim_multiplier"`
 	ClaimPeriodSeconds    float64 `json:"claim_period_seconds"`
 	AdjustedPeriodSeconds float64 `json:"adjusted_period_seconds"`
@@ -172,6 +179,10 @@ func (d *DinoAPI) ClaimableReport(opts DinoClaimableOptions) (DinoClaimableRepor
 	}
 	for _, id := range sortedUUIDKeys(dinos) {
 		dino := dinos[id]
+		if isSystemDinoClaimTeam(dino.Owner.TargetTeam) {
+			report.Summary.SystemTeamDinos++
+			continue
+		}
 		if !isOwnedClaimableCandidate(dino) {
 			continue
 		}
@@ -309,7 +320,26 @@ func ParsePvEDinoDecayPeriodMultiplier(path string) (float64, bool, error) {
 }
 
 func isOwnedClaimableCandidate(dino arkobject.Dino) bool {
-	return !dino.IsDead && !dino.IsCryopodded && dinoClaimableOwner(dino.Owner).SortKey != "unknown"
+	return !dino.IsDead && !dino.IsCryopodded && hasPlayerClaimTeam(dino.Owner) && dinoClaimableOwner(dino.Owner).SortKey != "unknown"
+}
+
+func hasPlayerClaimTeam(owner arkobject.DinoOwner) bool {
+	if owner.TargetTeam != 0 {
+		return isPlayerDinoClaimTeam(owner.TargetTeam)
+	}
+	return isPlayerDinoClaimTeam(owner.TamerTribeID)
+}
+
+func isPlayerDinoClaimTeam(teamID int32) bool {
+	return (teamID >= dinoClaimPlayerTeamStart && teamID < dinoClaimTribeTeamStart) ||
+		(teamID >= dinoClaimTribeTeamStart && teamID < dinoClaimBreedingTeamID)
+}
+
+func isSystemDinoClaimTeam(teamID int32) bool {
+	if teamID == 0 {
+		return false
+	}
+	return teamID < dinoClaimPlayerTeamStart || teamID >= dinoClaimBreedingTeamID || teamID == dinoClaimAbandonedTeamID
 }
 
 func (d *DinoAPI) selectedClaimableDinoIndexWithFaults() (map[uuid.UUID]arkobject.Dino, []arksave.FaultyObjectInfo, error) {
